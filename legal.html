@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d5c36">
+<title>Información legal · Emporio Sabroso y Distribuidora Santa Bárbara</title>
+<meta name="description" content="Privacidad, términos y condiciones, cambios y devoluciones, datos guardados, accesibilidad y licencias de la carta de pedidos.">
+<link rel="icon" href="img/icono.png">
+<style>
+/* Misma paleta y tipografía de la carta. Sin recursos externos: no se conecta a servidores de terceros. */
+@font-face{font-family:"Fraunces";src:url("fonts/fraunces.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+:root{
+  color-scheme:light;
+  --campo:#1d5c36; --brote:#4f8a2f; --sol:#f07d1a; --trigo:#f9b21b; --masa:#fbf6ec;
+  --tinta:#2a2a22; --suave:#5f5b4e; --borde:#ebe2cf; --sol-t:#a94e00; --linea:#8a8474;
+  --display:"Fraunces","Georgia",serif;
+  --texto:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--masa);color:var(--tinta);font:16px/1.6 var(--texto)}
+.wrap{max-width:720px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+:focus-visible{outline:3px solid var(--trigo);outline-offset:2px}
+a{color:var(--campo);font-weight:600}
+.salto{position:absolute;left:8px;top:-60px;z-index:50;background:#fff;color:var(--campo);font-weight:700;padding:10px 14px;border-radius:10px;border:2px solid var(--campo)}
+.salto:focus{top:8px}
+
+.marca{background:var(--campo);color:#fff}
+.marca .wrap{padding-block:22px 26px}
+.marca a.volver{display:inline-block;color:#fff;font-size:14px;font-weight:700;padding:8px 0;min-height:44px}
+.marca h1{margin:6px 0 4px;font-family:var(--display);font-size:clamp(26px,6vw,36px);line-height:1.15;text-wrap:balance}
+.marca p{margin:0;font-size:14px}
+.franja{height:8px;background:linear-gradient(90deg,var(--trigo) 0 50%,var(--sol) 50% 100%)}
+
+.borrador{margin:18px 0 0;padding:12px 14px;border:2px dashed var(--sol);border-radius:12px;background:#fff;font-size:14.5px}
+.borrador b{color:var(--sol-t)}
+.borrador ul{margin:6px 0 0;padding-left:20px}
+mark.pend{background:#fff0bf;color:var(--tinta);padding:1px 5px;border-radius:5px;font-weight:600}
+
+.indice{margin:18px 0 0;padding:14px 16px;background:#fff;border:1px solid var(--borde);border-radius:14px}
+.indice h2{margin:0 0 6px;font-family:var(--display);font-size:18px;color:var(--campo)}
+.indice ol{margin:0;padding-left:22px;columns:2;column-gap:24px}
+.indice li{break-inside:avoid;padding:3px 0}
+@media (max-width:520px){.indice ol{columns:1}}
+
+main section{scroll-margin-top:12px;margin-top:22px;padding:18px 18px 8px;background:#fff;border:1px solid var(--borde);border-radius:14px}
+main h2{margin:0 0 8px;font-family:var(--display);font-size:24px;line-height:1.2;color:var(--campo);text-wrap:balance}
+main h3{margin:18px 0 4px;font-size:16.5px;color:var(--tinta)}
+main p{margin:0 0 12px}
+main ul,main ol{margin:0 0 12px;padding-left:22px}
+main li{margin-bottom:5px}
+.resumen{background:#eef6f0;border-left:4px solid var(--campo);border-radius:0 10px 10px 0;padding:10px 14px;margin:0 0 14px;font-size:15px}
+.tabla{overflow-x:auto;margin:0 0 12px}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:480px}
+caption{text-align:left;font-weight:700;padding:0 0 6px}
+th,td{border:1px solid var(--borde);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--masa);color:var(--campo)}
+code{background:var(--masa);border:1px solid var(--borde);border-radius:5px;padding:0 5px;font-size:13.5px}
+.contacto{display:grid;gap:10px;grid-template-columns:1fr 1fr;margin:0 0 12px}
+.contacto > div{background:var(--masa);border:1px solid var(--borde);border-radius:12px;padding:12px 14px;font-size:15px}
+.contacto b{display:block;color:var(--campo);font-family:var(--display);font-size:17px;margin-bottom:2px}
+@media (max-width:560px){.contacto{grid-template-columns:1fr}}
+
+footer{margin:26px 0 40px;font-size:14px;color:var(--suave);text-align:center}
+footer p{margin:0 0 6px}
+@media print{.marca{background:none;color:#000}.marca a.volver,.salto,.indice,.franja{display:none}main section{border:0;padding:0}body{background:#fff}}
+</style>
+</head>
+<body>
+<a class="salto" href="#contenido">Saltar al contenido</a>
+
+<header class="marca">
+  <div class="wrap">
+    <a class="volver" href="./">← Volver a la carta</a>
+    <h1>Información legal</h1>
+    <p>Emporio Sabroso y Distribuidora Santa Bárbara · Distribuidora Avícola Santa Bárbara SpA</p>
+  </div>
+</header>
+<div class="franja" aria-hidden="true"></div>
+
+<div class="wrap">
+  <!-- BORRADOR: quitar este bloque y resolver cada <mark class="pend"> antes de publicar. -->
+  <aside class="borrador" aria-label="Aviso de borrador">
+    <b>Borrador en revisión.</b> Este texto todavía no es definitivo: falta la revisión de un abogado y hay puntos por confirmar, que aparecen <mark class="pend">destacados así</mark>.
+  </aside>
+
+  <nav class="indice" aria-labelledby="indiceTit">
+    <h2 id="indiceTit">Contenido</h2>
+    <ol>
+      <li><a href="#quienes">Quiénes somos</a></li>
+      <li><a href="#privacidad">Privacidad</a></li>
+      <li><a href="#cookies">Cookies y datos guardados</a></li>
+      <li><a href="#baja">Dejar de recibir ofertas</a></li>
+      <li><a href="#eliminacion">Eliminar tus datos</a></li>
+      <li><a href="#menores">Menores de edad</a></li>
+      <li><a href="#terminos">Términos y condiciones</a></li>
+      <li><a href="#devoluciones">Cambios y devoluciones</a></li>
+      <li><a href="#accesibilidad">Accesibilidad</a></li>
+      <li><a href="#licencias">Licencias y contenidos</a></li>
+      <li><a href="#contacto">Contacto y reclamos</a></li>
+    </ol>
+  </nav>
+</div>
+
+<main class="wrap" id="contenido" tabindex="-1">
+
+  <section id="quienes" aria-labelledby="h-quienes">
+    <h2 id="h-quienes">1. Quiénes somos</h2>
+    <p>La carta de pedidos y este sitio pertenecen a <b>Distribuidora Avícola Santa Bárbara SpA</b>, RUT 77.586.055-3, que atiende al público en dos locales de Chillán, Región de Ñuble:</p>
+    <div class="contacto">
+      <div><b>Emporio Sabroso</b>Arturo Prat 720, frente al Mercado Techado<br>Lunes a sábado, 8:30 a 17:00<br>WhatsApp y teléfono: <a href="tel:+56933903395">+56 9 3390 3395</a></div>
+      <div><b>Distribuidora Santa Bárbara</b>Cocharcas 884<br>WhatsApp y teléfono: <a href="tel:+56954158511">+56 9 5415 8511</a></div>
+    </div>
+    <p>Para cualquier consulta sobre este documento o sobre tus datos, escríbenos a <a href="mailto:supermerca.do@avicolasb.com">supermerca.do@avicolasb.com</a>.</p>
+    <p>La empresa es la responsable de los datos personales que se describen aquí.</p>
+  </section>
+
+  <section id="privacidad" aria-labelledby="h-privacidad">
+    <h2 id="h-privacidad">2. Política de privacidad</h2>
+    <p class="resumen">En corto: pedimos solo lo necesario para preparar tu pedido y, si te registras, para darte tu descuento. No vendemos ni compartimos tus datos, no usamos publicidad ni seguimiento, y puedes pedir que los borremos cuando quieras.</p>
+
+    <h3>Qué datos tratamos y para qué</h3>
+    <div class="tabla">
+    <table>
+      <caption>Datos personales que usa la carta</caption>
+      <thead><tr><th scope="col">Dato</th><th scope="col">Para qué se usa</th><th scope="col">¿Es obligatorio?</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Nombre para el pedido</th><td>Identificar de quién es el pedido cuando lo retiras.</td><td>Sí, para enviar un pedido.</td></tr>
+        <tr><th scope="row">Hora de retiro y comentario</th><td>Tener el pedido listo y preparado como lo pediste.</td><td>La hora sí. El comentario es opcional.</td></tr>
+        <tr><th scope="row">Primer nombre, apellido paterno y celular</th><td>Registrarte como cliente y aplicar tu descuento de bienvenida.</td><td>Solo si decides registrarte.</td></tr>
+        <tr><th scope="row">Segundo nombre y apellido materno</th><td>Distinguirte de otro cliente con el mismo nombre.</td><td>No, son opcionales.</td></tr>
+        <tr><th scope="row">Permiso para recibir ofertas</th><td>Avisarte de ofertas por WhatsApp o teléfono.</td><td>No. La casilla viene sin marcar.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>No pedimos RUT, dirección, correo, fecha de nacimiento ni datos de pago. Tampoco tratamos datos sensibles.</p>
+
+    <h3>Con qué fundamento</h3>
+    <ul>
+      <li><b>Tu pedido:</b> usamos los datos porque tú nos pides preparar esa compra.</li>
+      <li><b>Tu registro y las ofertas:</b> los usamos con tu consentimiento, que das al marcar las casillas del registro. Puedes retirarlo cuando quieras, sin costo y sin dar explicaciones.</li>
+    </ul>
+
+    <h3>Dónde quedan tus datos</h3>
+    <ul>
+      <li><b>En tu celular:</b> el pedido que estás armando y tu registro se guardan en el navegador de tu teléfono. El detalle está en <a href="#cookies">Cookies y datos guardados</a>.</li>
+      <li><b>En el mensaje que tú envías:</b> el pedido viaja por WhatsApp o Instagram cuando tocas el botón para enviarlo. Esos servicios son de Meta y tienen sus propias políticas de privacidad.</li>
+      <li><b>En el registro de clientes de la empresa:</b> una planilla interna, alojada en Google Drive, a la que solo accede el personal autorizado. Google actúa como proveedor de almacenamiento.</li>
+      <li><b>En el servidor del sitio:</b> la carta está publicada en GitHub Pages. Como cualquier sitio web, ese servicio puede registrar datos técnicos de la visita, como la dirección IP, por seguridad. Nosotros no vemos ni usamos esos registros.</li>
+    </ul>
+
+    <h3>Con quién los compartimos</h3>
+    <p>Con nadie. No vendemos, arrendamos ni cedemos tus datos, y no los usamos para publicidad de terceros. Solo podríamos entregarlos si una ley o un tribunal lo exige.</p>
+
+    <h3>Cuánto tiempo los guardamos</h3>
+    <ul>
+      <li>El pedido que no enviaste se borra solo de tu celular después de 12 horas.</li>
+      <li>Tu registro de cliente se conserva hasta que pidas eliminarlo.</li>
+      <li>Los mensajes con tus pedidos quedan en el chat de WhatsApp o Instagram del local.</li>
+    </ul>
+
+    <h3>Tus derechos</h3>
+    <p>Según la Ley N.º 19.628 sobre protección de la vida privada y la Ley N.º 21.719 sobre protección de datos personales, puedes pedirnos, sin costo:</p>
+    <ul>
+      <li><b>Acceso:</b> saber qué datos tuyos tenemos.</li>
+      <li><b>Rectificación:</b> corregir un dato equivocado o desactualizado.</li>
+      <li><b>Supresión:</b> que eliminemos tus datos. Ver <a href="#eliminacion">Eliminar tus datos</a>.</li>
+      <li><b>Oposición:</b> que dejemos de usarlos para ofertas. Ver <a href="#baja">Dejar de recibir ofertas</a>.</li>
+      <li><b>Portabilidad y bloqueo:</b> recibir una copia de tus datos o pedir que suspendamos su uso mientras se resuelve tu solicitud.</li>
+    </ul>
+    <p>Para ejercerlos, escríbenos a <a href="mailto:supermerca.do@avicolasb.com">supermerca.do@avicolasb.com</a>, por WhatsApp o en el local. Te responderemos dentro del plazo que fija la ley. Para proteger tus datos, podemos pedirte que confirmes que el número de celular registrado es tuyo.</p>
+
+    <h3>Seguridad</h3>
+    <p>El sitio se sirve por conexión cifrada (HTTPS). El registro de clientes solo lo ve el personal que lo necesita para atenderte.</p>
+
+    <h3>Cambios a esta política</h3>
+    <p>Si cambiamos algo importante, lo avisaremos en la carta y actualizaremos la fecha que aparece al final de este documento.</p>
+  </section>
+
+  <section id="cookies" aria-labelledby="h-cookies">
+    <h2 id="h-cookies">3. Cookies y datos guardados en tu celular</h2>
+    <p class="resumen">En corto: la carta no usa cookies. No hay publicidad, analítica ni seguimiento, y no se conecta a ningún servicio externo. Solo guarda algunos datos en tu propio teléfono para funcionar.</p>
+    <p>Al entrar, un aviso te deja elegir entre <b>«Solo lo necesario»</b> y <b>«Aceptar todo»</b>. Las dos opciones pesan lo mismo y la carta funciona igual con cualquiera.</p>
+    <div class="tabla">
+    <table>
+      <caption>Qué se guarda en el navegador de tu celular</caption>
+      <thead><tr><th scope="col">Qué</th><th scope="col">Para qué</th><th scope="col">Tipo</th><th scope="col">Hasta cuándo</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Tu elección del aviso</th><td>No volver a preguntarte en cada visita.</td><td>Necesario</td><td>Hasta que la cambies o la borres.</td></tr>
+        <tr><th scope="row">El pedido que estás armando</th><td>No perder lo elegido si cierras la carta sin querer.</td><td>Necesario</td><td>12 horas, o hasta que lo envíes.</td></tr>
+        <tr><th scope="row">Tu registro de cliente</th><td>Reconocerte y aplicar tu descuento.</td><td>Necesario, solo si te registras</td><td>Hasta que lo borres.</td></tr>
+        <tr><th scope="row">Tu nombre para el pedido</th><td>No tener que escribirlo de nuevo.</td><td>Opcional</td><td>Hasta que lo borres.</td></tr>
+        <tr><th scope="row">Preferencias de tapa y de paquete o unidad</th><td>Recordar cómo te gusta comprar cada producto.</td><td>Opcional</td><td>Hasta que las borres.</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>Lo opcional solo se guarda si eliges «Aceptar todo». Si después eliges «Solo lo necesario», se borra de inmediato.</p>
+    <p>Puedes cambiar tu elección o borrar todo cuando quieras, con los botones <b>«Cambiar qué se guarda en este celular»</b> y <b>«Borrar mis datos de este celular»</b> que están al final de la carta. También puedes borrar los datos del sitio desde la configuración de tu navegador.</p>
+  </section>
+
+  <section id="baja" aria-labelledby="h-baja">
+    <h2 id="h-baja">4. Dejar de recibir ofertas</h2>
+    <p>Solo te enviamos ofertas si marcaste esa casilla al registrarte. Puedes darte de baja cuando quieras, gratis y sin dar motivo:</p>
+    <ul>
+      <li>Con el botón <b>«Dejar de recibir ofertas (darme de baja)»</b>, al final de la carta.</li>
+      <li>Respondiendo <b>BAJA</b> a cualquier mensaje nuestro.</li>
+      <li>Escribiendo a <a href="mailto:supermerca.do@avicolasb.com">supermerca.do@avicolasb.com</a> o avisando en el local.</li>
+    </ul>
+    <p>Darte de baja de las ofertas no elimina tu registro ni tu descuento. Si además quieres borrar tus datos, sigue los pasos de la sección siguiente.</p>
+  </section>
+
+  <section id="eliminacion" aria-labelledby="h-eliminacion">
+    <h2 id="h-eliminacion">5. Eliminar tus datos</h2>
+    <p>Tus datos están en dos lugares, y puedes borrar ambos:</p>
+    <ol>
+      <li><b>En tu celular:</b> toca <b>«Borrar mis datos de este celular»</b>, al final de la carta. Se borran al instante tu pedido, tu registro y tus preferencias.</li>
+      <li><b>En el registro de clientes de la empresa:</b> toca <b>«Pedir que eliminen mis datos del registro»</b>, que abre un mensaje de WhatsApp ya escrito, o escríbenos a <a href="mailto:supermerca.do@avicolasb.com">supermerca.do@avicolasb.com</a> indicando el celular con que te registraste.</li>
+    </ol>
+    <p>Eliminaremos tu registro dentro del plazo que fija la ley y te avisaremos cuando esté hecho. Podemos conservar lo que una ley nos obligue a guardar, como los documentos tributarios de una venta.</p>
+  </section>
+
+  <section id="menores" aria-labelledby="h-menores">
+    <h2 id="h-menores">6. Menores de edad</h2>
+    <p>El registro de clientes es solo para personas de <b>18 años o más</b>. Por eso el formulario pide confirmarlo antes de guardar los datos.</p>
+    <p>No recopilamos a sabiendas datos de niños, niñas o adolescentes. Si eres madre, padre o tutor y crees que un menor a tu cargo se registró, escríbenos a <a href="mailto:supermerca.do@avicolasb.com">supermerca.do@avicolasb.com</a> y eliminaremos ese registro.</p>
+    <p>Si en el futuro ofrecemos algo dirigido a menores, pediremos antes el consentimiento de su madre, padre o tutor, como exige la ley.</p>
+  </section>
+
+  <section id="terminos" aria-labelledby="h-terminos">
+    <h2 id="h-terminos">7. Términos y condiciones</h2>
+    <p class="resumen">En corto: la carta sirve para armar un pedido y avisarnos. No se paga en línea. La compra se hace en el local, cuando retiras y pagas.</p>
+
+    <h3>Qué es la carta</h3>
+    <p>La carta es un catálogo con el que eliges productos y nos envías tu pedido por WhatsApp o Instagram, para retirarlo en el local. Usarla es gratis y no necesitas registrarte.</p>
+
+    <h3>Cómo funciona un pedido</h3>
+    <ol>
+      <li>Eliges los productos y nos envías el pedido.</li>
+      <li>Lo preparamos y te avisamos si falta algún producto o si cambió algún precio.</li>
+      <li>Pasas al local, revisas, pagas en caja y retiras.</li>
+    </ol>
+    <p>Enviar un pedido es una <b>solicitud de reserva</b>, no una compra: no te obliga a comprar y puedes dejarlo sin costo. La compraventa se celebra en el local, al momento de pagar, y ahí te entregamos tu boleta o factura.</p>
+
+    <h3>Precios</h3>
+    <ul>
+      <li>Los precios están en pesos chilenos. <mark class="pend">Por confirmar: indicar expresamente que los precios incluyen IVA.</mark></li>
+      <li>No hay cargos por usar la carta, armar el pedido ni enviarlo. El total que ves es el de los productos.</li>
+      <li>El total de la carta es aproximado. Si un precio cambió, te lo decimos antes de pagar y decides si llevas el producto.</li>
+      <li>Mientras la carta muestre el aviso «Carta en revisión», los precios son provisorios.</li>
+      <li>Los precios por mayor y sus tramos son los que muestra la carta al tocar «Ver precios por mayor».</li>
+    </ul>
+
+    <h3>Disponibilidad</h3>
+    <p>Los productos están sujetos al stock del local al momento de preparar tu pedido. Si algo no está, te avisamos y te ofrecemos una alternativa o lo quitamos del pedido.</p>
+
+    <h3>Descuento de bienvenida</h3>
+    <ul>
+      <li>Es de 5 % para clientes registrados en la carta de Emporio Sabroso.</li>
+      <li>Vale del 23 de noviembre al 4 de diciembre de 2026.</li>
+      <li>Se usa una sola vez por cliente.</li>
+      <li>Aplica a los productos a precio normal. No se suma a las ofertas ni a los precios por mayor.</li>
+    </ul>
+
+    <h3>Información de los productos</h3>
+    <p>Describimos los productos tal como los vendemos. No publicamos reseñas ni valoraciones de clientes, ni afirmaciones sobre los productos que no podamos respaldar.</p>
+
+    <h3>Uso del sitio</h3>
+    <p>Te pedimos usar la carta de buena fe: con datos reales y sin enviar pedidos que no piensas retirar.</p>
+
+    <h3>Ley aplicable</h3>
+    <p>Estos términos se rigen por la ley chilena, en especial la Ley N.º 19.496 sobre protección de los derechos de los consumidores. Nada de lo dicho aquí limita los derechos que esa ley te da.</p>
+  </section>
+
+  <section id="devoluciones" aria-labelledby="h-devoluciones">
+    <h2 id="h-devoluciones">8. Cambios, devoluciones y reembolsos</h2>
+    <p class="resumen">En corto: si un producto sale malo, tienes la garantía legal. Guarda tu boleta.</p>
+
+    <h3>Garantía legal</h3>
+    <p>Si un producto viene fallado, dañado, incompleto o no corresponde a lo ofrecido, tienes <b>6 meses</b> desde que lo recibiste para elegir entre:</p>
+    <ul>
+      <li>cambiarlo por otro,</li>
+      <li>repararlo gratis, cuando sea posible, o</li>
+      <li>que te devolvamos el dinero.</li>
+    </ul>
+    <p>La elección es tuya. Para hacerla valer, ven al local con el producto y con tu boleta u otro comprobante de la compra.</p>
+
+    <h3>Alimentos y otros productos perecibles</h3>
+    <p>En productos perecibles, o que por su naturaleza se consumen en plazos breves, el plazo de la garantía es el que indica el envase. Si el envase no indica plazo, es de <b>7 días</b>.</p>
+
+    <h3>Cuándo no aplica la garantía</h3>
+    <p>La garantía legal no cubre los daños causados por un mal uso después de la compra.</p>
+
+    <h3>Reembolsos</h3>
+    <p>Si eliges la devolución del dinero, te devolvemos lo que pagaste por el producto. <mark class="pend">Por confirmar: forma y plazo en que se hace la devolución según el medio de pago.</mark></p>
+
+    <h3>Cambios por gusto</h3>
+    <p><mark class="pend">Por confirmar: si el local aceptará cambiar productos en buen estado por arrepentimiento del cliente y, en ese caso, con qué plazo y condiciones.</mark></p>
+
+    <h3>Pedidos que no retiras</h3>
+    <p>Como no se paga por adelantado, no hay nada que reembolsar si decides no retirar un pedido. Solo te pedimos avisarnos para liberar los productos.</p>
+  </section>
+
+  <section id="accesibilidad" aria-labelledby="h-accesibilidad">
+    <h2 id="h-accesibilidad">9. Accesibilidad</h2>
+    <p>Queremos que cualquier persona pueda usar la carta. Trabajamos para cumplir el nivel AA de las Pautas de Accesibilidad para el Contenido Web (WCAG 2.1).</p>
+    <h3>Qué hemos hecho</h3>
+    <ul>
+      <li>Los textos y botones tienen contraste suficiente sobre su fondo.</li>
+      <li>Toda la carta se puede usar con teclado: hay un enlace para saltar a los productos, el foco siempre se ve y la tecla Escape cierra las ventanas.</li>
+      <li>Las imágenes de producto llevan texto alternativo y los íconos decorativos se ocultan a los lectores de pantalla.</li>
+      <li>Los formularios tienen etiquetas visibles y los errores se anuncian con texto, no solo con color.</li>
+      <li>El texto se puede agrandar con el zoom del navegador y la carta respeta la preferencia de reducir animaciones.</li>
+    </ul>
+    <h3>Si algo no te funciona</h3>
+    <p>Cuéntanos qué pasó y con qué teléfono o lector de pantalla, a <a href="mailto:supermerca.do@avicolasb.com">supermerca.do@avicolasb.com</a> o por WhatsApp. También puedes hacer tu pedido por teléfono o directamente en el local.</p>
+  </section>
+
+  <section id="licencias" aria-labelledby="h-licencias">
+    <h2 id="h-licencias">10. Licencias y contenidos</h2>
+    <ul>
+      <li><b>Marcas y logos:</b> «Emporio Sabroso» y «Distribuidora Santa Bárbara», con sus logos, pertenecen a Distribuidora Avícola Santa Bárbara SpA. No se pueden usar sin autorización.</li>
+      <li><b>Íconos de las categorías:</b> fueron dibujados especialmente para esta carta y son de la empresa.</li>
+      <li><b>Fotos de productos:</b> hoy la carta no usa fotografías. Cuando se agreguen, serán propias o con licencia para usarlas.</li>
+      <li><b>Tipografía:</b> los títulos usan Fraunces, de The Fraunces Project Authors, bajo la licencia SIL Open Font License 1.1. El archivo de la tipografía está alojado en este sitio. <a href="fonts/LICENCIA-Fraunces-OFL.txt">Ver la licencia</a>.</li>
+      <li><b>Marcas de terceros:</b> los nombres de productos y de sus fabricantes pertenecen a sus dueños y se mencionan solo para identificar lo que vendemos.</li>
+    </ul>
+  </section>
+
+  <section id="contacto" aria-labelledby="h-contacto">
+    <h2 id="h-contacto">11. Contacto y reclamos</h2>
+    <ul>
+      <li><b>Correo:</b> <a href="mailto:supermerca.do@avicolasb.com">supermerca.do@avicolasb.com</a></li>
+      <li><b>Emporio Sabroso:</b> Arturo Prat 720, Chillán · <a href="https://wa.me/56933903395">WhatsApp +56 9 3390 3395</a></li>
+      <li><b>Distribuidora Santa Bárbara:</b> Cocharcas 884, Chillán · <a href="https://wa.me/56954158511">WhatsApp +56 9 5415 8511</a></li>
+    </ul>
+    <p>Si no quedas conforme con nuestra respuesta, puedes reclamar ante el Servicio Nacional del Consumidor (SERNAC) por temas de consumo. Por temas de datos personales, puedes recurrir a la Agencia de Protección de Datos Personales o a los tribunales de justicia.</p>
+  </section>
+</main>
+
+<footer class="wrap">
+  <p>Última actualización: 11 de noviembre de 2026 (borrador).</p>
+  <p>Distribuidora Avícola Santa Bárbara SpA · RUT 77.586.055-3 · Chillán, Región de Ñuble</p>
+  <p><a href="./">Volver a la carta</a></p>
+</footer>
+</body>
+</html>

@@ -22,17 +22,26 @@ Agregar a la carta: política de privacidad, términos y condiciones, política 
 - **Texto alternativo:** fotos de producto con `alt` = nombre; íconos SVG con `aria-hidden`.
 - `img/logo-emporio.webp` e `img/icono.png` extraídos para usarlos en la página web.
 
+## Hecho el 11/11/2026 en Claude Code (misma rama, SIN publicar)
+- **`legal.html`** (borrador): quiénes somos, privacidad, cookies y datos guardados, baja, eliminación, menores, términos, cambios y devoluciones, accesibilidad, licencias y contacto. Anclas: `#quienes #privacidad #cookies #baja #eliminacion #menores #terminos #devoluciones #accesibilidad #licencias #contacto`. Lleva un aviso de borrador arriba y tres puntos `<mark class="pend">` por confirmar.
+- **Correo de datos:** `supermerca.do@avicolasb.com` (lo dio David). Está en `legal.html`, en `web/index.html` y en el pie de la carta (`CORREO_DATOS`).
+- **`web/index.html`**: página del Emporio (qué vende, cómo se compra, pedir antes de venir, venta por mayor, 5 % de bienvenida, dónde y cuándo, pie legal). Sin recursos externos. Antes del 23/11 anuncia la apertura y después muestra el horario; el bloque del descuento se oculta desde el 05/12.
+- **`apps-script/Registro clientes carta Emporio.gs`**: escrito completo (el original no estaba en el equipo). Tipos `registro`, `uso`, `baja` y `eliminar`. La baja se aplica al instante; la eliminación queda como solicitud en la hoja "Solicitudes" y una persona la confirma antes de borrar (menú "Registro de clientes"). Sin instalar ni probar en Google: solo se revisó la sintaxis.
+- **Carta:** los botones de baja y eliminación avisan también a la planilla cuando `REGISTRO_URL` tenga dirección; la baja desmarca las ofertas en el celular.
+- **Accesibilidad (axe 4.14, WCAG 2.1 A/AA y buenas prácticas):** cero violaciones en la carta del Emporio, la de la Distribuidora, las ventanas de registro y de pedido, `legal.html` y `web/`. Se corrigió: título principal (`h1` con el logo), bloques fuera de regiones (`section`/`nav` con nombre) y el lema del encabezado del Emporio (`#ffd76a`, 4,8:1; con `--trigo` daba 3,6:1). El encabezado verde de la Distribuidora cumple (4,6:1 a 5,0:1).
+- Ojo al auditar: si la ventana de la aplicación está tapada, la animación `sube` queda detenida con opacidad 0,6 y axe reporta contraste falso en los diálogos. Terminar las animaciones antes de medir.
+
 ## Pendiente
-1. **`legal.html`** (un solo documento con anclas; el pie ya enlaza a ellas): `#privacidad`, `#terminos`, `#devoluciones`, `#cookies`, `#accesibilidad`, más secciones de menores de edad, baja, eliminación de datos y licencias (logos propios, íconos dibujados para la carta, Fraunces OFL). Base legal chilena: Ley 19.628 y Ley 21.719 (datos personales), Ley 19.496 (consumidor: garantía legal de 6 meses; perecibles, el plazo del envase o 7 días). No inventar políticas voluntarias de cambio: preguntar a David.
-2. **Página web del Emporio** en `web/index.html` (misma paleta y tipografía, sin recursos externos): qué vende, cómo se compra (vendedor → caja → retiro), venta por mayor, dirección (Arturo Prat 720, frente al Mercado Techado), horario (lunes a sábado 8:30 a 17:00), apertura 23/11/2026, botones a la carta, WhatsApp +56 9 3390 3395 e Instagram @emporio.sabroso, pie con los mismos enlaces legales.
-3. Revisar la carta de la Distribuidora con el tema verde (contraste del encabezado) y pasar una auditoría de accesibilidad automática (axe).
-4. `Registro clientes carta Emporio.gs` (Apps Script, aún sin instalar; `REGISTRO_URL` vacío): agregar tipos "baja" y "eliminar".
-5. Publicar: fusionar esta rama en `main` solo cuando David lo apruebe.
+1. Resolver los tres puntos por confirmar de `legal.html` y quitar el aviso de borrador (bloque `.borrador`) y el "(borrador)" de la fecha.
+2. Revisión de un abogado antes de publicar los textos legales.
+3. Instalar el script en la planilla EM27-07, pegar la URL en `REGISTRO_URL` y probar un registro, un uso, una baja y una eliminación reales.
+4. David revisa los textos de `web/index.html` (descripciones de cada rubro).
+5. Publicar: fusionar esta rama en `main` solo cuando David lo apruebe. La web quedará en `/carta-emporio/web/`.
 
 ## Preguntas abiertas para David
-- ¿Los precios de la carta incluyen IVA? (no se afirmó en ningún texto)
-- Correo de contacto para solicitudes de datos (hoy solo WhatsApp y el local).
-- ¿Habrá cambios por gusto, además de la garantía legal?
+- ¿Los precios incluyen IVA? David dijo (11/11) que los precios de la carta no son los correctos y que los subirá más adelante; no tocar precios.
+- ¿Habrá cambios por gusto (producto en buen estado, cliente arrepentido), además de la garantía legal? Se le explicó la diferencia; falta su decisión y, si es sí, plazo y condiciones.
+- Forma y plazo de la devolución del dinero según el medio de pago.
 - Precios definitivos para quitar el aviso de "precios provisorios".
 
 ## Reglas

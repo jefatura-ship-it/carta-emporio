@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1d5c36">
+<title>Emporio Sabroso · Chillán</title>
+<meta name="description" content="Emporio Sabroso, en Arturo Prat 720, Chillán, frente al Mercado Techado. Huevos, abarrotes, envases y desechables por unidad, por paquete y por mayor.">
+<link rel="icon" href="../img/icono.png">
+<style>
+/* Misma paleta y tipografía de la carta. Sin recursos externos: la página no se conecta a servidores de terceros. */
+@font-face{font-family:"Fraunces";src:url("../fonts/fraunces.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
+:root{
+  color-scheme:light;
+  --campo:#1d5c36; --brote:#4f8a2f; --sol:#f07d1a; --trigo:#f9b21b; --masa:#fbf6ec;
+  --tinta:#2a2a22; --suave:#5f5b4e; --borde:#ebe2cf; --sol-t:#a94e00; --wsp:#157a3e;
+  --display:"Fraunces","Georgia",serif;
+  --texto:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+body{margin:0;background:var(--masa);color:var(--tinta);font:16px/1.55 var(--texto)}
+.wrap{max-width:1040px;margin:0 auto;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+:focus-visible{outline:3px solid var(--trigo);outline-offset:3px}
+a{color:var(--campo)}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+.salto{position:absolute;left:8px;top:-60px;z-index:50;background:#fff;color:var(--campo);font-weight:700;padding:10px 14px;border-radius:10px;border:2px solid var(--campo)}
+.salto:focus{top:8px}
+
+/* ---------- Botones ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:12px;padding:12px 20px;font-weight:700;font-size:16px;text-decoration:none;border:2px solid transparent}
+.btn.prim{background:var(--sol);color:var(--tinta)}
+.btn.prim:hover{background:var(--trigo)}
+.btn.wsp{background:var(--wsp);color:#fff}
+.btn.claro{background:#fff;color:var(--campo);border-color:#fff}
+.btn.linea{background:#fff;color:var(--campo);border-color:var(--campo)}
+.btn.linea:hover{background:var(--campo);color:#fff}
+.btn svg{width:20px;height:20px;flex:none}
+
+/* ---------- Portada ---------- */
+.marca{position:relative;color:#fff;background:var(--campo);overflow:hidden}
+.marca::before{content:"";position:absolute;inset:0;background:repeating-conic-gradient(from -90deg at 50% 125%,var(--brote) 0 7deg,var(--campo) 7deg 14deg);opacity:.26}
+.marca .wrap{position:relative;padding-block:38px 64px;display:grid;justify-items:center;gap:16px;text-align:center}
+.lema{margin:0;font-weight:700;font-size:14px;letter-spacing:.07em;text-transform:uppercase;color:#ffd76a} /* 4,8:1 o más sobre el verde con rayos */
+.logo{display:block;width:min(360px,82%);height:auto}
+.marca h1{font-size:clamp(28px,5.4vw,46px);font-variation-settings:"SOFT" 100;max-width:17ch}
+.marca .bajada{margin:0;max-width:52ch;font-size:17px}
+.estado{display:inline-block;margin:0;background:var(--trigo);color:var(--tinta);font-weight:800;border-radius:99px;padding:6px 16px;font-size:15px}
+.acciones{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:4px}
+.ola{position:absolute;left:0;right:0;bottom:-1px;height:28px;display:block;width:100%}
+
+/* ---------- Secciones ---------- */
+section{padding-block:44px 8px}
+section > .wrap > h2{font-size:clamp(26px,4.4vw,34px);color:var(--campo);margin-bottom:8px}
+.intro{margin:0 0 22px;max-width:62ch;color:var(--suave);font-size:17px}
+
+.rubros{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;list-style:none;margin:0;padding:0}
+.rubros li{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--borde);border-radius:14px;padding:14px}
+.rubros svg{width:44px;height:44px;flex:none}
+.rubros b{display:block;line-height:1.25}
+.rubros small{display:block;color:var(--suave);font-size:13.5px;line-height:1.35;margin-top:2px}
+
+.pasos{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;list-style:none;margin:0 0 22px;padding:0;counter-reset:paso}
+.pasos li{counter-increment:paso;background:#fff;border:1px solid var(--borde);border-radius:14px;padding:18px 16px}
+.pasos li::before{content:counter(paso);display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--campo);color:#fff;font-family:var(--display);font-weight:800;font-size:19px;margin-bottom:10px}
+.pasos h3{font-size:19px;color:var(--campo);margin-bottom:4px}
+.pasos p{margin:0;color:var(--suave);font-size:15px}
+@media (max-width:720px){.pasos{grid-template-columns:1fr}}
+
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.duo{grid-template-columns:1fr}}
+.caja{background:#fff;border:1px solid var(--borde);border-radius:16px;padding:22px 20px}
+.caja h3{font-size:22px;color:var(--campo);margin-bottom:8px}
+.caja p{margin:0 0 12px}
+.caja ul{margin:0 0 14px;padding-left:20px}
+.caja li{margin-bottom:4px}
+.caja.sol{background:#fff7e8;border:2px solid var(--trigo)}
+.caja.sol h3{color:var(--sol-t)}
+.letra{font-size:13.5px;color:var(--suave)}
+
+.donde{display:grid;grid-template-columns:1.1fr .9fr;gap:16px;align-items:stretch}
+@media (max-width:760px){.donde{grid-template-columns:1fr}}
+.donde dl{margin:0;display:grid;gap:14px}
+.donde dt{font-size:13px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--suave)}
+.donde dd{margin:2px 0 0;font-size:18px}
+.donde dd a{font-weight:700}
+.verde{background:var(--campo);color:#fff;border:0;display:grid;gap:12px;align-content:center}
+.verde h3{color:#fff}
+.verde p{margin:0}
+.verde .btn{width:100%}
+
+/* ---------- Pie ---------- */
+footer{margin-top:52px;background:#fff;border-top:1px solid var(--borde);padding-block:26px 34px;font-size:14.5px}
+footer h2{font-size:19px;color:var(--campo);margin-bottom:6px}
+footer p{margin:0 0 8px}
+footer a{font-weight:700}
+footer ul{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:4px 18px}
+footer li a{display:inline-block;padding:8px 0}
+</style>
+</head>
+<body>
+<a class="salto" href="#contenido">Saltar al contenido</a>
+
+<header class="marca">
+  <div class="wrap">
+    <p class="lema">Lo mejor del campo para tu familia</p>
+    <img class="logo" src="../img/logo-emporio.webp" alt="Emporio Sabroso" width="360" height="111">
+    <h1>Huevos, abarrotes y envases, frente al Mercado de Chillán</h1>
+    <p class="bajada">Compra por unidad, por paquete o por mayor. Arma tu pedido en la carta y te lo tenemos listo para retirar.</p>
+    <p class="estado" id="estado">Abrimos el lunes 23 de noviembre de 2026</p>
+    <div class="acciones">
+      <a class="btn prim" href="../?local=emporio">Ver la carta y pedir</a>
+      <a class="btn claro" href="#donde">Cómo llegar</a>
+    </div>
+  </div>
+  <svg class="ola" viewBox="0 0 400 22" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <path d="M0 10 C80 0 140 22 210 12 S340 2 400 10 V22 H0Z" fill="#f9b21b"/>
+    <path d="M0 15 C90 6 150 24 220 16 S340 8 400 14 V22 H0Z" fill="#f07d1a"/>
+    <path d="M0 19 C100 13 160 26 230 19 S350 14 400 18 V22 H0Z" fill="#fbf6ec"/>
+  </svg>
+</header>
+
+<main id="contenido" tabindex="-1">
+
+  <section aria-labelledby="h-rubros">
+    <div class="wrap">
+      <h2 id="h-rubros">Qué encuentras en el Emporio</h2>
+      <p class="intro">Productos para la casa y para tu negocio: almacén, repostería, comida para llevar y eventos.</p>
+      <ul class="rubros">
+        <li><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><ellipse cx="16" cy="22" rx="9" ry="12" fill="#fff" stroke="var(--sol)" stroke-width="2"/><ellipse cx="25" cy="24" rx="8.5" ry="11" fill="var(--trigo)"/><ellipse cx="22" cy="19" rx="2.2" ry="3.4" fill="#fff" opacity=".55"/></svg>
+          <div><b>Huevos</b><small>Por bandeja y por caja, y hueveras para llevarlos.</small></div></li>
+        <li><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M8 14h24l-2 18H10z" fill="var(--trigo)" stroke="var(--sol)" stroke-width="2" stroke-linejoin="round"/><path d="M14 14c0-4 3-6 6-6s6 2 6 6" fill="none" stroke="var(--brote)" stroke-width="2.5"/></svg>
+          <div><b>Abarrotes y conservas</b><small>Lo básico de la despensa.</small></div></li>
+        <li><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M6 16h28l-3 16H9z" fill="#fff" stroke="var(--brote)" stroke-width="2" stroke-linejoin="round"/><path d="M4 12h32v4H4z" fill="var(--brote)"/></svg>
+          <div><b>Envases y contenedores</b><small>Con su tapa incluida: un envase, una tapa.</small></div></li>
+        <li><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M10 15h20l-2 17H12z" fill="#fff" stroke="var(--brote)" stroke-width="2" stroke-linejoin="round"/><rect x="8" y="10" width="24" height="5" rx="2" fill="var(--brote)"/></svg>
+          <div><b>Potes, salseros y vasos</b><small>Para comida para llevar y bebidas.</small></div></li>
+        <li><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M5 15h30l-4 14H9z" fill="#e3e7ea" stroke="var(--brote)" stroke-width="2" stroke-linejoin="round"/><path d="M3 13h34" stroke="var(--brote)" stroke-width="3" stroke-linecap="round"/><path d="M12 20h16" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+          <div><b>Aluminio</b><small>Bandejas y envases para horno y reparto.</small></div></li>
+        <li><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M6 14l14-6 14 6v14l-14 6-14-6z" fill="var(--trigo)" stroke="var(--sol)" stroke-width="2" stroke-linejoin="round"/><path d="M6 14l14 6 14-6M20 20v14" fill="none" stroke="var(--sol)" stroke-width="2"/></svg>
+          <div><b>Cajas y bandejas de cartón</b><small>Para tortas, pasteles y empanadas.</small></div></li>
+        <li><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><circle cx="20" cy="20" r="14" fill="#fff" stroke="var(--brote)" stroke-width="2" stroke-dasharray="3 2.4"/><circle cx="20" cy="20" r="7" fill="var(--trigo)"/></svg>
+          <div><b>Blondas y moldes</b><small>Para repostería.</small></div></li>
+        <li><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><path d="M9 15h22l-2 19H11z" fill="#fff" stroke="var(--brote)" stroke-width="2" stroke-linejoin="round"/><path d="M15 15c0-4 2-7 5-7s5 3 5 7" fill="none" stroke="var(--sol)" stroke-width="2.5"/></svg>
+          <div><b>Bolsas, sacos y papeles</b><small>Para envolver, pesar y despachar.</small></div></li>
+        <li><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><circle cx="23" cy="21" r="12" fill="#fff" stroke="var(--brote)" stroke-width="2"/><circle cx="23" cy="21" r="6.5" fill="none" stroke="var(--trigo)" stroke-width="2"/><path d="M7 7v10M4.5 7v5a2.5 2.5 0 0 0 5 0V7M7 17v16" stroke="var(--sol)" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+          <div><b>Platos, cubiertos y desechables</b><small>Para cumpleaños, eventos y cocinerías.</small></div></li>
+        <li><svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><rect x="14" y="15" width="12" height="19" rx="3" fill="var(--brote)"/><rect x="16" y="8" width="7" height="7" fill="var(--sol)"/><path d="M23 10h7" stroke="var(--sol)" stroke-width="2.5" stroke-linecap="round"/></svg>
+          <div><b>Aseo</b><small>Artículos de limpieza.</small></div></li>
+      </ul>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-compra">
+    <div class="wrap">
+      <h2 id="h-compra">Cómo se compra</h2>
+      <p class="intro">En el local te atendemos en tres pasos.</p>
+      <ol class="pasos">
+        <li><h3>Pide con un vendedor</h3><p>Te ayuda a elegir y arma tu pedido.</p></li>
+        <li><h3>Paga en caja</h3><p>Pagas el total y recibes tu boleta o factura.</p></li>
+        <li><h3>Retira tus productos</h3><p>Te entregamos el pedido listo.</p></li>
+      </ol>
+      <div class="duo">
+        <div class="caja">
+          <h3>Pide antes de venir</h3>
+          <p>Con la carta eliges desde el celular, nos envías el pedido por WhatsApp o Instagram y pasas a retirarlo a la hora que quieras.</p>
+          <p class="letra">Usar la carta no tiene costo. Pagas en el local al retirar.</p>
+          <a class="btn prim" href="../?local=emporio">Abrir la carta</a>
+        </div>
+        <div class="caja">
+          <h3>Venta por mayor</h3>
+          <p>Si compras por paquete o en cantidad, el precio baja. La carta muestra los tramos de cada producto.</p>
+          <p class="letra">Toca «Ver precios por mayor» al comienzo de la carta.</p>
+          <a class="btn linea" href="../?local=emporio">Ver precios por mayor</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-bienvenida" id="bienvenida">
+    <div class="wrap">
+      <div class="caja sol">
+        <h3 id="h-bienvenida">5 % de bienvenida para clientes registrados</h3>
+        <p>Regístrate en la carta con tu nombre, apellido y celular, y obtén 5 % de descuento en una compra.</p>
+        <ul>
+          <li>Vale del 23 de noviembre al 4 de diciembre de 2026.</li>
+          <li>Se usa una sola vez por cliente.</li>
+          <li>Aplica a productos a precio normal. No se suma a ofertas ni a precios por mayor.</li>
+        </ul>
+        <a class="btn prim" href="../?local=emporio">Registrarme en la carta</a>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-donde" id="donde">
+    <div class="wrap">
+      <h2 id="h-donde">Dónde y cuándo</h2>
+      <p class="intro">Estamos en el centro de Chillán, frente al Mercado Techado.</p>
+      <div class="donde">
+        <div class="caja">
+          <dl>
+            <div><dt>Dirección</dt><dd>Arturo Prat 720, Chillán<br><a href="https://www.google.com/maps/search/?api=1&amp;query=Arturo+Prat+720%2C+Chill%C3%A1n" target="_blank" rel="noopener">Abrir en el mapa <span class="letra">(se abre Google Maps)</span></a></dd></div>
+            <div><dt>Horario</dt><dd>Lunes a sábado, 8:30 a 17:00</dd></div>
+            <div><dt>Apertura</dt><dd>Lunes 23 de noviembre de 2026</dd></div>
+            <div><dt>Teléfono</dt><dd><a href="tel:+56933903395">+56 9 3390 3395</a></dd></div>
+          </dl>
+        </div>
+        <div class="caja verde">
+          <h3>Escríbenos</h3>
+          <p>Consultas, cotizaciones por mayor y pedidos.</p>
+          <a class="btn wsp" style="border-color:#fff" href="https://wa.me/56933903395" target="_blank" rel="noopener">WhatsApp +56 9 3390 3395</a>
+          <a class="btn claro" href="https://www.instagram.com/emporio.sabroso/" target="_blank" rel="noopener">Instagram @emporio.sabroso</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <h2>Emporio Sabroso</h2>
+    <p>Emporio Sabroso es un local de Distribuidora Avícola Santa Bárbara SpA · RUT 77.586.055-3<br>Arturo Prat 720, Chillán, Región de Ñuble</p>
+    <p>WhatsApp y teléfono: <a href="tel:+56933903395">+56 9 3390 3395</a> · Correo: <a href="mailto:supermerca.do@avicolasb.com">supermerca.do@avicolasb.com</a></p>
+    <p class="letra">Esta página no usa cookies, publicidad ni seguimiento, y no se conecta a servicios externos.</p>
+    <nav aria-label="Información legal"><ul>
+      <li><a href="../legal.html#privacidad">Privacidad</a></li>
+      <li><a href="../legal.html#terminos">Términos y condiciones</a></li>
+      <li><a href="../legal.html#devoluciones">Cambios y devoluciones</a></li>
+      <li><a href="../legal.html#cookies">Cookies y datos guardados</a></li>
+      <li><a href="../legal.html#accesibilidad">Accesibilidad</a></li>
+      <li><a href="../legal.html#licencias">Licencias</a></li>
+    </ul></nav>
+  </div>
+</footer>
+
+<script>
+/* Fechas: antes de la apertura se anuncia el día; después, el horario. El descuento de bienvenida se oculta al terminar. */
+(function(){
+  var apertura=new Date("2026-11-23T00:00:00-03:00"), finPromo=new Date("2026-12-05T00:00:00-03:00"), ahora=Date.now();
+  if(ahora>=apertura)document.getElementById("estado").textContent="Abierto de lunes a sábado, 8:30 a 17:00";
+  if(ahora>=finPromo)document.getElementById("bienvenida").hidden=true;
+})();
+</script>
+</body>
+</html>

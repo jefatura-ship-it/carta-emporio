@@ -47,7 +47,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 :root[data-local="distribuidora"] .marca::before{background:radial-gradient(circle at 50% 130%,var(--brote) 0 45%,transparent 46%);opacity:.2}
 :root[data-local="distribuidora"] .lema{color:#fff}
 .marca .wrap{position:relative;padding-block:22px 34px;display:grid;justify-items:center;gap:10px;text-align:center}
-.lema{margin:0;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--trigo)}
+.lema{margin:0;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#ffd76a} /* amarillo más claro que --trigo: 4,8:1 sobre los rayos del encabezado (con --trigo daba 3,6:1) */
+.h1logo{margin:0;width:100%;display:grid;justify-items:center} /* el logo es el título principal de la página */
 .logo{display:block;width:min(270px,78%);height:auto}
 .logo.badge{width:min(200px,60%);background:#fff;border-radius:18px;padding:8px 10px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
 .datos{margin:0;font-size:13px}
@@ -212,7 +213,7 @@ body.con-galleta{padding-bottom:calc(300px + env(safe-area-inset-bottom,0px))}
 <header class="marca">
   <div class="wrap">
     <p class="lema" id="lema"></p>
-    <img class="logo" id="logo" alt="" width="270" height="83">
+    <h1 class="h1logo"><img class="logo" id="logo" alt="" width="270" height="83"></h1>
     <p class="datos" id="datos"></p>
   </div>
   <svg class="ola" viewBox="0 0 400 22" preserveAspectRatio="none" aria-hidden="true">
@@ -222,7 +223,7 @@ body.con-galleta{padding-bottom:calc(300px + env(safe-area-inset-bottom,0px))}
   </svg>
 </header>
 
-<div class="wrap">
+<section class="wrap" aria-label="Cómo pedir">
   <button type="button" class="mayorBtn" id="bMayor" aria-pressed="false"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13v10H3z"/><path d="M16 10h3l2 3v4h-5"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg><span>Ver precios por mayor</span></button>
   <p class="aviso" id="aviso" hidden>Carta en revisión: los precios son provisorios, algunos están por confirmar y los productos en rojo quedaron con stock 0 en el conteo.</p>
   <p class="intro"><b>Arma tu pedido y te lo tenemos listo</b><span id="introTxt">Elige lo que quieres, envíanos el pedido por WhatsApp y pasa a retirarlo.</span></p>
@@ -230,13 +231,13 @@ body.con-galleta{padding-bottom:calc(300px + env(safe-area-inset-bottom,0px))}
     <div><b id="regTit"></b><span id="regTxt"></span></div>
     <button type="button" class="btn prim mini" id="regBtn">Registrarme</button>
   </div>
-</div>
+</section>
 
 <nav class="cats" aria-label="Categorías"><div class="wrap" id="cats"></div></nav>
 
 <main class="wrap" id="carta" tabindex="-1"></main>
 
-<div class="wrap"><p class="otra" id="otra"></p>
+<div class="wrap"><nav class="otra" id="otra" aria-label="Carta del otro local"></nav>
   <footer class="pie" id="pie">
     <h2 id="pieNombre"></h2>
     <p id="pieDatos"></p>
@@ -269,12 +270,12 @@ body.con-galleta{padding-bottom:calc(300px + env(safe-area-inset-bottom,0px))}
     </div>
   </div>
 </section>
-<div class="barra">
+<section class="barra" aria-label="Tu pedido">
   <div class="wrap">
     <div class="resumen"><span id="cuenta">Tu pedido está vacío</span><b id="totalBarra">$0</b></div>
     <button class="btn prim" id="revisar" disabled>Revisar pedido</button>
   </div>
-</div>
+</section>
 
 <div class="velo" id="veloReg" hidden>
   <section class="hoja" role="dialog" aria-modal="true" aria-labelledby="tituloReg">
@@ -339,6 +340,7 @@ body.con-galleta{padding-bottom:calc(300px + env(safe-area-inset-bottom,0px))}
 /* =================== CONFIGURACIÓN =================== */
 /* Cada local tiene su propia carta. El QR de cada local abre su carta con ?local=emporio o ?local=distribuidora */
 const PRUEBA = true; // false cuando se carguen los productos reales
+const CORREO_DATOS = "supermerca.do@avicolasb.com"; // consultas y solicitudes sobre datos personales (el mismo de legal.html)
 
 const LOCALES = {
   emporio:{
@@ -899,7 +901,7 @@ function usarDescuento(){
   if(!dcto()||cliente.usado)return; // ya quedó marcado (reenvío del mismo pedido)
   cliente.usado={t:Date.now(),codigo};
   try{localStorage.setItem("cliente-"+KEY,JSON.stringify(cliente))}catch(e){}
-  if(REGISTRO_URL){try{fetch(REGISTRO_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({tipo:"uso",tel:cliente.tel,codigo,monto:dcto()})})}catch(e){}}
+  if(REGISTRO_URL){try{fetch(REGISTRO_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({tipo:"uso",tel:cliente.tel,codigo,monto:dcto(),local:KEY})})}catch(e){}}
 }
 const totalFinal=()=>total()-dcto();
 
@@ -1204,11 +1206,26 @@ document.addEventListener("keydown",e=>{
 (function(){
   const g=L.legal||{}, tel="+"+L.whatsapp.replace(/^(\d{2})(\d)(\d{4})(\d{4})$/,"$1 $2 $3 $4");
   $("pieNombre").textContent=L.nombre;
-  $("pieDatos").innerHTML=`${g.nota?g.nota+"<br>":""}${g.razon||""} · RUT ${g.rut||""}<br>${g.direccion||""}<br>WhatsApp y teléfono: <a href="tel:+${L.whatsapp}">${tel}</a>`;
+  $("pieDatos").innerHTML=`${g.nota?g.nota+"<br>":""}${g.razon||""} · RUT ${g.rut||""}<br>${g.direccion||""}<br>WhatsApp y teléfono: <a href="tel:+${L.whatsapp}">${tel}</a><br>Consultas y solicitudes sobre tus datos: <a href="mailto:${CORREO_DATOS}">${CORREO_DATOS}</a>`;
   const wa=t=>`https://wa.me/${L.whatsapp}?text=${encodeURIComponent(t)}`;
   $("bBaja").href=wa(`BAJA: no quiero recibir más ofertas de ${L.nombre}.`);
   $("bEliminar").href=wa(`Solicito que eliminen mis datos del registro de clientes de ${L.nombre}.`);
   const aviso=t=>{$("pieMsg").textContent=t;$("pieMsg").hidden=false};
+  /* Baja y eliminación: además del mensaje de WhatsApp, se avisa a la planilla (si está conectada) con el celular registrado.
+     La baja se aplica de inmediato; la eliminación queda como solicitud y el local la confirma antes de borrar. */
+  const avisarPlanilla=tipo=>{
+    if(!REGISTRO_URL||!cliente||!cliente.tel)return;
+    try{fetch(REGISTRO_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({tipo,tel:cliente.tel,local:KEY})})}catch(e){}
+  };
+  $("bBaja").addEventListener("click",()=>{
+    avisarPlanilla("baja");
+    if(cliente&&cliente.acepta){cliente.acepta=false;try{localStorage.setItem("cliente-"+KEY,JSON.stringify(cliente))}catch(e){} pintarReg()}
+    aviso("Se abrió WhatsApp con el mensaje de baja listo: envíalo y no te mandaremos más ofertas.");
+  });
+  $("bEliminar").addEventListener("click",()=>{
+    avisarPlanilla("eliminar");
+    aviso("Se abrió WhatsApp con tu solicitud lista: envíala y te avisaremos cuando tus datos estén eliminados. Para borrarlos también de este celular, usa el botón «Borrar mis datos de este celular».");
+  });
   $("bBorrar").onclick=()=>{
     try{Object.keys(localStorage).filter(k=>/^(pedido-|cliente-|tapas-|modos-|nombre-cliente|permiso-datos)/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}
     aviso("Listo: se borró de este celular tu pedido, tu registro y tus preferencias. La carta se va a recargar.");
