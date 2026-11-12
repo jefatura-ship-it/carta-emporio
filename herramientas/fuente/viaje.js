@@ -387,24 +387,33 @@ if (!quieto) {
   });
 }
 
-/* =================== Del batch al saco: macro y micro caen, se revuelven y el alimento cae al saco =================== */
-// Las fotos (montones, molino y saco) son fijas; las manos se mueven con transform y los granos se dibujan en un lienzo encima.
+/* =================== Del batch al saco: de los sacos de insumos al molino, se revuelve, cae al saco y se cierra =================== */
+// Los dibujos son fijos; las manos, la rueda, el saco y la etiqueta se mueven con transform y los granos se dibujan en un lienzo encima.
 if (!quieto) {
   const sec = $('#batch'), mesa = $('#batchMesa'), lienzo = $('#batchLienzo'), ctx = lienzo.getContext('2d');
-  const mez = $('.mezcladora', mesa), saco = $('.saco', mesa), pasos = $$('#batchPasos li');
+  const mez = $('.mezcladora', mesa), saco = $('.saco', mesa), cerrado = $('.saco-cerrado', mesa), etq = $('.etq', mesa), pasos = $$('#batchPasos li');
+  const tzI = $('.mano-tz-i', mesa), tzD = $('.mano-tz-d', mesa);
   // Rueda de tiza: gira en un plano visto de lado (ver CSS); la manilla la sigue sin girar. Medidas en píxeles del dibujo original (1168 de ancho).
   const gira = $('.mol-gira', mez), manija = $('.mol-manija', mez), K = 0.523, ANCLA = [187.4, 97];
   let angulo = 0, vRueda = 0, vaivenSaco = 0;
-  const ings = $$('.ing', mesa).map((f, i) => ({ img: $('img', f), tipo: ['maiz', 'soya', 'afrechillo', 'premix'][i], acum: 0 }));
+  const ings = $$('.ing', mesa).map((f, i) => ({ img: $('img', f), tipo: ['maiz', 'soya', 'afrechillo', 'premix'][i] }));
   const COL = { maiz: ['#f2a314', '#e38e0b', '#f7b93a'], soya: ['#d9b36d', '#caa057', '#e6c48b'], afrechillo: ['#b5773e', '#a46632', '#c98d54'], premix: ['#efe5cf', '#e4d8bd', '#f7f0e1'] };
-  // Manos que echan cada ingrediente al molino: ventana de tiempo, punta (fracción de la imagen), giro y caudal
-  const manos = [['.mano-maiz', 'maiz', 0.04, 0.17, [0.77, 0.65], 9, 0], ['.mano-soya', 'soya', 0.16, 0.29, [0.24, 0.52], -9, 0.02], ['.mano-afrechillo', 'afrechillo', 0.28, 0.39, [0.77, 0.65], 9, -0.01], ['.mano-premix', 'premix', 0.4, 0.53, [0.13, 0.6], -7, 0.01]]
-    .map(([sel, tipo, a, b, tip, giro, dx]) => ({ el: $(sel, mesa), tipo, a, b, tip, giro, dx, ancho: tipo === 'premix' ? 0.34 : 0.4, flujo: tipo === 'premix' ? 120 : 75, acum: 0 }));
+  // Manos que sacan cada insumo de su saco y lo echan al molino: ventana de tiempo, punta (fracción de la imagen), giro y corrimiento sobre la tolva
+  const manos = [['.mano-maiz', 'maiz', 0.03, 0.15, [0.77, 0.65], 9, 0], ['.mano-soya', 'soya', 0.13, 0.25, [0.24, 0.52], -9, 0.02], ['.mano-afrechillo', 'afrechillo', 0.23, 0.35, [0.77, 0.65], 9, -0.01], ['.mano-premix', 'premix', 0.34, 0.47, [0.13, 0.6], -7, 0.01]]
+    .map(([sel, tipo, a, b, tip, giro, dx]) => ({ el: $(sel, mesa), tipo, a, b, tip, giro, dx, ing: null, ancho: tipo === 'premix' ? 0.22 : 0.26, flujo: tipo === 'premix' ? 120 : 75, acum: 0 }));
+  manos.forEach(m => { m.ing = ings.find(o => o.tipo === m.tipo); });
   const TAM = { maiz: [3.4, 4.6], soya: [2.6, 3.8], afrechillo: [2.4, 3.6], premix: [1.1, 1.8] };
   const MEZCLA = [...COL.maiz, ...COL.soya, ...COL.afrechillo, '#d9c69a', '#c79a5a'];
   const elige = a => a[(Math.random() * a.length) | 0];
   const rel = (el, R) => { const r = el.getBoundingClientRect(); return { x: r.left - R.left, y: r.top - R.top, w: r.width, h: r.height }; };
   const rango = (p, a, b) => suave(a, a + 0.04, p) * (1 - suave(b - 0.04, b, p));
+  // Coloca un dibujo con su centro en (x, y) y un ancho dado (el tamaño se fija solo si cambia)
+  const ubica = (el, x, y, w, giro, op) => {
+    if (el._w !== Math.round(w)) { el._w = Math.round(w); el.style.width = el._w + 'px'; }
+    const h = el._w * (+(el.getAttribute('height') || el.dataset.h) || 1) / (+(el.getAttribute('width') || el.dataset.w) || 1);
+    el.style.transform = `translate3d(${(x - el._w / 2).toFixed(1)}px,${(y - h / 2).toFixed(1)}px,0) rotate(${giro.toFixed(2)}deg)`;
+    el.style.opacity = op.toFixed(3);
+  };
   let granos = [], pB = 0, antes = 0, paso = 0, acumSaco = 0, caenSaco = 0;
   cuadros.push(t => {
     const dt = Math.min(0.05, Math.max(0, t - antes)); antes = t;
@@ -414,14 +423,9 @@ if (!quieto) {
     if (lienzo.width !== W || lienzo.height !== H) { lienzo.width = W; lienzo.height = H; }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, R.width, R.height);
     pB = mezcla(pB, avance(sec), 0.1);
-    const macro = rango(pB, 0.04, 0.4), micro = rango(pB, 0.38, 0.54), revuelve = rango(pB, 0.46, 0.8), ensaca = rango(pB, 0.64, 1.01);
+    const revuelve = rango(pB, 0.44, 0.66), ensaca = rango(pB, 0.6, 0.84);
     const g = R.height * 1.6; // gravedad, en píxeles por segundo al cuadrado
-    // Los montones se van achicando a medida que las manos sacan de cada uno
-    ings.forEach(o => {
-      const v = o.tipo === 'premix' ? suave(0.4, 0.52, pB) : o.tipo === 'maiz' ? suave(0.05, 0.16, pB) : o.tipo === 'soya' ? suave(0.17, 0.28, pB) : suave(0.29, 0.38, pB);
-      o.img.style.transform = `scale(${(1 - 0.45 * v).toFixed(3)})`;
-    });
-    const M = rel(mez, R), S = rel(saco, R);
+    const M = rel(mez, R);
     // El molino vibra suave mientras revuelve
     mez.style.transform = revuelve > 0.01 ? `translate(${(Math.sin(t * 41) * 1.1 * revuelve).toFixed(2)}px,${(Math.cos(t * 37) * 0.9 * revuelve).toFixed(2)}px)` : '';
     // La rueda acelera y frena suave (inercia), y sigue girando lento mientras sale el alimento
@@ -429,27 +433,51 @@ if (!quieto) {
     vRueda += (vObjetivo - vRueda) * (1 - Math.exp(-dt * 2.5));
     angulo = (angulo + vRueda * dt) % (Math.PI * 2);
     gira.style.transform = `rotate(${(angulo * 180 / Math.PI).toFixed(2)}deg)`;
-    const ca = Math.cos(angulo), sa = Math.sin(angulo), esc = M.w / 1168;
-    const mx = (K * (ANCLA[0] * ca - ANCLA[1] * sa) - K * ANCLA[0]) * esc, my = (ANCLA[0] * sa + ANCLA[1] * ca - ANCLA[1]) * esc;
+    const ca = Math.cos(angulo), sa = Math.sin(angulo), escM = M.w / 1168;
+    const mx = (K * (ANCLA[0] * ca - ANCLA[1] * sa) - K * ANCLA[0]) * escM, my = (ANCLA[0] * sa + ANCLA[1] * ca - ANCLA[1]) * escM;
     manija.style.transform = `translate3d(${mx.toFixed(2)}px,${my.toFixed(2)}px,0)`;
-    const llenado = suave(0.66, 0.98, pB);
+    // Al final: dos manos de tiza sujetan el saco, se cose la boca y le ponen la etiqueta
+    const sujeta = suave(0.84, 0.88, pB), cose = suave(0.88, 0.92, pB), pega = suave(0.915, 0.96, pB), suelta = suave(0.96, 1, pB);
+    const apriete = Math.sin(Math.PI * cose);
+    const llenado = suave(0.62, 0.83, pB);
     // El saco se infla al llenarse y se mece un poco con cada golpe de grano
     vaivenSaco += (caenSaco * 0.012 - vaivenSaco) * (1 - Math.exp(-dt * 6)); caenSaco = 0;
     const meneo = Math.sin(t * 9) * Math.min(1.6, vaivenSaco);
-    saco.style.transform = `rotate(${meneo.toFixed(2)}deg) scale(${(1 + 0.06 * llenado).toFixed(3)},${(1 + 0.03 * llenado).toFixed(3)})`;
-    // Las manos: cada una entra en su turno, se inclina con cuidado sobre la tolva y vuelve a salir.
-    // La punta de la pala (o del bol) queda siempre sobre la boca del molino; desde ahí caen los granos.
+    const tSaco = `rotate(${meneo.toFixed(2)}deg) scale(${((1 + 0.06 * llenado) * (1 - 0.05 * apriete)).toFixed(3)},${((1 + 0.03 * llenado) * (1 + 0.02 * apriete)).toFixed(3)})`;
+    saco.style.transform = cerrado.style.transform = tSaco;
+    saco.style.opacity = (1 - cose).toFixed(3); cerrado.style.opacity = cose.toFixed(3);
+    const S = rel(saco, R);
+    const mW = S.w * 1.25, fuera = R.width * 0.3 * (1 - sujeta) + R.width * 0.3 * suelta, vis = sujeta * (1 - suelta);
+    const iX = S.x - mW * 0.2 - fuera, iY = S.y + S.h * 0.22 - S.h * 0.06 * apriete;
+    const dX = S.x + S.w + mW * 0.2 + fuera, dY = S.y + S.h * 0.3 - S.h * 0.05 * apriete;
+    ubica(tzI, iX, iY, mW, -8 - 6 * apriete, vis);
+    ubica(tzD, dX, dY, mW, 6 + 6 * apriete, vis);
+    // La etiqueta llega en la mano derecha y queda pegada al frente del saco
+    const eW = S.w * 0.5;
+    if (etq._fs !== Math.round(eW)) { etq._fs = Math.round(eW); etq.style.fontSize = (eW * 0.1).toFixed(1) + 'px'; }
+    const eX = mezcla(dX - mW * 0.32, S.x + S.w * 0.5, pega), eY = mezcla(dY + mW * 0.05, S.y + S.h * 0.56, pega);
+    ubica(etq, eX, eY, eW, mezcla(-24, -3, pega), suave(0.895, 0.915, pB));
+    // Las manos con la pala: cada una entra en su turno, saca de su saco, lo lleva a la tolva, la vacía y se va.
+    // La punta de la pala (o del bol) marca el recorrido; desde ahí caen los granos.
     const bocaX = M.x + M.w * 0.45, bocaY = M.y + M.h * 0.05;
     manos.forEach(m => {
-      const vis = rango(pB, m.a, m.b), inclina = suave(m.a + 0.02, m.a + 0.05, pB) * (1 - suave(m.b - 0.04, m.b - 0.01, pB));
-      const w = M.w * m.ancho, h = w, tx = bocaX + m.dx * M.w, ty = bocaY - M.h * 0.2;
-      const entra = (1 - vis) * h * 0.7, bal = Math.sin(t * 2.3 + m.a * 9) * 1.2 * vis;
+      const u = limita((pB - m.a) / (m.b - m.a));
+      const ve = suave(0, 0.1, u) * (1 - suave(0.9, 1, u));
+      const saca = suave(0.08, 0.2, u) * (1 - suave(0.2, 0.3, u)), lleva = suave(0.26, 0.5, u);
+      const inclina = suave(0.5, 0.58, u) * (1 - suave(0.82, 0.9, u));
+      const I = rel(m.ing.img, R), w = R.width * m.ancho, h = w;
+      const ax = I.x + I.w * 0.5, ay = I.y + I.h * 0.12 + saca * I.h * 0.12 - (1 - ve) * R.height * 0.05;
+      const bx = bocaX + m.dx * M.w, by = bocaY - M.h * 0.14;
+      const tx = mezcla(ax, bx, lleva), ty = mezcla(ay, by, lleva) - Math.sin(Math.PI * lleva) * R.height * 0.1 - suave(0.9, 1, u) * R.height * 0.05;
+      const bal = Math.sin(t * 2.3 + m.a * 9) * 1.2 * ve;
       m.el.style.width = w.toFixed(1) + 'px';
       m.el.style.transformOrigin = `${m.tip[0] * 100}% ${m.tip[1] * 100}%`;
-      m.el.style.transform = `translate3d(${(tx - m.tip[0] * w).toFixed(1)}px,${(ty - m.tip[1] * h - entra).toFixed(1)}px,0) rotate(${(m.giro * inclina + bal).toFixed(2)}deg)`;
-      m.el.style.opacity = vis.toFixed(3);
+      m.el.style.transform = `translate3d(${(tx - m.tip[0] * w).toFixed(1)}px,${(ty - m.tip[1] * h).toFixed(1)}px,0) rotate(${(m.giro * inclina - m.giro * 0.5 * saca + bal).toFixed(2)}deg)`;
+      m.el.style.opacity = ve.toFixed(3);
+      // El saco del insumo se hunde un poco cuando la pala saca
+      m.ing.img.style.transform = `scale(${(1 + 0.02 * saca).toFixed(3)},${(1 - 0.04 * saca).toFixed(3)})`;
       // Granos que caen desde la punta hasta la tolva
-      m.acum += m.flujo * inclina * vis * dt;
+      m.acum += m.flujo * inclina * ve * dt;
       const [a, b] = TAM[m.tipo];
       while (m.acum >= 1) {
         m.acum -= 1;
@@ -468,17 +496,19 @@ if (!quieto) {
       granos.push({ x: sx + (Math.random() - 0.5) * M.w * 0.035, y: sy, vx: (Math.random() - 0.5) * 18, vy: 40 + Math.random() * 40, fin: ky + Math.random() * 6, edad: 0, c: elige(MEZCLA), w, h: w * 0.8, r: Math.random() * 6, vr: (Math.random() - 0.5) * 10, a: 1 });
     }
     // Lo que se ve dentro de la tolva: gira despacio y se acelera mientras revuelve
-    const contenido = suave(0.08, 0.5, pB) * (1 - suave(0.72, 0.97, pB));
+    const contenido = suave(0.06, 0.48, pB) * (1 - suave(0.64, 0.84, pB));
     const n = Math.round(70 * contenido), cx = bocaX, cy = M.y + M.h * 0.1, rx = M.w * 0.13, ry = M.h * 0.022, vel = 0.4 + 3.2 * revuelve;
     for (let i = 0; i < n; i++) {
       const k = (i * 0.6180339) % 1, ang = t * vel * (0.7 + k * 0.6) + i * 2.399;
       ctx.fillStyle = MEZCLA[i % MEZCLA.length]; ctx.beginPath();
       ctx.ellipse(cx + Math.cos(ang) * rx * (0.25 + 0.75 * k), cy + Math.sin(ang * 1.7) * ry * (0.5 + 0.5 * ((i * 0.381966) % 1)), 2.2 + (i % 3) * 0.6, 1.6 + (i % 2) * 0.6, ang, 0, Math.PI * 2); ctx.fill();
     }
-    // El saco se va llenando
-    if (llenado > 0.02) {
+    // El saco se va llenando (hasta que se cierra)
+    if (llenado > 0.02 && cose < 0.5) {
       const kx = S.x + S.w * 0.5, rs = S.w * 0.26 * Math.sqrt(llenado);
+      ctx.globalAlpha = 1 - cose * 2;
       for (let i = 0; i < 60 * llenado; i++) { const k = (i * 0.6180339) % 1, an = i * 2.399; ctx.fillStyle = MEZCLA[i % MEZCLA.length]; ctx.beginPath(); ctx.ellipse(kx + Math.cos(an) * rs * k, ky + 2 + Math.sin(an) * 4 * k, 2.4, 1.8, an, 0, Math.PI * 2); ctx.fill(); }
+      ctx.globalAlpha = 1;
     }
     // Granos en el aire
     granos = granos.filter(p => {
@@ -489,8 +519,8 @@ if (!quieto) {
     });
     ctx.globalAlpha = 1;
     if (granos.length > 1400) granos.splice(0, granos.length - 1400);
-    const ps = pB < 0.38 ? 0 : pB < 0.54 ? 1 : pB < 0.66 ? 2 : 3;
-    if (ps !== paso) { pasos[paso].classList.remove('activo'); pasos[ps].classList.add('activo'); paso = ps; }
+    const ps = pB < 0.34 ? 0 : pB < 0.48 ? 1 : pB < 0.6 ? 2 : pB < 0.84 ? 3 : 4;
+    if (ps !== paso && pasos[ps]) { pasos[paso].classList.remove('activo'); pasos[ps].classList.add('activo'); paso = ps; }
   });
 }
 

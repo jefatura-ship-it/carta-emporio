@@ -261,21 +261,34 @@ p{margin:0 0 12px}
 #batchLienzo{display:none}
 @media (min-width:821px){.batch-escena{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);align-items:center}}
 /* Con movimiento: la mesa queda fija y la mezcla avanza con el desplazamiento */
-.mov .batch{height:330vh}
+.mov .batch{height:420vh}
 .mov .batch-escena{position:sticky;top:0;height:100vh;height:100svh;padding-block:calc(var(--nav) + 14px) 14px;align-content:center}
-.mov .batch-mesa{display:block;position:relative;width:min(100%,calc((100svh - var(--nav) - 40px) * 1.05));aspect-ratio:1.05/1;justify-self:center}
+.mov .batch-mesa{display:block;position:relative;width:min(100%,calc((100svh - var(--nav) - 40px) * 1.3));aspect-ratio:1.3/1;justify-self:center;overflow:hidden}
 .mov .batch-mesa>*{position:absolute;margin:0}
-.mov .batch-mesa .ing{top:0;width:19%;z-index:1}
-.mov .batch-mesa .i1{left:1%}
-.mov .batch-mesa .i2{left:24%}
-.mov .batch-mesa .i3{left:47%}
-.mov .batch-mesa .i4{left:78%}
+/* Piso de madera dibujado con tiza; los insumos en sus sacos, apoyados en el piso */
+.batch-mesa .piso,.batch-mesa .saco-cerrado,.batch-mesa .etq,.batch-mesa .mano-tz{display:none}
+.mov .batch-mesa .piso{display:block;left:11px;right:11px;bottom:11px;top:68%;z-index:0;border-radius:0 0 12px 12px;border-top:3px solid rgba(243,239,230,.75);
+  background:repeating-linear-gradient(90deg,transparent 0 23%,rgba(243,239,230,.28) 23% calc(23% + 2px),transparent calc(23% + 2px) 41%,rgba(243,239,230,.22) 41% calc(41% + 2px),transparent calc(41% + 2px) 67%,rgba(243,239,230,.26) 67% calc(67% + 2px),transparent calc(67% + 2px) 100%) 0 0/100% 34%,
+  repeating-linear-gradient(180deg,transparent 0 calc(33.3% - 2px),rgba(243,239,230,.5) calc(33.3% - 2px) 33.3%),
+  repeating-linear-gradient(176deg,rgba(243,239,230,.05) 0 3px,transparent 3px 11px),linear-gradient(#6d4b2e,#4f3520)}
+.mov .batch-mesa .ing{width:16%;z-index:1}
+.mov .batch-mesa .i1{left:3%;top:52%}
+.mov .batch-mesa .i2{left:21%;top:52.3%}
+.mov .batch-mesa .i3{left:7%;top:76%;z-index:2}
+.mov .batch-mesa .i4{left:26%;top:78%;width:14%;z-index:2}
 .mov .batch-mesa .ing img{transform-origin:50% 100%}
-.mov .batch-mesa .i4 img{transform-origin:70% 60%}
-.mov .batch-mesa .mezcladora{top:27%;left:14%;width:64%;z-index:1}
-.mov .batch-mesa .saco{top:71%;left:16.5%;width:17%;max-height:none;z-index:2;transform-origin:50% 100%}
+.mov .batch-mesa .ing figcaption{position:absolute;left:50%;bottom:4%;translate:-50% 0;white-space:nowrap;margin:0;padding:3px 9px 4px;border-radius:99px;background:rgba(36,48,42,.86);font-size:12.5px;line-height:1.1;text-align:center}
+.mov .batch-mesa .ing figcaption small{font-size:8.5px}
+@media (max-width:600px){.mov .batch-mesa .ing figcaption{font-size:9.5px;padding:2px 6px}.mov .batch-mesa .ing figcaption small{font-size:6.5px}}
+.mov .batch-mesa .mezcladora{top:31%;left:44%;width:50%;z-index:1}
+.mov .batch-mesa .saco,.mov .batch-mesa .saco-cerrado{display:block;top:77.5%;left:46.5%;width:11%;max-height:none;z-index:2;transform-origin:50% 100%}
+.mov .batch-mesa .saco-cerrado{opacity:0;will-change:transform,opacity}
+.mov .batch-mesa .etq{display:grid;left:0;top:0;z-index:5;opacity:0;place-items:center;aspect-ratio:100/62;padding:4% 3%;border-radius:4px;background:#f6f0de;border:1.5px solid #c9b88f;box-shadow:0 2px 4px rgba(0,0,0,.35);color:#2b2a26;text-align:center;line-height:1.05;font-size:8px;will-change:transform,opacity;overflow:hidden}
+.mov .batch-mesa .etq b{font-family:var(--display);font-weight:400;font-size:1.6em;color:#b4301e}.mov .batch-mesa .etq span{font-size:.85em}
+.mov .batch-mesa .etq small{font-weight:700}
+.mov .batch-mesa .mano-tz{display:block;left:0;top:0;max-width:none;z-index:4;opacity:0;pointer-events:none;will-change:transform,opacity}
 .mov #batchLienzo{display:block;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
-@media (max-width:820px){.mov .batch-escena{grid-template-rows:auto 1fr;gap:10px}.mov .batch-texto p{display:none}.mov .batch-pasos li{display:none}.mov .batch-pasos li.activo{display:grid}.mov .batch-mesa{width:min(100%,calc((100svh - var(--nav) - 260px) * 1.05))}}
+@media (max-width:820px){.mov .batch-escena{grid-template-rows:auto 1fr;gap:10px}.mov .batch-texto p{display:none}.mov .batch-pasos li{display:none}.mov .batch-pasos li.activo{display:grid}.mov .batch-mesa{width:min(100%,calc((100svh - var(--nav) - 260px) * 1.3))}}
 
 /* Franja con fotografía */
 .franja{position:relative;margin:0;height:min(64vh,520px);overflow:hidden;background:#e9e2d5}
@@ -795,19 +808,25 @@ footer.funde{--fh:110px;padding-top:80px}
         <li data-n="2"><b>Luego, lo micro</b>Las vitaminas y minerales: el premix.<span class="por">Van en muy poca cantidad, por eso se agregan sobre la base ya cargada: así se reparten en todo el batch y cada saco lleva la misma dosis.</span></li>
         <li data-n="3"><b>El batch revuelve</b>El molino gira sin parar.<span class="por">Revuelve el tiempo que indica la receta, hasta que no quedan zonas con más de un ingrediente que de otro. Una mezcla pareja asegura que cada gallina coma lo mismo.</span></li>
         <li data-n="4"><b>Al saco</b>El alimento mezclado cae al saco.<span class="por">Con la mezcla pareja se abre la compuerta: el alimento cae al saco, se pesa (sacos de 25 kilos) y se cierra, listo para despachar.</span></li>
+        <li data-n="5"><b>Cerrado y etiquetado</b>Dos manos cosen la boca del saco y le ponen su etiqueta.<span class="por">La etiqueta dice qué alimento lleva y cuánto pesa, para despacharlo sin confusiones.</span></li>
       </ol>
     </div>
     <div class="batch-mesa" id="batchMesa">
-      <figure class="ing i1"><img src="img/batch/maiz.webp" alt="Maíz en grano." width="420" height="257" loading="lazy"><figcaption>Maíz <small>macro</small></figcaption></figure>
-      <figure class="ing i2"><img src="img/batch/soya.webp" alt="Harina de soya." width="420" height="270" loading="lazy"><figcaption>Soya <small>macro</small></figcaption></figure>
-      <figure class="ing i3"><img src="img/batch/afrechillo.webp" alt="Afrechillo de trigo." width="420" height="234" loading="lazy"><figcaption>Afrechillo <small>macro</small></figcaption></figure>
-      <figure class="ing i4"><img src="img/batch/premix.webp" alt="Pala con premix de vitaminas y minerales." width="420" height="313" loading="lazy"><figcaption>Premix <small>micro</small></figcaption></figure>
+      <div class="piso" aria-hidden="true"></div>
+      <figure class="ing i1"><img src="img/batch/saco-maiz.webp" alt="Dibujo de tiza de un saco abierto con maíz en grano." width="420" height="418" loading="lazy"><figcaption>Maíz <small>macro</small></figcaption></figure>
+      <figure class="ing i2"><img src="img/batch/saco-soya.webp" alt="Dibujo de tiza de un saco abierto con harina de soya." width="420" height="414" loading="lazy"><figcaption>Soya <small>macro</small></figcaption></figure>
+      <figure class="ing i3"><img src="img/batch/saco-afrechillo.webp" alt="Dibujo de tiza de un saco abierto con afrechillo de trigo." width="420" height="384" loading="lazy"><figcaption>Afrechillo <small>macro</small></figcaption></figure>
+      <figure class="ing i4"><img src="img/batch/saco-premix.webp" alt="Dibujo de tiza de una bolsa abierta con premix de vitaminas y minerales." width="380" height="359" loading="lazy"><figcaption>Premix <small>micro</small></figcaption></figure>
       <div class="mezcladora" role="img" aria-label="Dibujo de tiza de un molino mezclador de campo, de madera y metal, con manivela."><img class="mol-cuerpo" src="img/batch/molino-tiza.webp" alt="" width="900" height="678" loading="lazy"><div class="mol-rueda"><div class="mol-gira"><img src="img/batch/molino-rueda.webp" alt="" width="173" height="320" loading="lazy"></div></div><img class="mol-manija" src="img/batch/molino-manija.webp" alt="" width="102" height="67" loading="lazy"></div>
       <img class="mano mano-maiz" src="img/batch/mano-maiz.webp" alt="" width="520" height="520" loading="lazy">
       <img class="mano mano-soya" src="img/batch/mano-soya.webp" alt="" width="520" height="520" loading="lazy">
       <img class="mano mano-afrechillo" src="img/batch/mano-maiz.webp" alt="" width="520" height="520" loading="lazy">
       <img class="mano mano-premix" src="img/batch/mano-premix.webp" alt="" width="520" height="520" loading="lazy">
       <img class="saco" src="img/batch/saco-tiza.webp" alt="Dibujo de tiza de un saco para el alimento." width="520" height="690" loading="lazy">
+      <img class="saco-cerrado" src="img/batch/saco-cerrado.webp" alt="" width="520" height="690" loading="lazy">
+      <div class="etq" aria-hidden="true" data-w="100" data-h="62"><b>ALL FOOD</b><span>Alimento para aves</span><small>25 kg</small></div>
+      <img class="mano-tz mano-tz-i" src="img/tiza/mano-izquierda.webp" alt="" width="560" height="440" loading="lazy">
+      <img class="mano-tz mano-tz-d" src="img/tiza/mano-derecha.webp" alt="" width="560" height="334" loading="lazy">
       <canvas id="batchLienzo" aria-hidden="true"></canvas>
     </div>
   </div>
