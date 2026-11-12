@@ -752,6 +752,32 @@ if (!quieto) {
   }
 }
 
+/* =================== Sabrosita se asoma por el costado y saluda mientras se recorre el Emporio =================== */
+if (!quieto) {
+  const emp = $('#emporio'), sab = $('#sabroLado');
+  if (emp && sab) {
+    const cuerpoS = $('.sl-cuerpo', sab), alaS = $('.sl-ala', sab), hola = $('.sl-hola', sab);
+    let vis = 0, tA = 0, quieta = false;
+    cuadros.push(t => {
+      const dt = t - tA > 0 && t - tA < 0.1 ? t - tA : 1 / 60; tA = t;
+      const r = emp.getBoundingClientRect(), H = innerHeight;
+      const k = limita((H - r.top) / (r.height + H));
+      const meta = suave(0.12, 0.24, k) * (1 - suave(0.78, 0.9, k));
+      vis += (meta - vis) * (1 - Math.exp(-dt * 4));
+      if (vis < 0.002 && meta === 0) { if (!quieta) { sab.style.transform = ''; quieta = true; } return; }
+      quieta = false;
+      // Entra desde la izquierda con un pequeño rebote, se balancea y levanta el ala para saludar
+      const entra = 1 - Math.pow(1 - vis, 3), rebote = Math.sin(vis * Math.PI) * 6;
+      sab.style.transform = `translate3d(${((entra - 1) * 140 - (innerWidth < 600 ? 22 * entra : 0)).toFixed(1)}%,0,0)`;
+      cuerpoS.style.transform = `rotate(${(-14 * (1 - vis) + rebote * 0.4 + Math.sin(t * 2.2) * 2.5).toFixed(2)}deg) translateY(${(-Math.abs(Math.sin(t * 2.2)) * 4).toFixed(1)}px)`;
+      const sube = suave(0.55, 1, vis);
+      alaS.style.transform = `rotate(${(sube * (-128 + Math.sin(t * 8) * 22)).toFixed(1)}deg)`;
+      const oh = suave(0.8, 1, vis);
+      hola.style.opacity = oh.toFixed(3); hola.style.transform = `translateY(${((1 - oh) * 8 + Math.sin(t * 3) * 2).toFixed(1)}px)`;
+    });
+  }
+}
+
 /* ---------- Bucle de animación ---------- */
 if (cuadros.length) {
   const paso = ms => { cursor.sx = mezcla(cursor.sx, cursor.x, 0.07); cursor.sy = mezcla(cursor.sy, cursor.y, 0.07); const t = ms / 1000; for (const f of cuadros) f(t); };
