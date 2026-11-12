@@ -7,6 +7,22 @@
 <title>Del campo a tu mesa · Avícola El Huevo Sabroso y Emporio Sabroso</title>
 <meta name="description" content="Avícola El Huevo Sabroso produce huevos en Oro Verde, Chillán. Emporio Sabroso los vende en Arturo Prat 720, frente al Mercado Techado, junto a abarrotes, envases y desechables.">
 <link rel="icon" href="../img/icono.png">
+<!-- Para buscadores y redes: dirección única de la página, vista previa al compartir y datos del negocio -->
+<link rel="canonical" href="https://jefatura-ship-it.github.io/carta-emporio/web/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_CL">
+<meta property="og:site_name" content="Avícola El Huevo Sabroso · Emporio Sabroso">
+<meta property="og:title" content="Del campo a tu mesa · Avícola El Huevo Sabroso y Emporio Sabroso">
+<meta property="og:description" content="Huevos de Oro Verde, Chillán, pollitas de 14 semanas, alimento para aves y Emporio Sabroso en Arturo Prat 720, frente al Mercado Techado.">
+<meta property="og:url" content="https://jefatura-ship-it.github.io/carta-emporio/web/">
+<meta property="og:image" content="https://jefatura-ship-it.github.io/carta-emporio/web/img/huevos-editorial.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"Organization","name":"Avícola El Huevo Sabroso","url":"https://jefatura-ship-it.github.io/carta-emporio/web/","logo":"https://jefatura-ship-it.github.io/carta-emporio/web/img/logo-huevo-sabroso-amarillo.png","description":"Avícola de Oro Verde, Chillán: huevos, pollitas, alimentos para aves e insumos avícolas.","sameAs":["https://www.instagram.com/pollitasoroverde/"]},
+ {"@type":"GroceryStore","name":"Emporio Sabroso","url":"https://jefatura-ship-it.github.io/carta-emporio/","telephone":"+56933903395","address":{"@type":"PostalAddress","streetAddress":"Arturo Prat 720","addressLocality":"Chillán","addressRegion":"Ñuble","addressCountry":"CL"},"openingHours":"Mo-Sa 08:30-17:00","sameAs":["https://www.instagram.com/emporio.sabroso/"]}
+]}
+</script>
 <style>
 /* Sin recursos externos: tipografía, imágenes y la biblioteca 3D están alojadas en este sitio. */
 /* Tipografía: Instrument Serif para títulos y DM Sans para el texto (ambas con licencia SIL OFL 1.1, alojadas en el sitio) */
@@ -111,7 +127,11 @@ p{margin:0 0 12px}
 
 /* Con movimiento: la pizarra queda fija detrás y el contenido pasa por encima */
 .mov .av-lienzo{display:block;position:sticky;top:0;height:100vh;height:100svh;z-index:0;pointer-events:none;overflow:hidden}
-.tz-camino{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.tz-camino{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+/* El camino de tiza se pinta una sola vez en un lienzo; letreros y dibujos se mueven solo con transform y opacity (fluido en celular) */
+.tz-via,.tz-letrero{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.tz-letrero{overflow:visible;opacity:0;will-change:opacity}
+.av-lienzo{contain:layout paint}
 .tz-nota{font-size:30px;opacity:.85}
 .tz{position:absolute;left:0;top:0;max-width:none;height:auto;transform-origin:50% 50%;will-change:transform,opacity;opacity:0}
 .tz-paila,.tz-huevo{opacity:1}
@@ -170,7 +190,7 @@ p{margin:0 0 12px}
 .fab-datos li{background:var(--papel);border:1px solid var(--raya);border-top:3px solid var(--av-amarillo);border-radius:12px;padding:12px;font-size:14.5px;line-height:1.4;color:var(--gris)}
 .fab-datos b{display:block;font-family:var(--display);font-size:22px;line-height:1.2;color:var(--carbon);margin-bottom:3px}
 .fab-vid{margin:0;justify-self:center;width:min(290px,78%);text-align:center}
-.fab-vid video{display:block;width:100%;aspect-ratio:9/16;border-radius:18px;background:#000;box-shadow:0 22px 50px rgba(28,28,26,.25)}
+.fab-vid video{display:block;width:100%;aspect-ratio:720/1140;border-radius:18px;background:#000;box-shadow:0 22px 50px rgba(28,28,26,.25)}
 .fab-vid figcaption{font-size:14px;color:var(--gris);margin-top:8px}
 .fab-fotos{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;max-width:780px;margin:0 auto}
 .fab-fotos .flot{max-width:none}
@@ -184,8 +204,12 @@ p{margin:0 0 12px}
 .batch-texto p{font-size:18px;max-width:44ch}
 .batch-pasos{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:8px;counter-reset:bp}
 .batch-pasos li{counter-increment:bp;display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:center;padding:10px 14px;border:1px solid var(--raya);border-radius:14px;background:#fff;font-size:15px;line-height:1.35;color:var(--gris);transition:border-color .3s,box-shadow .3s,transform .3s}
-.batch-pasos li::before{content:counter(bp);grid-row:span 2;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid currentColor;font-size:14px}
+.batch-pasos li::before{content:attr(data-n);grid-row:span 2;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid currentColor;font-size:14px}
 .batch-pasos b{font-family:var(--display);font-weight:400;font-size:23px;line-height:1.1;color:var(--carbon)}
+/* El porqué de cada paso: con movimiento se despliega solo el del paso en que vas al bajar */
+.batch-pasos .por{grid-column:2;display:block;margin-top:6px;font-size:14.5px;line-height:1.45;color:var(--gris)}
+.mov .batch-pasos .por{max-height:0;opacity:0;margin-top:0;overflow:hidden;transition:max-height .5s ease,opacity .4s ease,margin-top .4s ease}
+.mov .batch-pasos li.activo .por{max-height:14em;opacity:1;margin-top:6px}
 .batch-pasos li.activo{border-color:var(--carbon);box-shadow:0 10px 24px rgba(28,28,26,.12);transform:translateX(4px);color:var(--carbon)}
 .batch-mesa{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:end}
 .batch-mesa .ing{margin:0;text-align:center}
@@ -310,9 +334,8 @@ p{margin:0 0 12px}
 .rep-lista p{margin:4px 0 0;font-size:15px;color:var(--suave)}
 .rep-lista img{width:100%;height:150px;object-fit:contain;margin-bottom:8px}
 .mov3d .rep-lista img{display:none}
-/* Con 3D: la repisa queda fija y rueda con el desplazamiento */
-.mov3d .rep{height:calc(100vh + 14 * 46vh)}
-.mov3d .rep-escena{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;padding:0}
+/* Con 3D: la repisa ocupa una pantalla y se recorre deslizando de lado; bajar sigue de largo por la página */
+.mov3d .rep-escena{position:relative;height:100vh;height:100svh;max-height:900px;overflow:hidden;padding:0}
 .mov3d .rep canvas{display:block;position:absolute;inset:0;width:100%;height:100%;touch-action:pan-y;cursor:grab}
 .mov3d .rep canvas.arrastra{cursor:grabbing}
 .mov3d .rep-cab{position:absolute;top:calc(var(--nav) + 12px);left:0;right:0;z-index:2;pointer-events:none;margin:0;text-shadow:0 2px 10px rgba(0,0,0,.5)}
@@ -419,18 +442,13 @@ footer.funde{--fh:110px;padding-top:80px}
           <feColorMatrix in="ruido" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  2.6 0 0 0 -0.55" result="grano"/>
           <feComposite in="tembloroso" in2="grano" operator="in"/>
         </filter>
-        <mask id="tzRevela" maskUnits="userSpaceOnUse"><path class="tz-revela" fill="none" stroke="#fff" stroke-width="90" stroke-linecap="round"/></mask>
       </defs>
-      <g mask="url(#tzRevela)"><g filter="url(#tiza)">
-        <path class="tz-borde" fill="none" stroke="#f3f1ea" stroke-linecap="round" stroke-linejoin="round"/>
-        <path class="tz-fondo" fill="none" stroke="#24302a" stroke-linecap="round" stroke-linejoin="round"/>
-        <path class="tz-centro" fill="none" stroke="#f3f1ea" stroke-width="3" stroke-dasharray="16 18" stroke-linecap="round" opacity=".8"/>
-      </g></g>
-      <g filter="url(#tiza)" fill="#f3f1ea" font-family="Instrument Serif, Georgia, serif" font-style="italic">
-        <text class="tz-nota tz-inicio">Oro Verde</text>
-        <text class="tz-nota tz-fin">a tu mesa</text>
-      </g>
+      <!-- Solo geometría: el camino se dibuja una vez en el lienzo de abajo (con la textura de tiza ya aplicada) -->
+      <path class="tz-revela" fill="none" stroke="none"/>
     </svg>
+    <canvas class="tz-via"></canvas>
+    <svg class="tz-letrero tz-inicio" xmlns="http://www.w3.org/2000/svg"><text filter="url(#tiza)" fill="#f3f1ea" font-family="Instrument Serif, Georgia, serif" font-style="italic">Oro Verde</text></svg>
+    <svg class="tz-letrero tz-fin" xmlns="http://www.w3.org/2000/svg"><text filter="url(#tiza)" fill="#f3f1ea" font-family="Instrument Serif, Georgia, serif" font-style="italic">a tu mesa</text></svg>
     <img class="tz tz-paila" src="img/tiza/paila.webp" alt="" width="720" height="518">
     <img class="tz tz-frito" src="img/tiza/huevo-frito.webp" alt="" width="520" height="447">
     <img class="tz tz-mano-i" src="img/tiza/mano-izquierda.webp" alt="" width="560" height="440">
@@ -575,8 +593,8 @@ footer.funde{--fh:110px;padding-top:80px}
       </figure>
     </div>
     <div class="fab-fotos">
-      <figure class="flot" data-vel="-.06"><img src="img/fabrica-nueva-silos.jpg" alt="Silo metálico nuevo de la fábrica de alimentos, montado sobre su estructura, con otros silos al lado." width="900" height="1467" loading="lazy"><figcaption>Los silos nuevos, ya armados.</figcaption></figure>
-      <figure class="flot" data-vel=".07"><img src="img/fabrica-nueva-vista.jpg" alt="Vista de la obra de la fábrica nueva: tres silos metálicos y la estructura de la planta bajo un cielo despejado." width="900" height="925" loading="lazy"><figcaption>La planta nueva, en obra.</figcaption></figure>
+      <figure class="flot" data-vel="-.06"><img src="img/fabrica-nueva-silos.jpg" alt="Silo metálico nuevo de la fábrica de alimentos, montado sobre su estructura, con otros silos al lado." width="900" height="1427" loading="lazy"><figcaption>Los silos nuevos, ya armados.</figcaption></figure>
+      <figure class="flot" data-vel=".07"><img src="img/fabrica-nueva-vista.jpg" alt="Vista de la obra de la fábrica nueva: tres silos metálicos y la estructura de la planta bajo un cielo despejado." width="900" height="889" loading="lazy"><figcaption>La planta nueva, en obra.</figcaption></figure>
     </div>
   </div>
 </section>
@@ -589,10 +607,10 @@ footer.funde{--fh:110px;padding-top:80px}
       <h2 id="h-batch">Del batch <em>al saco</em></h2>
       <p>Las materias primas caen a la mezcladora, se revuelven hasta quedar parejas y el alimento listo cae al saco.</p>
       <ol class="batch-pasos" id="batchPasos">
-        <li class="activo"><b>Macro</b>Los granos y harinas, como maíz, soya y afrechillo.</li>
-        <li><b>Micro</b>Las vitaminas y minerales: el premix.</li>
-        <li><b>El batch revuelve</b>La mezcladora deja todo parejo.</li>
-        <li><b>Al saco</b>El alimento mezclado cae al saco.</li>
+        <li class="activo" data-n="1"><b>Primero, lo macro</b>Los granos y harinas: maíz, soya y afrechillo.<span class="por">Van primero porque son la mayor parte del alimento: el maíz aporta energía, la soya proteína y el afrechillo fibra. Se pesan según la receta y forman la base de la mezcla.</span></li>
+        <li data-n="2"><b>Luego, lo micro</b>Las vitaminas y minerales: el premix.<span class="por">Van en muy poca cantidad, por eso se agregan sobre la base ya cargada: así se reparten en todo el batch y cada saco lleva la misma dosis.</span></li>
+        <li data-n="3"><b>El batch revuelve</b>La mezcladora gira sin parar.<span class="por">Revuelve el tiempo que indica la receta, hasta que no quedan zonas con más de un ingrediente que de otro. Una mezcla pareja asegura que cada gallina coma lo mismo.</span></li>
+        <li data-n="4"><b>Al saco</b>El alimento mezclado cae al saco.<span class="por">Con la mezcla pareja se abre la compuerta: el alimento cae al saco, se pesa (sacos de 25 kilos) y se cierra, listo para despachar.</span></li>
       </ol>
     </div>
     <div class="batch-mesa" id="batchMesa">

@@ -177,18 +177,24 @@ if (!quieto) {
 }
 
 /* =================== La pizarra: el huevo de tiza recorre el camino, unas manos lo quiebran y cae a la paila =================== */
+// Para que sea fluida en el celular: el camino con su textura de tiza se pinta UNA vez en un mapa de bits y en cada cuadro
+// solo se recorta la parte ya dibujada (lienzo 2D); los dibujos se mueven solo con transform y opacity (sin cambiar tamaños),
+// y el avance sigue al desplazamiento con un suavizado que no depende de cuántos cuadros por segundo dé el equipo.
 if (!quieto) {
   const av = $('#avicola'), piz = $('#pizarra');
-  const [revela, borde, fondo, centro] = ['.tz-revela', '.tz-borde', '.tz-fondo', '.tz-centro'].map(s => $(s, piz));
-  const notaIni = $('.tz-inicio', piz), notaFin = $('.tz-fin', piz), svg = $('.tz-camino', piz);
+  const revela = $('.tz-revela', piz), svg = $('.tz-camino', piz), via = $('.tz-via', piz), cv = via.getContext('2d');
+  const notaIni = $('.tz-inicio', piz), notaFin = $('.tz-fin', piz), txtIni = $('text', notaIni), txtFin = $('text', notaFin);
   const im = n => $('.tz-' + n, piz);
   const huevo = im('huevo'), mitadI = im('mitad-i'), mitadD = im('mitad-d'), grieta = im('grieta'), trazo = $('polyline', grieta), frito = im('frito'), paila = im('paila'), manoI = im('mano-i'), manoD = im('mano-d');
-  // Coloca una imagen con su centro en (x, y), un ancho en px, giro, escala vertical y opacidad
+  const proporcion = el => (+el.getAttribute('height')) / (+el.getAttribute('width'));
+  // Tamaño base de cada dibujo: se fija al armar (no en cada cuadro); después solo se escala con transform
+  const base = (el, w) => { el._w = w; el._h = w * proporcion(el); el.style.width = w.toFixed(1) + 'px'; el.style.height = el._h.toFixed(1) + 'px'; el._t = el._o = null; };
+  // Coloca un dibujo con su centro en (x, y), un ancho en px, giro, opacidad y escala vertical; escribe solo si cambió
   const pon = (el, x, y, w, giro = 0, op = 1, sy = 1) => {
-    const h = w * el.height / el.width;
-    el.style.width = w.toFixed(1) + 'px';
-    el.style.transform = `translate(${(x - w / 2).toFixed(1)}px,${(y - h / 2).toFixed(1)}px) rotate(${giro.toFixed(2)}deg) scaleY(${sy.toFixed(3)})`;
-    el.style.opacity = op.toFixed(3);
+    const e = w / el._w, t = `translate3d(${(x - el._w / 2).toFixed(1)}px,${(y - el._h / 2).toFixed(1)}px,0) rotate(${giro.toFixed(2)}deg) scale(${e.toFixed(4)},${(e * sy).toFixed(4)})`;
+    if (t !== el._t) { el.style.transform = t; el._t = t; }
+    const o = op.toFixed(3); if (o !== el._o) { el.style.opacity = o; el._o = o; }
+    return e;
   };
   // Curva suave que pasa por todos los puntos (Catmull-Rom convertida a Bézier)
   const curva = P => {
@@ -199,10 +205,27 @@ if (!quieto) {
     }
     return d;
   };
-  let L = {}, largo = 1, hitos = null;
+  let L = {}, largo = 1, hitos = null, puntos = [], trazado = null, mapa = null, dpr = 1, visto = -1, version = 0;
+  const N = 720; // puntos guardados a lo largo del camino (el huevo se interpola entre ellos)
+  const punto = s => { const f = (largo > 0 ? limita(s / largo || 0) : 0) * N, i = Math.min(N - 1, Math.floor(f)), k = f - i, a = puntos[i], b = puntos[i + 1]; return { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k }; };
   const pasos = $$('.paso', av);
+  // Pinta el camino con la textura de tiza en un mapa de bits (una vez por tamaño de pantalla)
+  const pintaMapa = (W, H, d) => {
+    const f = $('#tiza').outerHTML.replace('id="tiza"', 'id="t"');
+    const v = L.via, svgTxt = `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.round(W * dpr)}" height="${Math.round(H * dpr)}" viewBox="0 0 ${W} ${H}"><defs>${f}</defs><g filter="url(#t)" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
+      `<path d="${d}" stroke="#f3f1ea" stroke-width="${v.toFixed(1)}"/><path d="${d}" stroke="#24302a" stroke-width="${(v - 8).toFixed(1)}"/>` +
+      `<path d="${d}" stroke="#f3f1ea" stroke-width="3" stroke-dasharray="16 18" opacity=".8"/></g></svg>`;
+    const yo = ++version, img = new Image();
+    img.onload = () => {
+      if (yo !== version) return;
+      const c = document.createElement('canvas'); c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); mapa = c; visto = -1;
+    };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgTxt);
+  };
   const arma = () => {
     const W = piz.clientWidth, H = piz.clientHeight, ancho = W >= 900;
+    if (!W || !H) return;
     // En escritorio el camino ocupa la mitad derecha; en celular, la franja libre de arriba
     const P = ancho
       ? [[.53, .2], [.7, .14], [.92, .24], [.66, .36], [.6, .48], [.86, .52], [.76, .58]].map(([x, y]) => [x * W, y * H])
@@ -213,23 +236,30 @@ if (!quieto) {
       paila: [ancho ? .76 * W : .5 * W, ancho ? .8 * H : .38 * H], pailaW: u * (ancho ? .52 : .5)
     };
     const d = curva(P);
-    for (const p of [revela, borde, fondo, centro]) p.setAttribute('d', d);
-    borde.setAttribute('stroke-width', L.via.toFixed(1)); fondo.setAttribute('stroke-width', (L.via - 8).toFixed(1));
-    revela.setAttribute('stroke-width', (L.via * 2).toFixed(1));
-    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    revela.setAttribute('d', d); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     largo = revela.getTotalLength();
-    revela.style.strokeDasharray = `${largo} ${largo}`;
+    if (!(largo > 0)) { puntos = []; return; }
+    puntos = Array.from({ length: N + 1 }, (_, i) => revela.getPointAtLength(largo * i / N));
+    trazado = new Path2D(d);
+    dpr = Math.min(2, devicePixelRatio || 1);
+    via.width = Math.round(W * dpr); via.height = Math.round(H * dpr); mapa = null; visto = -1;
+    pintaMapa(W, H, d);
+    // Tamaños base de los dibujos
+    for (const el of [huevo, mitadI, mitadD, grieta]) base(el, L.huevo);
+    base(manoI, L.huevo * 1.9); base(manoD, L.huevo * 1.9); base(paila, L.pailaW); base(frito, L.pailaW * .44);
+    // Letreros «Oro Verde» y «a tu mesa»
     const tam = Math.max(20, u * .055);
-    notaIni.setAttribute('font-size', tam.toFixed(0)); notaFin.setAttribute('font-size', tam.toFixed(0));
-    notaIni.setAttribute('x', P[0][0].toFixed(0)); notaIni.setAttribute('y', (P[0][1] + L.via * .5 + tam * 1.05).toFixed(0));
+    for (const s of [notaIni, notaFin]) s.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    for (const t of [txtIni, txtFin]) t.setAttribute('font-size', tam.toFixed(0));
+    txtIni.setAttribute('x', P[0][0].toFixed(0)); txtIni.setAttribute('y', (P[0][1] + L.via * .5 + tam * 1.05).toFixed(0));
+    if (ancho) { txtFin.setAttribute('text-anchor', 'end'); txtFin.setAttribute('x', (L.paila[0] - L.pailaW * .52).toFixed(0)); txtFin.setAttribute('y', (L.paila[1] + L.pailaW * .16).toFixed(0)); }
+    else { txtFin.setAttribute('text-anchor', 'middle'); txtFin.setAttribute('x', (L.paila[0] - L.pailaW * .1).toFixed(0)); txtFin.setAttribute('y', (L.paila[1] + L.pailaW * .5).toFixed(0)); }
     // En celular el contenido tapa la pizarra salvo en la ventana libre al comienzo de cada paso: los momentos clave caen ahí
     hitos = null;
     if (!ancho && pasos.length >= 4) {
       const tope = av.getBoundingClientRect().top, rango = Math.max(1, av.offsetHeight - H);
       hitos = [1, 2, 3].map(i => limita((pasos[i].getBoundingClientRect().top - tope + H * .2) / rango));
     }
-    if (ancho) { notaFin.setAttribute('text-anchor', 'end'); notaFin.setAttribute('x', (L.paila[0] - L.pailaW * .52).toFixed(0)); notaFin.setAttribute('y', (L.paila[1] + L.pailaW * .16).toFixed(0)); }
-    else { notaFin.setAttribute('text-anchor', 'middle'); notaFin.setAttribute('x', (L.paila[0] - L.pailaW * .1).toFixed(0)); notaFin.setAttribute('y', (L.paila[1] + L.pailaW * .5).toFixed(0)); }
   };
   // Convierte el avance del desplazamiento en el avance de la historia (igual en escritorio; por tramos en celular)
   const tramo = p => {
@@ -238,18 +268,35 @@ if (!quieto) {
     for (let i = 0; i < X.length - 1; i++) if (p <= X[i + 1]) return mezcla(Y[i], Y[i + 1], limita((p - X[i]) / Math.max(1e-4, X[i + 1] - X[i])));
     return 1;
   };
-  arma(); addEventListener('resize', arma); addEventListener('load', arma);
-  let pH = 0;
+  // Dibuja en el lienzo solo la parte del camino ya recorrida (más un poco delante del huevo)
+  const pintaVia = s => {
+    if (!mapa) return;
+    const vis = Math.min(largo, s + largo * .22 + 30);
+    if (Math.abs(vis - visto) < 0.4) return;
+    visto = vis;
+    cv.setTransform(1, 0, 0, 1, 0, 0); cv.globalCompositeOperation = 'source-over'; cv.clearRect(0, 0, via.width, via.height);
+    cv.setTransform(dpr, 0, 0, dpr, 0, 0); cv.lineWidth = L.via * 2; cv.lineCap = 'round'; cv.strokeStyle = '#000';
+    cv.setLineDash([Math.max(0.01, vis), largo + 200]); cv.lineDashOffset = 0; cv.stroke(trazado);
+    cv.globalCompositeOperation = 'source-in'; cv.setTransform(1, 0, 0, 1, 0, 0); cv.drawImage(mapa, 0, 0);
+    cv.globalCompositeOperation = 'source-over';
+  };
+  let ancho0 = 0, alto0 = 0;
+  const reArma = () => { const W = piz.clientWidth, H = piz.clientHeight; if (W === ancho0 && Math.abs(H - alto0) < 120) return; ancho0 = W; alto0 = H; arma(); };
+  arma(); ancho0 = piz.clientWidth; alto0 = piz.clientHeight;
+  addEventListener('resize', reArma); addEventListener('load', arma);
+  let pH = 0, tAnt = 0, opIni = '', opFin = '';
   cuadros.push(t => {
-    if (!enPantalla.get(av)) return;
-    pH = mezcla(pH, avance(av), 0.09);
+    const dt0 = t - tAnt, dt = dt0 > 0 && dt0 < 0.1 ? dt0 : 1 / 60; tAnt = t; // si el reloj salta o retrocede, cuenta como un cuadro
+    if (!enPantalla.get(av) || !puntos.length) return;
+    // Suavizado independiente de los cuadros por segundo: sigue al dedo sin saltos ni retraso
+    pH = mezcla(pH, avance(av), 1 - Math.pow(1 - 0.2, dt * 60));
     const e = tramo(pH);
     // 1) El huevo rueda por el camino y la tiza se dibuja delante de él
     const viaje = suave(0.02, 0.5, e), s = viaje * largo;
-    revela.style.strokeDashoffset = (largo - Math.min(largo, s + largo * .22 + 30)).toFixed(1);
-    const q = revela.getPointAtLength(s), q2 = revela.getPointAtLength(Math.min(largo, s + 2));
+    pintaVia(s);
+    const q = punto(s), q2 = punto(Math.min(largo, s + 2));
     // Sobre la paila esperan las manos: el huevo sube del final del camino a ese punto
-    const [px, py] = L.paila, alto = L.huevo * 561 / 420;
+    const [px, py] = L.paila, alto = L.huevo * proporcion(huevo);
     const sobre = [px - L.pailaW * .06, py - L.pailaW * .62];
     const sube = suave(0.5, 0.58, e);
     const hx = mezcla(q.x, sobre[0], sube), hy = mezcla(q.y - alto * .42, sobre[1], sube);
@@ -263,7 +310,7 @@ if (!quieto) {
     pon(huevo, hx + tiemble, hy, L.huevo, rueda, partido ? 0 : 1);
     // La grieta se dibuja sobre el huevo y se apaga cuando las mitades se separan
     pon(grieta, hx + tiemble, hy, L.huevo, rueda, raja > 0 ? 1 - suave(0, 0.35, abre) : 0);
-    trazo.style.strokeDashoffset = (1 - raja).toFixed(3);
+    if (trazo._r !== raja) { trazo.style.strokeDashoffset = (1 - raja).toFixed(3); trazo._r = raja; }
     const sep = abre * L.huevo * 0.34 + sale * L.u * 0.5;
     pon(mitadI, sobre[0] - sep + tiemble, sobre[1] - sale * L.u * .12, L.huevo, rueda + abre * 24 - sale * 10, partido ? 1 - sale : 0);
     pon(mitadD, sobre[0] + sep + tiemble, sobre[1] - sale * L.u * .18, L.huevo, rueda - abre * 24 + sale * 10, partido ? 1 - sale : 0);
@@ -278,11 +325,13 @@ if (!quieto) {
     const r = mezcla(fw * .211 * asoma, fw * .75, plano);
     const fy = mezcla(sobre[1] + alto * .18, fondoPaila[1], cae * cae);
     const estira = 1 + Math.sin(cae * Math.PI) * .12;
-    frito.style.clipPath = `circle(${r.toFixed(1)}px at 50.1% 52.9%)`;
-    pon(frito, mezcla(sobre[0], fondoPaila[0], cae), fy, fw, Math.sin(t * .8) * 2 * plano, asoma > 0 ? 1 : 0, mezcla(estira, .42, plano) * (1 + Math.sin(t * 2.2) * .015 * plano));
+    const esc = pon(frito, mezcla(sobre[0], fondoPaila[0], cae), fy, fw, Math.sin(t * .8) * 2 * plano, asoma > 0 ? 1 : 0, mezcla(estira, .42, plano) * (1 + Math.sin(t * 2.2) * .015 * plano));
+    const cp = asoma > 0 ? `circle(${(r / esc).toFixed(1)}px at 50.1% 52.9%)` : 'circle(0px at 50% 50%)';
+    if (cp !== frito._cp) { frito.style.clipPath = cp; frito._cp = cp; }
     pon(paila, px, py, L.pailaW, 0, 0.92 + suave(0.8, 0.9, e) * .08);
-    notaIni.style.opacity = (0.85 * (1 - suave(0.1, 0.3, e))).toFixed(3);
-    notaFin.style.opacity = (0.85 * suave(0.8, 0.92, e)).toFixed(3);
+    const oi = (0.85 * (1 - suave(0.1, 0.3, e))).toFixed(2), of = (0.85 * suave(0.8, 0.92, e)).toFixed(2);
+    if (oi !== opIni) { notaIni.style.opacity = oi; opIni = oi; }
+    if (of !== opFin) { notaFin.style.opacity = of; opFin = of; }
   });
 }
 
@@ -456,14 +505,15 @@ if (!quieto) {
       return g;
     });
 
-    hay3d = true; raiz.classList.add('mov3d'); rep.style.height = 'calc(100vh + ' + n + ' * 46vh)';
-    $('#repAyuda').textContent = 'Baja con la rueda, desliza con el dedo o arrastra la repisa. Toca un producto para girarlo y verlo de cerca.';
+    // La repisa ya no secuestra el desplazamiento: bajar con la rueda o el dedo sigue de largo por la página.
+    // Los productos se recorren deslizando de lado (dedo, mouse o panel táctil), con las flechas o tocando un nombre.
+    hay3d = true; raiz.classList.add('mov3d');
+    $('#repAyuda').textContent = 'Desliza de lado o arrastra la repisa para ver los productos; para seguir, solo baja. Toca un producto para girarlo y verlo de cerca.';
     const ficha = { nombre: $('#repNombre'), desc: $('#repDesc'), n: $('#repN'), abrir: $('#repAbrir') }, lista = $('#repLista');
     const DIST = [7.4, 5.2, 3.9];
-    let pR = 0, foco = -1, abierto = false, zoom = 1, dist = DIST[1], arrastre = 0;
-    const rango = () => rep.offsetHeight - innerHeight;
-    const inicio = () => rep.getBoundingClientRect().top + scrollY;
-    const ir = i => scrollTo({ top: inicio() + limita(i, 0, n - 1) / (n - 1) * rango(), behavior: 'smooth' });
+    let pR = 0, objetivo = 0, foco = -1, abierto = false, zoom = 1, dist = DIST[1];
+    const porProducto = () => Math.max(120, lr.clientWidth * 0.32); // píxeles de arrastre para pasar de un producto al siguiente
+    const ir = i => { objetivo = limita(Math.round(i), 0, n - 1); };
     const ponAbierto = v => { abierto = v; ficha.abrir.setAttribute('aria-pressed', v); ficha.abrir.textContent = v ? 'Detener' : 'Girar y acercar'; zoom = v ? 2 : 1; };
     const enfoca = i => {
       foco = i; ponAbierto(false);
@@ -479,14 +529,15 @@ if (!quieto) {
     // Arrastrar con mouse o dedo en horizontal; el desplazamiento vertical sigue siendo el del navegador
     const rayo = new THREE.Raycaster(), punto = new THREE.Vector2();
     let ar = null;
-    lr.addEventListener('pointerdown', e => { ar = { x: e.clientX, y: e.clientY, top: scrollY, mov: false }; lr.setPointerCapture(e.pointerId); });
+    lr.addEventListener('pointerdown', e => { ar = { x: e.clientX, y: e.clientY, obj: objetivo, mov: false }; lr.setPointerCapture(e.pointerId); });
     lr.addEventListener('pointermove', e => {
       if (!ar) return; const dx = e.clientX - ar.x;
       if (!ar.mov && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(e.clientY - ar.y)) { ar.mov = true; lr.classList.add('arrastra'); }
-      if (ar.mov) scrollTo({ top: ar.top - dx * 1.7, behavior: 'instant' });
+      if (ar.mov) objetivo = limita(ar.obj - dx / porProducto(), -0.3, n - 0.7);
     });
     const suelta = e => {
       if (!ar) return; const fue = ar.mov, quietoClic = Math.hypot(e.clientX - ar.x, e.clientY - ar.y) < 8; ar = null; lr.classList.remove('arrastra');
+      if (fue) ir(objetivo); // al soltar, se acomoda en el producto más cercano
       if (fue || !quietoClic || e.type === 'pointercancel') return;
       const r = lr.getBoundingClientRect(); punto.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
       rayo.setFromCamera(punto, camR);
@@ -496,16 +547,22 @@ if (!quieto) {
     };
     lr.addEventListener('pointerup', suelta); lr.addEventListener('pointercancel', suelta);
     // Panel táctil: el gesto de lado también hace rodar la repisa
-    escenaRep.addEventListener('wheel', e => { if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) { e.preventDefault(); scrollBy(0, e.deltaX); } }, { passive: false });
+    // (la rueda vertical no se toca: la página sigue bajando)
+    let ruedaFin = 0;
+    escenaRep.addEventListener('wheel', e => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      e.preventDefault(); objetivo = limita(objetivo + e.deltaX / porProducto(), -0.3, n - 0.7);
+      clearTimeout(ruedaFin); ruedaFin = setTimeout(() => ir(objetivo), 140);
+    }, { passive: false });
     lr.addEventListener('dblclick', () => { zoom = zoom === 2 ? 1 : 2; });
 
     let antes = 0;
     cuadros.push(t => {
-      const dt = Math.min(0.05, t - antes); antes = t;
+      const dt = limita(t - antes, 0, 0.05); antes = t;
       if (!enPantalla.get(rep)) return;
       ajusta(rR, camR, lr);
-      pR = mezcla(pR, avance(rep), 0.1);
-      const camX = pR * (n - 1) * SEP, f = Math.round(avance(rep) * (n - 1));
+      pR = mezcla(pR, objetivo, 1 - Math.pow(1 - 0.14, Math.max(0.5, Math.min(4, dt * 60))));
+      const camX = pR * SEP, f = limita(Math.round(objetivo), 0, n - 1);
       if (f !== foco) enfoca(f);
       dist = mezcla(dist, DIST[zoom] * (camR.aspect < 0.8 ? 1.25 : 1), 0.08);
       camR.position.set(camX + cursor.sx * 0.25, 1.15 - cursor.sy * 0.12, dist);
