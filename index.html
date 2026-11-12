@@ -467,6 +467,15 @@ footer.funde{--fh:110px;padding-top:80px}
   footer{font-size:16px}
 }
 .mov .av .portada{text-shadow:0 0 10px var(--pizarra),0 0 18px var(--pizarra),0 0 3px var(--pizarra)}
+/* Huevitos blanco, café y azul detrás del título del huevo */
+.tit-huevos{position:relative;isolation:isolate}
+.tit-huevos h2{position:relative}
+.tit-huevos .hv{position:absolute;z-index:-1;height:auto;filter:drop-shadow(0 6px 6px rgba(28,28,26,.14));animation:hvMece 4.5s ease-in-out infinite}
+.tit-huevos .hv-b{width:46px;right:20%;top:-30px;transform:rotate(-14deg);animation-delay:-1s}
+.tit-huevos .hv-c{width:58px;right:7%;top:-12px;transform:rotate(10deg);animation-delay:-2.4s}
+.tit-huevos .hv-a{width:40px;right:-1%;top:-38px;transform:rotate(22deg);animation-delay:-.3s}
+@keyframes hvMece{0%,100%{translate:0 0}50%{translate:0 -5px}}
+@media (prefers-reduced-motion:reduce){.tit-huevos .hv{animation:none}}
 </style>
 </head>
 <body>
@@ -550,7 +559,7 @@ footer.funde{--fh:110px;padding-top:80px}
       <div class="col">
         <div class="panel" data-entra>
           <span class="etiqueta">El huevo</span>
-          <h2>Blanco, café o azul</h2>
+          <div class="tit-huevos"><svg class="hv hv-b" viewBox="0 0 60 76" aria-hidden="true"><path d="M30 2C14 2 3 30 3 47c0 16 12 27 27 27s27-11 27-27C57 30 46 2 30 2z" fill="#f6f1e6" stroke="#d9cfbd" stroke-width="2"/><ellipse cx="20" cy="26" rx="5" ry="9" fill="#fff" opacity=".45" transform="rotate(18 20 26)"/></svg><svg class="hv hv-c" viewBox="0 0 60 76" aria-hidden="true"><path d="M30 2C14 2 3 30 3 47c0 16 12 27 27 27s27-11 27-27C57 30 46 2 30 2z" fill="#c98a55" stroke="#a96d3f" stroke-width="2"/><ellipse cx="20" cy="26" rx="5" ry="9" fill="#fff" opacity=".45" transform="rotate(18 20 26)"/></svg><svg class="hv hv-a" viewBox="0 0 60 76" aria-hidden="true"><path d="M30 2C14 2 3 30 3 47c0 16 12 27 27 27s27-11 27-27C57 30 46 2 30 2z" fill="#b7d4d4" stroke="#8fb3b4" stroke-width="2"/><ellipse cx="20" cy="26" rx="5" ry="9" fill="#fff" opacity=".45" transform="rotate(18 20 26)"/></svg><h2>Blanco, café o azul</h2></div>
           <p>Vendemos huevo blanco y huevo café, por bandeja y por caja. Y ahora también huevo azul, de nuestra nueva raza de gallinas Novogen.</p>
           <p class="proveedor">Analizamos nuestros huevos con el laboratorio <img src="img/certilab.webp" alt="Certilab" width="320" height="92" loading="lazy"></p>
         </div>
