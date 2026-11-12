@@ -759,7 +759,7 @@ if (!quieto) {
   const emp = $('#emporio'), sab = $('#sabroLado');
   if (emp && sab) {
     const cuerpoS = $('.sl-cuerpo', sab), alaS = $('.sl-ala', sab), hola = $('.sl-hola', sab);
-    let vis = 0, tA = 0, quieta = false;
+    let vis = 0, tA = 0, quieta = false, tSaludo = -1, invita = false;
     cuadros.push(t => {
       const dt = t - tA > 0 && t - tA < 0.1 ? t - tA : 1 / 60; tA = t;
       const r = emp.getBoundingClientRect(), H = innerHeight;
@@ -775,7 +775,12 @@ if (!quieto) {
       const sube = suave(0.55, 1, vis);
       alaS.style.transform = `rotate(${(sube * (-128 + Math.sin(t * 8) * 22)).toFixed(1)}deg)`;
       const oh = suave(0.8, 1, vis);
-      hola.style.opacity = oh.toFixed(3); hola.style.transform = `translateY(${((1 - oh) * 8 + Math.sin(t * 3) * 2).toFixed(1)}px)`;
+      if (oh > 0.95 && tSaludo < 0) tSaludo = t;
+      if (vis < 0.3 && tSaludo >= 0) { tSaludo = -1; if (invita) { invita = false; hola.textContent = '¡Hola! Soy Sabrosita'; hola.classList.remove('carta'); } }
+      if (tSaludo >= 0 && !invita && t - tSaludo > 1.5) { invita = true; hola.textContent = '¡Abre nuestra carta!'; hola.classList.add('carta'); }
+      // un saltito al cambiar el mensaje
+      const salto = invita ? Math.max(0, 1 - (t - tSaludo - 1.5) / 0.35) : 0;
+      hola.style.opacity = oh.toFixed(3); hola.style.transform = `translateY(${((1 - oh) * 8 + Math.sin(t * 3) * 2 - Math.sin(salto * Math.PI) * 6).toFixed(1)}px) scale(${(1 + 0.12 * Math.sin(salto * Math.PI)).toFixed(3)})`;
     });
   }
 }

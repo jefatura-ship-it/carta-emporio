@@ -506,8 +506,9 @@ footer.funde{--fh:110px;padding-top:80px}
 .sl-cuerpo{position:relative;transform-origin:50% 100%;will-change:transform}
 .sl-cuerpo>img:first-child{display:block;width:100%;height:auto;filter:drop-shadow(0 12px 16px rgba(0,0,0,.35))}
 .sl-ala{position:absolute;left:85.33%;top:47.08%;width:14.67%;height:auto;transform-origin:31.8% 14.1%;will-change:transform}
-.sl-hola{position:absolute;left:70%;top:-4%;background:#fff;color:var(--carbon);font-size:13px;font-weight:700;line-height:1.15;padding:7px 11px;border-radius:14px 14px 14px 4px;box-shadow:0 8px 18px rgba(0,0,0,.28);white-space:nowrap;opacity:0;will-change:opacity,transform}
+.sl-hola{position:absolute;left:70%;top:-4%;background:#fff;color:var(--carbon);font-size:13px;font-weight:700;line-height:1.15;padding:7px 11px;border-radius:14px 14px 14px 4px;box-shadow:0 8px 18px rgba(0,0,0,.28);white-space:nowrap;opacity:0;text-decoration:none;pointer-events:auto;will-change:opacity,transform}
 @media (max-width:600px){.mov .sabro-lado{width:74px;left:0;bottom:7vh}.sl-hola{font-size:11px;padding:5px 8px}}
+.sl-hola.carta{background:var(--naranjo,#f9740d);color:#fff}
 </style>
 </head>
 <body>
@@ -930,7 +931,7 @@ footer.funde{--fh:110px;padding-top:80px}
     </div>
   </div>
 </section>
-<div class="sabro-lado" id="sabroLado" aria-hidden="true"><div class="sl-cuerpo"><img src="img/sabrosita-cuerpo.webp" alt="" width="600" height="701" loading="lazy"><img class="sl-ala" src="img/sabrosita-ala.webp" alt="" width="88" height="198" loading="lazy"><span class="sl-hola">¡Hola! Soy Sabrosita</span></div></div>
+<div class="sabro-lado" id="sabroLado" aria-hidden="true"><div class="sl-cuerpo"><img src="img/sabrosita-cuerpo.webp" alt="" width="600" height="701" loading="lazy"><img class="sl-ala" src="img/sabrosita-ala.webp" alt="" width="88" height="198" loading="lazy"><a class="sl-hola" href="carta/?local=emporio" tabindex="-1">¡Hola! Soy Sabrosita</a></div></div>
 
 <!-- =================== LA REPISA =================== -->
 <section class="rep" id="repisa" aria-labelledby="h-repisa">
