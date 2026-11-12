@@ -261,9 +261,10 @@ if (!quieto) {
   // Pinta el camino con la textura de tiza en un mapa de bits (una vez por tamaño de pantalla)
   const pintaMapa = (W, H, d) => {
     const f = $('#tiza').outerHTML.replace('id="tiza"', 'id="t"');
-    const v = L.via, svgTxt = `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.round(W * dpr)}" height="${Math.round(H * dpr)}" viewBox="0 0 ${W} ${H}"><defs>${f}</defs><g filter="url(#t)" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
-      `<path d="${d}" stroke="#f3f1ea" stroke-width="${v.toFixed(1)}"/><path d="${d}" stroke="#24302a" stroke-width="${(v - 8).toFixed(1)}"/>` +
-      `<path d="${d}" stroke="#f3f1ea" stroke-width="3" stroke-dasharray="16 18" opacity=".8"/></g></svg>`;
+    const v = L.via, capa = `<g filter="url(#t)" fill="none" stroke-linecap="round" stroke-linejoin="round">` +
+      `<path d="${d}" stroke="#fbfaf5" stroke-width="${v.toFixed(1)}"/><path d="${d}" stroke="#24302a" stroke-width="${(v - 13).toFixed(1)}"/>` +
+      `<path d="${d}" stroke="#fbfaf5" stroke-width="5" stroke-dasharray="18 16"/></g>`;
+    const svgTxt = `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.round(W * dpr)}" height="${Math.round(H * dpr)}" viewBox="0 0 ${W} ${H}"><defs>${f}</defs>${capa}${capa}</svg>`;
     const yo = ++version, img = new Image();
     img.onload = () => {
       if (yo !== version) return;
@@ -300,7 +301,9 @@ if (!quieto) {
     const tam = Math.max(20, u * .055);
     for (const s of [notaIni, notaFin]) s.setAttribute('viewBox', `0 0 ${W} ${H}`);
     for (const t of [txtIni, txtFin]) t.setAttribute('font-size', tam.toFixed(0));
-    txtIni.setAttribute('x', P[0][0].toFixed(0)); txtIni.setAttribute('y', (P[0][1] + L.via * .5 + tam * 1.05).toFixed(0));
+    // «Oro Verde»: centrado bajo el comienzo en escritorio; debajo y a la izquierda en celular (ahí no lo tapa el huevo ni cruza el camino)
+    if (ancho) { txtIni.setAttribute('text-anchor', 'middle'); txtIni.setAttribute('x', P[0][0].toFixed(0)); txtIni.setAttribute('y', (P[0][1] + L.via * .5 + L.huevo * .55 + tam).toFixed(0)); }
+    else { txtIni.setAttribute('text-anchor', 'start'); txtIni.setAttribute('x', P[0][0].toFixed(0)); txtIni.setAttribute('y', (P[0][1] + L.via * .5 + tam * 1.05).toFixed(0)); }
     if (ancho) { txtFin.setAttribute('text-anchor', 'end'); txtFin.setAttribute('x', (L.paila[0] - L.pailaW * .52).toFixed(0)); txtFin.setAttribute('y', (L.paila[1] + L.pailaW * .16).toFixed(0)); }
     else { txtFin.setAttribute('text-anchor', 'middle'); txtFin.setAttribute('x', (L.paila[0] - L.pailaW * .1).toFixed(0)); txtFin.setAttribute('y', (L.paila[1] + L.pailaW * .5).toFixed(0)); }
     // En celular el contenido tapa la pizarra salvo en la ventana libre al comienzo de cada paso: los momentos clave caen ahí
@@ -320,7 +323,7 @@ if (!quieto) {
   // Dibuja en el lienzo solo la parte del camino ya recorrida (más un poco delante del huevo)
   const pintaVia = s => {
     if (!mapa) return;
-    const vis = Math.min(largo, s + largo * .22 + 30);
+    const vis = largo;
     if (Math.abs(vis - visto) < 0.4) return;
     visto = vis;
     cv.setTransform(1, 0, 0, 1, 0, 0); cv.globalCompositeOperation = 'source-over'; cv.clearRect(0, 0, via.width, via.height);
