@@ -208,6 +208,7 @@ if (!quieto) {
       const li = b.parentElement; lista.scrollTo({ left: li.offsetLeft - lista.clientWidth / 2 + li.offsetWidth / 2, behavior: 'smooth' });
     };
     botones.forEach((b, i) => b.addEventListener('click', () => ir(i)));
+    enfoca(0); // la ficha parte con el primer producto, aunque la repisa todavía no esté en pantalla
     $('#repAnt').onclick = () => ir(foco - 1); $('#repSig').onclick = () => ir(foco + 1);
     $('#repMas').onclick = () => { zoom = Math.min(2, zoom + 1); }; $('#repMenos').onclick = () => { zoom = Math.max(0, zoom - 1); };
     ficha.abrir.onclick = () => ponAbierto(!abierto);
