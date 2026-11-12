@@ -331,6 +331,19 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 /* Formato de venta de los huevos */
 .fmt{display:flex;align-items:center;gap:8px;margin:7px 0 4px;font-size:14px;font-weight:700;color:var(--campo)}
 .fmt select{min-height:40px;padding:6px 10px;border:1.5px solid var(--campo);border-radius:10px;background:#fff;color:var(--campo);font:700 15px var(--texto,inherit);max-width:100%}
+/* Pasar de una sección a otra */
+.pasasec{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:22px 0 10px;padding-top:16px;border-top:1px solid #e6dfd0}
+.pasasec button{display:flex;flex-direction:column;gap:2px;min-height:52px;padding:9px 14px;border-radius:14px;border:1.5px solid var(--campo);background:#fff;color:var(--campo);font-family:inherit;font-size:15px;font-weight:700;line-height:1.2;cursor:pointer;max-width:100%}
+.pasasec button small{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.75}
+.pasasec .ant{justify-self:start;align-items:flex-start;text-align:left}
+.pasasec .sig{justify-self:end;align-items:flex-end;text-align:right;background:var(--campo);color:#fff}
+.pasasec .n{font-size:13px;color:#6b6b66;white-space:nowrap}
+#carta{overflow-x:clip}
+.grupo.pag-der{animation:pagDer .38s cubic-bezier(.2,.8,.2,1)}
+.grupo.pag-izq{animation:pagIzq .38s cubic-bezier(.2,.8,.2,1)}
+@keyframes pagDer{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+@keyframes pagIzq{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:none}}
+@media (max-width:560px){.pasasec{grid-template-columns:1fr 1fr}.pasasec .n{grid-column:1/-1;grid-row:1;text-align:center}}
 </style>
 </head>
 <body>
@@ -354,7 +367,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 <section class="wrap" aria-label="Cómo pedir">
   <button type="button" class="mayorBtn" id="bMayor" aria-pressed="false"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13v10H3z"/><path d="M16 10h3l2 3v4h-5"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg><span>Ver precios por mayor</span></button>
   <p class="aviso" id="aviso" hidden>Carta en revisión: los precios son provisorios, algunos están por confirmar y los productos en rojo quedaron con stock 0 en el conteo.</p>
-  <p class="intro"><b>Arma tu pedido y te lo tenemos listo</b><span id="introTxt">Elige lo que quieres, envíanos el pedido por WhatsApp y pasa a retirarlo.</span></p>
+  <p class="intro"><b>Arma tu pedido y te lo tenemos listo</b><span id="introTxt">Primero elige lo que quieres; luego envíanos el pedido por WhatsApp y, cuando esté listo, pasa a retirarlo.</span></p>
   <div class="reg" id="reg" hidden>
     <div><b id="regTit"></b><span id="regTxt"></span><span class="regcod" id="regCod" hidden></span></div>
     <button type="button" class="btn prim mini" id="regBtn">Registrarme</button>
@@ -368,17 +381,17 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 <main class="wrap" id="carta" tabindex="-1"></main>
 <aside class="wrap avi" id="g-avicola" aria-labelledby="aviTit">
   <h2 id="aviTit">Pedidos a la avícola</h2>
-  <p class="avi-sub">Estos pedidos no van al Emporio: se envían por WhatsApp directo al número que corresponde.</p>
+  <p class="avi-sub">Estos pedidos no van al Emporio, sino que se envían por WhatsApp directamente al número que corresponde.</p>
   <div class="avi-item">
     <b>Pollitas Oro Verde de 14 semanas</b>
-    <small>Llegan a nuestro pabellón con 1 día de vida, cumplen el calendario de vacunación y se retiran a la semana 14. Precio y fecha de entrega: consúltalos al pedir.</small>
+    <small>Llegan a nuestro pabellón con 1 día de vida; luego cumplen el calendario de vacunación y, finalmente, se retiran en la semana 14. En cuanto al precio y la fecha de entrega, consúltalos al momento de pedir.</small>
     <label for="aviPol">¿Cuántas pollitas? <input id="aviPol" type="number" inputmode="numeric" min="1" step="1" placeholder="Ej.: 20"></label>
     <a class="btn wsp" id="aviPolBtn" href="https://wa.me/56966087529" target="_blank" rel="noopener">Pedir al WhatsApp de crianzas</a>
     <a class="avi-otro" href="https://www.instagram.com/pollitasoroverde/" target="_blank" rel="noopener">Instagram @pollitasoroverde</a>
   </div>
   <div class="avi-item">
     <b>Alimento para aves</b>
-    <small>De ALL FOOD, nuestra fábrica de alimentos. Elige el tipo y a quién enviar el pedido. Precio: consúltalo al pedir.</small>
+    <small>Lo hace ALL FOOD, nuestra fábrica de alimentos. Primero elige el tipo y, después, a quién enviar el pedido. En cuanto al precio, consúltalo al momento de pedir.</small>
     <div class="modos" role="group" aria-label="Tipo de alimento"><button type="button" class="mchip" data-tipoali="ponedora" aria-pressed="true">Ponedora</button><button type="button" class="mchip" data-tipoali="pollita" aria-pressed="false">Pollita</button></div>
     <label for="aviAli">¿Cuántos sacos? <input id="aviAli" type="number" inputmode="numeric" min="1" step="1" placeholder="Ej.: 5"></label>
     <a class="btn wsp" id="aviAliBtn" href="https://wa.me/56954158511" target="_blank" rel="noopener">Enviar a Distribuidora Santa Bárbara</a>
@@ -392,7 +405,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
   <footer class="pie" id="pie">
     <h2 id="pieNombre"></h2>
     <p id="pieDatos"></p>
-    <p>Los precios están en pesos chilenos. Usar la carta y armar el pedido no tiene costo: pagas en el local al retirar y no se agregan cargos al total.</p>
+    <p>Los precios están en pesos chilenos. Además, usar la carta y armar el pedido no tiene costo, ya que pagas en el local al retirar y, por lo tanto, no se agregan cargos al total.</p>
     <p><a href="../">Visita nuestra página web: Del campo a tu mesa</a></p>
     <p>Instagram: <a href="https://www.instagram.com/emporio.sabroso/" target="_blank" rel="noopener">@emporio.sabroso</a> · <a href="https://www.instagram.com/pollitasoroverde/" target="_blank" rel="noopener">@pollitasoroverde</a></p>
     <nav aria-label="Información legal"><ul>
@@ -416,7 +429,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 <section class="galleta" id="galleta" aria-labelledby="galletaTit" hidden>
   <div class="wrap">
     <h2 id="galletaTit">Qué guarda esta carta en tu celular</h2>
-    <p><b>Sin cookies de publicidad ni seguimiento.</b> Guardamos tu pedido en este celular y, si aceptas, también tu nombre y preferencias. <a href="../legal.html#cookies">Ver detalle</a></p>
+    <p><b>Sin cookies de publicidad ni de seguimiento.</b> Solo guardamos tu pedido en este celular y, si aceptas, también tu nombre y tus preferencias. <a href="../legal.html#cookies">Ver detalle</a></p>
     <div class="dos">
       <button type="button" class="btn" id="gNec">Solo lo necesario</button>
       <button type="button" class="btn" id="gTodo">Aceptar todo</button>
@@ -448,7 +461,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
     <div class="wrap carro-cuerpo">
       <div id="carroLista" class="lista"></div>
       <div class="carro-vacio" id="carroVacio" hidden>
-        <p><b>Tu carro está vacío.</b> Agrega productos desde la carta con el botón <span aria-hidden="true">+</span><span class="sr">más</span> y aquí podrás revisarlos y cambiar cantidades.</p>
+        <p><b>Tu carro está vacío.</b> Para empezar, agrega productos desde la carta con el botón <span aria-hidden="true">+</span><span class="sr">más</span>; luego, aquí podrás revisarlos y cambiar las cantidades.</p>
         <button type="button" class="btn prim" id="volverVacio"><span aria-hidden="true">←</span> Volver a la carta</button>
       </div>
     </div>
@@ -480,7 +493,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
       <label class="check"><input type="checkbox" id="rOk"><span>Quiero recibir ofertas por WhatsApp o teléfono <span class="opc">(opcional)</span>. Puedo darme de baja cuando quiera.</span></label>
       <p class="msgreg" id="rMsg" role="alert" hidden></p>
       <button class="btn prim" id="rGuardar">Registrarme</button>
-      <p class="nota">Usamos tus datos solo para tu descuento y, si marcas la casilla de ofertas, para avisarte. No los vendemos ni los compartimos. Puedes pedir que los eliminemos cuando quieras.</p>
+      <p class="nota">Usamos tus datos solo para tu descuento y, si marcas la casilla de ofertas, también para avisarte. En ningún caso los vendemos ni los compartimos; además, puedes pedir que los eliminemos cuando quieras.</p>
     </div>
   </section>
 </div>
@@ -491,7 +504,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
       <h3 id="tituloHoja">Tu pedido <button type="button" class="cerrar" id="cerrar">Seguir eligiendo</button></h3>
       <div class="ticket" id="ticket"></div>
       <div class="total"><span>Total aprox.</span><span id="totalHoja"></span></div>
-      <p class="legalnota">Pagas en el local al retirar. No hay cargos por armar o enviar el pedido. Si algún precio cambió, te avisamos antes de pagar y puedes dejar el pedido sin costo.</p>
+      <p class="legalnota">Pagas en el local al retirar y, además, no hay cargos por armar o enviar el pedido. Si algún precio cambió, te avisamos antes de pagar; en ese caso, puedes dejar el pedido sin costo.</p>
       <div class="alerta" id="alertaTapas" role="status" aria-live="polite" hidden></div>
       <div class="campo" id="campoNombre">
         <label for="nombre">Tu nombre</label>
@@ -1001,7 +1014,7 @@ $("datos").textContent=L.datos;
 $("logo").src=L.logo; $("logo").alt=L.nombre;
 if(L.logoBadge)$("logo").classList.add("badge");
 $("aviso").hidden=!PRUEBA;
-if(L.instagram)$("introTxt").textContent="Elige lo que quieres, envíanos el pedido por WhatsApp o Instagram y pasa a retirarlo.";
+if(L.instagram)$("introTxt").textContent="Primero elige lo que quieres; luego envíanos el pedido por WhatsApp o Instagram y, cuando esté listo, pasa a retirarlo.";
 const otraKey=KEY==="emporio"?"distribuidora":"emporio";
 $("otra").innerHTML=`¿Buscas la carta de ${LOCALES[otraKey].nombre}? <a href="?local=${otraKey}">Ábrela aquí</a>`;
 
@@ -1090,15 +1103,15 @@ function pintarReg(){
   }else if(cliente&&cliente.usado&&!enGracia()){
     $("reg").classList.remove("ok");
     $("regTit").textContent=`Hola, ${cliente.n1}: ya usaste tu descuento de bienvenida`;
-    $("regTxt").textContent=cliente.acepta?"Gracias por tu compra. Te avisaremos de nuevas ofertas.":"Gracias por tu compra.";
+    $("regTxt").textContent=cliente.acepta?"Gracias por tu compra; además, te avisaremos cuando haya nuevas ofertas.":"Gracias por tu compra.";
     $("regBtn").textContent="Mis datos";
   }else if(cliente){
     $("regTit").textContent=`Hola, ${cliente.n1}: tienes ${DCTO}% de descuento en esta compra`;
-    $("regTxt").textContent=`Se usa una sola vez, en productos a precio normal. Válido hasta el ${ultimoDia}.`;
+    $("regTxt").textContent=`Se usa una sola vez y solo en productos a precio normal. Además, es válido hasta el ${ultimoDia}.`;
     $("regBtn").textContent="Mis datos";
   }else{
     $("regTit").textContent=`Regístrate y obtén ${DCTO}% en tu compra`;
-    $("regTxt").textContent=`Solo tus nombres, apellidos y celular. Válido una vez, hasta el ${ultimoDia}.`;
+    $("regTxt").textContent=`Solo te pedimos tus nombres, apellidos y celular. Además, es válido una vez, hasta el ${ultimoDia}.`;
     $("regBtn").textContent="Registrarme";
   }
 }
@@ -1235,7 +1248,7 @@ $("cats").innerHTML=cats.map((c,i)=>`<button class="chip${c===FAV?" fav":""}" da
   mn.addEventListener("click",e=>{const b=e.target.closest("button[data-ir]");if(!b)return;cerrarHoja("veloMenu");
     document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-current",x.dataset.ir===b.dataset.ir));
     const ch=document.querySelector(`.chip[data-ir="${b.dataset.ir}"]`);if(ch)ch.scrollIntoView({block:"nearest",inline:"center"});
-    $("g-"+b.dataset.ir).scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})});
+    const id="g-"+b.dataset.ir;if(esSeccion(id))verSeccion(id,{enfocar:true});else $(id).scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})});
 })();
 /* Fila de categorías: flechas, arrastre con el mouse y rueda de lado */
 (()=>{const fila=$("cats"),izq=$("catIzq"),der=$("catDer");
@@ -1266,6 +1279,32 @@ $("carta").innerHTML=cats.map(c=>`
     <h2>${c===FAV?ICONOS._fav:(ICONOS[c]||(c==="Hueveras"?ICONOS.Huevos:ICONOS._))}${c}</h2>
     <div class="lista">${deCat(c).map(p=>card(p,c)).join("")}</div>
   </section>`).join("");
+/* La carta va sección por sección: se ve una a la vez y al final de cada una hay botones para pasar a la anterior o a la siguiente */
+const SECC=[...document.querySelectorAll("#carta .grupo")];
+const nomSec=g=>g.querySelector("h2").textContent.trim();
+SECC.forEach((g,i)=>{const a=SECC[i-1],sg=SECC[i+1],nav=document.createElement("nav");
+  nav.className="pasasec";nav.setAttribute("aria-label","Cambiar de sección");
+  nav.innerHTML=(a?`<button type="button" class="ant" data-sec="${a.id}"><small>Anterior</small><span><span aria-hidden="true">← </span>${nomSec(a)}</span></button>`:"<span></span>")
+    +`<span class="n">Sección ${i+1} de ${SECC.length}</span>`
+    +(sg?`<button type="button" class="sig" data-sec="${sg.id}"><small>Siguiente</small><span>${nomSec(sg)}<span aria-hidden="true"> →</span></span></button>`:`<button type="button" class="sig" data-sec="${SECC[0].id}"><small>Terminaste la carta</small><span>Volver a la primera<span aria-hidden="true"> ↺</span></span></button>`);
+  g.appendChild(nav)});
+function verSeccion(id,{enfocar=false,desplazar=true}={}){
+  const g=SECC.find(x=>x.id===id)||SECC[0];
+  /* como pasar de página: la nueva sección entra de lado (desde la derecha si va hacia adelante) */
+  const antes=SECC.findIndex(x=>!x.hidden),ahora=SECC.indexOf(g);
+  SECC.forEach(x=>{x.hidden=x!==g});
+  if(antes>=0&&antes!==ahora&&!matchMedia("(prefers-reduced-motion:reduce)").matches){g.classList.remove("pag-der","pag-izq");void g.offsetWidth;g.classList.add(ahora>antes?"pag-der":"pag-izq")}
+  document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-current","g-"+x.dataset.ir===g.id));
+  const ch=document.querySelector(`.chip[data-ir="${g.id.slice(2)}"]`);if(ch)ch.scrollIntoView({block:"nearest",inline:"center"});
+  guardaPref("seccion-"+KEY,g.id);
+  if(desplazar)g.scrollIntoView({behavior:"auto",block:"start"});
+  if(enfocar){const h=g.querySelector("h2");h.tabIndex=-1;h.focus({preventScroll:true})}
+}
+const esSeccion=id=>SECC.some(x=>x.id===id);
+/* antes de ir a un producto (desde el carro o un aviso) se muestra su sección */
+const asegura=el=>{const g=el&&el.closest(".grupo");if(g&&g.hidden)verSeccion(g.id,{desplazar:false});return el};
+$("carta").addEventListener("click",e=>{const b=e.target.closest("button[data-sec]");if(b)verSeccion(b.dataset.sec,{enfocar:true})});
+verSeccion(leePref("seccion-"+KEY)||SECC[0].id,{desplazar:false});
 const repintar=p=>{document.querySelectorAll(`article[data-prod="${p.cod}"]`).forEach(a=>{a.outerHTML=card(p,a.id?null:FAV)});refrescar()};
 function ajustarTope(p){const tp=topeDe(p);if(tp==null)return;const kp=clave(p.cod,"P");
   while(unidadesEn(p)>tp){if(cart[p.cod]){if(!--cart[p.cod])delete cart[p.cod]}else if(cart[kp]){if(!--cart[kp])delete cart[kp]}else break}guardar()}
@@ -1304,7 +1343,7 @@ $("bMayor").onclick=()=>{const on=document.body.classList.toggle("vermayor");$("
 $("cats").addEventListener("click",e=>{
   const b=e.target.closest(".chip"); if(!b)return;
   document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-current",x===b));
-  $("g-"+b.dataset.ir).scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"});
+  const id="g-"+b.dataset.ir;if(esSeccion(id))verSeccion(id,{enfocar:true});else $(id).scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"});
 });
 
 const POS=Object.fromEntries(L.productos.map((p,i)=>[p.cod,i]));
@@ -1385,7 +1424,7 @@ $("carta").addEventListener("click",e=>{
     const tapa=L.productos.find(p=>p.cod===b.dataset.env); if(!tapa)return;
     destacados=tapa.envase.filter(c=>$("p-"+c)); if(!destacados.length)return;
     volverA=tapa.cod;
-    $("p-"+destacados[0]).scrollIntoView({behavior:mov(),block:"center"});
+    asegura($("p-"+destacados[0])).scrollIntoView({behavior:mov(),block:"center"});
     marcar(destacados);
     $("volver").textContent="↩ Volver a la tapa"; $("volver").classList.remove("listo"); $("volver").hidden=false;
     return;
@@ -1397,7 +1436,7 @@ $("carta").addEventListener("click",e=>{
 });
 $("volver").onclick=()=>{
   if(!volverA)return;
-  $("p-"+volverA).scrollIntoView({behavior:mov(),block:"center"});
+  asegura($("p-"+volverA)).scrollIntoView({behavior:mov(),block:"center"});
   marcar([volverA]);
   volverA=null; destacados=[]; $("volver").hidden=true;
 };
@@ -1485,7 +1524,7 @@ $("alertaTapas").addEventListener("click",e=>{
   const a=e.target.closest("[data-agrega]");
   if(a){cart[a.dataset.agrega]=(cart[a.dataset.agrega]||0)+Number(a.dataset.n);guardar();refrescar();pintarHoja();actualizarEnlaces();return}
   const v=e.target.closest("[data-verenv]");
-  if(v){cerrar();const t=L.productos.find(p=>p.cod===v.dataset.verenv);const c=t&&t.envase.find(c=>$("p-"+c));if(c){$("p-"+c).scrollIntoView({behavior:mov(),block:"center"});marcar(t.envase.filter(x=>$("p-"+x)))}}
+  if(v){cerrar();const t=L.productos.find(p=>p.cod===v.dataset.verenv);const c=t&&t.envase.find(c=>$("p-"+c));if(c){asegura($("p-"+c)).scrollIntoView({behavior:mov(),block:"center"});marcar(t.envase.filter(x=>$("p-"+x)))}}
 });
 $("cerrar").onclick=cerrar;
 $("velo").addEventListener("click",e=>{if(e.target===$("velo"))cerrar()});
