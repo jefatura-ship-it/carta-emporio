@@ -135,15 +135,21 @@ if (!quieto) {
     `<circle cx="20" cy="29" r="7" fill="#1a1a1a"/><circle cx="76" cy="29" r="7" fill="#1a1a1a"/><circle class="faro" cx="2" cy="16" r="9" fill="#fff1b8" opacity="0"/><rect x="0" y="14" width="4" height="4" fill="#fff3c4"/></g>`;
   const AUTOS = COLORES_AUTO.map((col, i) => ({ x0: i * (ANCHO / COLORES_AUTO.length) + azar() * 300, v: 210 + azar() * 140, col }));
   const carreta = '<g class="carreta"><g class="caballo"><path d="M0 0 q10 -16 34 -14 q16 1 22 -14 l8 -10 4 6 -4 14 q-2 12 -12 18 v26 h-6 v-22 h-30 v22 h-6 v-24 q-10 -2 -10 -2z" fill="#6b4a2b"/><path d="M58 -32 l6 -8 2 8z" fill="#4a3320"/></g>' +
-    '<path d="M-6 -6 h-30" stroke="#4a3320" stroke-width="3"/><rect x="-96" y="-22" width="60" height="22" rx="3" fill="#a0784a"/><path d="M-96 -22 h60" stroke="#6b4a2b" stroke-width="4"/>' +
-    '<g class="rueda-c"><circle cx="-66" cy="4" r="14" fill="none" stroke="#4a3320" stroke-width="4"/><path d="M-80 4h28M-66 -10v28" stroke="#4a3320" stroke-width="2.5"/></g></g>';
+    '<g class="caja"><path d="M-6 -6 h-30" stroke="#4a3320" stroke-width="3"/><rect x="-96" y="-22" width="60" height="22" rx="3" fill="#a0784a"/><path d="M-96 -22 h60" stroke="#6b4a2b" stroke-width="4"/><path d="M-70 0 v6" stroke="#4a3320" stroke-width="4"/>' +
+    '<g class="cochero"><path d="M-50 -24 h13 v14" stroke="#2b2b28" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<rect x="-58" y="-47" width="15" height="25" rx="5" fill="#3d5a80"/><path d="M-46 -41 l11 5" stroke="#3d5a80" stroke-width="5" stroke-linecap="round"/>' +
+    '<circle cx="-34" cy="-36" r="2.6" fill="#c99a76"/><circle cx="-50" cy="-54" r="7" fill="#c99a76"/>' +
+    '<path d="M-63 -58.5 h26" stroke="#d9b36d" stroke-width="3" stroke-linecap="round"/><path d="M-56 -58 q6 -12 13 0z" fill="#d9b36d"/><path d="M-55.5 -60 h12" stroke="#6b4a2b" stroke-width="2"/></g></g>' +
+    '<path class="riendas" d="M-34 -36 Q14 -16 61 -31" stroke="#2b1d12" stroke-width="1.6" fill="none"/>' +
+    '<g class="rueda-suelta"><g class="rueda-c"><circle cx="-66" cy="4" r="14" fill="none" stroke="#4a3320" stroke-width="4"/><path d="M-80 4h28M-66 -10v28" stroke="#4a3320" stroke-width="2.5"/></g></g></g>';
   const persona = (i, col) => `<g class="persona" data-i="${i}"><circle cx="0" cy="-46" r="6" fill="#c99a76"/><rect x="-6" y="-39" width="12" height="20" rx="4" fill="${col}"/>` +
     `<path class="pi" d="M-2 -20 v20" stroke="#2b2b28" stroke-width="4" stroke-linecap="round"/><path class="pd" d="M2 -20 v20" stroke="#2b2b28" stroke-width="4" stroke-linecap="round"/></g>`;
   const GENTE = [['#2f6b3f', -1], ['#c8281f', 1], ['#2f5f8a', -1], ['#d9a520', 1], ['#8a5a9e', -1]].map(([col, lado], i) => ({ col, lado, fase: i / 5 }));
   const vivosSvg = `<svg class="vivos" viewBox="0 0 ${ANCHO} 600" xmlns="http://www.w3.org/2000/svg">` +
-    `<g class="bodega"><rect x="5168" y="380" width="196" height="120" fill="#141412"/><g class="cortina"><rect x="5168" y="380" width="196" height="120" fill="#b4b8ba"/>` +
-    Array.from({ length: 14 }, (_, i) => `<rect x="5168" y="${384 + i * 8.5}" width="196" height="2.5" fill="#8f9496"/>`).join('') + `</g><rect x="5168" y="372" width="196" height="10" fill="#262623"/>` +
-    `<text x="5266" y="376" text-anchor="middle" ${LETRA} font-size="11" fill="#e8e4da">BODEGA</text></g>` +
+    `<defs><radialGradient id="rojoLuz"><stop offset="0" stop-color="#ff5a3c" stop-opacity=".85"/><stop offset="1" stop-color="#ff5a3c" stop-opacity="0"/></radialGradient></defs>` +
+    `<g class="bodega"><rect x="5168" y="380" width="184" height="120" fill="#141412"/><g class="trasera" opacity="0"><g class="trasera-c"><rect x="-85" y="-150" width="170" height="122" rx="6" fill="#fbfaf6" stroke="#1c1c1a" stroke-width="4"/><path d="M0 -148v118" stroke="#cfc9bb" stroke-width="3"/><rect x="-9" y="-78" width="5" height="22" rx="2" fill="#8f9496"/><rect x="4" y="-78" width="5" height="22" rx="2" fill="#8f9496"/><circle cx="0" cy="-112" r="27" fill="#fff" stroke="#e6e1d6" stroke-width="2"/><image href="img/emporio-sello-chico.png" x="-27" y="-139" width="54" height="54"/><rect x="-90" y="-30" width="180" height="13" rx="3" fill="#1c1c1a"/><rect x="-15" y="-27" width="30" height="9" rx="1" fill="#f4f1e6"/><circle class="freno" cx="-76" cy="-40" r="22" fill="url(#rojoLuz)"/><circle class="freno" cx="76" cy="-40" r="22" fill="url(#rojoLuz)"/><rect x="-84" y="-46" width="15" height="11" rx="2" fill="#e0301e"/><rect x="69" y="-46" width="15" height="11" rx="2" fill="#e0301e"/><rect x="-76" y="-18" width="32" height="20" rx="5" fill="#1a1a1a"/><rect x="44" y="-18" width="32" height="20" rx="5" fill="#1a1a1a"/><rect class="sombra" x="-92" y="-152" width="184" height="156" fill="#0b0b0a" opacity="0"/></g></g><g class="cortina"><rect x="5168" y="380" width="184" height="120" fill="#b4b8ba"/>` +
+    Array.from({ length: 14 }, (_, i) => `<rect x="5168" y="${384 + i * 8.5}" width="184" height="2.5" fill="#8f9496"/>`).join('') + `</g><rect x="5168" y="372" width="184" height="10" fill="#262623"/>` +
+    `<text x="5260" y="376" text-anchor="middle" ${LETRA} font-size="11" fill="#e8e4da">BODEGA</text></g>` +
     AUTOS.map((a, i) => auto(i, a.col)).join('') + carreta + GENTE.map((g, i) => persona(i, g.col)).join('') + '</svg>';
   const frenteCapa = `<div class="capa frente">${frente}<div class="copia tarde">${frente}</div><div class="copia noche">${frente}</div><div class="copia luces">${svg(ANCHO, luces)}</div>${vivosSvg}</div>`;
 
@@ -156,14 +162,20 @@ if (!quieto) {
 
   const estrellas = Array.from({ length: 90 }, () => { const s = (0.8 + azar() * 1.8).toFixed(1); return `<i style="left:${(azar() * 100).toFixed(1)}%;top:${(azar() * 58).toFixed(1)}%;width:${s}px;height:${s}px;opacity:${(0.35 + azar() * 0.65).toFixed(2)}"></i>`; }).join('');
   const paisaje = $('#paisaje');
-  paisaje.innerHTML = `<div class="cielo"></div><div class="v-sol"></div><div class="capa">${cordillera}</div><div class="capa">${cerros}</div>` +
-    `<div class="velo tarde"></div><div class="velo noche"></div><div class="estrellas">${estrellas}</div><div class="v-luna"></div>${frenteCapa}<div class="camion">${camion}<div class="haz"></div></div>`;
+  paisaje.innerHTML = `<div class="cielo"></div><div class="v-sol"></div><div class="nubes"><i></i><i></i><i></i><i></i><i></i></div><div class="capa">${cordillera}</div><div class="capa">${cerros}</div>` +
+    `<div class="velo tarde"></div><div class="velo noche"></div><div class="estrellas">${estrellas}</div><div class="v-luna"></div>${frenteCapa}<div class="velo tormenta"></div><div class="camion">${camion}<div class="haz"></div></div><canvas class="lluvia"></canvas><div class="relampago"></div>`;
 
   const viaje = vigila($('#viaje')), escena = $('.viaje-escena'), capas = $$(':scope > .capa', paisaje), frenteEl = $('.capa.frente', paisaje);
   const cielo = $('.cielo', paisaje), sol = $('.v-sol', paisaje), luna = $('.v-luna', paisaje), est = $('.estrellas', paisaje);
   const veloT = $('.velo.tarde', paisaje), veloN = $('.velo.noche', paisaje), copT = $('.copia.tarde', paisaje), copN = $('.copia.noche', paisaje), copL = $('.copia.luces', paisaje);
   const vivos = $('.vivos', paisaje), autosEl = $$('.auto', vivos), farosEl = $$('.faro', vivos), carretaEl = $('.carreta', vivos), caballoEl = $('.caballo', vivos), ruedaC = $('.rueda-c', vivos);
-  const genteEl = $$('.persona', vivos), cortina = $('.cortina', vivos);
+  const genteEl = $$('.persona', vivos), cortina = $('.cortina', vivos), cajaC = $('.caja', vivos), sueltaC = $('.rueda-suelta', vivos), riendas = $('.riendas', vivos);
+  const traseraEl = $('.trasera', vivos), traseraC = $('.trasera-c', vivos), sombraT = $('.sombra', traseraEl), frenos = $$('.freno', traseraEl);
+  // Tormenta en Oro Verde: nubes, lluvia (lienzo), relámpagos y el temblor del trueno
+  const nubes = $('.nubes', paisaje), veloTo = $('.velo.tormenta', paisaje), lluvia = $('.lluvia', paisaje), lctx = lluvia.getContext('2d'), relamp = $('.relampago', paisaje);
+  const GOTAS = Array.from({ length: 240 }, () => ({ x: Math.random(), y: Math.random(), v: 0.85 + Math.random() * 0.6, l: 0.6 + Math.random() * 0.8 }));
+  let proximoRayo = 0, rayo = null, lluviaLimpia = true, tAntV = 0;
+  const haceRayo = () => { const p = [[0.2 + Math.random() * 0.6, 0]]; let [x, y] = p[0]; while (y < 0.5) { y += 0.04 + Math.random() * 0.05; x += (Math.random() - 0.5) * 0.06; p.push([x, y]); } return p; };
   const cam = $('.camion', paisaje), camSvg = $('svg', cam), haz = $('.haz', cam), hitos = $$('#hitos li');
   const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
   const tono = (a, b, k) => 'rgb(' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * k)).join(',') + ')';
@@ -174,10 +186,10 @@ if (!quieto) {
     if (!enPantalla.get(viaje)) return;
     pv = mezcla(pv, avance(viaje), 0.12);
     const W = innerWidth, esc = frenteEl.offsetHeight / 600;
-    let centro = X0;
+    let centro = X0, corrF = 0;
     capas.forEach(capa => {
       let max = Math.max(0, capa.offsetWidth - W);
-      if (capa === frenteEl) { max = Math.min(max, Math.max(0, X_EMPORIO * esc - W / 2)); centro = (pv * max + W / 2) / esc; } // al llegar, el Emporio queda al centro
+      if (capa === frenteEl) { max = Math.min(max, Math.max(0, X_EMPORIO * esc - W / 2)); centro = (pv * max + W / 2) / esc; corrF = pv * max; } // al llegar, el Emporio queda al centro
       capa.style.transform = `translate3d(${(-pv * max).toFixed(1)}px,0,0)`;
     });
     const u = limita((centro - X0) / (X_EMPORIO - X0));
@@ -189,7 +201,7 @@ if (!quieto) {
       cielo.style.background = `linear-gradient(${arriba},${abajo} 78%)`;
       const s = limita(u / 0.74);
       sol.style.left = (4 + 88 * s).toFixed(2) + '%'; sol.style.top = (66 - 52 * Math.sin(Math.PI * s)).toFixed(2) + '%';
-      sol.style.opacity = (1 - suave(0.7, 0.8, u)).toFixed(3);
+      sol.style.opacity = ((1 - suave(0.7, 0.8, u)) * (1 - 0.85 * (suave(0.14, 0.22, u) * (1 - suave(0.4, 0.48, u))))).toFixed(3);
       sol.style.background = u < 0.2 ? tono('#ffc89a', '#fff4c4', u / 0.2) : tono('#fff4c4', '#ff9f5a', limita((u - 0.4) / 0.3));
       luna.style.opacity = suave(0.78, 0.9, u).toFixed(3); est.style.opacity = suave(0.8, 0.95, u).toFixed(3);
       veloT.style.opacity = tarde.toFixed(3); veloN.style.opacity = noche.toFixed(3);
@@ -197,14 +209,57 @@ if (!quieto) {
       haz.style.opacity = luz.toFixed(3); camSvg.style.filter = `brightness(${(1 - 0.45 * noche).toFixed(3)})`;
       escena.classList.toggle('noche', noche > 0.45);
     }
+    // Tormenta: crece al entrar a Oro Verde y se va antes de Chillán
+    const dtV = t - tAntV > 0 && t - tAntV < 0.1 ? t - tAntV : 1 / 60; tAntV = t;
+    const tormenta = suave(0.14, 0.22, u) * (1 - suave(0.4, 0.48, u));
+    veloTo.style.opacity = (tormenta * 0.9).toFixed(3); nubes.style.opacity = tormenta.toFixed(3);
+    nubes.style.transform = `translate3d(${(Math.sin(t * 0.07) * 40).toFixed(1)}px,0,0)`;
+    let sacude = 0, flash = 0;
+    if (tormenta > 0.01) {
+      const Wc = lluvia.clientWidth, Hc = lluvia.clientHeight, d = Math.min(devicePixelRatio || 1, 1.5);
+      if (lluvia.width !== Math.round(Wc * d)) { lluvia.width = Math.round(Wc * d); lluvia.height = Math.round(Hc * d); }
+      lctx.setTransform(d, 0, 0, d, 0, 0); lctx.clearRect(0, 0, Wc, Hc);
+      // Relámpago cada pocos segundos: destello doble, el rayo dibujado y, un instante después, el trueno sacude la escena
+      if (tormenta > 0.5 && t > proximoRayo) { rayo = { t0: t, p: haceRayo() }; proximoRayo = t + 4 + Math.random() * 4; }
+      if (rayo) {
+        const k = t - rayo.t0;
+        flash = k < 0.07 ? 1 : k < 0.13 ? 0.25 : k < 0.2 ? 0.85 : Math.max(0, 1 - (k - 0.2) / 0.35);
+        if (flash > 0.08) {
+          lctx.save(); lctx.globalAlpha = flash; lctx.strokeStyle = '#f4f7ff'; lctx.lineWidth = 3; lctx.lineJoin = 'round'; lctx.shadowColor = '#bcd0ff'; lctx.shadowBlur = 14;
+          lctx.beginPath(); rayo.p.forEach(([x, y], i) => i ? lctx.lineTo(x * Wc, y * Hc) : lctx.moveTo(x * Wc, y * Hc)); lctx.stroke(); lctx.restore();
+        }
+        if (k > 0.35 && k < 1.4) sacude = Math.sin(k * 60) * 3.2 * (1 - (k - 0.35) / 1.05);
+        if (k > 2) rayo = null;
+      }
+      // Lluvia en diagonal
+      lctx.strokeStyle = 'rgba(205,218,236,.55)'; lctx.lineWidth = 1.2; lctx.beginPath();
+      for (const g of GOTAS) {
+        g.y += g.v * dtV * 1.7; g.x -= g.v * dtV * 0.35; if (g.y > 1) { g.y -= 1.05; g.x = Math.random() * 1.2; } if (g.x < -0.1) g.x += 1.2;
+        const x = g.x * Wc, y = g.y * Hc, l = g.l * 26;
+        lctx.moveTo(x, y); lctx.lineTo(x - l * 0.22, y + l);
+      }
+      lctx.stroke();
+      lluvia.style.opacity = tormenta.toFixed(3); lluviaLimpia = false;
+    } else if (!lluviaLimpia) { lctx.setTransform(1, 0, 0, 1, 0, 0); lctx.clearRect(0, 0, lluvia.width, lluvia.height); lluvia.style.opacity = '0'; lluviaLimpia = true; rayo = null; }
+    relamp.style.opacity = (flash * 0.32 * tormenta).toFixed(3);
+    paisaje.style.transform = sacude ? `translate3d(${sacude.toFixed(1)}px,${(sacude * 0.4).toFixed(1)}px,0)` : '';
     // Autos por el carril contrario (van hacia la izquierda, de forma continua)
     AUTOS.forEach((a, i) => { const x = ((a.x0 - t * a.v) % ANCHO + ANCHO) % ANCHO - 100; autosEl[i].setAttribute('transform', `translate(${x.toFixed(1)},512) scale(.82)`); });
     farosEl.forEach(f => f.setAttribute('opacity', luz.toFixed(2)));
     vivos.style.filter = noche > 0.01 ? `brightness(${(1 - 0.55 * noche).toFixed(3)})` : '';
     // Carreta con caballo saliendo de Oro Verde por la orilla del camino (vuelta cada 26 s)
-    const kc = (t % 26) / 26, xc = 1960 + kc * 900, pasoC = Math.sin(t * 7);
+    // ...y a medio camino se le sale una rueda: la rueda sigue rodando sola hasta caer y la carreta queda ladeada
+    const kc = (t % 26) / 26, kd = limita((kc - 0.42) / 0.58), frena = suave(0, 0.12, kd);
+    const xc = 1700 + (kc < 0.42 ? kc : 0.42 + 0.03 * frena) * 520, pasoC = Math.sin(t * 7) * (1 - frena) + Math.sin(t * 2.5) * 0.25 * frena;
     carretaEl.setAttribute('transform', `translate(${xc.toFixed(1)},${(494 - Math.abs(pasoC) * 1.5).toFixed(1)}) scale(.9)`);
-    caballoEl.setAttribute('transform', `rotate(${(pasoC * 2).toFixed(2)})`); ruedaC.setAttribute('transform', `rotate(${(t * 160 % 360).toFixed(1)} -66 4)`);
+    caballoEl.setAttribute('transform', `rotate(${(pasoC * 2 - 3 * Math.sin(Math.PI * suave(0, 0.1, kd))).toFixed(2)})`);
+    const ladeo = -10 * suave(0, 0.05, kd) + Math.sin(kd * 70) * 2.2 * suave(0, 0.04, kd) * (1 - suave(0.04, 0.14, kd));
+    cajaC.setAttribute('transform', `rotate(${ladeo.toFixed(2)} -36 -6)`);
+    const yMano = -36 + ladeo * 0.05, tira = Math.sin(t * 7) * 2 * (1 - frena);
+    riendas.setAttribute('d', `M-34 ${yMano.toFixed(1)} Q14 ${(-16 + tira).toFixed(1)} 61 -31`);
+    const rueda = -230 * (1 - Math.pow(1 - suave(0, 0.36, kd), 2)), cae = suave(0.34, 0.44, kd), tambalea = Math.sin(kd * 90) * 6 * suave(0.2, 0.34, kd) * (1 - cae);
+    ruedaC.setAttribute('transform', `rotate(${((kc < 0.42 ? t * 160 : 0.42 * 26 * 160 - rueda * 4.1) % 360).toFixed(1)} -66 4)`);
+    sueltaC.setAttribute('transform', `translate(${rueda.toFixed(1)},0) translate(-66,18) rotate(${tambalea.toFixed(2)}) scale(1,${(1 - 0.78 * cae).toFixed(3)}) translate(66,-18)`);
     carretaEl.setAttribute('opacity', (kc < 0.06 ? kc / 0.06 : kc > 0.92 ? (1 - kc) / 0.08 : 1).toFixed(2));
     // Gente que camina por la vereda y entra al Emporio (se desvanece en la puerta)
     GENTE.forEach((g, i) => {
@@ -214,12 +269,18 @@ if (!quieto) {
       genteEl[i].querySelector('.pi').setAttribute('transform', `rotate(${paso.toFixed(1)} -2 -20)`); genteEl[i].querySelector('.pd').setAttribute('transform', `rotate(${(-paso).toFixed(1)} 2 -20)`);
     });
     // Al final, la cortina de la bodega sube y el camión entra
-    const entra = suave(0.93, 1, pv), abre = suave(0.88, 0.95, pv);
+    const llega = suave(0.84, 0.9, pv), cambio = suave(0.895, 0.925, pv), adentro = suave(0.925, 0.98, pv);
+    const abre = suave(0.85, 0.9, pv) * (1 - suave(0.975, 1, pv));
     cortina.setAttribute('transform', `translate(0,${(-abre * 112).toFixed(1)})`);
+    traseraEl.setAttribute('opacity', cambio.toFixed(3));
+    const sT = mezcla(1.18, 0.6, adentro), yT = mezcla(548, 497, adentro) + Math.sin(t * 11) * 0.8 * (1 - adentro);
+    traseraC.setAttribute('transform', `translate(5260,${yT.toFixed(1)}) scale(${sT.toFixed(3)})`);
+    sombraT.setAttribute('opacity', (adentro * 0.7).toFixed(3));
+    frenos.forEach(f => f.setAttribute('opacity', (0.35 + 0.65 * Math.max(luz, suave(0.93, 0.95, pv))).toFixed(2)));
     cam.style.setProperty('--giro-rueda', (pv * 6400).toFixed(0) + 'deg');
-    const puertaX = (5266 - 5400) * esc + W / 2, camX = cam.offsetLeft + cam.offsetWidth * 0.5;
-    cam.style.transform = `translate3d(${(entra * (puertaX - camX)).toFixed(1)}px,${(Math.sin(t * 9) * (pv > 0.005 && pv < 0.93 ? 1.6 : 0) - entra * frenteEl.offsetHeight * 0.1).toFixed(1)}px,0) scale(${(1 - entra * 0.35).toFixed(3)})`;
-    cam.style.opacity = (1 - suave(0.97, 1, pv)).toFixed(3);
+    const puertaX = 5260 * esc - corrF, camX = cam.offsetLeft + cam.offsetWidth * 0.5;
+    cam.style.transform = `translate3d(${(llega * (puertaX - camX)).toFixed(1)}px,${(Math.sin(t * 9) * (pv > 0.005 && pv < 0.9 ? 1.6 : 0)).toFixed(1)}px,0)`;
+    cam.style.opacity = (1 - cambio).toFixed(3);
     const h = u < 0.12 ? 0 : u < 0.4 ? 1 : u < 0.76 ? 2 : 3;
     if (h !== hito) { hitos[hito].classList.remove('activo'); hitos[h].classList.add('activo'); hito = h; }
   });
