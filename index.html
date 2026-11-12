@@ -244,7 +244,17 @@ p{margin:0 0 12px}
 .batch-mesa figcaption small{display:block;font-weight:500;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gris)}
 .batch-mesa .mezcladora{grid-column:1/4}
 .batch-mesa .saco{grid-column:4;max-height:260px;width:auto;justify-self:center}
-.batch-mesa img{filter:drop-shadow(0 14px 14px rgba(28,28,26,.18))}
+.batch-mesa .ing img,.batch-mesa .mano{filter:drop-shadow(0 12px 12px rgba(0,0,0,.35))}
+/* La mesa del batch es una pizarra: el molino y el saco están dibujados con tiza */
+.batch-mesa{background:radial-gradient(120% 90% at 30% 20%,rgba(255,255,255,.07),transparent 60%),#24302a;border-radius:22px;box-shadow:inset 0 0 0 9px #7a5233,inset 0 0 0 11px #5d3d24,0 18px 40px rgba(28,28,26,.22);padding:22px}
+.batch-mesa figcaption{color:#f3efe6}.batch-mesa figcaption small{color:#cfd8cf}
+.batch-mesa .mezcladora{position:relative;aspect-ratio:1168/880}
+.batch-mesa .mezcladora img{display:block;width:100%;height:auto}
+.batch-mesa .mol-rueda,.batch-mesa .mol-gira{position:absolute;left:70.72%;top:27.95%;width:19.18%;height:47.05%;transform-origin:50% 49.76%}
+.batch-mesa .mol-gira{left:0;top:0;width:100%;height:100%}
+.batch-mesa .mol-gira img{position:absolute;inset:0;height:100%;transform-origin:50% 49.76%;transform:scaleX(1.912)}
+.batch-mesa .mol-rueda{transform:scaleX(.523)}
+.batch-mesa .mezcladora .mol-manija{position:absolute;left:88.7%;top:57.39%;width:11.3%;will-change:transform}
 /* Manos que echan los ingredientes al molino (solo con movimiento) */
 .batch-mesa .mano{display:none}
 .mov .batch-mesa .mano{display:block;position:absolute;left:0;top:0;width:40%;max-width:none;z-index:3;opacity:0;will-change:transform,opacity;pointer-events:none}
@@ -263,7 +273,7 @@ p{margin:0 0 12px}
 .mov .batch-mesa .ing img{transform-origin:50% 100%}
 .mov .batch-mesa .i4 img{transform-origin:70% 60%}
 .mov .batch-mesa .mezcladora{top:27%;left:14%;width:64%;z-index:1}
-.mov .batch-mesa .saco{top:72%;left:30.6%;width:16%;max-height:none;z-index:2;transform-origin:50% 100%}
+.mov .batch-mesa .saco{top:71%;left:16.5%;width:17%;max-height:none;z-index:2;transform-origin:50% 100%}
 .mov #batchLienzo{display:block;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
 @media (max-width:820px){.mov .batch-escena{grid-template-rows:auto 1fr;gap:10px}.mov .batch-texto p{display:none}.mov .batch-pasos li{display:none}.mov .batch-pasos li.activo{display:grid}.mov .batch-mesa{width:min(100%,calc((100svh - var(--nav) - 260px) * 1.05))}}
 
@@ -782,12 +792,12 @@ footer.funde{--fh:110px;padding-top:80px}
       <figure class="ing i2"><img src="img/batch/soya.webp" alt="Harina de soya." width="420" height="270" loading="lazy"><figcaption>Soya <small>macro</small></figcaption></figure>
       <figure class="ing i3"><img src="img/batch/afrechillo.webp" alt="Afrechillo de trigo." width="420" height="234" loading="lazy"><figcaption>Afrechillo <small>macro</small></figcaption></figure>
       <figure class="ing i4"><img src="img/batch/premix.webp" alt="Pala con premix de vitaminas y minerales." width="420" height="313" loading="lazy"><figcaption>Premix <small>micro</small></figcaption></figure>
-      <img class="mezcladora" src="img/batch/molino.webp" alt="Molino mezclador de campo, de madera y metal, con manivela." width="900" height="678" loading="lazy">
+      <div class="mezcladora" role="img" aria-label="Dibujo de tiza de un molino mezclador de campo, de madera y metal, con manivela."><img class="mol-cuerpo" src="img/batch/molino-tiza.webp" alt="" width="900" height="678" loading="lazy"><div class="mol-rueda"><div class="mol-gira"><img src="img/batch/molino-rueda.webp" alt="" width="173" height="320" loading="lazy"></div></div><img class="mol-manija" src="img/batch/molino-manija.webp" alt="" width="102" height="67" loading="lazy"></div>
       <img class="mano mano-maiz" src="img/batch/mano-maiz.webp" alt="" width="520" height="520" loading="lazy">
       <img class="mano mano-soya" src="img/batch/mano-soya.webp" alt="" width="520" height="520" loading="lazy">
       <img class="mano mano-afrechillo" src="img/batch/mano-maiz.webp" alt="" width="520" height="520" loading="lazy">
       <img class="mano mano-premix" src="img/batch/mano-premix.webp" alt="" width="520" height="520" loading="lazy">
-      <img class="saco" src="img/batch/saco.webp" alt="Saco para el alimento." width="520" height="688" loading="lazy">
+      <img class="saco" src="img/batch/saco-tiza.webp" alt="Dibujo de tiza de un saco para el alimento." width="520" height="690" loading="lazy">
       <canvas id="batchLienzo" aria-hidden="true"></canvas>
     </div>
   </div>

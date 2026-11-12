@@ -389,6 +389,9 @@ if (!quieto) {
 if (!quieto) {
   const sec = $('#batch'), mesa = $('#batchMesa'), lienzo = $('#batchLienzo'), ctx = lienzo.getContext('2d');
   const mez = $('.mezcladora', mesa), saco = $('.saco', mesa), pasos = $$('#batchPasos li');
+  // Rueda de tiza: gira en un plano visto de lado (ver CSS); la manilla la sigue sin girar. Medidas en píxeles del dibujo original (1168 de ancho).
+  const gira = $('.mol-gira', mez), manija = $('.mol-manija', mez), K = 0.523, ANCLA = [187.4, 97];
+  let angulo = 0, vRueda = 0, vaivenSaco = 0;
   const ings = $$('.ing', mesa).map((f, i) => ({ img: $('img', f), tipo: ['maiz', 'soya', 'afrechillo', 'premix'][i], acum: 0 }));
   const COL = { maiz: ['#f2a314', '#e38e0b', '#f7b93a'], soya: ['#d9b36d', '#caa057', '#e6c48b'], afrechillo: ['#b5773e', '#a46632', '#c98d54'], premix: ['#efe5cf', '#e4d8bd', '#f7f0e1'] };
   // Manos que echan cada ingrediente al molino: ventana de tiempo, punta (fracción de la imagen), giro y caudal
@@ -399,7 +402,7 @@ if (!quieto) {
   const elige = a => a[(Math.random() * a.length) | 0];
   const rel = (el, R) => { const r = el.getBoundingClientRect(); return { x: r.left - R.left, y: r.top - R.top, w: r.width, h: r.height }; };
   const rango = (p, a, b) => suave(a, a + 0.04, p) * (1 - suave(b - 0.04, b, p));
-  let granos = [], pB = 0, antes = 0, paso = 0, acumSaco = 0;
+  let granos = [], pB = 0, antes = 0, paso = 0, acumSaco = 0, caenSaco = 0;
   cuadros.push(t => {
     const dt = Math.min(0.05, Math.max(0, t - antes)); antes = t;
     if (!enPantalla.get(sec)) return;
@@ -418,8 +421,19 @@ if (!quieto) {
     const M = rel(mez, R), S = rel(saco, R);
     // El molino vibra suave mientras revuelve
     mez.style.transform = revuelve > 0.01 ? `translate(${(Math.sin(t * 41) * 1.1 * revuelve).toFixed(2)}px,${(Math.cos(t * 37) * 0.9 * revuelve).toFixed(2)}px)` : '';
+    // La rueda acelera y frena suave (inercia), y sigue girando lento mientras sale el alimento
+    const vObjetivo = 5.2 * revuelve + 1.4 * ensaca;
+    vRueda += (vObjetivo - vRueda) * (1 - Math.exp(-dt * 2.5));
+    angulo = (angulo + vRueda * dt) % (Math.PI * 2);
+    gira.style.transform = `rotate(${(angulo * 180 / Math.PI).toFixed(2)}deg)`;
+    const ca = Math.cos(angulo), sa = Math.sin(angulo), esc = M.w / 1168;
+    const mx = (K * (ANCLA[0] * ca - ANCLA[1] * sa) - K * ANCLA[0]) * esc, my = (ANCLA[0] * sa + ANCLA[1] * ca - ANCLA[1]) * esc;
+    manija.style.transform = `translate3d(${mx.toFixed(2)}px,${my.toFixed(2)}px,0)`;
     const llenado = suave(0.66, 0.98, pB);
-    saco.style.transform = `scale(${(1 + 0.06 * llenado).toFixed(3)},${(1 + 0.03 * llenado).toFixed(3)})`;
+    // El saco se infla al llenarse y se mece un poco con cada golpe de grano
+    vaivenSaco += (caenSaco * 0.012 - vaivenSaco) * (1 - Math.exp(-dt * 6)); caenSaco = 0;
+    const meneo = Math.sin(t * 9) * Math.min(1.6, vaivenSaco);
+    saco.style.transform = `rotate(${meneo.toFixed(2)}deg) scale(${(1 + 0.06 * llenado).toFixed(3)},${(1 + 0.03 * llenado).toFixed(3)})`;
     // Las manos: cada una entra en su turno, se inclina con cuidado sobre la tolva y vuelve a salir.
     // La punta de la pala (o del bol) queda siempre sobre la boca del molino; desde ahí caen los granos.
     const bocaX = M.x + M.w * 0.45, bocaY = M.y + M.h * 0.05;
@@ -444,10 +458,10 @@ if (!quieto) {
       }
     });
     // El alimento revuelto sale por el canal de madera y cae al saco
-    const sx = M.x + M.w * 0.33, sy = M.y + M.h * 0.78, ky = S.y + S.h * 0.09;
+    const sx = M.x + M.w * 0.16, sy = M.y + M.h * 0.77, ky = S.y + S.h * 0.17;
     acumSaco += 170 * ensaca * dt;
     while (acumSaco >= 1) {
-      acumSaco -= 1; const w = 2.2 + Math.random() * 2.4;
+      acumSaco -= 1; caenSaco++; const w = 2.2 + Math.random() * 2.4;
       granos.push({ x: sx + (Math.random() - 0.5) * M.w * 0.035, y: sy, vx: (Math.random() - 0.5) * 18, vy: 40 + Math.random() * 40, fin: ky + Math.random() * 6, edad: 0, c: elige(MEZCLA), w, h: w * 0.8, r: Math.random() * 6, vr: (Math.random() - 0.5) * 10, a: 1 });
     }
     // Lo que se ve dentro de la tolva: gira despacio y se acelera mientras revuelve
@@ -460,7 +474,7 @@ if (!quieto) {
     }
     // El saco se va llenando
     if (llenado > 0.02) {
-      const kx = S.x + S.w * 0.52, rs = S.w * 0.26 * Math.sqrt(llenado);
+      const kx = S.x + S.w * 0.5, rs = S.w * 0.26 * Math.sqrt(llenado);
       for (let i = 0; i < 60 * llenado; i++) { const k = (i * 0.6180339) % 1, an = i * 2.399; ctx.fillStyle = MEZCLA[i % MEZCLA.length]; ctx.beginPath(); ctx.ellipse(kx + Math.cos(an) * rs * k, ky + 2 + Math.sin(an) * 4 * k, 2.4, 1.8, an, 0, Math.PI * 2); ctx.fill(); }
     }
     // Granos en el aire
