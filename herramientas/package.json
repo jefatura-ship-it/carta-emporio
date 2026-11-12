@@ -1,0 +1,12 @@
+{
+  "name": "herramientas-carta-emporio",
+  "private": true,
+  "description": "Construye web/js/viaje.js (la escena 3D de la página web) a partir de web/fuente/viaje.js.",
+  "scripts": {
+    "construir": "esbuild fuente/viaje.js --bundle --minify --format=esm --target=es2020 --legal-comments=linked --outfile=../web/js/viaje.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "three": "0.187.0"
+  }
+}
