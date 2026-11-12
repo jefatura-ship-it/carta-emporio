@@ -84,7 +84,7 @@ html.bloqueo,html.bloqueo body{overflow:hidden}
 .panel-menu{width:100%;height:100%;background:var(--masa);display:flex;flex-direction:column}
 .pm-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .pm-scroll .menu-cats{min-height:calc(100% + 1px)} /* siempre 1 px de scroll propio: el gesto no se escapa al fondo aunque haya poco contenido */
-.pm-cab{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--campo);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+.pm-cab{flex:none;display:flex;align-items:center;justify-content:flex-start;gap:14px;background:var(--campo);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
 .pm-cab h2{margin:0;font-family:var(--display);font-size:20px}
 .pm-cerrar{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 16px;border:2px solid #fff;border-radius:99px;background:#fff;color:var(--campo);font-weight:800;font-size:15px;cursor:pointer}
 .menu-cats{max-width:560px;margin:0 auto;padding:8px 16px calc(24px + env(safe-area-inset-bottom,0px));display:grid;align-content:start;gap:12px}
@@ -427,7 +427,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 <!-- Menú «Ver todo»: panel a pantalla completa con su propio scroll (el fondo queda bloqueado mientras está abierto) -->
 <div class="velo velo-menu" id="veloMenu" hidden>
   <section class="panel-menu" role="dialog" aria-modal="true" aria-labelledby="tituloMenu">
-    <div class="pm-cab"><h2 id="tituloMenu">Todas las secciones</h2><button type="button" class="pm-cerrar" id="cerrarMenu"><span aria-hidden="true">✕</span> Cerrar</button></div>
+    <div class="pm-cab"><button type="button" class="pm-cerrar" id="cerrarMenu" aria-label="Atrás: cerrar el menú y volver a la carta"><span aria-hidden="true">←</span> Atrás</button><h2 id="tituloMenu">Todas las secciones</h2></div>
     <div class="pm-scroll" id="menuScroll"><div class="menu-cats" id="menuCats"></div></div>
   </section>
 </div>
