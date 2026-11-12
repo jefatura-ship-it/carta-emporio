@@ -761,8 +761,8 @@ if (!quieto) {
     cuadros.push(t => {
       const dt = t - tA > 0 && t - tA < 0.1 ? t - tA : 1 / 60; tA = t;
       const r = emp.getBoundingClientRect(), H = innerHeight;
-      const k = limita((H - r.top) / (r.height + H));
-      const meta = suave(0.12, 0.24, k) * (1 - suave(0.78, 0.9, k));
+      // Solo mientras el Emporio ocupa la pantalla: entra cuando la sección sube y se va antes de la repisa
+      const meta = (1 - suave(H * 0.35, H * 0.85, r.top)) * suave(H * 0.45, H * 0.85, r.bottom);
       vis += (meta - vis) * (1 - Math.exp(-dt * 4));
       if (vis < 0.002 && meta === 0) { if (!quieta) { sab.style.transform = ''; quieta = true; } return; }
       quieta = false;
