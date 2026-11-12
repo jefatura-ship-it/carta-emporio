@@ -450,7 +450,7 @@ if (!quieto) {
     escR.add(pon(caja(largo, 9, 0.2, M('#24241f', { roughness: 0.95 })), (n - 1) * SEP / 2, 2, -1.1));
     escR.add(pon(caja(largo, 0.1, 1.5, madera), (n - 1) * SEP / 2, 0, 0), pon(caja(largo, 0.1, 1.2, madera), (n - 1) * SEP / 2, 2.55, -0.3));
     escR.add(pon(caja(largo, 0.36, 0.06, M('#141412')), (n - 1) * SEP / 2, -0.23, 0.74));
-    new THREE.TextureLoader().load('../img/logo-emporio.webp', tx => {
+    new THREE.TextureLoader().load('img/logo-emporio.webp', tx => {
       tx.colorSpace = THREE.SRGBColorSpace;
       const mat = new THREE.MeshBasicMaterial({ map: tx, transparent: true, opacity: 0.12 });
       for (let x = SEP * 1.5; x < (n - 1) * SEP; x += SEP * 4) escR.add(pon(new THREE.Mesh(new THREE.PlaneGeometry(2.3, 0.7), mat), x, 1.5, -0.98));

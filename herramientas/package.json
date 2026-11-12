@@ -3,7 +3,7 @@
   "private": true,
   "description": "Construye web/js/viaje.js (la escena 3D de la página web) a partir de web/fuente/viaje.js.",
   "scripts": {
-    "construir": "esbuild fuente/viaje.js --bundle --minify --format=esm --target=es2020 --legal-comments=linked --outfile=../web/js/viaje.js"
+    "construir": "esbuild fuente/viaje.js --bundle --minify --format=esm --target=es2020 --legal-comments=linked --outfile=../js/viaje.js"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",

@@ -4,7 +4,8 @@ Traspaso desde el chat "Creatividad Higgsfield" (11/11/2026). Responder siempre 
 
 ## Qué es
 - `index.html`: carta de pedidos en un solo archivo (GitHub Pages). `?local=emporio` (por defecto) o `?local=distribuidora`.
-- Publicada desde `main`: https://jefatura-ship-it.github.io/carta-emporio/
+- Publicada desde `main`: https://jefatura-ship-it.github.io/carta-emporio/ (se está pasando a **www.avicolasb.com**, ver «Dominio propio»).
+- **Estructura (desde el 12/11/2026):** la página web está en la **raíz** (`index.html`, `img/`, `js/`, `modelos/`, `video/`) y la carta en **`carta/index.html`**. La raíz manda a `carta/` cualquier dirección con `?local=` (los QR impresos siguen funcionando) y `web/index.html` es solo una redirección a la raíz. `npm run construir` deja el paquete en `js/viaje.js`.
 - Los productos salen de la planilla de inventario MyPyme (07/11/2026). `PRUEBA = true`: los precios son provisorios.
 - Reglas del negocio ya implementadas: tapas dentro de su envase (1 envase = 1 tapa, precio sumado, stock = el menor de los dos), venta por paquete o unidad, precios por mayor, descuento de bienvenida 5 % una vez por cliente del 23/11 al 04/12/2026.
 
@@ -120,6 +121,9 @@ Pedido de David: «cuando los clientes se registren en la carta, quiero que le g
   - **Plan de cuentas:** el de MyPyme de la Distribuidora (propuesta del 12/11/2026, `DISTRIBUIDORA/DI27 AÑO COMERCIAL 2027/DI27-08 Plan de cuentas MyPyme Distribuidora y Emporio 2026-11-12.xlsx`, 388 cuentas), copiado como `Plan de cuentas MyPyme Distribuidora.csv`. Caja por local (1-1-01-01-02 Emporio, -01 Cocharcas), centro de costo CC02 Emporio / CC01 Cocharcas en las cuentas 4, ventas por línea de producto (4-1-01-01-01 huevos … -12 bebidas), IVA 2-1-05-01-01 e IABA 2-1-05-01-02. Las ventas se clasifican primero por nombre de artículo y después por línea, porque la familia de MyPyme no es confiable (los huevos tienen familia «ENVASES Y PLASTICOS»). Se revisó también el módulo Contabilidad de avicola-app (plan Softland de la casa matriz): David eligió el Excel, así que avicola-app no se tocó.
   - **Probado con la exportación real de MyPyme** de la Distribuidora del 2 al 11/11/2026 (bajada desde el navegador de la app con la sesión de David): 605 documentos, 1.071 líneas, neto $44.157.432 y total $52.547.387 iguales a MyPyme, 18 comprobantes cuadrados. Ejemplo en `EM27-0702 Ejemplo MyPyme Distribuidora 2 al 11 nov 2026.xlsx` y el archivo de origen en la carpeta de la herramienta. También lee el Registro de Compras y Ventas del SII y libros de ventas hechos a mano (probado con los de la Distribuidora 2025).
 - **Publicado en `main` el 12/11/2026** (aprobado por David): la rama guardada hasta f3a339b más solo el código de cliente y `REGISTRO_URL`. El trabajo en curso de otras sesiones (rediseño web, pedidos a la avícola, aviso de cookies nuevo) NO se publicó y sigue sin commit en la carpeta.
+
+## Dominio propio (12/11/2026)
+David no quiere que la dirección diga «jefatura»; eligió **avicolasb.com**, que la empresa ya tiene (DNS en Squarespace Domains, ex Google Domains; hoy muestra una página «Próximamente» de Squarespace). El correo de la empresa usa ese dominio (MX smtp.google.com y SPF de Google): **esos registros no se tocan**. Plan: David borra en Squarespace solo los registros del sitio de Squarespace y agrega A @ → 185.199.108.153 / .109.153 / .110.153 / .111.153 y CNAME www → jefatura-ship-it.github.io; luego se sube el archivo `CNAME` con `www.avicolasb.com`, se cambian a ese dominio las URL absolutas (`canonical`, Open Graph, schema.org, `sitemap.xml`) y David activa «Enforce HTTPS» en Settings → Pages. Google Search Console: propiedad de tipo Dominio con un TXT en Squarespace, y enviar `sitemap.xml`. No subir el `CNAME` antes de que el DNS responda (la carta quedaría caída).
 
 ## Pendiente
 0. Página web: reemplazar `web/img/batch/saco.webp` por la foto del saco nuevo cuando David la envíe.

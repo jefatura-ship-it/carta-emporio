@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Mapa del sitio para Google Search Console: las páginas públicas de la carta y la web -->
+<!-- Mapa del sitio para Google Search Console: la página web (raíz), la carta y la información legal -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://jefatura-ship-it.github.io/carta-emporio/web/</loc><priority>1.0</priority></url>
-  <url><loc>https://jefatura-ship-it.github.io/carta-emporio/</loc><priority>0.8</priority></url>
+  <url><loc>https://jefatura-ship-it.github.io/carta-emporio/</loc><priority>1.0</priority></url>
+  <url><loc>https://jefatura-ship-it.github.io/carta-emporio/carta/</loc><priority>0.8</priority></url>
   <url><loc>https://jefatura-ship-it.github.io/carta-emporio/legal.html</loc><priority>0.3</priority></url>
 </urlset>
