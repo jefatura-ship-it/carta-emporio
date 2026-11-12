@@ -104,6 +104,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .reg b{display:block;color:var(--campo);font-size:15px;line-height:1.25}
 .reg span{display:block;font-size:12.5px;color:var(--suave)}
 .reg.ok{border-color:var(--sol);background:#fff7e8}
+.reg .regcod{margin-top:4px;color:var(--tinta,#222);font-size:13px}
+.reg .regcod strong{font-size:15px;letter-spacing:.04em}
 .reg .btn{flex:none}
 .check{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.35}
 .check input{width:20px;height:20px;margin-top:1px;flex:none;accent-color:var(--campo)}
@@ -228,7 +230,7 @@ body.con-galleta{padding-bottom:calc(300px + env(safe-area-inset-bottom,0px))}
   <p class="aviso" id="aviso" hidden>Carta en revisión: los precios son provisorios, algunos están por confirmar y los productos en rojo quedaron con stock 0 en el conteo.</p>
   <p class="intro"><b>Arma tu pedido y te lo tenemos listo</b><span id="introTxt">Elige lo que quieres, envíanos el pedido por WhatsApp y pasa a retirarlo.</span></p>
   <div class="reg" id="reg" hidden>
-    <div><b id="regTit"></b><span id="regTxt"></span></div>
+    <div><b id="regTit"></b><span id="regTxt"></span><span class="regcod" id="regCod" hidden></span></div>
     <button type="button" class="btn prim mini" id="regBtn">Registrarme</button>
   </div>
 </section>
@@ -820,7 +822,9 @@ const guardar=()=>{enviado=false;grabar()};
 const marcarEnviado=()=>{if(typeof usarDescuento==="function")usarDescuento();enviado=true;grabar()};
 
 /* ---------- Registro de clientes: nombres, apellidos y celular → descuento ---------- */
-const REGISTRO_URL=""; // dirección del script de la planilla EM27-07 (pestaña Clientes). Vacía: el registro queda en el celular del cliente y viaja en el mensaje del pedido.
+// App web del script «Registro clientes carta Emporio», vinculado a la planilla «EM27-07 Pedidos carta QR y proveedores 2026-11»
+// (hojas Clientes y Solicitudes), implementado el 12/11/2026 con la cuenta dte@. Vacía: el registro queda solo en el celular del cliente.
+const REGISTRO_URL="https://script.google.com/macros/s/AKfycbzP_AWWh7HEctijtBYVxf8MHUL4JSU9ySmbOXd_9_NrEf0x3w7JKlIsFiLtPYPSsJwg/exec";
 const PROMO=L.promo||null;
 const promoIni=PROMO?new Date(PROMO.inicio+"T00:00:00"):null;
 const promoFin=PROMO?new Date(new Date(PROMO.fin+"T00:00:00").getTime()+864e5):null; // hasta las 00:00 del día siguiente al último
@@ -835,9 +839,35 @@ let cliente=null;
 try{cliente=JSON.parse(localStorage.getItem("cliente-"+KEY)||"null")}catch(e){cliente=null}
 const nombreCompleto=c=>[c.n1,c.n2,c.a1,c.a2].filter(Boolean).join(" ");
 const celular=s=>{const d=String(s).replace(/\D/g,"").replace(/^56/,"");return /^9\d{8}$/.test(d)?"+56"+d:null};
+/* Código de cliente: lo asigna la planilla (E-0001 en el Emporio, D-0001 en la Distribuidora) para que no se repita.
+   Mientras no responda (o REGISTRO_URL esté vacía) se usa uno provisorio: prefijo + "-P" + últimos 4 dígitos del celular.
+   cliente.codigo = el que se muestra; cliente.codigoOk = true cuando ya viene de la planilla. */
+const codigoProvisorio=c=>L.pref+"-P"+String(c.tel||"").slice(-4);
+const guardarCliente=()=>{try{localStorage.setItem("cliente-"+KEY,JSON.stringify(cliente))}catch(e){}};
+function pedirCodigo(){
+  if(!REGISTRO_URL||!cliente||!cliente.tel)return;
+  const c=cliente,{codigo:_c,codigoOk:_o,usado:_u,...datos}=c;
+  // sin mode:"no-cors" para poder leer la respuesta {ok, codigo}; el script de Google responde con CORS abierto
+  fetch(REGISTRO_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({tipo:"registro",...datos})})
+    .then(r=>r.json()).then(j=>{
+      if(!j||!j.ok||!/^[ED]-\d{4,}$/.test(j.codigo||"")||cliente!==c)return;
+      c.codigo=j.codigo; c.codigoOk=true; guardarCliente(); pintarReg();
+    }).catch(()=>{}); // sin conexión: queda el provisorio y se reintenta al volver a abrir la carta
+}
+if(cliente&&cliente.tel){
+  if(!cliente.codigo){cliente.codigo=codigoProvisorio(cliente);guardarCliente()}
+  if(!cliente.codigoOk)pedirCodigo();
+}
 function pintarReg(){
   const hayRegistro=L.descuentoRegistro!=null; // el registro sigue abierto aunque termine la semana del descuento
   $("reg").hidden=!hayRegistro; if(!hayRegistro)return;
+  const rc=$("regCod"); rc.hidden=!(cliente&&cliente.codigo);
+  if(cliente&&cliente.codigo){
+    rc.textContent="";
+    rc.append(cliente.codigoOk?"Tu código de cliente: ":"Tu código provisorio: ");
+    const s=document.createElement("strong"); s.textContent=cliente.codigo; rc.append(s);
+    if(!cliente.codigoOk)rc.append(" (en el local te damos el definitivo)");
+  }
   $("reg").classList.toggle("ok",!!cliente);
   const gracias=cliente&&cliente.acepta?"Te avisaremos de nuevas ofertas.":"Gracias por preferirnos.";
   const pct=L.descuentoRegistro;
@@ -883,11 +913,14 @@ $("rGuardar").onclick=()=>{
   const v=id=>$(id).value.trim().replace(/\s+/g," ");
   const c={n1:v("rN1"),n2:v("rN2"),a1:v("rA1"),a2:v("rA2"),tel:celular($("rTel").value),acepta:$("rOk").checked,fecha:(cliente&&cliente.fecha)||new Date().toISOString(),local:KEY};
   if(cliente&&cliente.usado)c.usado=cliente.usado;
+  // el código sigue al celular: si cambia el número es otro cliente para la planilla
+  if(cliente&&cliente.codigo&&cliente.tel===c.tel){c.codigo=cliente.codigo;if(cliente.codigoOk)c.codigoOk=true}
+  else if(c.tel)c.codigo=codigoProvisorio(c);
   const falta=[!c.n1&&"primer nombre",!c.a1&&"apellido paterno",!c.tel&&"un celular válido (+56 9 …)",!$("rEdad").checked&&"marcar que tienes 18 años o más y aceptas la política de privacidad"].filter(Boolean);
   if(falta.length){$("rMsg").textContent="Falta: "+falta.join(", ")+".";$("rMsg").hidden=false;(!c.n1?$("rN1"):!c.a1?$("rA1"):!c.tel?$("rTel"):$("rEdad")).focus();return}
   cliente=c;
-  try{localStorage.setItem("cliente-"+KEY,JSON.stringify(c))}catch(e){}
-  if(REGISTRO_URL){try{fetch(REGISTRO_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify({tipo:"registro",...c})})}catch(e){}}
+  guardarCliente();
+  pedirCodigo(); // la planilla anota o actualiza al cliente y responde su código definitivo
   cerrarReg(); pintarReg(); refrescar();
 };
 pintarReg();
@@ -1086,7 +1119,7 @@ function textoPedido(){
   const nom=$("nombre").value.trim()||"(sin nombre)";
   const hora=$("hora").value||"Lo antes posible";
   let t=`PEDIDO ${codigo} · ${L.nombre}\nCliente: ${nom}\n`;
-  if(cliente)t+=`Cliente registrado: ${nombreCompleto(cliente)} · ${cliente.tel}${cliente.acepta?" · acepta ofertas":""}\n`;
+  if(cliente)t+=`Cliente registrado${cliente.codigo?" "+cliente.codigo+(cliente.codigoOk?"":" (provisorio)"):""}: ${nombreCompleto(cliente)} · ${cliente.tel}${cliente.acepta?" · acepta ofertas":""}\n`;
   t+=`Retira: ${hora}\n\n`;
   t+=items().map(x=>`${x.q} x ${x.nombre}${x.detalle?" ("+x.detalle+")":""}${x.mayor?" [precio por mayor "+clp(x.precio)+(x.paq?" c/paquete]":" c/u]"):""} = ${sub(x)}`).join("\n");
   if(dcto())t+=`\n\nSUBTOTAL: ${clp(total())}\nDESCUENTO BIENVENIDA ${DCTO}% (1 sola vez, precio normal): -${clp(dcto())}\nTOTAL APROX: ${clp(totalFinal())}`;

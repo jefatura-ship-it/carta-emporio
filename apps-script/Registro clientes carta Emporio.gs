@@ -10,8 +10,8 @@
  *  4. Recargar la planilla: aparece el menú "Registro de clientes".
  *
  * QUÉ RECIBE (JSON enviado como texto por la carta)
- *  registro  {n1, n2, a1, a2, tel, acepta, fecha, local}  crea o actualiza al cliente
- *  uso       {tel, codigo, monto, local}                  anota el descuento de bienvenida usado
+ *  registro  {n1, n2, a1, a2, tel, acepta, fecha, local}  crea o actualiza al cliente y RESPONDE su código
+ *  uso      {tel, codigo, monto, local}                  anota el descuento de bienvenida usado
  *  baja      {tel, local}                                 deja de recibir ofertas (se aplica de inmediato)
  *  eliminar  {tel, local}                                 solicitud de eliminación (queda pendiente)
  *
@@ -20,12 +20,21 @@
  * o en el local). Luego escribe SI en la columna "Eliminar (verificado)" de "Clientes"
  * y usa el menú Registro de clientes → Eliminar clientes verificados.
  *
+ * CÓDIGO DE CLIENTE
+ * Lo asigna esta planilla, no el celular, para que nunca se repita: E-0001, E-0002… en el
+ * Emporio y D-0001… en la Distribuidora (un cliente registrado en los dos locales tiene un
+ * código en cada uno). Se guarda en la columna "Código de cliente" y se devuelve a la carta
+ * en la respuesta: {ok: true, codigo: "E-0001"}. El último número usado queda en las
+ * propiedades del script, así que un código de un cliente eliminado no se vuelve a dar.
+ * Si alguien anota un cliente a mano, el menú "Asignar códigos faltantes" le pone el suyo.
+ *
  * Esta planilla guarda datos personales: compartirla solo con quien la necesita.
  */
 
 const HOJA_CLIENTES = 'Clientes';
 const HOJA_SOLICITUDES = 'Solicitudes';
-const COLUMNAS_CLIENTES = ['Fecha de registro', 'Local', 'Primer nombre', 'Segundo nombre', 'Apellido paterno', 'Apellido materno',
+const PREFIJOS = { emporio: 'E', distribuidora: 'D' };
+const COLUMNAS_CLIENTES = ['Código de cliente', 'Fecha de registro','Local', 'Primer nombre', 'Segundo nombre', 'Apellido paterno', 'Apellido materno',
   'Celular', 'Acepta ofertas', 'Fecha de baja', 'Descuento usado', 'Código del pedido', 'Monto del descuento',
   'Eliminación solicitada', 'Eliminar (verificado)', 'Actualizado'];
 const COLUMNAS_SOLICITUDES = ['Fecha', 'Tipo', 'Celular', 'Local', 'Estado', 'Resuelta el'];
@@ -43,12 +52,12 @@ function doPost(e) {
     const tel = celular(d.tel);
     const local = LOCALES_VALIDOS.indexOf(String(d.local || '').toLowerCase()) >= 0 ? String(d.local).toLowerCase() : 'emporio';
     if (!tel) throw new Error('celular no válido');
-    if (d.tipo === 'registro') registrar(d, tel, local);
+    respuesta = { ok: true };
+    if (d.tipo === 'registro') respuesta.codigo = registrar(d, tel, local);
     else if (d.tipo === 'uso') anotarUso(d, tel, local);
     else if (d.tipo === 'baja') darDeBaja(tel, local);
     else if (d.tipo === 'eliminar') solicitarEliminacion(tel, local);
     else throw new Error('tipo desconocido');
-    respuesta = { ok: true };
   } catch (err) {
     respuesta = { ok: false, error: String(err && err.message || err) };
   } finally {
@@ -81,6 +90,47 @@ function registrar(d, tel, local) {
   if (acepta) hoja.getRange(fila, COL['Fecha de baja']).clearContent();
   else if (antes === 'Sí') hoja.getRange(fila, COL['Fecha de baja']).setValue(ahora);
   hoja.getRange(fila, COL['Actualizado']).setValue(ahora);
+  let codigo = String(hoja.getRange(fila, COL['Código de cliente']).getValue() || '').trim();
+  if (!codigo) {
+    codigo = nuevoCodigoCliente(hoja, local);
+    hoja.getRange(fila, COL['Código de cliente']).setValue(codigo);
+  }
+  return codigo;
+}
+
+// Siguiente código del local (E-0001, D-0001…). Se llama con el candado tomado, así dos registros
+// simultáneos no pueden recibir el mismo número.
+function nuevoCodigoCliente(hoja, local) {
+  const pref = PREFIJOS[local] || 'E';
+  const props = PropertiesService.getScriptProperties();
+  let ultimo = Number(props.getProperty('ultimo-' + pref)) || 0;
+  const n = hoja.getLastRow();
+  if (n > 1) hoja.getRange(2, COL['Código de cliente'], n - 1, 1).getValues().forEach(function (f) {
+    const m = String(f[0]).match(new RegExp('^' + pref + '-(\\d+)$'));
+    if (m) ultimo = Math.max(ultimo, Number(m[1]));
+  });
+  ultimo += 1;
+  props.setProperty('ultimo-' + pref, String(ultimo));
+  return pref + '-' + String(ultimo).padStart(4, '0');
+}
+
+// Menú: pone código a las filas que no lo tienen (por ejemplo, clientes anotados a mano).
+function asignarCodigosFaltantes() {
+  const candado = LockService.getScriptLock();
+  candado.waitLock(20000);
+  let puestos = 0;
+  try {
+    const hoja = hojaClientes();
+    const n = hoja.getLastRow();
+    for (let fila = 2; fila <= n; fila++) {
+      if (String(hoja.getRange(fila, COL['Código de cliente']).getValue() || '').trim()) continue;
+      if (!celular(hoja.getRange(fila, COL['Celular']).getValue())) continue;
+      const local = String(hoja.getRange(fila, COL['Local']).getValue() || '').toLowerCase();
+      hoja.getRange(fila, COL['Código de cliente']).setValue(nuevoCodigoCliente(hoja, PREFIJOS[local] ? local : 'emporio'));
+      puestos++;
+    }
+  } finally { candado.releaseLock(); }
+  SpreadsheetApp.getUi().alert(puestos ? 'Listo: ' + puestos + ' código(s) asignado(s).' : 'Todos los clientes ya tienen código.');
 }
 
 function anotarUso(d, tel, local) {
@@ -121,6 +171,7 @@ function solicitarEliminacion(tel, local) {
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Registro de clientes')
     .addItem('Eliminar clientes verificados', 'eliminarVerificados')
+    .addItem('Asignar códigos faltantes', 'asignarCodigosFaltantes')
     .addItem('Preparar hojas', 'prepararHojas')
     .addToUi();
 }
