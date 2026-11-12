@@ -112,8 +112,9 @@ html.bloqueo,html.bloqueo body{overflow:hidden}
 .avi-item .btn{width:100%}
 .avi-item .modos{justify-self:start;margin:0}
 .avi-item a.avi-otro{font-size:13.5px;font-weight:700;color:var(--campo)}
-@media (min-width:1100px){
-  .cuerpo{display:grid;grid-template-columns:minmax(0,560px) 300px;gap:28px;justify-content:center;padding-inline:16px}
+/* Dos columnas (carta + pedidos a la avícola) desde 820 px: así se mantiene también con zoom en el computador */
+@media (min-width:820px){
+  .cuerpo{display:grid;grid-template-columns:minmax(0,560px) minmax(240px,300px);gap:clamp(16px,2.4vw,28px);justify-content:center;padding-inline:max(16px,env(safe-area-inset-right,0px)) 40px}
   .cuerpo>#carta{max-width:none;margin:0;padding-inline:0}
   .cats .wrap{max-width:920px}
   .cuerpo>.avi{position:sticky;top:64px;align-self:start;max-width:none;margin:0;padding-inline:0;max-height:calc(100vh - 76px);overflow:auto}
@@ -327,6 +328,9 @@ body.vermayor .mayor{display:block}
 body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 /* La barra de categorías es solo para computador: en el celular se navega con la perilla «MENÚ» del costado */
 @media (max-width:700px){.cats{display:none}.grupo{scroll-margin-top:12px}.avi{scroll-margin-top:12px}}
+/* Formato de venta de los huevos */
+.fmt{display:flex;align-items:center;gap:8px;margin:7px 0 4px;font-size:14px;font-weight:700;color:var(--campo)}
+.fmt select{min-height:40px;padding:6px 10px;border:1.5px solid var(--campo);border-radius:10px;background:#fff;color:var(--campo);font:700 15px var(--texto,inherit);max-width:100%}
 </style>
 </head>
 <body>
@@ -858,27 +862,27 @@ const LOCALES = {
       {cod:"HUE001",cat:"Hueveras",nombre:"Huevera 12 × 200 u",detalle:"Precio por paquete de 200 u",precio:48000},
       {cod:"HUE002",cat:"Hueveras",nombre:"Bandeja 30 × 75 u",detalle:"Precio por paquete de 75 u",precio:9500},
       {cod:"HUE003",cat:"Hueveras",nombre:"Huevera 6 × 200 u",detalle:"Precio por unidad",precio:300},
-      {cod:"HUE004",cat:"Huevos",nombre:"Huevo de quinta",detalle:"Precio por unidad",precio:null},
-      {cod:"HUE005",cat:"Huevos",nombre:"Huevo tercera blanco Avicola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE006",cat:"Huevos",nombre:"Huevo jumbo blanco",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE007",cat:"Huevos",nombre:"Huevo super blanco 100 u",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE008",cat:"Huevos",nombre:"Huevo super blanco",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE009",cat:"Huevos",nombre:"Huevo super bandeja 30 café",detalle:"Precio por unidad",precio:null},
-      {cod:"HUE010",cat:"Huevos",nombre:"Huevo extra blanco Avicola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE011",cat:"Huevos",nombre:"Huevo super color 20 un.(100un por caja)",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE012",cat:"Huevos",nombre:"Huevo primera blanco Avicola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE013",cat:"Huevos",nombre:"Huevo primera café",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE014",cat:"Huevos",nombre:"Huevo segunda blanco",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE015",cat:"Huevos",nombre:"Huevo segunda café bandeja 30",detalle:"Precio por unidad",precio:null},
-      {cod:"HUE016",cat:"Huevos",nombre:"Huevo de quinta jumbo × 20",detalle:"Precio por unidad",precio:null},
-      {cod:"HUE017",cat:"Huevos",nombre:"Huevo quinta × 30",detalle:"Precio por unidad",precio:null},
-      {cod:"HUE018",cat:"Huevos",nombre:"Huevo segunda café",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE019",cat:"Huevos",nombre:"Huevo primera café bandeja",detalle:"Precio por unidad",precio:null},
-      {cod:"HUE020",cat:"Huevos",nombre:"Huevo extra color Avicola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE021",cat:"Huevos",nombre:"Huevo super café",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE022",cat:"Huevos",nombre:"Huevo jumbo café",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE023",cat:"Huevos",nombre:"Huevo tercera bandeja café Avicola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null},
-      {cod:"HUE024",cat:"Huevos",nombre:"Huevo super jumbo blanco X20",detalle:"Precio por unidad",precio:null},
+      {cod:"HUE004",cat:"Huevos",nombre:"Huevo de quinta",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
+      {cod:"HUE005",cat:"Huevos",nombre:"Huevo tercera blanco Avicola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE006",cat:"Huevos",nombre:"Huevo jumbo blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE007",cat:"Huevos",nombre:"Huevo super blanco 100 u",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE008",cat:"Huevos",nombre:"Huevo super blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE009",cat:"Huevos",nombre:"Huevo super bandeja 30 café",detalle:"Precio por unidad",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE010",cat:"Huevos",nombre:"Huevo extra blanco Avicola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE011",cat:"Huevos",nombre:"Huevo super color 20 un.(100un por caja)",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE012",cat:"Huevos",nombre:"Huevo primera blanco Avicola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE013",cat:"Huevos",nombre:"Huevo primera café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE014",cat:"Huevos",nombre:"Huevo segunda blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE015",cat:"Huevos",nombre:"Huevo segunda café bandeja 30",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
+      {cod:"HUE016",cat:"Huevos",nombre:"Huevo de quinta jumbo × 20",detalle:"Precio por unidad",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE017",cat:"Huevos",nombre:"Huevo quinta × 30",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
+      {cod:"HUE018",cat:"Huevos",nombre:"Huevo segunda café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE019",cat:"Huevos",nombre:"Huevo primera café bandeja",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
+      {cod:"HUE020",cat:"Huevos",nombre:"Huevo extra color Avicola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE021",cat:"Huevos",nombre:"Huevo super café",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE022",cat:"Huevos",nombre:"Huevo jumbo café",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE023",cat:"Huevos",nombre:"Huevo tercera bandeja café Avicola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE024",cat:"Huevos",nombre:"Huevo super jumbo blanco X20",detalle:"Precio por unidad",precio:null,formatos:"huevoGrande"},
       {cod:"CON001",cat:"Conservas",nombre:"Durazno mitad 567 g Tia Bela",detalle:"Precio por unidad",precio:895,stock:67},
       {cod:"CON002",cat:"Conservas",nombre:"Choritos en aceite 190 g Tenglo",detalle:"Precio por unidad",precio:745,stock:535},
       {cod:"CON003",cat:"Conservas",nombre:"Surtido marisco 190 g Tenglo",detalle:"Precio por unidad",precio:1245,stock:96},
@@ -1150,7 +1154,7 @@ const pieza=t=>t&&t.cat==="Blondas"?"blonda":"tapa", porQue=t=>t&&t.cat==="Blond
 const tapasDe={};
 L.productos.filter(t=>!t.retirado).forEach(t=>(t.envase||[]).forEach(c=>{(tapasDe[c]=tapasDe[c]||[]).push(t)}));
 Object.values(tapasDe).forEach(ts=>ts.sort((a,b)=>((a.stock===0)-(b.stock===0))||((a.precio==null)-(b.precio==null))));
-Object.keys(cart).forEach(k=>{const p=PROD[k.replace(/@P$/,"")];if(!p||p.retirado||esPieza(p)||(k.endsWith("@P")&&!(p.upp>1)))delete cart[k]});
+Object.keys(cart).forEach(k=>{const p=PROD[k.replace(/@.*$/,"")];const f=(k.match(/@(F\d+)$/)||[])[1];if(!p||p.retirado||esPieza(p)||(k.endsWith("@P")&&!(p.upp>1))||(f&&!(FORMATOS[p.formatos]||[]).some(x=>x[0]===f)))delete cart[k]});
 let tapaSel={};try{tapaSel=JSON.parse(leePref("tapas-"+KEY)||"{}")||{}}catch(e){tapaSel={}}
 const tapaDe=p=>{const ts=tapasDe[p.cod];if(!ts)return null;return ts.find(t=>t.cod===tapaSel[p.cod])||ts[0]};
 /* stock disponible del envase con tapa: el menor de los dos, hasta que se renueve el stock */
@@ -1171,9 +1175,16 @@ const redondear=n=>n>=100?Math.round(n/10)*10:Math.round(n);
 const porUnidad=p=>/por unidad/i.test(p.detalle||"");
 const tienePaq=p=>p.upp>1&&porUnidad(p);
 let modo={};try{modo=JSON.parse(leePref("modos-"+KEY)||"{}")||{}}catch(e){modo={}}
-const modoDe=p=>tienePaq(p)?(modo[p.cod]||"P"):"U";
-const clave=(cod,m)=>m==="P"?cod+"@P":cod;
-const unidadesEn=p=>(cart[clave(p.cod,"P")]||0)*(p.upp||0)+(cart[p.cod]||0);
+/* Formatos de venta de los huevos (id, nombre, unidades). Los super y jumbo además van en bandeja de 20 y caja de 100. */
+const FORMATOS={huevo:[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F30","Bandeja de 30",30],["F180","Caja de 180",180]]};
+FORMATOS.huevoGrande=[...FORMATOS.huevo,["F20","Bandeja de 20",20],["F100","Caja de 100",100]];
+const fmtDe=p=>FORMATOS[p.formatos]||null;
+const fmtInfo=(p,m)=>(fmtDe(p)||[]).find(f=>f[0]===m);
+const modoDe=p=>fmtDe(p)?(fmtInfo(p,modo[p.cod])?modo[p.cod]:"F30"):tienePaq(p)?(modo[p.cod]||"P"):"U";
+const clave=(cod,m)=>m==="P"?cod+"@P":m&&m[0]==="F"?cod+"@"+m:cod;
+// unidades que trae una unidad de venta en el modo m (paquete, formato de huevos o unidad)
+const porDe=(p,m)=>m==="P"?(p.upp||1):(fmtInfo(p,m)||[0,0,1])[2];
+const unidadesEn=p=>(cart[clave(p.cod,"P")]||0)*(p.upp||0)+(cart[p.cod]||0)+(fmtDe(p)||[]).filter(f=>f[0]!=="U").reduce((a,f)=>a+(cart[p.cod+"@"+f[0]]||0)*f[2],0);
 function precioPaq(p,n){const b=precioBase(p);if(b==null||!tienePaq(p))return null;return redondear(b*p.upp*(1-(n>=MIN_PAQ_MAYOR?DMAY:DPAQ)/100))}
 function escalones(p){ // por mayor de lo que no viene en paquete: desde 12 y 50 u
   const base=precioBase(p);
@@ -1186,6 +1197,7 @@ function precioHTML(p){
   if(p.oferta!=null)return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(p.oferta)}${p.precio!=null?` <s>${clp(p.precio)}</s>`:""}</span>`;
   const base=precioBase(p);
   if(base==null)return `<span class="precio pc">Precio por confirmar</span>`;
+  if(fmtDe(p)){const f=fmtInfo(p,modoDe(p));return `<span class="precio">${clp(redondear(base*f[2]))} <small class="u">${f[1].toLowerCase()}</small></span>`+(f[2]>1?`<small class="cu">Sale a ${clp(base)} c/u</small>`:"")}
   if(tienePaq(p)){
     const pq=precioPaq(p,1), pm=precioPaq(p,MIN_PAQ_MAYOR);
     if(modoDe(p)==="P")return `<span class="precio">${clp(pq)} <small class="u">paquete de ${p.upp} u</small></span><small class="cu">Sale a ${clp(Math.round(pq/p.upp))} c/u</small>`+(pm<pq?`<span class="mayor">Por mayor: <span>${MIN_PAQ_MAYOR} paquetes o más: ${clp(pm)} c/paquete</span></span>`:"");
@@ -1195,7 +1207,7 @@ function precioHTML(p){
   return `<span class="precio">${clp(base)}${u?` <small class="u">${u}</small>`:""}</span>`+(es.length?`<span class="mayor">Por mayor: ${es.map(e=>`<span>${e.desde} u o más: ${clp(e.precio)} c/u</span>`).join("")}</span>`:"");
 }
 const formaVenta=p=>{const d=p.detalle||"";const m=d.match(/por (unidad|paquete(?: de \d+ u)?|kilo|bandeja)/i);return m?"Se vende por "+m[1].toLowerCase():""};
-const modosHTML=p=>tienePaq(p)?`<div class="modos" role="group" aria-label="Llevar ${p.nombre} por paquete o por unidad">${[["P","Paquete de "+p.upp+" u"],["U","Unidad"]].map(([m,x])=>`<button type="button" class="mchip" data-mcod="${p.cod}" data-modo="${m}" aria-pressed="${modoDe(p)===m}">${x}</button>`).join("")}</div>`:(formaVenta(p)?`<span class="venta">${formaVenta(p)}</span>`:"");
+const modosHTML=p=>fmtDe(p)?`<label class="fmt">Formato <select data-fcod="${p.cod}" aria-label="Formato de ${p.nombre}">${fmtDe(p).map(f=>`<option value="${f[0]}"${modoDe(p)===f[0]?" selected":""}>${f[1]}${f[2]>1?` (${f[2]} u)`:""}</option>`).join("")}</select></label>`:tienePaq(p)?`<div class="modos" role="group" aria-label="Llevar ${p.nombre} por paquete o por unidad">${[["P","Paquete de "+p.upp+" u"],["U","Unidad"]].map(([m,x])=>`<button type="button" class="mchip" data-mcod="${p.cod}" data-modo="${m}" aria-pressed="${modoDe(p)===m}">${x}</button>`).join("")}</div>`:(formaVenta(p)?`<span class="venta">${formaVenta(p)}</span>`:"");
 const sinTapa=n=>{const s=n.replace(/^(tapas?|blondas?)\s+(para\s+)?/i,"");return s?s[0].toUpperCase()+s.slice(1):n};
 const tapasHTML=p=>{const ts=tapasDe[p.cod];if(!ts)return "";const sel=tapaDe(p);
   return `<div class="tapas"><span class="tl">${ts.length>1?`Elige la ${pieza(sel)} (va incluida, 1 por ${porQue(sel)})`:`Incluye ${pieza(sel)} (1 por ${porQue(sel)})`}</span>${ts.length>1?`<div class="tsel" role="group" aria-label="${pieza(sel)==="blonda"?"Blonda":"Tapa"} para ${p.nombre}">${ts.map(t=>`<button type="button" class="tchip${t.stock===0?" sin":""}" data-selenv="${p.cod}" data-seltapa="${t.cod}" aria-pressed="${t===sel}">${sinTapa(t.nombre)}</button>`).join("")}</div>`:`<span class="tuna">${sinTapa(sel.nombre)}</span>`}</div>`};
@@ -1268,14 +1280,14 @@ function clickTarjeta(e){
   if(s){const p=PROD[s.dataset.selenv];tapaSel[p.cod]=s.dataset.seltapa;guardaPref("tapas-"+KEY,JSON.stringify(tapaSel));ajustarTope(p);repintar(p);reenfocar(cont,`button[data-selenv="${p.cod}"][data-seltapa="${s.dataset.seltapa}"]`);return}
   const b=e.target.closest("button[data-cod]"); if(!b)return;
   const p=PROD[b.dataset.cod], m=modoDe(p), k=clave(p.cod,m), d=Number(b.dataset.d), tp=topeDe(p);
-  if(d>0&&tp!=null&&unidadesEn(p)+(m==="P"?p.upp:1)>tp)return;   // no alcanza el stock (envase con tapa: manda el menor)
+  if(d>0&&tp!=null&&unidadesEn(p)+porDe(p,m)>tp)return;   // no alcanza el stock (envase con tapa: manda el menor)
   const n=Math.max(0,(cart[k]||0)+d); if(n)cart[k]=n; else delete cart[k];
   guardar(); refrescar();
 }
 /* La cantidad también se puede escribir: al salir del campo (o con Enter) se ajusta al stock disponible */
 function fijarCantidad(inp){
   const p=PROD[inp.dataset.q]; if(!p)return;
-  const m=modoDe(p), k=clave(p.cod,m), por=m==="P"?p.upp:1, tp=topeDe(p);
+  const m=modoDe(p), k=clave(p.cod,m), por=porDe(p,m), tp=topeDe(p);
   let n=Math.max(0,Math.floor(Number(String(inp.value).replace(/[^0-9]/g,""))||0));
   if(tp!=null){const libres=tp-(unidadesEn(p)-(cart[k]||0)*por);n=Math.min(n,Math.max(0,Math.floor(libres/por)))}
   if(n)cart[k]=n; else delete cart[k];
@@ -1301,23 +1313,24 @@ const items=()=>{const out=[];L.productos.forEach(p=>{if(esPieza(p))return;const
   const nom=tp?(new RegExp("con "+pieza(tp),"i").test(p.nombre)?`${p.nombre} (${sinTapa(tp.nombre).toLowerCase()})`:`${p.nombre} con ${pieza(tp)} (${sinTapa(tp.nombre).toLowerCase()})`):p.nombre;
   const qp=cart[clave(p.cod,"P")]||0, qu=cart[p.cod]||0;
   if(qp&&tienePaq(p)){const pr=precioPaq(p,qp);out.push({...p,q:qp,precio:pr,mayor:pr!=null&&qp>=MIN_PAQ_MAYOR&&DMAY>DPAQ,tapa:tp,paq:true,uds:qp*p.upp,detalle:"",nombre:`${nom} · paquete de ${p.upp} u`})}
-  if(qu){const {pr,m}=precioQ(p,qu);out.push({...p,q:qu,precio:pr,mayor:m,tapa:tp,paq:false,uds:qu,detalle:tienePaq(p)?"por unidad":p.detalle,nombre:nom})}
+  if(fmtDe(p)){const b=precioBase(p);fmtDe(p).filter(f=>f[0]!=="U").forEach(f=>{const qf=cart[p.cod+"@"+f[0]]||0;if(qf)out.push({...p,q:qf,precio:b==null?null:redondear(b*f[2]),mayor:false,tapa:null,paq:false,fmt:true,uds:qf*f[2],detalle:"",nombre:`${nom} · ${f[1].toLowerCase()} (${f[2]} u)`})})}
+  if(qu){const {pr,m}=precioQ(p,qu);out.push({...p,q:qu,precio:pr,mayor:m,tapa:tp,paq:false,uds:qu,detalle:tienePaq(p)||fmtDe(p)?"por unidad":p.detalle,nombre:nom})}
 });return out};
-const lineasMyPyme=()=>{const m=new Map();items().forEach(x=>{const k1=x.cod+(x.paq?" paq":" u");m.set(k1,(m.get(k1)||0)+x.q);if(x.tapa){const k2=x.tapa.cod+" u";m.set(k2,(m.get(k2)||0)+x.uds)}});return [...m].map(([k,q])=>{const [c,u]=k.split(" ");return `${c}: ${q} ${u}`}).join(", ")};
+const lineasMyPyme=()=>{const m=new Map();items().forEach(x=>{const k1=x.cod+(x.paq?" paq":" u");m.set(k1,(m.get(k1)||0)+(x.fmt?x.uds:x.q));if(x.tapa){const k2=x.tapa.cod+" u";m.set(k2,(m.get(k2)||0)+x.uds)}});return [...m].map(([k,q])=>{const [c,u]=k.split(" ");return `${c}: ${q} ${u}`}).join(", ")};
 const total=()=>items().reduce((a,x)=>a+x.q*(x.precio||0),0);
 const sub=x=>x.precio==null?"precio por confirmar":clp(x.q*x.precio);
 
 function refrescar(){
   L.productos.forEach(p=>{
     if(esPieza(p))return;
-    const m=modoDe(p), q=cart[clave(p.cod,m)]||0, otra=m==="P"?(cart[p.cod]||0):(cart[clave(p.cod,"P")]||0);
-    const tp=topeDe(p), lleno=tp!=null&&unidadesEn(p)+(m==="P"?p.upp:1)>tp;
+    const m=modoDe(p), q=cart[clave(p.cod,m)]||0, otra=fmtDe(p)?(fmtDe(p).filter(f=>f[0]!==m&&cart[clave(p.cod,f[0])]).map(f=>`${cart[clave(p.cod,f[0])]} × ${f[1].toLowerCase()}`).join(", ")):m==="P"?(cart[p.cod]||0):(cart[clave(p.cod,"P")]||0);
+    const tp=topeDe(p), lleno=tp!=null&&unidadesEn(p)+porDe(p,m)>tp;
     document.querySelectorAll(`[data-q="${p.cod}"]`).forEach(o=>{if(o.tagName==="INPUT"){if(document.activeElement!==o)o.value=q}else o.textContent=q});
     document.querySelectorAll(`article[data-prod="${p.cod}"]`).forEach(a=>{
       a.classList.toggle("on",q+otra>0);
       a.querySelector(".menos").disabled=q===0; a.querySelector(".mas").disabled=lleno;
       const tg=a.querySelector(".tope"); if(tg){tg.hidden=!(lleno&&tp>0);tg.textContent=`Máximo disponible: ${tp} u`}
-      const ep=a.querySelector(".enped"); if(ep){ep.hidden=!otra;ep.textContent=!otra?"":m==="P"?`Además llevas ${otra} u sueltas`:`Además llevas ${otra} paquete${otra>1?"s":""}`}
+      const ep=a.querySelector(".enped"); if(ep){ep.hidden=!otra;ep.textContent=!otra?"":fmtDe(p)?`Además llevas ${otra}`:m==="P"?`Además llevas ${otra} u sueltas`:`Además llevas ${otra} paquete${otra>1?"s":""}`}
     });
   });
   const n=items().reduce((a,x)=>a+x.q,0);
@@ -1336,13 +1349,14 @@ function resumenCarro(n){
   $("carroTotal").textContent=clp(totalFinal());
   $("irPedido").disabled=n===0;
 }
-const enCarro=p=>!esPieza(p)&&!p.retirado&&((cart[p.cod]||0)+(cart[clave(p.cod,"P")]||0))>0;
+const enCarro=p=>!esPieza(p)&&!p.retirado&&unidadesEn(p)>0;
 function pintarCarro(){
   const ps=L.productos.filter(enCarro);
   $("carroLista").innerHTML=ps.map(p=>`<div class="crow" data-crow="${p.cod}">${card(p,FAV)}<button type="button" class="quitar" data-quitar="${p.cod}" aria-label="Quitar ${p.nombre} del carro">Quitar del carro</button></div>`).join("");
   $("carroLista").hidden=!ps.length; $("carroVacio").hidden=!!ps.length; $("carroPie").hidden=!ps.length;
   refrescar();
 }
+document.addEventListener("change",e=>{const sel=e.target.closest("select[data-fcod]");if(!sel)return;const p=PROD[sel.dataset.fcod];if(!p)return;modo[p.cod]=sel.value;guardaPref("modos-"+KEY,JSON.stringify(modo));const enCarroLista=!!sel.closest("#carroLista");repintar(p);const nuevo=document.querySelector((enCarroLista?"#carroLista ":"")+`select[data-fcod="${p.cod}"]`);if(nuevo)nuevo.focus()});
 $("bCarro").onclick=()=>{pintarCarro();$("carroLista").parentNode.scrollTop=0;abrirHoja("veloCarro",$("seguirCarro"))};
 const seguirComprando=()=>cerrarHoja("veloCarro");
 $("seguirCarro").onclick=seguirComprando; $("seguirCarro2").onclick=seguirComprando; $("volverVacio").onclick=seguirComprando;
