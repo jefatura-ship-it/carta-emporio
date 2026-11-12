@@ -17,8 +17,17 @@ const avance = el => { const r = el.getBoundingClientRect(); return limita(-r.to
 /* ---------- Fechas: apertura del local y fin del descuento ---------- */
 {
   const ahora = Date.now();
-  if (ahora >= new Date('2026-11-23T00:00:00-03:00')) $('#estado').textContent = 'Abierto de lunes a sábado, 8:30 a 17:00';
+  // Desde el día de la apertura (23/11/2026) ya no se anuncia «abrimos el 23»: se muestra el horario y se quita la fila «Apertura»
+  if (ahora >= new Date('2026-11-23T00:00:00-03:00')) { $('#estado').textContent = 'Abierto de lunes a sábado, 8:30 a 17:00'; const f = $('#filaApertura'); if (f) f.remove(); }
   if (ahora >= new Date('2026-12-05T00:00:00-03:00')) $('#bienvenida').hidden = true;
+}
+
+/* ---------- Aprende el manejo de las aves: pestañas por tema (accesibles con teclado; sin JavaScript se ven todos los temas) ---------- */
+{
+  const tabs = $$('.apr-temas [role=tab]'), paneles = tabs.map(t => document.getElementById(t.getAttribute('aria-controls')));
+  const elige = (i, foco) => { tabs.forEach((t, k) => { const si = k === i; t.setAttribute('aria-selected', si); t.tabIndex = si ? 0 : -1; paneles[k].hidden = !si; }); if (foco) tabs[i].focus(); };
+  tabs.forEach((t, i) => { t.addEventListener('click', () => elige(i)); t.addEventListener('keydown', e => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (d) { e.preventDefault(); elige((i + d + tabs.length) % tabs.length, true); } }); });
+  if (tabs.length) elige(0);
 }
 
 /* ---------- Qué secciones están en pantalla (para no dibujar lo que no se ve) ---------- */
@@ -119,7 +128,24 @@ if (!quieto) {
     faroles.map(f => `<circle cx="${f + 3}" cy="430" r="80" fill="url(#halo)"/><circle cx="${f + 3}" cy="421" r="6" fill="#fff4cf"/>`).join('') +
     `<circle cx="5400" cy="352" r="125" fill="url(#halo)"/>${sello}<rect x="5380" y="430" width="40" height="70" fill="#ffe2a0"/>` + rotuloDistri('#3e8f56');
   const frente = svg(ANCHO, c);
-  const frenteCapa = `<div class="capa frente">${frente}<div class="copia tarde">${frente}</div><div class="copia noche">${frente}</div><div class="copia luces">${svg(ANCHO, luces)}</div></div>`;
+  // Lo que se mueve en el paisaje (capa aparte encima del frente): autos por el otro carril, una carreta con caballo
+  // saliendo de Oro Verde, gente entrando al Emporio y la bodega donde entra el camión al final.
+  const COLORES_AUTO = ['#c8281f', '#2f5f8a', '#e8e4da', '#3b3b35', '#d9a520', '#5f7d52', '#8a8f94'];
+  const auto = (i, color) => `<g class="auto" data-i="${i}"><path d="M0 22 q2 -12 18 -13 l14 -9 h30 l14 9 h10 q8 1 8 13 v6 h-94z" fill="${color}"/><path d="M36 2 h24 l11 8 h-46z" fill="#cfe3ec"/>` +
+    `<circle cx="20" cy="29" r="7" fill="#1a1a1a"/><circle cx="76" cy="29" r="7" fill="#1a1a1a"/><circle class="faro" cx="2" cy="16" r="9" fill="#fff1b8" opacity="0"/><rect x="0" y="14" width="4" height="4" fill="#fff3c4"/></g>`;
+  const AUTOS = COLORES_AUTO.map((col, i) => ({ x0: i * (ANCHO / COLORES_AUTO.length) + azar() * 300, v: 210 + azar() * 140, col }));
+  const carreta = '<g class="carreta"><g class="caballo"><path d="M0 0 q10 -16 34 -14 q16 1 22 -14 l8 -10 4 6 -4 14 q-2 12 -12 18 v26 h-6 v-22 h-30 v22 h-6 v-24 q-10 -2 -10 -2z" fill="#6b4a2b"/><path d="M58 -32 l6 -8 2 8z" fill="#4a3320"/></g>' +
+    '<path d="M-6 -6 h-30" stroke="#4a3320" stroke-width="3"/><rect x="-96" y="-22" width="60" height="22" rx="3" fill="#a0784a"/><path d="M-96 -22 h60" stroke="#6b4a2b" stroke-width="4"/>' +
+    '<g class="rueda-c"><circle cx="-66" cy="4" r="14" fill="none" stroke="#4a3320" stroke-width="4"/><path d="M-80 4h28M-66 -10v28" stroke="#4a3320" stroke-width="2.5"/></g></g>';
+  const persona = (i, col) => `<g class="persona" data-i="${i}"><circle cx="0" cy="-46" r="6" fill="#c99a76"/><rect x="-6" y="-39" width="12" height="20" rx="4" fill="${col}"/>` +
+    `<path class="pi" d="M-2 -20 v20" stroke="#2b2b28" stroke-width="4" stroke-linecap="round"/><path class="pd" d="M2 -20 v20" stroke="#2b2b28" stroke-width="4" stroke-linecap="round"/></g>`;
+  const GENTE = [['#2f6b3f', -1], ['#c8281f', 1], ['#2f5f8a', -1], ['#d9a520', 1], ['#8a5a9e', -1]].map(([col, lado], i) => ({ col, lado, fase: i / 5 }));
+  const vivosSvg = `<svg class="vivos" viewBox="0 0 ${ANCHO} 600" xmlns="http://www.w3.org/2000/svg">` +
+    `<g class="bodega"><rect x="5168" y="380" width="196" height="120" fill="#141412"/><g class="cortina"><rect x="5168" y="380" width="196" height="120" fill="#b4b8ba"/>` +
+    Array.from({ length: 14 }, (_, i) => `<rect x="5168" y="${384 + i * 8.5}" width="196" height="2.5" fill="#8f9496"/>`).join('') + `</g><rect x="5168" y="372" width="196" height="10" fill="#262623"/>` +
+    `<text x="5266" y="376" text-anchor="middle" ${LETRA} font-size="11" fill="#e8e4da">BODEGA</text></g>` +
+    AUTOS.map((a, i) => auto(i, a.col)).join('') + carreta + GENTE.map((g, i) => persona(i, g.col)).join('') + '</svg>';
+  const frenteCapa = `<div class="capa frente">${frente}<div class="copia tarde">${frente}</div><div class="copia noche">${frente}</div><div class="copia luces">${svg(ANCHO, luces)}</div>${vivosSvg}</div>`;
 
   // El camión: solo con el sello del Emporio en la caja (David no quiere el logo de la avícola en el camión)
   const camion = '<svg viewBox="0 0 300 160" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="14" width="190" height="100" rx="8" fill="#fbfaf6" stroke="#1c1c1a" stroke-width="4"/><rect x="6" y="88" width="190" height="10" fill="#1c1c1a"/>' +
@@ -136,6 +162,8 @@ if (!quieto) {
   const viaje = vigila($('#viaje')), escena = $('.viaje-escena'), capas = $$(':scope > .capa', paisaje), frenteEl = $('.capa.frente', paisaje);
   const cielo = $('.cielo', paisaje), sol = $('.v-sol', paisaje), luna = $('.v-luna', paisaje), est = $('.estrellas', paisaje);
   const veloT = $('.velo.tarde', paisaje), veloN = $('.velo.noche', paisaje), copT = $('.copia.tarde', paisaje), copN = $('.copia.noche', paisaje), copL = $('.copia.luces', paisaje);
+  const vivos = $('.vivos', paisaje), autosEl = $$('.auto', vivos), farosEl = $$('.faro', vivos), carretaEl = $('.carreta', vivos), caballoEl = $('.caballo', vivos), ruedaC = $('.rueda-c', vivos);
+  const genteEl = $$('.persona', vivos), cortina = $('.cortina', vivos);
   const cam = $('.camion', paisaje), camSvg = $('svg', cam), haz = $('.haz', cam), hitos = $$('#hitos li');
   const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
   const tono = (a, b, k) => 'rgb(' + hex(a).map((v, i) => Math.round(v + (hex(b)[i] - v) * k)).join(',') + ')';
@@ -169,8 +197,29 @@ if (!quieto) {
       haz.style.opacity = luz.toFixed(3); camSvg.style.filter = `brightness(${(1 - 0.45 * noche).toFixed(3)})`;
       escena.classList.toggle('noche', noche > 0.45);
     }
+    // Autos por el carril contrario (van hacia la izquierda, de forma continua)
+    AUTOS.forEach((a, i) => { const x = ((a.x0 - t * a.v) % ANCHO + ANCHO) % ANCHO - 100; autosEl[i].setAttribute('transform', `translate(${x.toFixed(1)},512) scale(.82)`); });
+    farosEl.forEach(f => f.setAttribute('opacity', luz.toFixed(2)));
+    vivos.style.filter = noche > 0.01 ? `brightness(${(1 - 0.55 * noche).toFixed(3)})` : '';
+    // Carreta con caballo saliendo de Oro Verde por la orilla del camino (vuelta cada 26 s)
+    const kc = (t % 26) / 26, xc = 1960 + kc * 900, pasoC = Math.sin(t * 7);
+    carretaEl.setAttribute('transform', `translate(${xc.toFixed(1)},${(494 - Math.abs(pasoC) * 1.5).toFixed(1)}) scale(.9)`);
+    caballoEl.setAttribute('transform', `rotate(${(pasoC * 2).toFixed(2)})`); ruedaC.setAttribute('transform', `rotate(${(t * 160 % 360).toFixed(1)} -66 4)`);
+    carretaEl.setAttribute('opacity', (kc < 0.06 ? kc / 0.06 : kc > 0.92 ? (1 - kc) / 0.08 : 1).toFixed(2));
+    // Gente que camina por la vereda y entra al Emporio (se desvanece en la puerta)
+    GENTE.forEach((g, i) => {
+      const k = ((t / 9 + g.fase) % 1), x = 5400 + g.lado * (1 - k) * 330, paso = Math.sin(t * 9 + i) * 22;
+      genteEl[i].setAttribute('transform', `translate(${x.toFixed(1)},508) scale(${g.lado > 0 ? -1 : 1},1)`);
+      genteEl[i].setAttribute('opacity', (k > 0.9 ? (1 - k) / 0.1 : k < 0.08 ? k / 0.08 : 1).toFixed(2));
+      genteEl[i].querySelector('.pi').setAttribute('transform', `rotate(${paso.toFixed(1)} -2 -20)`); genteEl[i].querySelector('.pd').setAttribute('transform', `rotate(${(-paso).toFixed(1)} 2 -20)`);
+    });
+    // Al final, la cortina de la bodega sube y el camión entra
+    const entra = suave(0.93, 1, pv), abre = suave(0.88, 0.95, pv);
+    cortina.setAttribute('transform', `translate(0,${(-abre * 112).toFixed(1)})`);
     cam.style.setProperty('--giro-rueda', (pv * 6400).toFixed(0) + 'deg');
-    cam.style.transform = `translate3d(0,${(Math.sin(t * 9) * (pv > 0.005 && pv < 0.995 ? 1.6 : 0)).toFixed(1)}px,0)`;
+    const puertaX = (5266 - 5400) * esc + W / 2, camX = cam.offsetLeft + cam.offsetWidth * 0.5;
+    cam.style.transform = `translate3d(${(entra * (puertaX - camX)).toFixed(1)}px,${(Math.sin(t * 9) * (pv > 0.005 && pv < 0.93 ? 1.6 : 0) - entra * frenteEl.offsetHeight * 0.1).toFixed(1)}px,0) scale(${(1 - entra * 0.35).toFixed(3)})`;
+    cam.style.opacity = (1 - suave(0.97, 1, pv)).toFixed(3);
     const h = u < 0.12 ? 0 : u < 0.4 ? 1 : u < 0.76 ? 2 : 3;
     if (h !== hito) { hitos[hito].classList.remove('activo'); hitos[h].classList.add('activo'); hito = h; }
   });
@@ -336,12 +385,15 @@ if (!quieto) {
 }
 
 /* =================== Del batch al saco: macro y micro caen, se revuelven y el alimento cae al saco =================== */
-// Las fotos (montones, mezcladora y saco) son fijas; los granos que caen se dibujan en un lienzo encima.
+// Las fotos (montones, molino y saco) son fijas; las manos se mueven con transform y los granos se dibujan en un lienzo encima.
 if (!quieto) {
   const sec = $('#batch'), mesa = $('#batchMesa'), lienzo = $('#batchLienzo'), ctx = lienzo.getContext('2d');
   const mez = $('.mezcladora', mesa), saco = $('.saco', mesa), pasos = $$('#batchPasos li');
   const ings = $$('.ing', mesa).map((f, i) => ({ img: $('img', f), tipo: ['maiz', 'soya', 'afrechillo', 'premix'][i], acum: 0 }));
   const COL = { maiz: ['#f2a314', '#e38e0b', '#f7b93a'], soya: ['#d9b36d', '#caa057', '#e6c48b'], afrechillo: ['#b5773e', '#a46632', '#c98d54'], premix: ['#efe5cf', '#e4d8bd', '#f7f0e1'] };
+  // Manos que echan cada ingrediente al molino: ventana de tiempo, punta (fracción de la imagen), giro y caudal
+  const manos = [['.mano-maiz', 'maiz', 0.04, 0.17, [0.77, 0.65], 9, 0], ['.mano-soya', 'soya', 0.16, 0.29, [0.24, 0.52], -9, 0.02], ['.mano-afrechillo', 'afrechillo', 0.28, 0.39, [0.77, 0.65], 9, -0.01], ['.mano-premix', 'premix', 0.4, 0.53, [0.13, 0.6], -7, 0.01]]
+    .map(([sel, tipo, a, b, tip, giro, dx]) => ({ el: $(sel, mesa), tipo, a, b, tip, giro, dx, ancho: tipo === 'premix' ? 0.34 : 0.4, flujo: tipo === 'premix' ? 120 : 75, acum: 0 }));
   const TAM = { maiz: [3.4, 4.6], soya: [2.6, 3.8], afrechillo: [2.4, 3.6], premix: [1.1, 1.8] };
   const MEZCLA = [...COL.maiz, ...COL.soya, ...COL.afrechillo, '#d9c69a', '#c79a5a'];
   const elige = a => a[(Math.random() * a.length) | 0];
@@ -356,43 +408,51 @@ if (!quieto) {
     if (lienzo.width !== W || lienzo.height !== H) { lienzo.width = W; lienzo.height = H; }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, R.width, R.height);
     pB = mezcla(pB, avance(sec), 0.1);
-    const macro = rango(pB, 0.04, 0.4), micro = rango(pB, 0.3, 0.54), revuelve = rango(pB, 0.38, 0.8), ensaca = rango(pB, 0.64, 1.01);
+    const macro = rango(pB, 0.04, 0.4), micro = rango(pB, 0.38, 0.54), revuelve = rango(pB, 0.46, 0.8), ensaca = rango(pB, 0.64, 1.01);
     const g = R.height * 1.6; // gravedad, en píxeles por segundo al cuadrado
-    // Los montones se vacían y la pala del premix se inclina hacia la mezcladora
-    const vacia = suave(0.04, 0.4, pB), vaciaMicro = suave(0.3, 0.54, pB);
+    // Los montones se van achicando a medida que las manos sacan de cada uno
     ings.forEach(o => {
-      o.img.style.transform = o.tipo === 'premix'
-        ? `rotate(${(-28 * Math.min(1, vaciaMicro * 3) * (1 - suave(0.5, 0.58, pB))).toFixed(1)}deg) scale(${(1 - 0.15 * vaciaMicro).toFixed(3)})`
-        : `scale(${(1 - 0.5 * vacia).toFixed(3)})`;
+      const v = o.tipo === 'premix' ? suave(0.4, 0.52, pB) : o.tipo === 'maiz' ? suave(0.05, 0.16, pB) : o.tipo === 'soya' ? suave(0.17, 0.28, pB) : suave(0.29, 0.38, pB);
+      o.img.style.transform = `scale(${(1 - 0.45 * v).toFixed(3)})`;
     });
     const M = rel(mez, R), S = rel(saco, R);
-    // La mezcladora vibra mientras revuelve
-    mez.style.transform = revuelve > 0.01 ? `translate(${(Math.sin(t * 53) * 1.4 * revuelve).toFixed(2)}px,${(Math.cos(t * 47) * 1.1 * revuelve).toFixed(2)}px)` : '';
+    // El molino vibra suave mientras revuelve
+    mez.style.transform = revuelve > 0.01 ? `translate(${(Math.sin(t * 41) * 1.1 * revuelve).toFixed(2)}px,${(Math.cos(t * 37) * 0.9 * revuelve).toFixed(2)}px)` : '';
     const llenado = suave(0.66, 0.98, pB);
     saco.style.transform = `scale(${(1 + 0.06 * llenado).toFixed(3)},${(1 + 0.03 * llenado).toFixed(3)})`;
-    // Macro y micro: caen en arco desde cada montón hasta la boca de la mezcladora
-    ings.forEach(o => {
-      o.acum += (o.tipo === 'premix' ? 110 * micro : 38 * macro) * dt;
-      const I = rel(o.img, R), [a, b] = TAM[o.tipo];
-      while (o.acum >= 1) {
-        o.acum -= 1;
-        const x0 = I.x + I.w * (0.3 + Math.random() * 0.4), y0 = I.y + I.h * (o.tipo === 'premix' ? 0.35 : 0.55);
-        const tx = M.x + M.w * (0.16 + Math.random() * 0.44), ty = M.y + M.h * (0.24 + Math.random() * 0.1), T = 0.75 + Math.random() * 0.3;
-        const w = a + Math.random() * (b - a);
-        granos.push({ x: x0, y: y0, vx: (tx - x0) / T, vy: (ty - y0 - 0.5 * g * T * T) / T, fin: ty, edad: 0, c: elige(COL[o.tipo]), w,
-          h: w * (o.tipo === 'maiz' ? 1.25 : o.tipo === 'premix' ? 1 : 0.6), r: Math.random() * 6, vr: (Math.random() - 0.5) * 12, a: o.tipo === 'premix' ? 0.75 : 1 });
+    // Las manos: cada una entra en su turno, se inclina con cuidado sobre la tolva y vuelve a salir.
+    // La punta de la pala (o del bol) queda siempre sobre la boca del molino; desde ahí caen los granos.
+    const bocaX = M.x + M.w * 0.45, bocaY = M.y + M.h * 0.05;
+    manos.forEach(m => {
+      const vis = rango(pB, m.a, m.b), inclina = suave(m.a + 0.02, m.a + 0.05, pB) * (1 - suave(m.b - 0.04, m.b - 0.01, pB));
+      const w = M.w * m.ancho, h = w, tx = bocaX + m.dx * M.w, ty = bocaY - M.h * 0.2;
+      const entra = (1 - vis) * h * 0.7, bal = Math.sin(t * 2.3 + m.a * 9) * 1.2 * vis;
+      m.el.style.width = w.toFixed(1) + 'px';
+      m.el.style.transformOrigin = `${m.tip[0] * 100}% ${m.tip[1] * 100}%`;
+      m.el.style.transform = `translate3d(${(tx - m.tip[0] * w).toFixed(1)}px,${(ty - m.tip[1] * h - entra).toFixed(1)}px,0) rotate(${(m.giro * inclina + bal).toFixed(2)}deg)`;
+      m.el.style.opacity = vis.toFixed(3);
+      // Granos que caen desde la punta hasta la tolva
+      m.acum += m.flujo * inclina * vis * dt;
+      const [a, b] = TAM[m.tipo];
+      while (m.acum >= 1) {
+        m.acum -= 1;
+        const x0 = tx + (Math.random() - 0.5) * w * 0.06, y0 = ty;
+        const fx = bocaX + (Math.random() - 0.5) * M.w * 0.22, fy = bocaY + M.h * (0.04 + Math.random() * 0.06), T = 0.32 + Math.random() * 0.18;
+        const s = a + Math.random() * (b - a);
+        granos.push({ x: x0, y: y0, vx: (fx - x0) / T, vy: (fy - y0 - 0.5 * g * T * T) / T, fin: fy, edad: 0, c: elige(COL[m.tipo]), w: s,
+          h: s * (m.tipo === 'maiz' ? 1.25 : m.tipo === 'premix' ? 1 : 0.6), r: Math.random() * 6, vr: (Math.random() - 0.5) * 12, a: m.tipo === 'premix' ? 0.8 : 1 });
       }
     });
-    // El alimento revuelto sale por la descarga y cae al saco
-    const sx = M.x + M.w * 0.385, sy = M.y + M.h * 0.8, ky = S.y + S.h * 0.09;
+    // El alimento revuelto sale por el canal de madera y cae al saco
+    const sx = M.x + M.w * 0.33, sy = M.y + M.h * 0.78, ky = S.y + S.h * 0.09;
     acumSaco += 170 * ensaca * dt;
     while (acumSaco >= 1) {
       acumSaco -= 1; const w = 2.2 + Math.random() * 2.4;
       granos.push({ x: sx + (Math.random() - 0.5) * M.w * 0.035, y: sy, vx: (Math.random() - 0.5) * 18, vy: 40 + Math.random() * 40, fin: ky + Math.random() * 6, edad: 0, c: elige(MEZCLA), w, h: w * 0.8, r: Math.random() * 6, vr: (Math.random() - 0.5) * 10, a: 1 });
     }
-    // Lo que hay dentro de la mezcladora: gira despacio y se acelera mientras revuelve
+    // Lo que se ve dentro de la tolva: gira despacio y se acelera mientras revuelve
     const contenido = suave(0.08, 0.5, pB) * (1 - suave(0.72, 0.97, pB));
-    const n = Math.round(110 * contenido), cx = M.x + M.w * 0.4, cy = M.y + M.h * 0.31, rx = M.w * 0.27, ry = M.h * 0.045, vel = 0.4 + 3.2 * revuelve;
+    const n = Math.round(70 * contenido), cx = bocaX, cy = M.y + M.h * 0.1, rx = M.w * 0.13, ry = M.h * 0.022, vel = 0.4 + 3.2 * revuelve;
     for (let i = 0; i < n; i++) {
       const k = (i * 0.6180339) % 1, ang = t * vel * (0.7 + k * 0.6) + i * 2.399;
       ctx.fillStyle = MEZCLA[i % MEZCLA.length]; ctx.beginPath();
@@ -412,7 +472,7 @@ if (!quieto) {
     });
     ctx.globalAlpha = 1;
     if (granos.length > 1400) granos.splice(0, granos.length - 1400);
-    const ps = pB < 0.3 ? 0 : pB < 0.42 ? 1 : pB < 0.66 ? 2 : 3;
+    const ps = pB < 0.38 ? 0 : pB < 0.54 ? 1 : pB < 0.66 ? 2 : 3;
     if (ps !== paso) { pasos[paso].classList.remove('activo'); pasos[ps].classList.add('activo'); paso = ps; }
   });
 }

@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<!-- Seguridad: solo se cargan recursos de este mismo sitio (y el registro de clientes en la carta); no se envía la dirección completa a otros sitios -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline'; object-src 'none'; base-uri 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Del campo a tu mesa · Avícola El Huevo Sabroso</title>
 <!-- La página web se mudó a la raíz del sitio: esta dirección antigua lleva a la nueva -->

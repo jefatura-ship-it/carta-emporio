@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<!-- Seguridad: solo se cargan recursos de este mismo sitio (y el registro de clientes en la carta); no se envía la dirección completa a otros sitios -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1d5c36">
 <title>Información legal · Emporio Sabroso y Distribuidora Santa Bárbara</title>
@@ -325,6 +328,7 @@ footer p{margin:0 0 6px}
       <li><b>Logo de Avícola El Huevo Sabroso:</b> es propio y no se puede usar sin autorización.</li>
       <li><b>Fotos de la avícola, de sus pabellones, de las bandejas de huevos y de la fábrica de alimentos:</b> son propias.</li>
       <li><b>Logos de Avícola El Huevo Sabroso, Pollitas Oro Verde y Emporio Sabroso:</b> son propios y se usan en sus versiones oficiales.</li>
+      <li><b>Logos de Nutringen y Certilab:</b> son marcas de sus dueños y se muestran solo para indicar quién nos provee las vacunas (Nutringen) y quién analiza nuestros huevos (Certilab).</li>
       <li><b>Fotos de pollitas de la página web:</b> son imágenes referenciales, creadas para este sitio con inteligencia artificial (Higgsfield).</li>
       <li><b>Fotos de la mezcla del alimento (materias primas, mezcladora y saco):</b> son imágenes referenciales, creadas para este sitio con inteligencia artificial (Higgsfield).</li>
       <li><b>Fotos de productos:</b> hoy la carta no usa fotografías. Cuando se agreguen, serán propias o con licencia para usarlas.</li>

@@ -1,0 +1,39 @@
+# Publica en GitHub Pages SOLO los archivos públicos del sitio (www.avicolasb.com).
+# Quedan fuera las notas internas (CLAUDE.md, README.md), el código del registro de clientes (apps-script/)
+# y las herramientas de trabajo (herramientas/). Requiere Settings → Pages → Source: «GitHub Actions».
+name: Publicar sitio
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Armar la carpeta pública
+        run: |
+          mkdir _site
+          cp index.html legal.html sitemap.xml CNAME _site/
+          cp -r carta web img js modelos video fonts _site/
+          rm -f _site/js/*.map
+          echo "Archivos publicados:"; find _site -maxdepth 2 -type d
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: despliegue
+        uses: actions/deploy-pages@v4

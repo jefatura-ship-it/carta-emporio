@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<!-- Seguridad: solo se cargan recursos de este mismo sitio (y el registro de clientes en la carta); no se envía la dirección completa a otros sitios -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self'; font-src 'self'; connect-src 'self' data: blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <!-- La carta se mudó a /carta/: los QR y enlaces antiguos (con ?local=…) siguen llevando a la carta -->
 <script>if(/[?&]local=/.test(location.search))location.replace('carta/'+location.search+location.hash)</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -170,6 +173,28 @@ p{margin:0 0 12px}
 @media (max-width:900px){.pol-pasos{grid-template-columns:1fr 1fr}}
 @media (max-width:520px){.pol-pasos{grid-template-columns:1fr}.pol-cab{flex-direction:column;align-items:flex-start;gap:14px}.pol-logo{width:110px}}
 
+/* =================== APRENDE EL MANEJO DE LAS AVES =================== */
+.apr{background-color:var(--papel);color:var(--carbon)}
+.apr .wrap{padding-block:40px 76px}
+.apr h2{font-size:clamp(38px,5.2vw,60px);margin-bottom:10px}
+.apr-cab p{font-size:18px;max-width:56ch}
+.apr-temas{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 16px}
+.apr-temas button{border:1.5px solid var(--carbon);background:#fff;color:var(--carbon);border-radius:99px;padding:9px 15px;font:600 15px var(--texto);cursor:pointer}
+.apr-temas button[aria-selected="true"]{background:var(--carbon);color:#fff}
+.apr-panel{background:#fff;border:1px solid var(--raya);border-radius:18px;padding:22px 24px 14px;box-shadow:0 14px 34px rgba(28,28,26,.08);animation:aprEntra .35s ease}
+@keyframes aprEntra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.apr-panel{animation:none}}
+.apr-panel h3{font-size:28px;margin:0 0 10px}
+.apr-panel ul{margin:0 0 10px;padding-left:1.1em;display:grid;gap:8px}
+.apr-panel li{font-size:16.5px;line-height:1.5}
+.apr-tabla{overflow-x:auto;margin:0 0 14px}
+.apr-tabla table{border-collapse:collapse;width:100%;min-width:440px;font-size:15.5px}
+.apr-tabla caption{text-align:left;font-size:13.5px;color:var(--gris);padding-bottom:6px}
+.apr-tabla th,.apr-tabla td{border-bottom:1px solid var(--raya);padding:8px 10px;text-align:left}
+.apr-tabla thead th{background:var(--papel);font-weight:700}
+.apr-fuente{margin:14px 0 0;font-size:14px;color:var(--gris);max-width:80ch}
+@media (max-width:520px){.apr-temas button{padding:8px 12px;font-size:14px}.apr-panel{padding:18px 16px 10px}}
+
 /* =================== LA FÁBRICA DE ALIMENTOS =================== */
 .fab{background:#fff;color:var(--carbon);border-block:1px solid var(--raya)}
 .fab .wrap{padding-block:76px}
@@ -220,6 +245,9 @@ p{margin:0 0 12px}
 .batch-mesa .mezcladora{grid-column:1/4}
 .batch-mesa .saco{grid-column:4;max-height:260px;width:auto;justify-self:center}
 .batch-mesa img{filter:drop-shadow(0 14px 14px rgba(28,28,26,.18))}
+/* Manos que echan los ingredientes al molino (solo con movimiento) */
+.batch-mesa .mano{display:none}
+.mov .batch-mesa .mano{display:block;position:absolute;left:0;top:0;width:40%;max-width:none;z-index:3;opacity:0;will-change:transform,opacity;pointer-events:none}
 #batchLienzo{display:none}
 @media (min-width:821px){.batch-escena{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);align-items:center}}
 /* Con movimiento: la mesa queda fija y la mezcla avanza con el desplazamiento */
@@ -277,6 +305,7 @@ p{margin:0 0 12px}
 .viaje-escena.noche h2,.viaje-escena.noche .sub{color:#f6f3ee}
 .capa{position:absolute;left:0;bottom:0;height:100%;will-change:transform}
 .capa svg{display:block;height:100%;width:auto}
+.capa .vivos{position:absolute;left:0;top:0;height:100%;width:auto;pointer-events:none;overflow:visible}
 .camion{position:absolute;left:30%;bottom:6%;width:clamp(130px,27vh,300px);z-index:1}
 .camion svg{display:block;width:100%;height:auto;overflow:visible}
 .camion .rueda{transform-box:fill-box;transform-origin:center;transform:rotate(var(--giro-rueda,0deg))}
@@ -408,6 +437,25 @@ footer.funde{--fh:110px;padding-top:80px}
 /* Movimiento: los elementos con data-entra se acomodan al entrar a la pantalla (lo calcula viaje.js) */
 .mov [data-entra]{will-change:transform,opacity}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important;animation:none!important}}
+
+/* Logos de proveedores (vacunas Nutringen, análisis Certilab) */
+.proveedor{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin:10px 0 0;font-size:14.5px;font-weight:600;color:var(--gris)}
+.proveedor img{height:30px;width:auto;background:#fff;border-radius:6px;padding:4px 6px}
+/* Pantallas de computador: textos pequeños un poco más grandes */
+@media (min-width:900px){
+  body{font-size:18px}
+  .etiqueta{font-size:13.5px}
+  .flot figcaption,.fab-vid figcaption,.batch-mesa figcaption{font-size:15.5px}
+  .batch-mesa figcaption small{font-size:12px}
+  .pol-pasos b{font-size:13.5px}
+  .pol-pasos p,.pol-cab p,.fab-pasos span,.fab-datos li,.batch-pasos li,.batch-pasos .por,.dato p,.fab-compra p,.pol-compra p{font-size:16.5px}
+  .pol-pasos h3{font-size:25px}
+  .hitos .hora{font-size:12.5px}
+  .lema{font-size:14px}
+  .estado{font-size:16px}
+  .letra,.rep-ficha .n,.pad small,.donde dt{font-size:15px}
+  footer{font-size:16px}
+}
 </style>
 </head>
 <body>
@@ -419,6 +467,7 @@ footer.funde{--fh:110px;padding-top:80px}
     <ul>
       <li><a href="#quienes">Quiénes somos</a></li>
       <li><a href="#pollitas">Pollitas</a></li>
+      <li><a href="#aprende">Aprende</a></li>
       <li><a href="#fabrica">La fábrica</a></li>
       <li><a href="#batch">El alimento</a></li>
       <li><a href="#viaje">El viaje</a></li>
@@ -492,6 +541,7 @@ footer.funde{--fh:110px;padding-top:80px}
           <span class="etiqueta">El huevo</span>
           <h2>Blanco, café o azul</h2>
           <p>Vendemos huevo blanco y huevo café, por bandeja y por caja. Y ahora también huevo azul, de nuestra nueva raza de gallinas Novogen.</p>
+          <p class="proveedor">Analizamos nuestros huevos con el laboratorio <img src="img/certilab.webp" alt="Certilab" width="320" height="92" loading="lazy"></p>
         </div>
         <div class="flotan">
           <figure class="flot" data-vel=".10"><img src="img/huevos-cafe-bandeja.jpg" alt="Bandeja de huevos café sobre una mesa de madera." width="1280" height="853" loading="lazy"><figcaption>Huevo café, por bandeja.</figcaption></figure>
@@ -545,6 +595,7 @@ footer.funde{--fh:110px;padding-top:80px}
         <b>Vacunas</b>
         <h3>Con su calendario de vacunas</h3>
         <p>Cada pollita cumple con el calendario de vacunación.</p>
+        <p class="proveedor">Vacunas de <img src="img/nutringen.webp" alt="Nutringen, nutrición y salud animal" width="320" height="67" loading="lazy"></p>
       </li>
       <li data-entra>
         <figure data-vel="-.04"><img src="img/pollitas-criadora.jpg" alt="Pollitas sobre viruta bajo lámparas de calor encendidas, dentro de un pabellón, junto a comederos y bebederos." width="1000" height="672" loading="lazy"></figure>
@@ -564,6 +615,117 @@ footer.funde{--fh:110px;padding-top:80px}
       <a class="btn wsp" href="https://wa.me/56966087529?text=Hola%2C%20quiero%20comprar%20pollitas." target="_blank" rel="noopener">WhatsApp crianzas +56 9 6608 7529</a>
       <a class="btn linea" href="https://www.instagram.com/pollitasoroverde/" target="_blank" rel="noopener">Instagram @pollitasoroverde</a>
     </div>
+  </div>
+</section>
+
+<!-- =================== APRENDE CON NOSOTROS EL MANEJO DE LAS AVES =================== -->
+<section class="apr" id="aprende" aria-labelledby="h-aprende">
+  <div class="wrap">
+    <div class="apr-cab" data-entra>
+      <span class="etiqueta">Aprende con nosotros</span>
+      <h2 id="h-aprende">El manejo de <em>las aves</em></h2>
+      <p>Lo que hacemos en nuestros pabellones, explicado para que también lo puedas aplicar con tus gallinas. Elige un tema.</p>
+    </div>
+    <div class="apr-temas" role="tablist" aria-label="Temas de manejo">
+      <button type="button" role="tab" id="t-recibir" aria-controls="p-recibir" aria-selected="true">1. Recibir las pollitas</button>
+      <button type="button" role="tab" id="t-temp" aria-controls="p-temp" aria-selected="false" tabindex="-1">2. Temperatura y luz</button>
+      <button type="button" role="tab" id="t-agua" aria-controls="p-agua" aria-selected="false" tabindex="-1">3. Agua</button>
+      <button type="button" role="tab" id="t-alimento" aria-controls="p-alimento" aria-selected="false" tabindex="-1">4. Alimento</button>
+      <button type="button" role="tab" id="t-peso" aria-controls="p-peso" aria-selected="false" tabindex="-1">5. Peso y uniformidad</button>
+      <button type="button" role="tab" id="t-postura" aria-controls="p-postura" aria-selected="false" tabindex="-1">6. Traslado y postura</button>
+      <button type="button" role="tab" id="t-casa" aria-controls="p-casa" aria-selected="false" tabindex="-1">7. Gallinas en casa</button>
+      <button type="button" role="tab" id="t-bio" aria-controls="p-bio" aria-selected="false" tabindex="-1">8. Bioseguridad</button>
+    </div>
+    <div class="apr-panel" role="tabpanel" id="p-recibir" aria-labelledby="t-recibir">
+      <h3>Antes y durante la llegada</h3>
+      <ul>
+        <li>El pabellón descansa vacío unas 4 semanas entre lotes (mínimo 2) y se limpia de arriba hacia abajo, con desinfección y control de roedores.</li>
+        <li>Se precalienta antes de la llegada: 24 horas si el clima es normal, 48 si es fresco y 72 si es frío.</li>
+        <li>Las pollitas llegan a 33–36 °C con 60 % de humedad, medidos a su altura, y con 30–50 lux de luz la primera semana para que encuentren agua y comida.</li>
+        <li>En los bebederos de nipple debe verse una gota colgando; el alimento va en migajas sobre papel los primeros días.</li>
+        <li>Para saber si están comiendo, se revisa el buche: lleno en el 75 % de las pollitas a las 6 horas, en el 85 % a las 12 y en todas a las 24.</li>
+      </ul>
+    </div>
+    <div class="apr-panel" role="tabpanel" id="p-temp" aria-labelledby="t-temp">
+      <h3>Temperatura y luz según la edad</h3>
+      <div class="apr-tabla" tabindex="0" role="region" aria-label="Tabla de temperatura y luz por edad (desliza hacia el lado)"><table>
+        <caption>Guía de crianza de pollitas Hy-Line Brown</caption>
+        <thead><tr><th scope="col">Edad</th><th scope="col">Temperatura</th><th scope="col">Luz</th><th scope="col">Horas de luz</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">0–3 días</th><td>35–36 °C</td><td>30–50 lux</td><td>22 h o intermitente</td></tr>
+          <tr><th scope="row">4–7 días</th><td>33–35 °C</td><td>30–50 lux</td><td>21 h</td></tr>
+          <tr><th scope="row">8–14 días</th><td>31–33 °C</td><td>25 lux</td><td>19 h</td></tr>
+          <tr><th scope="row">15–21 días</th><td>29–31 °C</td><td>25 lux</td><td>17,5 h</td></tr>
+          <tr><th scope="row">22–28 días</th><td>26–27 °C</td><td>25 lux</td><td>16 h</td></tr>
+          <tr><th scope="row">29–35 días</th><td>23–25 °C</td><td>10–15 lux</td><td>14,5 h</td></tr>
+          <tr><th scope="row">36–42 días</th><td>21 °C</td><td>10–15 lux</td><td>13 h</td></tr>
+        </tbody>
+      </table></div>
+      <ul>
+        <li><b>Escúchalas:</b> amontonadas y piando fuerte tienen frío; dispersas y aletargadas tienen calor.</li>
+        <li>Nunca 24 horas de luz: las pollitas también necesitan oscuridad.</li>
+        <li>Si la humedad sube 5 puntos sobre 60 %, se baja la temperatura 1 °C.</li>
+      </ul>
+    </div>
+    <div class="apr-panel" role="tabpanel" id="p-agua" aria-labelledby="t-agua">
+      <h3>Agua limpia, siempre</h3>
+      <ul>
+        <li>Una gallina sana toma entre 1,5 y 2 veces más agua que el alimento que come: sin agua no comen, y sin comer no ponen.</li>
+        <li>Agua a 20–25 °C para pollitas y a 15–20 °C para ponedoras, con pH entre 5 y 7. Nunca agua muy fría.</li>
+        <li>Si baja el consumo de agua, suele ser la primera señal de un problema.</li>
+        <li>Lava los bebederos todos los días y analiza el agua al menos una vez al año.</li>
+        <li>Las pollitas no deberían caminar más de 1 metro para llegar al agua y al alimento.</li>
+      </ul>
+    </div>
+    <div class="apr-panel" role="tabpanel" id="p-alimento" aria-labelledby="t-alimento">
+      <h3>Alimento a su tiempo</h3>
+      <ul>
+        <li>Alimento de pollita hasta la semana 17. Entre la semana 17 y la 18 se pasa al de postura, mezclando ambos durante una semana.</li>
+        <li>No dejarlas más de 2–3 horas sin alimento, no darlo húmedo y no reemplazar el balanceado por granos solos.</li>
+        <li>En crianza conviene repartir el alimento 3 a 5 veces al día.</li>
+        <li>El cambio de dieta se decide por el peso del lote y no solo por la edad.</li>
+        <li>Guarda los sacos en un lugar seco, elevado y cubierto.</li>
+      </ul>
+    </div>
+    <div class="apr-panel" role="tabpanel" id="p-peso" aria-labelledby="t-peso">
+      <h3>Peso y uniformidad</h3>
+      <ul>
+        <li>La pollita duplica su peso en la primera semana y a las 5 semanas pesa unas 10 veces lo que pesaba al llegar.</li>
+        <li>Se pesan cada semana (al menos 100 aves, mismo día y hora) hasta la semana 30.</li>
+        <li>La meta: que el 85 % del lote esté dentro de un 10 % del peso promedio.</li>
+        <li>Peso de referencia a las 17 semanas: 1,40–1,44 kg.</li>
+      </ul>
+    </div>
+    <div class="apr-panel" role="tabpanel" id="p-postura" aria-labelledby="t-postura">
+      <h3>Traslado e inicio de postura</h3>
+      <ul>
+        <li>Las aves llegan al pabellón de postura al menos 14 días antes del primer huevo, normalmente entre las semanas 14 y 16. Por eso nuestras pollitas se retiran a la semana 14.</li>
+        <li>Se trasladan temprano en la mañana, con vitaminas y electrolitos desde 3 días antes, y deben estar bebiendo normal 6 horas después.</li>
+        <li>Es normal que pierdan un 10–12 % de peso en el traslado.</li>
+        <li>Se toman de las dos patas y las dos alas, y nunca más de 3 aves por mano.</li>
+        <li>La luz sube de a poco hasta 16 horas cuando el lote alcanza su peso.</li>
+      </ul>
+    </div>
+    <div class="apr-panel" role="tabpanel" id="p-casa" aria-labelledby="t-casa">
+      <h3>Si tienes gallinas en casa</h3>
+      <ul>
+        <li>Temperatura agradable de 18 a 24 °C. Apiñadas o encimadas es señal de frío; jadeando o con las alas abiertas, de calor o falta de ventilación.</li>
+        <li>Ventilación suave y cruzada, sin corrientes frías ni goteras.</li>
+        <li>16 horas de luz al día, pareja en todo el gallinero, con ampolleta LED o fluorescente.</li>
+        <li>Cama seca de viruta o cáscara de arroz, de 8 a 10 cm; si se moja, cámbiala.</li>
+        <li>1 nido por cada 5 gallinas, en un lugar tranquilo y a 20–30 cm del suelo.</li>
+        <li>El picaje suele venir de falta de espacio, comederos o bebederos, o de frío o calor.</li>
+      </ul>
+    </div>
+    <div class="apr-panel" role="tabpanel" id="p-bio" aria-labelledby="t-bio">
+      <h3>Bioseguridad y salud</h3>
+      <ul>
+        <li>La bioseguridad es la mejor forma de evitar enfermedades: ropa y calzado solo para la granja, sin contacto con otras aves y vehículos fuera del área.</li>
+        <li>Se retiran las aves muertas todos los días y se mantiene una franja de 1 metro de piedra o concreto alrededor del pabellón contra los roedores.</li>
+        <li>Vacunas: sigue siempre el programa de tu médico veterinario. Nuestras pollitas salen con su calendario de vacunación al día.</li>
+      </ul>
+    </div>
+    <p class="apr-fuente">Fuentes: Guía básica para el cuidado de tus pollitas ponedoras, de Pollitas Oro Verde, y Guía de Manejo Hy-Line Brown, © Hy-Line International. Estos datos son una referencia general: cada lote y cada gallinero son distintos. ¿Dudas? Escríbenos al <a href="https://wa.me/56966087529?text=Hola%2C%20tengo%20una%20consulta%20sobre%20el%20manejo%20de%20mis%20gallinas." target="_blank" rel="noopener">WhatsApp de crianzas</a>.</p>
   </div>
 </section>
 
@@ -607,11 +769,11 @@ footer.funde{--fh:110px;padding-top:80px}
     <div class="batch-texto">
       <span class="etiqueta">Cómo se hace el alimento</span>
       <h2 id="h-batch">Del batch <em>al saco</em></h2>
-      <p>Las materias primas caen a la mezcladora, se revuelven hasta quedar parejas y el alimento listo cae al saco.</p>
+      <p>Las materias primas caen al molino, se revuelven hasta quedar parejas y el alimento listo cae al saco.</p>
       <ol class="batch-pasos" id="batchPasos">
         <li class="activo" data-n="1"><b>Primero, lo macro</b>Los granos y harinas: maíz, soya y afrechillo.<span class="por">Van primero porque son la mayor parte del alimento: el maíz aporta energía, la soya proteína y el afrechillo fibra. Se pesan según la receta y forman la base de la mezcla.</span></li>
         <li data-n="2"><b>Luego, lo micro</b>Las vitaminas y minerales: el premix.<span class="por">Van en muy poca cantidad, por eso se agregan sobre la base ya cargada: así se reparten en todo el batch y cada saco lleva la misma dosis.</span></li>
-        <li data-n="3"><b>El batch revuelve</b>La mezcladora gira sin parar.<span class="por">Revuelve el tiempo que indica la receta, hasta que no quedan zonas con más de un ingrediente que de otro. Una mezcla pareja asegura que cada gallina coma lo mismo.</span></li>
+        <li data-n="3"><b>El batch revuelve</b>El molino gira sin parar.<span class="por">Revuelve el tiempo que indica la receta, hasta que no quedan zonas con más de un ingrediente que de otro. Una mezcla pareja asegura que cada gallina coma lo mismo.</span></li>
         <li data-n="4"><b>Al saco</b>El alimento mezclado cae al saco.<span class="por">Con la mezcla pareja se abre la compuerta: el alimento cae al saco, se pesa (sacos de 25 kilos) y se cierra, listo para despachar.</span></li>
       </ol>
     </div>
@@ -620,7 +782,11 @@ footer.funde{--fh:110px;padding-top:80px}
       <figure class="ing i2"><img src="img/batch/soya.webp" alt="Harina de soya." width="420" height="270" loading="lazy"><figcaption>Soya <small>macro</small></figcaption></figure>
       <figure class="ing i3"><img src="img/batch/afrechillo.webp" alt="Afrechillo de trigo." width="420" height="234" loading="lazy"><figcaption>Afrechillo <small>macro</small></figcaption></figure>
       <figure class="ing i4"><img src="img/batch/premix.webp" alt="Pala con premix de vitaminas y minerales." width="420" height="313" loading="lazy"><figcaption>Premix <small>micro</small></figcaption></figure>
-      <img class="mezcladora" src="img/batch/mezcladora.webp" alt="Mezcladora de alimento tipo batch, de acero inoxidable." width="900" height="672" loading="lazy">
+      <img class="mezcladora" src="img/batch/molino.webp" alt="Molino mezclador de campo, de madera y metal, con manivela." width="900" height="678" loading="lazy">
+      <img class="mano mano-maiz" src="img/batch/mano-maiz.webp" alt="" width="520" height="520" loading="lazy">
+      <img class="mano mano-soya" src="img/batch/mano-soya.webp" alt="" width="520" height="520" loading="lazy">
+      <img class="mano mano-afrechillo" src="img/batch/mano-maiz.webp" alt="" width="520" height="520" loading="lazy">
+      <img class="mano mano-premix" src="img/batch/mano-premix.webp" alt="" width="520" height="520" loading="lazy">
       <img class="saco" src="img/batch/saco.webp" alt="Saco para el alimento." width="520" height="688" loading="lazy">
       <canvas id="batchLienzo" aria-hidden="true"></canvas>
     </div>
@@ -795,7 +961,7 @@ footer.funde{--fh:110px;padding-top:80px}
         <dl>
           <div><dt>Dirección</dt><dd>Arturo Prat 720, Chillán<br><a href="https://www.google.com/maps/search/?api=1&amp;query=Arturo+Prat+720%2C+Chill%C3%A1n" target="_blank" rel="noopener">Abrir en el mapa <span class="letra">(se abre Google Maps)</span></a></dd></div>
           <div><dt>Horario</dt><dd>Lunes a sábado, 8:30 a 17:00</dd></div>
-          <div><dt>Apertura</dt><dd>Lunes 23 de noviembre de 2026</dd></div>
+          <div id="filaApertura"><dt>Apertura</dt><dd>Lunes 23 de noviembre de 2026</dd></div>
           <div><dt>Teléfono</dt><dd><a href="tel:+56933903395">+56 9 3390 3395</a></dd></div>
         </dl>
       </div>

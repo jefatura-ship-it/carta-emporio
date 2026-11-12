@@ -2,6 +2,9 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
+<!-- Seguridad: solo se cargan recursos de este mismo sitio (y el registro de clientes en la carta); no se envía la dirección completa a otros sitios -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://script.google.com https://script.googleusercontent.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1d5c36">
 <title>Carta Emporio Sabroso</title>
@@ -75,7 +78,22 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* Menú «Ver todo»: abre la lista completa de secciones y enlaces */
 .cmenu{flex:none;display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--campo);background:var(--campo);color:#fff;border-radius:99px;padding:7px 13px;font-size:13px;font-weight:700;cursor:pointer}
 .cmenu[aria-expanded="true"]{background:#fff;color:var(--campo)}
-.menu-cats{max-width:560px;margin:0 auto;padding:4px 16px 14px;max-height:65vh;overflow:auto;display:grid;gap:12px}
+/* Panel a pantalla completa: cubre todo, tiene su propio scroll y no arrastra el fondo (html.bloqueo + overscroll-behavior) */
+html.bloqueo,html.bloqueo body{overflow:hidden}
+.velo-menu{background:var(--masa);align-items:stretch}
+.panel-menu{width:100%;height:100%;background:var(--masa);display:flex;flex-direction:column}
+.pm-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.pm-scroll .menu-cats{min-height:calc(100% + 1px)} /* siempre 1 px de scroll propio: el gesto no se escapa al fondo aunque haya poco contenido */
+.pm-cab{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--campo);color:#fff;padding:calc(10px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+.pm-cab h2{margin:0;font-family:var(--display);font-size:20px}
+.pm-cerrar{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 16px;border:2px solid #fff;border-radius:99px;background:#fff;color:var(--campo);font-weight:800;font-size:15px;cursor:pointer}
+.menu-cats{max-width:560px;margin:0 auto;padding:8px 16px calc(24px + env(safe-area-inset-bottom,0px));display:grid;align-content:start;gap:12px}
+/* Perilla: pestaña vertical pegada al borde derecho que abre el mismo menú (angosta para no tapar los botones + y −) */
+.perilla{position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:7;width:24px;padding:12px 0;display:flex;flex-direction:column;align-items:center;gap:7px;border:0;border-radius:12px 0 0 12px;background:var(--campo);color:#fff;box-shadow:-2px 3px 10px rgba(0,0,0,.22);cursor:pointer}
+.perilla span{writing-mode:vertical-rl;transform:rotate(180deg);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+@media (hover:hover){.perilla:hover{width:28px}}
+.perilla:focus-visible{outline-offset:-4px;outline-color:var(--trigo)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .menu-cats h3{margin:4px 0 0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave)}
 .menu-cats .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .menu-cats .mgrid>*{display:flex;align-items:center;min-height:44px;padding:8px 12px;border:1px solid var(--borde);border-radius:12px;background:#fff;color:var(--campo);font:600 14px/1.25 inherit;text-align:left;text-decoration:none;cursor:pointer}
@@ -191,6 +209,37 @@ body.vermayor .mayor{display:block}
 .paso .cant:focus{outline:3px solid var(--trigo);outline-offset:1px;border-color:var(--campo)}
 /* Celular: la cantidad baja a su propia fila para que el nombre del producto no quede angosto */
 @media (max-width:480px){.prod{grid-template-columns:auto 1fr}.prod .paso{grid-column:1/-1;justify-content:flex-end}.mchip{padding:6px 12px;font-size:13.5px}}
+/* Celular: tarjetas más aireadas, letra y botones más grandes para el dedo */
+@media (max-width:480px){
+  body{font-size:15.5px}
+  .lista{gap:12px}
+  .grupo{padding-top:22px}
+  .grupo h2{font-size:22px}
+  .prod{gap:10px 12px;padding:12px 12px 12px 10px;border-radius:16px}
+  .ico{width:48px;height:48px}
+  .ico svg{width:32px;height:32px}
+  .info b{font-size:16px;line-height:1.3}
+  .info small,.info small.cu{font-size:13px}
+  .precio{font-size:17.5px;margin-top:4px}
+  .modos{margin:8px 0 6px}
+  .mchip{min-height:42px;padding:8px 14px;font-size:14.5px}
+  .venta{font-size:13.5px;padding:6px 12px}
+  .prod .paso{gap:10px;padding-top:2px}
+  .paso button{width:44px;height:44px;font-size:22px}
+  .paso .cant{width:64px;height:44px;font-size:17px}
+  .tchip{min-height:38px;padding:7px 12px;font-size:13.5px}
+  .tapa{font-size:13.5px}
+  .chip{padding:9px 15px;font-size:14px}
+  .cats-lista{gap:8px;padding-block:10px 8px}
+  .cmenu{padding:9px 13px;font-size:14px}
+  .barra{padding-top:10px}
+  .barra .wrap{gap:8px}
+  .barra .btn.prim{padding:13px 14px}
+  .barra .resumen b{font-size:19px}
+}
+@media (max-width:420px){.bcarro .bt{display:none}.bcarro{padding:8px 11px}}
+/* deja un margen a la derecha para la perilla lateral: nunca queda encima de los botones + y − */
+@media (max-width:640px){#carta,.cuerpo>.avi{padding-right:max(24px,env(safe-area-inset-right,0px))}}
 
 .otra{margin:28px 0 8px;text-align:center;font-size:13px;color:var(--suave)}
 .otra a{color:var(--campo);font-weight:700}
@@ -227,6 +276,25 @@ body.vermayor .mayor{display:block}
 .nota{font-size:12.5px;color:var(--suave);margin:0}
 .ok{font-size:13px;color:var(--wsp);font-weight:700;margin:0}
 @media (prefers-reduced-motion:no-preference){.hoja{animation:sube .22s ease-out}@keyframes sube{from{transform:translateY(30px);opacity:.6}}}
+.velo,.hoja{overscroll-behavior:contain}
+@media (min-width:700px){.menu-cats{max-width:760px}.menu-cats .mgrid{grid-template-columns:repeat(3,1fr)}}
+
+/* ---------- Carro ---------- */
+.bcarro{position:relative;flex:none;display:inline-flex;align-items:center;gap:6px;min-height:48px;padding:8px 12px;border:1.5px solid var(--campo);border-radius:12px;background:#fff;color:var(--campo);font-weight:800;font-size:14px;cursor:pointer}
+.bcarro .nc{position:absolute;top:-8px;left:22px;min-width:22px;height:22px;padding:0 6px;border-radius:99px;background:var(--sol);color:var(--tinta);font:800 12px/22px var(--texto);text-align:center;font-variant-numeric:tabular-nums}
+.bcarro .nc.cero{background:var(--borde);color:var(--suave)}
+.hoja-carro{display:flex;flex-direction:column;max-height:94vh;max-height:94dvh;overflow:hidden;padding-bottom:0}
+.hoja-carro .carro-cab{flex:none;padding-block:12px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;border-bottom:1px solid var(--borde)}
+.seguir{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:9px 16px;border:2px solid var(--campo);border-radius:99px;background:var(--campo);color:#fff;font-weight:800;font-size:15px;cursor:pointer}
+.carro-cab h3{margin:4px 0 0;font-family:var(--display);font-size:22px;color:var(--campo)}
+.hoja-carro .carro-cuerpo{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-block:12px}
+.hoja-carro>.wrap{width:100%}
+.crow{display:grid;gap:4px}
+.quitar{justify-self:end;border:0;background:none;color:#b3261e;font-weight:700;font-size:13.5px;text-decoration:underline;cursor:pointer;padding:6px 4px;min-height:36px}
+.carro-vacio{display:grid;gap:14px;justify-items:start;padding:10px 0 18px}
+.carro-vacio p{margin:0;font-size:15px}
+.hoja-carro .carro-pie{flex:none;display:grid;gap:8px;padding-block:10px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--borde);background:var(--masa)}
+.carro-pie .total{font-size:17px}
 
 /* ---------- Accesibilidad ---------- */
 .salto{position:absolute;left:8px;top:-60px;z-index:50;background:#fff;color:var(--campo);font-weight:700;padding:10px 14px;border-radius:10px;border:2px solid var(--campo)}
@@ -286,7 +354,8 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
   </div>
 </section>
 
-<nav class="cats" aria-label="Categorías"><div class="wrap"><button type="button" class="cmenu" id="catMenu" aria-expanded="false" aria-controls="menuCats"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Ver todo</button><button type="button" class="cflecha" id="catIzq" aria-label="Ver categorías anteriores">‹</button><div class="cats-lista" id="cats"></div><button type="button" class="cflecha" id="catDer" aria-label="Ver más categorías">›</button></div><div class="menu-cats" id="menuCats" hidden></div></nav>
+<nav class="cats" aria-label="Categorías"><div class="wrap"><button type="button" class="cmenu" id="catMenu" aria-haspopup="dialog" aria-expanded="false" aria-controls="veloMenu"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Ver todo</button><button type="button" class="cflecha" id="catIzq" aria-label="Ver categorías anteriores">‹</button><div class="cats-lista" id="cats"></div><button type="button" class="cflecha" id="catDer" aria-label="Ver más categorías">›</button></div></nav>
+<button type="button" class="perilla" id="perilla" aria-haspopup="dialog" aria-expanded="false" aria-controls="veloMenu" aria-label="Abrir el menú con todas las secciones"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span aria-hidden="true">Menú</span></button>
 
 <div class="cuerpo">
 <main class="wrap" id="carta" tabindex="-1"></main>
@@ -350,9 +419,42 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 <section class="barra" aria-label="Tu pedido">
   <div class="wrap">
     <div class="resumen"><span id="cuenta">Tu pedido está vacío</span><b id="totalBarra">$0</b></div>
+    <button type="button" class="bcarro" id="bCarro" aria-haspopup="dialog" aria-expanded="false" aria-controls="veloCarro" aria-label="Ver tu carro: vacío"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg><span class="nc" id="nCarro" aria-hidden="true">0</span><span class="bt" aria-hidden="true">Carro</span></button>
     <button class="btn prim" id="revisar" disabled>Revisar pedido</button>
   </div>
 </section>
+
+<!-- Menú «Ver todo»: panel a pantalla completa con su propio scroll (el fondo queda bloqueado mientras está abierto) -->
+<div class="velo velo-menu" id="veloMenu" hidden>
+  <section class="panel-menu" role="dialog" aria-modal="true" aria-labelledby="tituloMenu">
+    <div class="pm-cab"><h2 id="tituloMenu">Todas las secciones</h2><button type="button" class="pm-cerrar" id="cerrarMenu"><span aria-hidden="true">✕</span> Cerrar</button></div>
+    <div class="pm-scroll" id="menuScroll"><div class="menu-cats" id="menuCats"></div></div>
+  </section>
+</div>
+
+<!-- Carro: solo los productos ya agregados, editables; sincronizado con la carta -->
+<div class="velo" id="veloCarro" hidden>
+  <section class="hoja hoja-carro" role="dialog" aria-modal="true" aria-labelledby="tituloCarro">
+    <div class="carro-cab wrap">
+      <button type="button" class="seguir" id="seguirCarro"><span aria-hidden="true">←</span> Seguir comprando</button>
+      <h3 id="tituloCarro">Tu carro</h3>
+    </div>
+    <div class="wrap carro-cuerpo">
+      <div id="carroLista" class="lista"></div>
+      <div class="carro-vacio" id="carroVacio" hidden>
+        <p><b>Tu carro está vacío.</b> Agrega productos desde la carta con el botón <span aria-hidden="true">+</span><span class="sr">más</span> y aquí podrás revisarlos y cambiar cantidades.</p>
+        <button type="button" class="btn prim" id="volverVacio"><span aria-hidden="true">←</span> Volver a la carta</button>
+      </div>
+    </div>
+    <div class="carro-pie wrap" id="carroPie">
+      <div class="total"><span id="carroCuenta"></span><span id="carroTotal"></span></div>
+      <div class="dos">
+        <button type="button" class="btn sec" id="seguirCarro2"><span aria-hidden="true">←</span> Seguir comprando</button>
+        <button type="button" class="btn prim" id="irPedido">Continuar al pedido <span aria-hidden="true">→</span></button>
+      </div>
+    </div>
+  </section>
+</div>
 
 <div class="velo" id="veloReg" hidden>
   <section class="hoja" role="dialog" aria-modal="true" aria-labelledby="tituloReg">
@@ -812,11 +914,11 @@ const LOCALES = {
       {cod:"ASE012",cat:"Aseo",nombre:"Bolsa basura 80 × 110 Virutex",detalle:"Precio por unidad · paquete de 10 u",precio:825,upp:10,stock:39},
       {cod:"ASE013",cat:"Aseo",nombre:"Bolsa basura 80 × 120 Superior",detalle:"Precio por unidad · paquete de 10 u",precio:595,upp:10,stock:30},
       {cod:"ASE014",cat:"Aseo",nombre:"Trapero humedo olor lavanda Virginia",detalle:"Precio por unidad · paquete de 10 u",precio:100,upp:10,stock:140},
+      {cod:"OTR002",cat:"Lácteos",nombre:"Quesillo 230 g Los Tilos",detalle:"Precio por unidad",precio:1900},
+      {cod:"OTR005",cat:"Golosinas",nombre:"Bon o bon dulce de leche",detalle:"Precio por unidad",precio:118},
       {cod:"OTR001",cat:"Otros",nombre:"Hilo ovillo chico",detalle:"Precio por unidad",precio:3990},
-      {cod:"OTR002",cat:"Otros",nombre:"Quesillo 230 g Los Tilos",detalle:"Precio por unidad",precio:1900},
       {cod:"OTR003",cat:"Otros",nombre:"Hilo cono",detalle:"Precio por unidad",precio:12750,stock:42},
       {cod:"OTR004",cat:"Otros",nombre:"Marmitas",detalle:"Precio por unidad",precio:150},
-      {cod:"OTR005",cat:"Otros",nombre:"Bon o bon dulce de leche",detalle:"Precio por unidad",precio:118},
       {cod:"OTR007",cat:"Otros",nombre:"Toalla clásica Nova",detalle:"Precio por paquete",precio:2100},
       {cod:"OTR008",cat:"Otros",nombre:"Limpiapisos 900 cc Glade",detalle:"Precio por unidad",precio:1498},
       {cod:"OTR009",cat:"Otros",nombre:"Pasta de zapatos café Virginia",detalle:"Precio por unidad",precio:1175},
@@ -865,6 +967,8 @@ const ICONOS={
   "Platos, cubiertos y desechables":'<svg viewBox="0 0 40 40"><circle cx="23" cy="21" r="12" fill="#fff" stroke="var(--brote)" stroke-width="2"/><circle cx="23" cy="21" r="6.5" fill="none" stroke="var(--trigo)" stroke-width="2"/><path d="M7 7v10M4.5 7v5a2.5 2.5 0 0 0 5 0V7M7 17v16" stroke="var(--sol)" stroke-width="2" stroke-linecap="round" fill="none"/></svg>',
   "Conservas":'<svg viewBox="0 0 40 40"><rect x="11" y="9" width="18" height="24" rx="3" fill="var(--brote)"/><rect x="11" y="16" width="18" height="10" fill="var(--trigo)"/><ellipse cx="20" cy="9.5" rx="9" ry="2.6" fill="#d7ddd8"/></svg>',
   "Aseo":'<svg viewBox="0 0 40 40"><rect x="14" y="15" width="12" height="19" rx="3" fill="var(--brote)"/><rect x="16" y="8" width="7" height="7" fill="var(--sol)"/><path d="M23 10h7" stroke="var(--sol)" stroke-width="2.5" stroke-linecap="round"/></svg>',
+  "Lácteos":'<svg viewBox="0 0 40 40"><path d="M13 15l3-7h8l3 7v19H13z" fill="#fff" stroke="var(--brote)" stroke-width="2" stroke-linejoin="round"/><path d="M13 15h14" stroke="var(--brote)" stroke-width="2"/><rect x="13" y="20" width="14" height="8" fill="var(--trigo)"/><path d="M20 22c-1.6 2-2.2 3-2.2 3.8a2.2 2.2 0 0 0 4.4 0c0-.8-.6-1.8-2.2-3.8z" fill="#fff"/></svg>',
+  "Golosinas":'<svg viewBox="0 0 40 40"><path d="M12 20L5 14v12zM28 20l7-6v12z" fill="var(--trigo)" stroke="var(--sol)" stroke-width="2" stroke-linejoin="round"/><ellipse cx="20" cy="20" rx="9" ry="7.5" fill="var(--sol)"/><path d="M16 14.5c2 3 2 8 0 11M21.5 13c2 3.5 2 10.5 0 14" stroke="#fff" stroke-width="1.6" fill="none" opacity=".6"/></svg>',
   "_fav":'<svg viewBox="0 0 40 40"><path d="M20 5l4.4 9.3 10.1 1.3-7.4 7 1.9 10-9-4.9-9 4.9 1.9-10-7.4-7 10.1-1.3z" fill="var(--trigo)" stroke="var(--sol)" stroke-width="2" stroke-linejoin="round"/></svg>',
   "_":'<svg viewBox="0 0 40 40"><path d="M8 14h24l-2 18H10z" fill="var(--trigo)" stroke="var(--sol)" stroke-width="2" stroke-linejoin="round"/><path d="M14 14c0-4 3-6 6-6s6 2 6 6" fill="none" stroke="var(--brote)" stroke-width="2.5"/></svg>'
 };
@@ -920,8 +1024,7 @@ const guardar=()=>{enviado=false;grabar()};
 const marcarEnviado=()=>{if(typeof usarDescuento==="function")usarDescuento();enviado=true;grabar()};
 
 /* ---------- Registro de clientes: nombres, apellidos y celular → descuento ---------- */
-// App web del script «Registro clientes carta Emporio», vinculado a la planilla «EM27-07 Pedidos carta QR y proveedores 2026-11»
-// (hojas Clientes y Solicitudes), implementado el 12/11/2026 con la cuenta dte@. Vacía: el registro queda solo en el celular del cliente.
+// Dirección del servicio de registro de clientes. Vacía: el registro queda solo en el celular del cliente.
 const REGISTRO_URL="https://script.google.com/macros/s/AKfycbzP_AWWh7HEctijtBYVxf8MHUL4JSU9ySmbOXd_9_NrEf0x3w7JKlIsFiLtPYPSsJwg/exec";
 const PROMO=L.promo||null;
 const promoIni=PROMO?new Date(PROMO.inicio+"T00:00:00"):null;
@@ -1111,13 +1214,14 @@ $("cats").innerHTML=`<button class="chip avi-chip" data-ir="avicola" aria-curren
   mn.innerHTML=`<h3>Pedidos a la avícola</h3><div class="mgrid"><button type="button" class="dest" data-ir="avicola">Pollitas de 14 semanas y alimento</button></div>`
     +`<h3>Productos</h3><div class="mgrid">${cats.map(c=>`<button type="button" data-ir="${slug(c)}">${c===FAV?"★ ":""}${c}</button>`).join("")}</div>`
     +`<h3>Conócenos</h3><div class="mgrid"><a href="../">Nuestra página web</a>${ig.map(([u,n])=>`<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">Instagram ${n}</a>`).join("")}</div>`;
-  const abre=v=>{mn.hidden=!v;bt.setAttribute("aria-expanded",v);if(v)mn.querySelector("button,a").focus()};
-  bt.onclick=()=>abre(mn.hidden);
-  mn.addEventListener("click",e=>{const b=e.target.closest("button[data-ir]");if(!b)return;abre(false);bt.focus({preventScroll:true});
+  /* se abre como diálogo a pantalla completa (desde «Ver todo» o desde la perilla lateral); abrirHoja bloquea el fondo y atrapa el foco */
+  const abre=()=>{$("menuScroll").scrollTop=0;abrirHoja("veloMenu",$("cerrarMenu"))};
+  bt.onclick=abre; $("perilla").onclick=abre;
+  $("cerrarMenu").onclick=()=>cerrarHoja("veloMenu");
+  mn.addEventListener("click",e=>{const b=e.target.closest("button[data-ir]");if(!b)return;cerrarHoja("veloMenu");
     document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-current",x.dataset.ir===b.dataset.ir));
+    const ch=document.querySelector(`.chip[data-ir="${b.dataset.ir}"]`);if(ch)ch.scrollIntoView({block:"nearest",inline:"center"});
     $("g-"+b.dataset.ir).scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})});
-  addEventListener("keydown",e=>{if(e.key==="Escape"&&!mn.hidden){abre(false);bt.focus()}});
-  document.addEventListener("click",e=>{if(!mn.hidden&&!e.target.closest(".cats"))abre(false)});
 })();
 /* Fila de categorías: flechas, arrastre con el mouse y rueda de lado */
 (()=>{const fila=$("cats"),izq=$("catIzq"),der=$("catDer");
@@ -1151,17 +1255,21 @@ $("carta").innerHTML=cats.map(c=>`
 const repintar=p=>{document.querySelectorAll(`article[data-prod="${p.cod}"]`).forEach(a=>{a.outerHTML=card(p,a.id?null:FAV)});refrescar()};
 function ajustarTope(p){const tp=topeDe(p);if(tp==null)return;const kp=clave(p.cod,"P");
   while(unidadesEn(p)>tp){if(cart[p.cod]){if(!--cart[p.cod])delete cart[p.cod]}else if(cart[kp]){if(!--cart[kp])delete cart[kp]}else break}guardar()}
-$("carta").addEventListener("click",e=>{
+/* tras repintar una tarjeta, el foco vuelve al mismo botón (en la carta o en el carro) */
+const reenfocar=(cont,sel)=>{const n=cont.querySelector(sel);if(n)n.focus({preventScroll:true})};
+/* Mismos controles en la carta y en el carro: modalidad, tapa, − y + */
+function clickTarjeta(e){
+  const cont=e.currentTarget;
   const mo=e.target.closest("button[data-modo]");
-  if(mo){const p=PROD[mo.dataset.mcod];modo[p.cod]=mo.dataset.modo;guardaPref("modos-"+KEY,JSON.stringify(modo));repintar(p);return}
+  if(mo){const p=PROD[mo.dataset.mcod];modo[p.cod]=mo.dataset.modo;guardaPref("modos-"+KEY,JSON.stringify(modo));repintar(p);reenfocar(cont,`button[data-mcod="${p.cod}"][data-modo="${mo.dataset.modo}"]`);return}
   const s=e.target.closest("button[data-seltapa]");
-  if(s){const p=PROD[s.dataset.selenv];tapaSel[p.cod]=s.dataset.seltapa;guardaPref("tapas-"+KEY,JSON.stringify(tapaSel));ajustarTope(p);repintar(p);return}
+  if(s){const p=PROD[s.dataset.selenv];tapaSel[p.cod]=s.dataset.seltapa;guardaPref("tapas-"+KEY,JSON.stringify(tapaSel));ajustarTope(p);repintar(p);reenfocar(cont,`button[data-selenv="${p.cod}"][data-seltapa="${s.dataset.seltapa}"]`);return}
   const b=e.target.closest("button[data-cod]"); if(!b)return;
   const p=PROD[b.dataset.cod], m=modoDe(p), k=clave(p.cod,m), d=Number(b.dataset.d), tp=topeDe(p);
   if(d>0&&tp!=null&&unidadesEn(p)+(m==="P"?p.upp:1)>tp)return;   // no alcanza el stock (envase con tapa: manda el menor)
   const n=Math.max(0,(cart[k]||0)+d); if(n)cart[k]=n; else delete cart[k];
   guardar(); refrescar();
-});
+}
 /* La cantidad también se puede escribir: al salir del campo (o con Enter) se ajusta al stock disponible */
 function fijarCantidad(inp){
   const p=PROD[inp.dataset.q]; if(!p)return;
@@ -1171,9 +1279,12 @@ function fijarCantidad(inp){
   if(n)cart[k]=n; else delete cart[k];
   inp.value=n; guardar(); refrescar();
 }
-$("carta").addEventListener("change",e=>{const i=e.target.closest("input.cant");if(i)fijarCantidad(i)});
-$("carta").addEventListener("keydown",e=>{const i=e.target.closest("input.cant");if(i&&e.key==="Enter"){e.preventDefault();fijarCantidad(i);i.blur()}});
-$("carta").addEventListener("focusin",e=>{const i=e.target.closest("input.cant");if(i)i.select()});
+["carta","carroLista"].forEach(id=>{const c=$(id);
+  c.addEventListener("click",clickTarjeta);
+  c.addEventListener("change",e=>{const i=e.target.closest("input.cant");if(i)fijarCantidad(i)});
+  c.addEventListener("keydown",e=>{const i=e.target.closest("input.cant");if(i&&e.key==="Enter"){e.preventDefault();fijarCantidad(i);i.blur()}});
+  c.addEventListener("focusin",e=>{const i=e.target.closest("input.cant");if(i)i.select()});
+});
 $("bMayor").hidden=!MAYOR;
 $("bMayor").onclick=()=>{const on=document.body.classList.toggle("vermayor");$("bMayor").setAttribute("aria-pressed",on);$("bMayor").querySelector("span").textContent=on?"Ocultar precios por mayor":"Ver precios por mayor"};
 $("cats").addEventListener("click",e=>{
@@ -1185,7 +1296,7 @@ $("cats").addEventListener("click",e=>{
 const POS=Object.fromEntries(L.productos.map((p,i)=>[p.cod,i]));
 const orden=p=>{if(p.envase){const e=p.envase.find(c=>cart[c]);if(e)return POS[e]+0.5}return POS[p.cod]};
 const items=()=>{const out=[];L.productos.forEach(p=>{if(esPieza(p))return;const tp=tapaDe(p);
-  const nom=tp?`${p.nombre} con ${pieza(tp)} (${sinTapa(tp.nombre).toLowerCase()})`:p.nombre;
+  const nom=tp?(new RegExp("con "+pieza(tp),"i").test(p.nombre)?`${p.nombre} (${sinTapa(tp.nombre).toLowerCase()})`:`${p.nombre} con ${pieza(tp)} (${sinTapa(tp.nombre).toLowerCase()})`):p.nombre;
   const qp=cart[clave(p.cod,"P")]||0, qu=cart[p.cod]||0;
   if(qp&&tienePaq(p)){const pr=precioPaq(p,qp);out.push({...p,q:qp,precio:pr,mayor:pr!=null&&qp>=MIN_PAQ_MAYOR&&DMAY>DPAQ,tapa:tp,paq:true,uds:qp*p.upp,detalle:"",nombre:`${nom} · paquete de ${p.upp} u`})}
   if(qu){const {pr,m}=precioQ(p,qu);out.push({...p,q:qu,precio:pr,mayor:m,tapa:tp,paq:false,uds:qu,detalle:tienePaq(p)?"por unidad":p.detalle,nombre:nom})}
@@ -1211,7 +1322,38 @@ function refrescar(){
   $("cuenta").textContent=n?`${n} producto${n>1?"s":""}`:"Tu pedido está vacío";
   $("totalBarra").textContent=clp(totalFinal());
   $("revisar").disabled=n===0;
+  resumenCarro(n);
 }
+
+/* ---------- Carro: solo lo agregado, con las mismas tarjetas (y funciones) de la carta ---------- */
+function resumenCarro(n){
+  const nc=$("nCarro"); nc.textContent=n>99?"99+":n; nc.classList.toggle("cero",!n);
+  $("bCarro").setAttribute("aria-label",n?`Ver tu carro: ${n} producto${n>1?"s":""}`:"Ver tu carro: vacío");
+  if($("veloCarro").hidden)return;
+  $("carroCuenta").textContent=n?`${n} producto${n>1?"s":""} · Total aprox.`:"Sin productos";
+  $("carroTotal").textContent=clp(totalFinal());
+  $("irPedido").disabled=n===0;
+}
+const enCarro=p=>!esPieza(p)&&!p.retirado&&((cart[p.cod]||0)+(cart[clave(p.cod,"P")]||0))>0;
+function pintarCarro(){
+  const ps=L.productos.filter(enCarro);
+  $("carroLista").innerHTML=ps.map(p=>`<div class="crow" data-crow="${p.cod}">${card(p,FAV)}<button type="button" class="quitar" data-quitar="${p.cod}" aria-label="Quitar ${p.nombre} del carro">Quitar del carro</button></div>`).join("");
+  $("carroLista").hidden=!ps.length; $("carroVacio").hidden=!!ps.length; $("carroPie").hidden=!ps.length;
+  refrescar();
+}
+$("bCarro").onclick=()=>{pintarCarro();$("carroLista").parentNode.scrollTop=0;abrirHoja("veloCarro",$("seguirCarro"))};
+const seguirComprando=()=>cerrarHoja("veloCarro");
+$("seguirCarro").onclick=seguirComprando; $("seguirCarro2").onclick=seguirComprando; $("volverVacio").onclick=seguirComprando;
+$("veloCarro").addEventListener("click",e=>{if(e.target===$("veloCarro"))seguirComprando()});
+$("irPedido").onclick=()=>{cerrarHoja("veloCarro");abrirRevision()};
+$("carroLista").addEventListener("click",e=>{
+  const q=e.target.closest("button[data-quitar]"); if(!q)return;
+  const cod=q.dataset.quitar, fila=q.closest(".crow"), sig=fila.nextElementSibling||fila.previousElementSibling;
+  delete cart[cod]; delete cart[clave(cod,"P")]; guardar();
+  fila.remove();
+  if(!$("carroLista").children.length){pintarCarro();$("volverVacio").focus();return}
+  refrescar(); sig.querySelector(".quitar").focus();
+});
 refrescar();
 
 /* ---------- Tapa → envase → volver a la tapa ---------- */
@@ -1288,7 +1430,9 @@ function nombreOk(){
   if(!ok)$("nombre").focus();
   return ok;
 }
-$("revisar").onclick=()=>{
+$("revisar").onclick=()=>abrirRevision();
+function abrirRevision(){
+  if(!items().length)return;
   codigo=enGracia()?cliente.usado.codigo:nuevoCodigo();
   pintarHoja();
   $("ok").hidden=true;
@@ -1369,12 +1513,17 @@ let hojaAbierta=null, focoAntes=null;
 function abrirHoja(id,foco){
   focoAntes=document.activeElement; hojaAbierta=id; $(id).hidden=false;
   document.querySelectorAll("body>*:not(.velo):not(script)").forEach(n=>n.setAttribute("inert",""));
-  (foco||$(id).querySelector("button,input,a")).focus();
+  document.documentElement.classList.add("bloqueo"); // el fondo no se desplaza mientras el diálogo está abierto
+  document.querySelectorAll(`[aria-controls="${id}"]`).forEach(b=>b.setAttribute("aria-expanded","true"));
+  (foco||$(id).querySelector("button,input,a")).focus({preventScroll:true});
 }
 function cerrarHoja(id){
-  $(id).hidden=true; if(hojaAbierta!==id)return; hojaAbierta=null;
+  $(id).hidden=true;
+  document.querySelectorAll(`[aria-controls="${id}"]`).forEach(b=>b.setAttribute("aria-expanded","false"));
+  if(hojaAbierta!==id)return; hojaAbierta=null;
   document.querySelectorAll("body>[inert]").forEach(n=>n.removeAttribute("inert"));
-  if(focoAntes&&focoAntes.focus)focoAntes.focus();
+  document.documentElement.classList.remove("bloqueo");
+  if(focoAntes&&focoAntes.focus)focoAntes.focus({preventScroll:true}); // vuelve al botón que lo abrió sin mover la carta
 }
 document.addEventListener("keydown",e=>{
   if(!hojaAbierta)return;

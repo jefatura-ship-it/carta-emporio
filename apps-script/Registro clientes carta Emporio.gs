@@ -10,7 +10,10 @@
  *  4. Recargar la planilla: aparece el menú "Registro de clientes".
  *
  * QUÉ RECIBE (JSON enviado como texto por la carta)
- *  registro  {n1, n2, a1, a2, tel, acepta, fecha, local}  crea o actualiza al cliente y RESPONDE su código
+ *  registro  {n1, n2, a1, a2, tel, acepta, fecha, local}  crea al cliente (o actualiza solo sus ofertas) y RESPONDE su código
+ *
+ * PROTECCIONES: tamaño máximo del envío, celular chileno válido, nombres solo con letras, textos sin fórmulas,
+ * límite de envíos por minuto y por celular, y un cliente ya registrado no cambia de nombre desde la carta.
  *  uso      {tel, codigo, monto, local}                  anota el descuento de bienvenida usado
  *  baja      {tel, local}                                 deja de recibir ofertas (se aplica de inmediato)
  *  eliminar  {tel, local}                                 solicitud de eliminación (queda pendiente)
@@ -52,6 +55,7 @@ function doPost(e) {
     const tel = celular(d.tel);
     const local = LOCALES_VALIDOS.indexOf(String(d.local || '').toLowerCase()) >= 0 ? String(d.local).toLowerCase() : 'emporio';
     if (!tel) throw new Error('celular no válido');
+    limitar(tel); // contra envíos masivos: máximo por minuto en total y por celular
     respuesta = { ok: true };
     if (d.tipo === 'registro') respuesta.codigo = registrar(d, tel, local);
     else if (d.tipo === 'uso') anotarUso(d, tel, local);
@@ -78,13 +82,18 @@ function registrar(d, tel, local) {
   const ahora = new Date();
   let fila = buscarCliente(hoja, tel, local);
   const acepta = d.acepta === true;
+  const nombres = [nombre(d.n1), nombre(d.n2), nombre(d.a1), nombre(d.a2)];
+  if (!nombres[0] || !nombres[2]) throw new Error('nombre no válido');
+  const nuevo = !fila;
   if (!fila) {
     fila = hoja.getLastRow() + 1;
     hoja.getRange(fila, COL['Fecha de registro']).setValue(fechaValida(d.fecha) || ahora);
     hoja.getRange(fila, COL['Local']).setValue(local);
     hoja.getRange(fila, COL['Celular']).setValue(texto(tel));
   }
-  hoja.getRange(fila, COL['Primer nombre'], 1, 4).setValues([[texto(d.n1), texto(d.n2), texto(d.a1), texto(d.a2)]]);
+  // Un cliente ya registrado no cambia de nombre desde la carta: cualquiera que conozca su celular podría hacerlo.
+  // Si de verdad hay que corregirlo, se cambia a mano en la planilla.
+  if (nuevo) hoja.getRange(fila, COL['Primer nombre'], 1, 4).setValues([nombres]);
   const antes = hoja.getRange(fila, COL['Acepta ofertas']).getValue();
   hoja.getRange(fila, COL['Acepta ofertas']).setValue(acepta ? 'Sí' : 'No');
   if (acepta) hoja.getRange(fila, COL['Fecha de baja']).clearContent();
@@ -245,6 +254,22 @@ function filasDelCelular(hoja, tel) {
   const out = [];
   hoja.getRange(2, COL['Celular'], ultima - 1, 1).getValues().forEach(function (f, i) { if (celular(f[0]) === tel) out.push(i + 2); });
   return out;
+}
+
+// Límite de envíos (CacheService): 40 por minuto en total y 4 cada 10 minutos por celular.
+function limitar(tel) {
+  const cache = CacheService.getScriptCache();
+  const minuto = 'min-' + Math.floor(Date.now() / 60000), porTel = 'tel-' + tel;
+  const total = Number(cache.get(minuto)) || 0, delTel = Number(cache.get(porTel)) || 0;
+  if (total >= 40 || delTel >= 4) throw new Error('demasiados envíos, intenta más tarde');
+  cache.put(minuto, String(total + 1), 120);
+  cache.put(porTel, String(delTel + 1), 600);
+}
+
+// Nombre o apellido: solo letras (con tildes), espacios, apóstrofo y guion; entre 2 y 40 caracteres. Vacío si no cumple.
+function nombre(v) {
+  const s = texto(v).slice(0, 40);
+  return /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]{2,40}$/.test(s) ? s : '';
 }
 
 // Celular chileno en formato +569XXXXXXXX, o null si no lo es.
