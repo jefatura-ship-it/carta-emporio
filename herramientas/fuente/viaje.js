@@ -186,11 +186,13 @@ if (!quieto) {
     if (!enPantalla.get(viaje)) return;
     pv = mezcla(pv, avance(viaje), 0.12);
     const W = innerWidth, esc = frenteEl.offsetHeight / 600;
+    // La cámara llega al Emporio un poco antes del final y se queda quieta: así se ve completa la entrada del camión
+    const pvC = limita(pv / 0.86);
     let centro = X0, corrF = 0;
     capas.forEach(capa => {
       let max = Math.max(0, capa.offsetWidth - W);
-      if (capa === frenteEl) { max = Math.min(max, Math.max(0, X_EMPORIO * esc - W / 2)); centro = (pv * max + W / 2) / esc; corrF = pv * max; } // al llegar, el Emporio queda al centro
-      capa.style.transform = `translate3d(${(-pv * max).toFixed(1)}px,0,0)`;
+      if (capa === frenteEl) { max = Math.min(max, Math.max(0, (W < 700 ? 5290 : X_EMPORIO) * esc - W / 2)); centro = (pvC * max + W / 2) / esc; corrF = pvC * max; } // al llegar, el Emporio queda al centro
+      capa.style.transform = `translate3d(${(-pvC * max).toFixed(1)}px,0,0)`;
     });
     const u = limita((centro - X0) / (X_EMPORIO - X0));
     const noche = suave(0.7, 0.88, u), tarde = suave(0.42, 0.56, u) * (1 - noche), luz = suave(0.64, 0.8, u);
@@ -201,7 +203,7 @@ if (!quieto) {
       cielo.style.background = `linear-gradient(${arriba},${abajo} 78%)`;
       const s = limita(u / 0.74);
       sol.style.left = (4 + 88 * s).toFixed(2) + '%'; sol.style.top = (66 - 52 * Math.sin(Math.PI * s)).toFixed(2) + '%';
-      sol.style.opacity = ((1 - suave(0.7, 0.8, u)) * (1 - 0.85 * (suave(0.14, 0.22, u) * (1 - suave(0.4, 0.48, u))))).toFixed(3);
+      sol.style.opacity = ((1 - suave(0.7, 0.8, u)) * (1 - 0.85 * (suave(0.1, 0.17, u) * (1 - suave(0.44, 0.52, u))))).toFixed(3);
       sol.style.background = u < 0.2 ? tono('#ffc89a', '#fff4c4', u / 0.2) : tono('#fff4c4', '#ff9f5a', limita((u - 0.4) / 0.3));
       luna.style.opacity = suave(0.78, 0.9, u).toFixed(3); est.style.opacity = suave(0.8, 0.95, u).toFixed(3);
       veloT.style.opacity = tarde.toFixed(3); veloN.style.opacity = noche.toFixed(3);
@@ -211,7 +213,7 @@ if (!quieto) {
     }
     // Tormenta: crece al entrar a Oro Verde y se va antes de Chillán
     const dtV = t - tAntV > 0 && t - tAntV < 0.1 ? t - tAntV : 1 / 60; tAntV = t;
-    const tormenta = suave(0.14, 0.22, u) * (1 - suave(0.4, 0.48, u));
+    const tormenta = suave(0.1, 0.17, u) * (1 - suave(0.44, 0.52, u));
     veloTo.style.opacity = (tormenta * 0.9).toFixed(3); nubes.style.opacity = tormenta.toFixed(3);
     nubes.style.transform = `translate3d(${(Math.sin(t * 0.07) * 40).toFixed(1)}px,0,0)`;
     let sacude = 0, flash = 0;
@@ -269,8 +271,8 @@ if (!quieto) {
       genteEl[i].querySelector('.pi').setAttribute('transform', `rotate(${paso.toFixed(1)} -2 -20)`); genteEl[i].querySelector('.pd').setAttribute('transform', `rotate(${(-paso).toFixed(1)} 2 -20)`);
     });
     // Al final, la cortina de la bodega sube y el camión entra
-    const llega = suave(0.84, 0.9, pv), cambio = suave(0.895, 0.925, pv), adentro = suave(0.925, 0.98, pv);
-    const abre = suave(0.85, 0.9, pv) * (1 - suave(0.975, 1, pv));
+    const llega = suave(0.87, 0.91, pv), cambio = suave(0.91, 0.92, pv), adentro = suave(0.92, 0.975, pv);
+    const abre = suave(0.86, 0.9, pv) * (1 - suave(0.975, 1, pv));
     cortina.setAttribute('transform', `translate(0,${(-abre * 112).toFixed(1)})`);
     traseraEl.setAttribute('opacity', cambio.toFixed(3));
     const sT = mezcla(1.18, 0.6, adentro), yT = mezcla(548, 497, adentro) + Math.sin(t * 11) * 0.8 * (1 - adentro);
@@ -279,7 +281,7 @@ if (!quieto) {
     frenos.forEach(f => f.setAttribute('opacity', (0.35 + 0.65 * Math.max(luz, suave(0.93, 0.95, pv))).toFixed(2)));
     cam.style.setProperty('--giro-rueda', (pv * 6400).toFixed(0) + 'deg');
     const puertaX = 5260 * esc - corrF, camX = cam.offsetLeft + cam.offsetWidth * 0.5;
-    cam.style.transform = `translate3d(${(llega * (puertaX - camX)).toFixed(1)}px,${(Math.sin(t * 9) * (pv > 0.005 && pv < 0.9 ? 1.6 : 0)).toFixed(1)}px,0)`;
+    cam.style.transform = `translate3d(${(llega * (puertaX - camX)).toFixed(1)}px,${(Math.sin(t * 9) * (pv > 0.005 && pv < 0.91 ? 1.6 : 0)).toFixed(1)}px,0)`;
     cam.style.opacity = (1 - cambio).toFixed(3);
     const h = u < 0.12 ? 0 : u < 0.4 ? 1 : u < 0.76 ? 2 : 3;
     if (h !== hito) { hitos[hito].classList.remove('activo'); hitos[h].classList.add('activo'); hito = h; }
