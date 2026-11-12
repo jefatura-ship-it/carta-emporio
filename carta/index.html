@@ -344,6 +344,21 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 @keyframes pagDer{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
 @keyframes pagIzq{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:none}}
 @media (max-width:560px){.pasasec{grid-template-columns:1fr 1fr}.pasasec .n{grid-column:1/-1;grid-row:1;text-align:center}}
+/* Lupa y «Mi cuenta» */
+.herram{background:var(--masa);padding:10px 0 6px}
+.herram-in{display:flex;gap:10px;align-items:center}
+.busca{position:relative;flex:1;min-width:0}
+.busca .lupa{position:absolute;left:13px;top:50%;translate:0 -50%;color:var(--campo);pointer-events:none}
+.busca input{width:100%;min-height:48px;padding:10px 44px 10px 44px;border:1.5px solid var(--borde);border-radius:999px;background:#fff;font-family:inherit;font-size:16px;color:var(--tinta);-webkit-appearance:none;appearance:none}
+.busca input:focus{outline:none;border-color:var(--campo);box-shadow:0 0 0 3px rgba(29,92,54,.18)}
+.busca input::-webkit-search-cancel-button{display:none}
+.qborrar{position:absolute;right:6px;top:50%;translate:0 -50%;width:36px;height:36px;border:0;border-radius:50%;background:#eee9dc;color:var(--tinta);font-size:22px;line-height:1;cursor:pointer}
+.bcuenta{display:inline-flex;align-items:center;gap:7px;min-height:48px;padding:0 14px;border:1.5px solid var(--campo);border-radius:999px;background:#fff;color:var(--campo);font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer;white-space:nowrap;max-width:42%;overflow:hidden;text-overflow:ellipsis}
+@media (max-width:700px){.herram{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;box-shadow:0 6px 12px -10px rgba(0,0,0,.35)}.bcuenta span{max-width:9ch;overflow:hidden;text-overflow:ellipsis}}
+.buscar-res .res-n{margin:0 0 12px;color:#6b6b66;font-size:14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.res-sec{border:1px solid var(--campo);background:#fff;color:var(--campo);border-radius:999px;padding:5px 11px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.res-tb{margin:20px 0 10px;font-family:var(--display);font-size:18px;color:var(--campo)}
+.nota.ingreso{background:#f1f6ee;border-radius:10px;padding:8px 11px}
 </style>
 </head>
 <body>
@@ -377,6 +392,12 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 <nav class="cats" aria-label="Categorías"><div class="wrap"><button type="button" class="cmenu" id="catMenu" aria-haspopup="dialog" aria-expanded="false" aria-controls="veloMenu"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Ver todo</button><button type="button" class="cflecha" id="catIzq" aria-label="Ver categorías anteriores">‹</button><div class="cats-lista" id="cats"></div><button type="button" class="cflecha" id="catDer" aria-label="Ver más categorías">›</button></div></nav>
 <button type="button" class="perilla" id="perilla" aria-haspopup="dialog" aria-expanded="false" aria-controls="veloMenu" aria-label="Abrir el menú con todas las secciones"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span aria-hidden="true">Menú</span></button>
 
+<div class="herram"><div class="wrap herram-in">
+  <div class="busca" role="search"><svg class="lupa" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
+    <label for="q" class="sr">Buscar productos en la carta</label><input id="q" type="search" placeholder="Buscar productos" autocomplete="off" enterkeyhint="search" spellcheck="false">
+    <button type="button" class="qborrar" id="qBorrar" hidden aria-label="Borrar la búsqueda">×</button></div>
+  <button type="button" class="bcuenta" id="bCuenta" aria-haspopup="dialog"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span id="bCuentaTxt">Mi cuenta</span></button>
+</div><p class="sr" id="qEstado" role="status" aria-live="polite"></p></div>
 <div class="cuerpo">
 <main class="wrap" id="carta" tabindex="-1"></main>
 <aside class="wrap avi" id="g-avicola" aria-labelledby="aviTit">
@@ -480,6 +501,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
     <div class="wrap">
       <h3 id="tituloReg">Regístrate <button type="button" class="cerrar" id="cerrarReg">Cerrar</button></h3>
       <p class="nota" id="regIntro"></p>
+      <p class="nota ingreso" id="regIngreso">¿Ya eres cliente? Escribe tus datos con el <b>mismo celular</b> con que te registraste y, así, recuperamos tu cuenta y tu código de cliente.</p>
       <div class="dos">
         <div class="campo"><label for="rN1">Primer nombre</label><input id="rN1" autocomplete="given-name" required aria-required="true"></div>
         <div class="campo"><label for="rN2">Segundo nombre <small>(opcional)</small></label><input id="rN2" autocomplete="additional-name" placeholder="Si tienes"></div>
@@ -493,6 +515,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
       <label class="check"><input type="checkbox" id="rOk"><span>Quiero recibir ofertas por WhatsApp o teléfono <span class="opc">(opcional)</span>. Puedo darme de baja cuando quiera.</span></label>
       <p class="msgreg" id="rMsg" role="alert" hidden></p>
       <button class="btn prim" id="rGuardar">Registrarme</button>
+      <button type="button" class="btn sec" id="rSalir" hidden>Salir de mi cuenta en este celular</button>
       <p class="nota">Usamos tus datos solo para tu descuento y, si marcas la casilla de ofertas, también para avisarte. En ningún caso los vendemos ni los compartimos; además, puedes pedir que los eliminemos cuando quieras.</p>
     </div>
   </section>
@@ -1078,7 +1101,10 @@ if(cliente&&cliente.tel){
   if(!cliente.codigo){cliente.codigo=codigoProvisorio(cliente);guardarCliente()}
   if(!cliente.codigoOk)pedirCodigo();
 }
+/* «Mi cuenta»: muestra el nombre del cliente si ya ingresó en este celular */
+function pintarCuenta(){$("bCuentaTxt").textContent=cliente&&cliente.n1?cliente.n1:"Ingresar";$("bCuenta").setAttribute("aria-label",cliente&&cliente.n1?`Mi cuenta: ${cliente.n1}`:"Ingresar a mi cuenta de cliente o registrarme")}
 function pintarReg(){
+  pintarCuenta();
   const hayRegistro=L.descuentoRegistro!=null; // el registro sigue abierto aunque termine la semana del descuento
   $("reg").hidden=!hayRegistro; if(!hayRegistro)return;
   const rc=$("regCod"); rc.hidden=!(cliente&&cliente.codigo);
@@ -1124,8 +1150,14 @@ $("regBtn").onclick=()=>{
   const c=cliente||{};
   $("rN1").value=c.n1||""; $("rN2").value=c.n2||""; $("rA1").value=c.a1||""; $("rA2").value=c.a2||"";
   $("rTel").value=c.tel||""; $("rOk").checked=!!c.acepta; $("rEdad").checked=!!cliente; $("rMsg").hidden=true;
+  $("rSalir").hidden=!cliente;
+  $("rGuardar").textContent=cliente?"Guardar mis datos":"Ingresar o registrarme";
+  $("regIngreso").hidden=!!cliente;
+  $("tituloReg").firstChild.nodeValue=cliente?"Mis datos ":"Regístrate ";
   abrirHoja("veloReg",$("rN1"));
 };
+$("bCuenta").onclick=()=>{$("regBtn").onclick();$("tituloReg").firstChild.nodeValue=cliente?"Mi cuenta ":"Ingresa o regístrate "};
+$("rSalir").onclick=()=>{cliente=null;try{localStorage.removeItem("cliente-"+KEY)}catch(e){}cerrarReg();pintarReg();refrescar()};
 const cerrarReg=()=>cerrarHoja("veloReg");
 $("cerrarReg").onclick=cerrarReg;
 $("veloReg").addEventListener("click",e=>{if(e.target===$("veloReg"))cerrarReg()});
@@ -1289,6 +1321,7 @@ SECC.forEach((g,i)=>{const a=SECC[i-1],sg=SECC[i+1],nav=document.createElement("
     +(sg?`<button type="button" class="sig" data-sec="${sg.id}"><small>Siguiente</small><span>${nomSec(sg)}<span aria-hidden="true"> →</span></span></button>`:`<button type="button" class="sig" data-sec="${SECC[0].id}"><small>Terminaste la carta</small><span>Volver a la primera<span aria-hidden="true"> ↺</span></span></button>`);
   g.appendChild(nav)});
 function verSeccion(id,{enfocar=false,desplazar=true}={}){
+  if(window.limpiarBusqueda)limpiarBusqueda();
   const g=SECC.find(x=>x.id===id)||SECC[0];
   /* como pasar de página: la nueva sección entra de lado (desde la derecha si va hacia adelante) */
   const antes=SECC.findIndex(x=>!x.hidden),ahora=SECC.indexOf(g);
@@ -1305,6 +1338,47 @@ const esSeccion=id=>SECC.some(x=>x.id===id);
 const asegura=el=>{const g=el&&el.closest(".grupo");if(g&&g.hidden)verSeccion(g.id,{desplazar:false});return el};
 $("carta").addEventListener("click",e=>{const b=e.target.closest("button[data-sec]");if(b)verSeccion(b.dataset.sec,{enfocar:true})});
 verSeccion(leePref("seccion-"+KEY)||SECC[0].id,{desplazar:false});
+/* Búsqueda: encuentra aunque falten tildes, se escriba en singular o plural, a medias o con alguna letra cambiada */
+(()=>{const q=$("q"),borrar=$("qBorrar"),estado=$("qEstado");
+  const norm=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+  const raiz=w=>w.length>4?w.replace(/(es|s)$/,""):w.length>3?w.replace(/s$/,""):w;
+  const pal=t=>norm(t).split(" ").filter(Boolean).map(raiz);
+  // distancia entre dos palabras (letras cambiadas, de más, de menos o al revés)
+  const dist=(a,b)=>{if(Math.abs(a.length-b.length)>2)return 9;const d=[];for(let i=0;i<=a.length;i++){d[i]=[i];for(let j=1;j<=b.length;j++)d[i][j]=i?0:j}
+    for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){const k=a[i-1]===b[j-1]?0:1;d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+k);if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}return d[a.length][b.length]};
+  const IDX=visibles.map(p=>({p,nom:pal(p.nombre),todo:pal([p.nombre,p.cat,p.detalle||""].join(" "))}));
+  const puntaje=(w,lista,nom)=>{let m=0;for(const t of lista){const extra=nom.includes(t)?0.5:0;let v=0;
+      if(t===w)v=3;else if(t.startsWith(w)&&w.length>=2)v=2.4;else if(w.length>=3&&t.includes(w))v=1.8;
+      else if(w.length>=4){const d=dist(w,t.slice(0,w.length+1).length>=w.length?t:t);const lim=w.length>=7?2:1;if(d<=lim)v=1.5-0.3*d;else if(t.length>w.length&&dist(w,t.slice(0,w.length))<=lim)v=1.2}
+      if(v)m=Math.max(m,v+extra)}return m};
+  const res=document.createElement("section");res.className="grupo buscar-res";res.id="resBusca";res.hidden=true;res.setAttribute("aria-labelledby","resTit");
+  $("carta").prepend(res);
+  let antes=null;
+  const busca=()=>{const txt=q.value.trim(),ws=pal(txt);borrar.hidden=!txt;
+    if(!ws.length){if(!res.hidden){res.hidden=true;res.innerHTML="";verSeccion(antes||SECC[0].id,{desplazar:false})}estado.textContent="";return}
+    if(res.hidden){const v=SECC.find(x=>!x.hidden);antes=v?v.id:null;SECC.forEach(x=>{x.hidden=true});res.hidden=false}
+    const r=IDX.map(o=>{const ps=ws.map(w=>puntaje(w,o.todo,o.nom));return {p:o.p,todos:ps.every(v=>v>0),suma:ps.reduce((a,v)=>a+v,0)}}).filter(o=>o.suma>0);
+    const exactos=r.filter(o=>o.todos).sort((a,b)=>b.suma-a.suma||a.p.nombre.localeCompare(b.p.nombre));
+    const parecidos=exactos.length?[]:r.sort((a,b)=>b.suma-a.suma).slice(0,24);
+    const lista=(exactos.length?exactos:parecidos).slice(0,40).map(o=>o.p);
+    // productos parecidos: otros de las mismas secciones que lo encontrado
+    const vistos=new Set(lista.map(p=>p.cod)),secs=[...new Set(lista.map(p=>p.cat))];
+    const tambien=exactos.length?visibles.filter(p=>secs.slice(0,2).includes(p.cat)&&!vistos.has(p.cod)).slice(0,6):[];
+    const t=txt.replace(/[<>&"]/g,"");
+    res.innerHTML=`<h2 id="resTit">${lista.length?(exactos.length?`Resultados para «${t}»`:`No encontramos «${t}» tal cual; quizás buscabas:`):`No encontramos «${t}»`}</h2>`
+      +(lista.length?`<p class="res-n">${lista.length} producto${lista.length===1?"":"s"}${secs.length?" en: ":""}${secs.slice(0,6).map(cn=>`<button type="button" class="res-sec" data-sec="g-${slug(cn)}">${cn}</button>`).join("")}</p>`:`<p class="res-n">Prueba con otra palabra, por ejemplo «vaso», «huevo» o «aluminio»; también puedes revisar todas las secciones en el menú.</p>`)
+      +`<div class="lista">${lista.map(p=>card(p,FAV)).join("")}</div>`
+      +(tambien.length?`<h3 class="res-tb">También te puede servir</h3><div class="lista">${tambien.map(p=>card(p,FAV)).join("")}</div>`:"");
+    refrescar();
+    estado.textContent=lista.length?`${lista.length} productos encontrados`:"Sin resultados";
+  };
+  let espera=0;q.addEventListener("input",()=>{clearTimeout(espera);espera=setTimeout(busca,140)});
+  q.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();busca();q.blur()}if(e.key==="Escape"){q.value="";busca()}});
+  borrar.onclick=()=>{q.value="";busca();q.focus()};
+  // al elegir una sección (desde los resultados, el menú o las pestañas) se deja de buscar
+  res.addEventListener("click",e=>{if(e.target.closest("button[data-sec]")){q.value="";borrar.hidden=true;res.hidden=true;res.innerHTML="";estado.textContent=""}});
+  window.limpiarBusqueda=()=>{if(q.value){q.value="";borrar.hidden=true;res.hidden=true;res.innerHTML="";estado.textContent=""}};
+})();
 const repintar=p=>{document.querySelectorAll(`article[data-prod="${p.cod}"]`).forEach(a=>{a.outerHTML=card(p,a.id?null:FAV)});refrescar()};
 function ajustarTope(p){const tp=topeDe(p);if(tp==null)return;const kp=clave(p.cod,"P");
   while(unidadesEn(p)>tp){if(cart[p.cod]){if(!--cart[p.cod])delete cart[p.cod]}else if(cart[kp]){if(!--cart[kp])delete cart[kp]}else break}guardar()}
