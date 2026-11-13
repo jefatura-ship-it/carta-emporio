@@ -359,6 +359,20 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 .res-sec{border:1px solid var(--campo);background:#fff;color:var(--campo);border-radius:999px;padding:5px 11px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
 .res-tb{margin:20px 0 10px;font-family:var(--display);font-size:18px;color:var(--campo)}
 .nota.ingreso{background:#f1f6ee;border-radius:10px;padding:8px 11px}
+/* Familias en el menú y pestañas de la familia en cada página */
+.fams{display:grid;gap:8px}
+.fam{border:1.5px solid var(--borde);border-radius:14px;background:#fff;overflow:hidden}
+.fam summary{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:52px;padding:10px 16px;cursor:pointer;list-style:none;font-weight:700;font-size:16px;color:var(--campo)}
+.fam summary::-webkit-details-marker{display:none}
+.fam summary::after{content:"";width:9px;height:9px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(45deg) translateY(-3px);transition:transform .25s;flex:none}
+.fam[open] summary::after{transform:rotate(-135deg) translateY(-1px)}
+.fam summary small{margin-left:auto;font-weight:600;font-size:12.5px;color:#6b6b66}
+.fam[open]{border-color:var(--campo)}
+.fam .mgrid{padding:0 12px 12px}
+.fam-et{margin:0 0 2px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#6b6b66}
+.subfam{display:flex;gap:7px;overflow-x:auto;margin:0 0 12px;padding-bottom:4px;scrollbar-width:thin}
+.subfam button{flex:none;min-height:40px;padding:7px 13px;border:1.5px solid var(--campo);border-radius:999px;background:#fff;color:var(--campo);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.subfam button[aria-current="true"]{background:var(--campo);color:#fff}
 </style>
 </head>
 <body>
@@ -1229,7 +1243,25 @@ L.productos.forEach(p=>{const r=SUBCATS[p.cat];if(!r||esPieza(p))return;p.catBas
 const ordenCats=lista=>{const pos={};lista.forEach((c,i)=>{const b=BASEDE[c]||c;if(!(b in pos))pos[b]=i});return lista.slice().sort((a,b)=>(pos[BASEDE[a]||a]-pos[BASEDE[b]||b])||((ORDENSUB[a]||0)-(ORDENSUB[b]||0)))};
 const visibles=L.productos.filter(p=>!esPieza(p)&&!p.retirado); // retirado: ya no está en la planilla de inventario
 const favs=visibles.filter(p=>p.fav||p.oferta!=null);
-const cats=[...(favs.length?[FAV]:[]),...ordenCats([...new Set(visibles.map(p=>p.cat))])];
+/* Familias: en el menú se ve primero la familia («Plásticos») y al tocarla se despliegan sus páginas («Envases», «Contenedores»…) */
+const FAMILIAS=[
+  ["Huevos",["Huevos","Hueveras"]],
+  ["Plásticos",["Envases","Contenedores","Cúpulas","Potes","Salseros"]],
+  ["Cartón",["Cajas de cartón","Bandejas de cartón","Bowls y conos de cartón"]],
+  ["Aluminio",["Envases de aluminio","Foil y moldes de aluminio"]],
+  ["Bolsas y papeles",["Bolsas","Sacos y mallas","Papeles y film"]],
+  ["Vasos, platos y cubiertos",["Vasos","Platos","Cubiertos y servilletas","Bombillas, brochetas y palitos"]],
+  ["Repostería",["Moldes","Esencias y colorantes"]],
+  ["Despensa",["Abarrotes","Frutas en conserva","Mariscos y atún","Lácteos","Golosinas"]],
+  ["Aseo",["Bolsas de basura","Traperos","Papel higiénico y afeitado","Guantes y cofias"]],
+  ["Otros",["Hilos y pitas","Otros"]]
+];
+const hayCat=new Set(visibles.map(p=>p.cat));
+const FAMS=FAMILIAS.map(([f,l])=>[f,l.filter(x=>hayCat.has(x))]).filter(([,l])=>l.length);
+const sueltas=ordenCats([...hayCat].filter(x=>!FAMS.some(([,l])=>l.includes(x))));
+if(sueltas.length){const o=FAMS.find(([f])=>f==="Otros");if(o)o[1].push(...sueltas);else FAMS.push(["Otros",sueltas])}
+const famDe=cn=>(FAMS.find(([,l])=>l.includes(cn))||[null])[0];
+const cats=[...(favs.length?[FAV]:[]),...FAMS.flatMap(([,l])=>l)];
 const deCat=c=>c===FAV?favs:visibles.filter(p=>p.cat===c);
 const precioDe=p=>p.oferta!=null?p.oferta:p.precio;
 /* precio por mayor: escalones según el paquete (o 12 y 50 u si no tiene paquete) */
@@ -1286,20 +1318,18 @@ const card=(p,c)=>`
           <button class="mas" data-cod="${p.cod}" data-d="1" aria-label="Agregar ${p.nombre}">+</button>
         </div>${tapasHTML(p)}
       </article>`;
-$("cats").innerHTML=cats.map((c,i)=>`<button class="chip${c===FAV?" fav":""}" data-ir="${slug(c)}" aria-current="${i===0}">${c===FAV?"★ ":""}${c}</button>`).join("");
+$("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}" data-fam="${FAV}" aria-current="true">★ ${FAV}</button>`:"")+FAMS.map(([f,l])=>`<button class="chip" data-ir="${slug(l[0])}" data-fam="${f}" aria-current="false">${f}</button>`).join("");
 /* Menú «Ver todo»: todas las secciones, pedidos a la avícola, la página web y los Instagram */
 (()=>{const bt=$("catMenu"),mn=$("menuCats");
   const ig=[["emporio.sabroso","Emporio Sabroso"],["pollitasoroverde","Pollitas Oro Verde"]];
   mn.innerHTML=`<h3>Pedidos a la avícola</h3><div class="mgrid"><button type="button" class="dest" data-ir="avicola">Pollitas de 14 semanas y alimento</button></div>`
-    +`<h3>Productos</h3><div class="mgrid">${cats.map(c=>`<button type="button" data-ir="${slug(c)}">${c===FAV?"★ ":""}${c}</button>`).join("")}</div>`
+    +`<h3>Productos</h3>${favs.length?`<div class="mgrid"><button type="button" data-ir="${slug(FAV)}">★ ${FAV}</button></div>`:""}<div class="fams">${FAMS.map(([f,l])=>`<details class="fam" name="familias"><summary><span>${f}</span><small>${l.length===1?"1 página":l.length+" páginas"}</small></summary><div class="mgrid">${l.map(x=>`<button type="button" data-ir="${slug(x)}">${x}</button>`).join("")}</div></details>`).join("")}</div>`
     +`<h3>Conócenos</h3><div class="mgrid"><a href="../">Nuestra página web</a>${ig.map(([u,n])=>`<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">Instagram ${n}</a>`).join("")}</div>`;
   /* se abre como diálogo a pantalla completa (desde «Ver todo» o desde la perilla lateral); abrirHoja bloquea el fondo y atrapa el foco */
   const abre=()=>{$("menuScroll").scrollTop=0;abrirHoja("veloMenu",$("cerrarMenu"))};
   bt.onclick=abre; $("perilla").onclick=abre;
   $("cerrarMenu").onclick=()=>cerrarHoja("veloMenu");
   mn.addEventListener("click",e=>{const b=e.target.closest("button[data-ir]");if(!b)return;cerrarHoja("veloMenu");
-    document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-current",x.dataset.ir===b.dataset.ir));
-    const ch=document.querySelector(`.chip[data-ir="${b.dataset.ir}"]`);if(ch)ch.scrollIntoView({block:"nearest",inline:"center"});
     const id="g-"+b.dataset.ir;if(esSeccion(id))verSeccion(id,{enfocar:true});else $(id).scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})});
 })();
 /* Fila de categorías: flechas, arrastre con el mouse y rueda de lado */
@@ -1328,7 +1358,8 @@ $("cats").innerHTML=cats.map((c,i)=>`<button class="chip${c===FAV?" fav":""}" da
 })();
 $("carta").innerHTML=cats.map(c=>`
   <section class="grupo" id="g-${slug(c)}">
-    <h2>${c===FAV?ICONOS._fav:(ICONOS[BASEDE[c]||c]||(c==="Hueveras"?ICONOS.Huevos:ICONOS._))}${c}</h2>
+    ${c!==FAV&&famDe(c)?`<p class="fam-et">${famDe(c)}</p>`:""}<h2>${c===FAV?ICONOS._fav:(ICONOS[BASEDE[c]||c]||(c==="Hueveras"?ICONOS.Huevos:ICONOS._))}${c}</h2>
+    ${(()=>{const l=c===FAV?null:(FAMS.find(([,x])=>x.includes(c))||[])[1];return l&&l.length>1?`<div class="subfam" role="group" aria-label="Páginas de ${famDe(c)}">${l.map(x=>`<button type="button" data-sec="g-${slug(x)}"${x===c?' aria-current="true"':""}>${x}</button>`).join("")}</div>`:""})()}
     <div class="lista">${deCat(c).map(p=>card(p,c)).join("")}</div>
   </section>`).join("");
 /* La carta va sección por sección: se ve una a la vez y al final de cada una hay botones para pasar a la anterior o a la siguiente */
@@ -1347,8 +1378,9 @@ function verSeccion(id,{enfocar=false,desplazar=true}={}){
   const antes=SECC.findIndex(x=>!x.hidden),ahora=SECC.indexOf(g);
   SECC.forEach(x=>{x.hidden=x!==g});
   if(antes>=0&&antes!==ahora&&!matchMedia("(prefers-reduced-motion:reduce)").matches){g.classList.remove("pag-der","pag-izq");void g.offsetWidth;g.classList.add(ahora>antes?"pag-der":"pag-izq")}
-  document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-current","g-"+x.dataset.ir===g.id));
-  const ch=document.querySelector(`.chip[data-ir="${g.id.slice(2)}"]`);if(ch)ch.scrollIntoView({block:"nearest",inline:"center"});
+  const fg=nomSec(g)===FAV?FAV:famDe(nomSec(g));
+  document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-current",x.dataset.fam===fg));
+  const ch=document.querySelector(`.chip[data-fam="${fg}"]`);if(ch)ch.scrollIntoView({block:"nearest",inline:"center"});
   guardaPref("seccion-"+KEY,g.id);
   if(desplazar)g.scrollIntoView({behavior:"auto",block:"start"});
   if(enfocar){const h=g.querySelector("h2");h.tabIndex=-1;h.focus({preventScroll:true})}
@@ -1436,7 +1468,6 @@ $("bMayor").hidden=!MAYOR;
 $("bMayor").onclick=()=>{const on=document.body.classList.toggle("vermayor");$("bMayor").setAttribute("aria-pressed",on);$("bMayor").querySelector("span").textContent=on?"Ocultar precios por mayor":"Ver precios por mayor"};
 $("cats").addEventListener("click",e=>{
   const b=e.target.closest(".chip"); if(!b)return;
-  document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-current",x===b));
   const id="g-"+b.dataset.ir;if(esSeccion(id))verSeccion(id,{enfocar:true});else $(id).scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"});
 });
 
