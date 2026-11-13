@@ -327,7 +327,7 @@ body.vermayor .mayor{display:block}
 .legalnota a{color:var(--campo);font-weight:700}
 body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 /* La barra de categorías es solo para computador: en el celular se navega con la perilla «MENÚ» del costado */
-@media (max-width:700px){.cats{display:none}.grupo{scroll-margin-top:12px}.avi{scroll-margin-top:12px}}
+@media (max-width:700px){.cats{display:none}.grupo{scroll-margin-top:78px}.avi{scroll-margin-top:12px}}
 /* Formato de venta de los huevos */
 .fmt{display:flex;align-items:center;gap:8px;margin:7px 0 4px;font-size:14px;font-weight:700;color:var(--campo)}
 .fmt select{min-height:40px;padding:6px 10px;border:1.5px solid var(--campo);border-radius:10px;background:#fff;color:var(--campo);font:700 15px var(--texto,inherit);max-width:100%}
@@ -1207,9 +1207,29 @@ function disponible(p){const t=tapaDe(p);if(!t)return null;const xs=[p.stock,t.s
 const topeDe=p=>/por unidad/i.test(p.detalle||"")?disponible(p):null; // en unidades
 const agotado=p=>!!p.sinStock||disponible(p)===0;
 const precioBase=p=>{const t=tapaDe(p),b=precioDe(p);if(!t)return b;return b==null||t.precio==null?null:b+precioDe(t)};
+/* Cada página de la carta es de un solo tipo de producto: las secciones compuestas («Envases y contenedores», «Potes y salseros»…)
+   se dividen según el nombre del producto. p.catBase guarda la sección original (para el ícono). El último tipo de cada lista recibe lo que no calza. */
+const SUBCATS={
+  "Envases y contenedores":[["Envases",/^(envase|bandeja plastica|caja plastica)/],["Contenedores",/^(ct |contenedor|p 1 contenedor|clamshell|sushi)/],["Cúpulas",/./]],
+  "Cajas y bandejas de cartón":[["Cajas de cartón",/^(caja|huicha|sandwich)/],["Bandejas de cartón",/^(bandeja|completero)/],["Bowls y conos de cartón",/./]],
+  "Bolsas, sacos y papeles":[["Bolsas",/^(bolsa|cartucho)/],["Sacos y mallas",/^(saco|malla)/],["Papeles y film",/./]],
+  "Platos, cubiertos y desechables":[["Platos",/^plato/],["Cubiertos y servilletas",/^(cuchara|cuchillo|tenedor|set |pack cubiertos|servilleta)/],["Bombillas, brochetas y palitos",/^(bombilla|brocheta|revolvedor|mondadientes|palito)/],["Guantes y cofias",/./]],
+  "Potes y salseros":[["Potes",/^pote/],["Salseros",/./]],
+  "Aluminio":[["Envases de aluminio",/^envase/],["Foil y moldes de aluminio",/./]],
+  "Abarrotes":[["Esencias y colorantes",/^(esencia|colorante)/],["Abarrotes",/./]],
+  "Aseo":[["Bolsas de basura",/^bolsa basura/],["Traperos",/^trapero/],["Papel higiénico y afeitado",/./]],
+  "Conservas":[["Frutas en conserva",/^(durazno|pina)/],["Mariscos y atún",/./]],
+  "Otros":[["Hilos y pitas",/^(hilo|pita)/],["Otros",/./]]
+};
+const BASEDE={}, ORDENSUB={};
+Object.entries(SUBCATS).forEach(([b,l])=>l.forEach(([n],i)=>{BASEDE[n]=b;ORDENSUB[n]=i}));
+const nPlano=t=>String(t).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+L.productos.forEach(p=>{const r=SUBCATS[p.cat];if(!r||esPieza(p))return;p.catBase=p.cat;p.cat=(r.find(([,re])=>re.test(nPlano(p.nombre)))||r[r.length-1])[0]});
+// las páginas de una misma sección van juntas y en el orden de la lista
+const ordenCats=lista=>{const pos={};lista.forEach((c,i)=>{const b=BASEDE[c]||c;if(!(b in pos))pos[b]=i});return lista.slice().sort((a,b)=>(pos[BASEDE[a]||a]-pos[BASEDE[b]||b])||((ORDENSUB[a]||0)-(ORDENSUB[b]||0)))};
 const visibles=L.productos.filter(p=>!esPieza(p)&&!p.retirado); // retirado: ya no está en la planilla de inventario
 const favs=visibles.filter(p=>p.fav||p.oferta!=null);
-const cats=[...(favs.length?[FAV]:[]),...new Set(visibles.map(p=>p.cat))];
+const cats=[...(favs.length?[FAV]:[]),...ordenCats([...new Set(visibles.map(p=>p.cat))])];
 const deCat=c=>c===FAV?favs:visibles.filter(p=>p.cat===c);
 const precioDe=p=>p.oferta!=null?p.oferta:p.precio;
 /* precio por mayor: escalones según el paquete (o 12 y 50 u si no tiene paquete) */
@@ -1258,7 +1278,7 @@ const tapasHTML=p=>{const ts=tapasDe[p.cod];if(!ts)return "";const sel=tapaDe(p)
   return `<div class="tapas"><span class="tl">${ts.length>1?`Elige la ${pieza(sel)} (va incluida, 1 por ${porQue(sel)})`:`Incluye ${pieza(sel)} (1 por ${porQue(sel)})`}</span>${ts.length>1?`<div class="tsel" role="group" aria-label="${pieza(sel)==="blonda"?"Blonda":"Tapa"} para ${p.nombre}">${ts.map(t=>`<button type="button" class="tchip${t.stock===0?" sin":""}" data-selenv="${p.cod}" data-seltapa="${t.cod}" aria-pressed="${t===sel}">${sinTapa(t.nombre)}</button>`).join("")}</div>`:`<span class="tuna">${sinTapa(sel.nombre)}</span>`}</div>`};
 const card=(p,c)=>`
       <article class="prod${agotado(p)?" agotado":""}${p.oferta!=null?" oferta":""}" data-prod="${p.cod}"${c===FAV?"":` id="p-${p.cod}"`}>
-        <div class="ico">${p.foto?`<img src="${p.foto}" alt="${p.nombre}" loading="lazy">`:((ICONOS[p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}</div>
+        <div class="ico">${p.foto?`<img src="${p.foto}" alt="${p.nombre}" loading="lazy">`:((ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}</div>
         <div class="info"><b>${p.nombre}</b>${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.sinStock?"Stock 0 en el conteo":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
         <div class="paso">
           <button class="menos" data-cod="${p.cod}" data-d="-1" aria-label="Quitar ${p.nombre}">−</button>
@@ -1308,7 +1328,7 @@ $("cats").innerHTML=cats.map((c,i)=>`<button class="chip${c===FAV?" fav":""}" da
 })();
 $("carta").innerHTML=cats.map(c=>`
   <section class="grupo" id="g-${slug(c)}">
-    <h2>${c===FAV?ICONOS._fav:(ICONOS[c]||(c==="Hueveras"?ICONOS.Huevos:ICONOS._))}${c}</h2>
+    <h2>${c===FAV?ICONOS._fav:(ICONOS[BASEDE[c]||c]||(c==="Hueveras"?ICONOS.Huevos:ICONOS._))}${c}</h2>
     <div class="lista">${deCat(c).map(p=>card(p,c)).join("")}</div>
   </section>`).join("");
 /* La carta va sección por sección: se ve una a la vez y al final de cada una hay botones para pasar a la anterior o a la siguiente */
