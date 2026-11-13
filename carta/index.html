@@ -718,6 +718,16 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
 @media (max-width:700px){.vt-slide .vt-precio{font-size:40px;padding:5px 12px 7px}}
 /* Celular: la diapositiva crece con su texto (el precio de la promo no se corta) */
 @media (max-width:700px){.vt-slide{aspect-ratio:auto;min-height:0}.vt-slide figcaption{position:relative;min-height:300px}.vt-slide .vt-letra{font-size:10.5px}}
+/* Pedidos favoritos */
+.cu-guardar{display:grid;grid-template-columns:1fr auto;gap:8px}
+.cu-guardar input{min-height:48px;padding:8px 12px;border:1.5px solid var(--borde);border-radius:12px;font-family:inherit;font-size:16px;background:#fff}
+.cu-guardar .cu-btn{min-height:48px;padding:8px 16px}
+.cu-pf-msg{min-height:1em;color:var(--campo);font-weight:700}
+.cu-pf-lista{display:grid;gap:8px}
+.cu-pf{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:8px;padding:10px 10px 10px 14px;border:1.5px solid var(--borde);border-radius:14px;background:#fff}
+.cu-pf b{display:block;font-size:15px;color:var(--tinta)}.cu-pf small{display:block;font-size:12px;color:#6b6b66}
+.cu-pf .cu-btn{min-height:42px;padding:6px 12px;font-size:13.5px}
+.cu-pf-borrar{width:38px;height:38px;border:0;border-radius:50%;background:#f3eee2;color:#6b6b66;font-size:16px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -862,6 +872,12 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
     <div class="pm-scroll"><div class="cuenta-in" id="cuentaIn">
       <section class="mbloque cu-datos" aria-label="Registro e ingreso"></section>
       <section class="mbloque" aria-label="Mis favoritos"><h3>Mis favoritos</h3><button type="button" class="cu-btn" id="cuFavs"><span class="cu-ico" aria-hidden="true">♥</span><span><b>Ver mis favoritos</b><small id="cuFavsN">Aún no guardas productos</small></span></button><p class="cu-nota">Toca el corazón de cualquier producto para guardarlo aquí.</p></section>
+      <section class="mbloque" aria-label="Pedidos favoritos"><h3>Pedidos favoritos</h3>
+        <p class="cu-nota">Guarda el pedido que tienes en el carro para repetirlo cuando quieras.</p>
+        <div class="cu-guardar"><label class="sr" for="cuPfNom">Nombre del pedido favorito</label><input id="cuPfNom" maxlength="40" placeholder="Ej.: Pedido semanal" autocomplete="off"><button type="button" class="cu-btn prim" id="cuPfGuardar">Guardar</button></div>
+        <p class="cu-nota cu-pf-msg" id="cuPfMsg" role="status" aria-live="polite"></p>
+        <div class="cu-pf-lista" id="cuPfLista"></div>
+      </section>
       <section class="mbloque" aria-label="Tu pedido anterior" id="cuAntBloque"><h3>Tu pedido anterior</h3><p class="cu-nota" id="cuAntTxt">Cuando envíes un pedido, lo verás aquí para repetirlo fácil.</p><div class="cu-dos" id="cuAntBtns" hidden><button type="button" class="cu-btn sec" id="cuAntVer">Ver productos</button><button type="button" class="cu-btn prim" id="cuAntRep">Repetir pedido</button></div></section>
     </div></div>
   </section>
@@ -1947,7 +1963,24 @@ pintarCuenta();
   $("cuAntRep").onclick=()=>{const a=ant();if(!a)return;let n=0;
     Object.entries(a.cart).forEach(([k,q])=>{const p=PROD[k.replace(/@.*$/,"")];if(!p||p.retirado||agotado(p))return;cart[k]=q;ajustarTope(p);n++});
     guardar();refrescar();cerrar(()=>{avisaCarro(n?`Agregamos ${n} producto${n===1?"":"s"} de tu pedido anterior`:"Esos productos ya no están disponibles",!!n);if(n)$("bCarro").click()})};
-  window.pintarCuentaLado=()=>{const f=favCli.filter(cod=>PROD[cod]).length;$("cuFavsN").textContent=f?`${f} producto${f===1?"":"s"} guardado${f===1?"":"s"}`:"Aún no guardas productos";
+  /* Pedidos favoritos: el carro actual se guarda con un nombre (hasta 10) y se vuelve a cargar con un toque */
+  const PF="pedidosFav-"+KEY;
+  const leerPf=()=>{try{const l=JSON.parse(localStorage.getItem(PF)||"[]");return Array.isArray(l)?l:[]}catch(e){return []}};
+  const grabarPf=l=>{try{localStorage.setItem(PF,JSON.stringify(l.slice(0,10)))}catch(e){}};
+  const esc=t=>String(t).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+  const pintarPf=()=>{const l=leerPf();
+    $("cuPfLista").innerHTML=l.length?l.map((x,i)=>{const n=Object.keys(x.cart).length;return `<div class="cu-pf"><div><b>${esc(x.nombre)}</b><small>${n} producto${n===1?"":"s"} · guardado el ${new Date(x.t).toLocaleDateString("es-CL",{day:"numeric",month:"short"})}</small></div><button type="button" class="cu-btn prim" data-pfusar="${i}">Agregar al carro</button><button type="button" class="cu-pf-borrar" data-pfborrar="${i}" aria-label="Borrar el pedido favorito ${esc(x.nombre)}">✕</button></div>`}).join(""):""};
+  $("cuPfGuardar").onclick=()=>{const qs=Object.fromEntries(Object.entries(cart).filter(([,q])=>q>0));
+    if(!Object.keys(qs).length){$("cuPfMsg").textContent="Tu carro está vacío: agrega productos y vuelve a guardar.";return}
+    const nombre=($("cuPfNom").value.trim()||"Mi pedido "+(leerPf().length+1)).slice(0,40);
+    const l=leerPf().filter(x=>x.nombre.toLowerCase()!==nombre.toLowerCase());l.unshift({nombre,t:Date.now(),cart:qs});grabarPf(l);
+    $("cuPfNom").value="";$("cuPfMsg").textContent=`Guardado: «${nombre}».`;pintarPf()};
+  $("cuPfLista").addEventListener("click",e=>{const u=e.target.closest("[data-pfusar]"),b=e.target.closest("[data-pfborrar]");const l=leerPf();
+    if(b){const x=l.splice(+b.dataset.pfborrar,1)[0];grabarPf(l);$("cuPfMsg").textContent=x?`Borrado: «${x.nombre}».`:"";pintarPf();return}
+    if(u){const x=l[+u.dataset.pfusar];if(!x)return;let n=0;
+      Object.entries(x.cart).forEach(([k,q])=>{const p=PROD[k.replace(/@.*$/,"")];if(!p||p.retirado||agotado(p))return;cart[k]=q;ajustarTope(p);n++});
+      guardar();refrescar();cerrar(()=>{avisaCarro(n?`Agregamos «${x.nombre}» a tu carro`:"Esos productos ya no están disponibles",!!n);if(n)$("bCarro").click()})}});
+  window.pintarCuentaLado=()=>{pintarPf();$("cuPfMsg").textContent="";const f=favCli.filter(cod=>PROD[cod]).length;$("cuFavsN").textContent=f?`${f} producto${f===1?"":"s"} guardado${f===1?"":"s"}`:"Aún no guardas productos";
     const a=ant();$("cuAntBtns").hidden=!a;
     if(a){const n=Object.keys(a.cart).length,d=new Date(a.t);$("cuAntTxt").textContent=`Enviado el ${d.toLocaleDateString("es-CL",{day:"numeric",month:"long"})} · ${n} producto${n===1?"":"s"}`}};
 })();
