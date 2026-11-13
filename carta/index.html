@@ -114,7 +114,7 @@ html.bloqueo,html.bloqueo body{overflow:hidden}
 .avi-item a.avi-otro{font-size:13.5px;font-weight:700;color:var(--campo)}
 /* La carta en una columna centrada desde 820 px (los pedidos a la avícola están dentro del menú) */
 @media (min-width:820px){
-  .cuerpo{display:grid;grid-template-columns:minmax(0,720px);gap:clamp(16px,2.4vw,28px);justify-content:center;padding-inline:max(16px,env(safe-area-inset-right,0px)) 40px}
+  .cuerpo{display:grid;grid-template-columns:minmax(0,1240px);gap:clamp(16px,2.4vw,28px);justify-content:center;padding-inline:max(16px,env(safe-area-inset-right,0px)) 40px}
   .cuerpo>#carta{max-width:none;margin:0;padding-inline:0}
   .cats .wrap{max-width:920px}
   .cuerpo>.avi{position:sticky;top:64px;align-self:start;max-width:none;margin:0;padding-inline:0;max-height:calc(100vh - 76px);overflow:auto}
@@ -339,10 +339,10 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 .pasasec .sig{justify-self:end;align-items:flex-end;text-align:right;background:var(--campo);color:#fff}
 .pasasec .n{font-size:13px;color:#6b6b66;white-space:nowrap}
 #carta{overflow-x:clip}
-.grupo.pag-der{animation:pagDer .38s cubic-bezier(.2,.8,.2,1)}
-.grupo.pag-izq{animation:pagIzq .38s cubic-bezier(.2,.8,.2,1)}
-@keyframes pagDer{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
-@keyframes pagIzq{from{opacity:0;transform:translateX(-40px)}to{opacity:1;transform:none}}
+.grupo.pag-der{animation:pagDer .5s cubic-bezier(.22,1,.36,1)}
+.grupo.pag-izq{animation:pagIzq .5s cubic-bezier(.22,1,.36,1)}
+@keyframes pagDer{from{opacity:0;transform:translate3d(28px,0,0)}to{opacity:1;transform:none}}
+@keyframes pagIzq{from{opacity:0;transform:translate3d(-28px,0,0)}to{opacity:1;transform:none}}
 @media (max-width:560px){.pasasec{grid-template-columns:1fr 1fr}.pasasec .n{grid-column:1/-1;grid-row:1;text-align:center}}
 /* Lupa y «Mi cuenta» */
 .herram{background:var(--masa);padding:10px 0 6px}
@@ -396,6 +396,59 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 /* Pedidos a la avícola dentro del menú */
 .nivAvi .avi{padding:0}
 .nivAvi .avi h2{font-size:22px}
+/* ===== La carta a escala: celular (1 columna), tablet (2) y computador (3 o 4), usando todo el ancho ===== */
+.cats-lista{scrollbar-width:none}.cats-lista::-webkit-scrollbar{display:none}
+@media (min-width:700px){
+  .como,.herram .wrap,.cats .wrap,.cuerpo,.barra .wrap,.galleta .wrap{max-width:1000px}
+  .pie-wrap{max-width:900px}
+  .cuerpo{margin-inline:auto}#carta.wrap{max-width:none}
+  #carta .lista{grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch}
+  /* en tarjetas más angostas los botones − / + van en su propia fila, a la derecha */
+  #carta .prod{grid-template-columns:auto 1fr;align-content:start}
+  #carta .prod .paso{grid-column:1/-1;justify-content:flex-end;margin-top:auto}
+  .grupo h2{font-size:24px}
+}
+@media (min-width:900px){
+  /* arriba: a la izquierda cómo pedir y el aviso; a la derecha el registro y los precios por mayor */
+  .como{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-areas:"intro mayor" "aviso aviso";column-gap:28px;align-items:center}
+  .como .intro{grid-area:intro;margin:16px 0 4px}
+  .como .aviso{grid-area:aviso}
+  .como .reg{grid-area:reg}
+  .como .mayorBtn{grid-area:mayor;justify-self:end;margin:10px 0 0}
+  .como>[hidden]{display:none}
+}
+@media (min-width:1100px){
+  .como,.herram .wrap,.cats .wrap,.cuerpo,.barra .wrap,.galleta .wrap{max-width:1240px}
+  #carta .lista{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (min-width:1500px){
+  .como,.herram .wrap,.cats .wrap,.cuerpo,.barra .wrap,.galleta .wrap{max-width:1480px}
+  #carta .lista{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+/* Solo se navega desde el menú: sin barra de familias arriba */
+.cats{display:none!important}
+/* Menú ordenado en bloques */
+.mbloque{display:grid;gap:10px;padding-bottom:16px;border-bottom:1px solid var(--borde)}
+.mbloque:last-child{border-bottom:0}
+.mbloque h3{margin:0}
+.mcuenta .reg{margin:0}
+.mcuenta .bcuenta{max-width:none;width:100%;justify-content:center}
+.mcuenta .bcuenta span{max-width:none}
+.mpedido{display:flex;align-items:center;justify-content:center;gap:9px;min-height:50px;border:0;border-radius:14px;background:var(--sol,#c98a1c);color:#fff;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer}
+.menu-cats .mgrid.uno{grid-template-columns:1fr}
+/* Transiciones más fluidas */
+html{scrollbar-gutter:stable}
+.velo-menu{animation:veloAparece .32s ease-out}
+@keyframes veloAparece{from{background-color:rgba(20,30,20,0)}to{background-color:rgba(20,30,20,.45)}}
+.velo-menu .panel-menu{animation:menuEntra .42s cubic-bezier(.22,1,.36,1);will-change:transform}
+.velo-menu.saliendo{transition:background-color .28s ease-in;background-color:rgba(20,30,20,0)}
+.velo-menu.saliendo .panel-menu{transition:transform .28s cubic-bezier(.4,0,1,1);transform:translateX(-100%)}
+.niv2{animation:nivEntra .36s cubic-bezier(.22,1,.36,1)}
+.niv1.vuelve{animation:nivVuelve .36s cubic-bezier(.22,1,.36,1)}
+@keyframes nivVuelve{from{opacity:0;transform:translateX(-36px)}to{opacity:1;transform:none}}
+/* en el celular el contenido no queda bajo la perilla del menú */
+@media (max-width:700px){.como,.herram .wrap,#carta.wrap{padding-left:max(32px,env(safe-area-inset-left,0px))}}
+@media (prefers-reduced-motion:reduce){.velo-menu,.niv1.vuelve,.grupo.pag-der,.grupo.pag-izq{animation:none}}
 </style>
 </head>
 <body>
@@ -416,7 +469,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
   </svg>
 </header>
 
-<section class="wrap" aria-label="Cómo pedir">
+<section class="wrap como" aria-label="Cómo pedir">
   <button type="button" class="mayorBtn" id="bMayor" aria-pressed="false"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13v10H3z"/><path d="M16 10h3l2 3v4h-5"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg><span>Ver precios por mayor</span></button>
   <p class="aviso" id="aviso" hidden>Carta en revisión: los precios son provisorios, algunos están por confirmar y los productos en rojo quedaron con stock 0 en el conteo.</p>
   <p class="intro"><b>Arma tu pedido y te lo tenemos listo</b><span id="introTxt">Primero elige lo que quieres; luego envíanos el pedido por WhatsApp y, cuando esté listo, pasa a retirarlo.</span></p>
@@ -459,7 +512,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 </aside>
 </div>
 
-<div class="wrap"><nav class="otra" id="otra" aria-label="Carta del otro local"></nav>
+<div class="wrap pie-wrap"><nav class="otra" id="otra" aria-label="Carta del otro local"></nav>
   <footer class="pie" id="pie">
     <h2 id="pieNombre"></h2>
     <p id="pieDatos"></p>
@@ -504,7 +557,7 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 <!-- Menú «Ver todo»: panel a pantalla completa con su propio scroll (el fondo queda bloqueado mientras está abierto) -->
 <div class="velo velo-menu" id="veloMenu" hidden>
   <section class="panel-menu" role="dialog" aria-modal="true" aria-labelledby="tituloMenu">
-    <div class="pm-cab"><button type="button" class="pm-cerrar" id="cerrarMenu" aria-label="Atrás: cerrar el menú y volver a la carta"><span aria-hidden="true">←</span> Atrás</button><h2 id="tituloMenu">Todas las secciones</h2></div>
+    <div class="pm-cab"><button type="button" class="pm-cerrar" id="cerrarMenu" aria-label="Atrás: cerrar el menú y volver a la carta"><span aria-hidden="true">←</span> Atrás</button><h2 id="tituloMenu">Menú</h2></div>
     <div class="pm-scroll" id="menuScroll"><div class="menu-cats" id="menuCats"></div></div>
   </section>
 </div>
@@ -1073,7 +1126,7 @@ $("lema").textContent=L.lema;
 $("datos").textContent=L.datos;
 $("logo").src=L.logo; $("logo").alt=L.nombre;
 if(L.logoBadge)$("logo").classList.add("badge");
-$("aviso").hidden=!PRUEBA;
+$("aviso").hidden=true; // ya no se muestra el aviso de carta en revisión
 if(L.instagram)$("introTxt").textContent="Primero elige lo que quieres; luego envíanos el pedido por WhatsApp o Instagram y, cuando esté listo, pasa a retirarlo.";
 const otraKey=KEY==="emporio"?"distribuidora":"emporio";
 $("otra").innerHTML=`¿Buscas la carta de ${LOCALES[otraKey].nombre}? <a href="?local=${otraKey}">Ábrela aquí</a>`;
@@ -1139,7 +1192,7 @@ if(cliente&&cliente.tel){
   if(!cliente.codigoOk)pedirCodigo();
 }
 /* «Mi cuenta»: muestra el nombre del cliente si ya ingresó en este celular */
-function pintarCuenta(){$("bCuentaTxt").textContent=cliente&&cliente.n1?cliente.n1:"Ingresar";$("bCuenta").setAttribute("aria-label",cliente&&cliente.n1?`Mi cuenta: ${cliente.n1}`:"Ingresar a mi cuenta de cliente o registrarme")}
+function pintarCuenta(){$("bCuentaTxt").textContent=cliente&&cliente.n1?`Mi cuenta: ${cliente.n1}`:"Ya soy cliente: ingresar";$("bCuenta").hidden=!!(cliente&&!$("reg").hidden);$("bCuenta").setAttribute("aria-label",cliente&&cliente.n1?`Mi cuenta: ${cliente.n1}`:"Ingresar a mi cuenta de cliente o registrarme")}
 function pintarReg(){
   pintarCuenta();
   const hayRegistro=L.descuentoRegistro!=null; // el registro sigue abierto aunque termine la semana del descuento
@@ -1347,36 +1400,42 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
 /* Menú «Ver todo»: todas las secciones, pedidos a la avícola, la página web y los Instagram */
 (()=>{const bt=$("catMenu"),mn=$("menuCats");
   const ig=[["emporio.sabroso","Emporio Sabroso"],["pollitasoroverde","Pollitas Oro Verde"]];
-  mn.innerHTML=`<h3>Pedidos a la avícola</h3><div class="mgrid"><button type="button" class="dest" data-ir="avicola">Pollitas de 14 semanas y alimento</button></div>`
-    +`<h3>Productos</h3>${favs.length?`<div class="mgrid"><button type="button" data-ir="${slug(FAV)}">★ ${FAV}</button></div>`:""}<div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${l.length===1?"1 página":l.length+" páginas"}</small></button>`).join("")}</div>`
-    +`<h3>Conócenos</h3><div class="mgrid"><a href="../">Nuestra página web</a>${ig.map(([u,n])=>`<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">Instagram ${n}</a>`).join("")}</div>`;
+  mn.innerHTML=`<section class="mbloque mcuenta" aria-label="Mi cuenta"><h3>Mi cuenta</h3><div class="mcuenta-in"></div></section>`
+    +`<section class="mbloque" aria-label="Productos"><h3>Productos</h3>${favs.length?`<div class="mgrid"><button type="button" data-ir="${slug(FAV)}">★ ${FAV}</button></div>`:""}<div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${l.length===1?"1 página":l.length+" páginas"}</small></button>`).join("")}</div></section>`
+    +`<section class="mbloque" aria-label="Tu pedido"><h3>Tu pedido</h3><button type="button" class="mpedido"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg>Ver y editar mi pedido</button></section>`
+    +`<section class="mbloque" aria-label="Pedidos a la avícola"><h3>Pedidos a la avícola</h3><div class="mgrid uno"><button type="button" class="dest" data-ir="avicola">Pollitas de 14 semanas y alimento para aves</button></div></section>`
+    +`<section class="mbloque" aria-label="Conócenos"><h3>Conócenos</h3><div class="mgrid"><a href="../">Nuestra página web</a>${ig.map(([u,n])=>`<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">Instagram ${n}</a>`).join("")}</div></section>`;
   /* Menú en dos niveles: primero las familias; al tocar una entra un segundo panel con sus páginas */
   mn.innerHTML='<div class="niv1">'+mn.innerHTML+'</div><div class="niv2" hidden></div>';
   const n1=mn.querySelector(".niv1"),n2=mn.querySelector(".niv2"),tit=$("tituloMenu");
   let famAbierta=null;
-  const nivel1=()=>{n2.hidden=true;const na=mn.querySelector(".nivAvi");if(na)na.hidden=true;n1.hidden=false;tit.textContent="Todas las secciones";$("menuScroll").scrollTop=0};
+  const nivel1=(anim)=>{n1.classList.remove("vuelve");if(anim===true){void n1.offsetWidth;n1.classList.add("vuelve")}n2.hidden=true;const na=mn.querySelector(".nivAvi");if(na)na.hidden=true;n1.hidden=false;tit.textContent="Menú";$("menuScroll").scrollTop=0};
   mn.addEventListener("click",e=>{
     const fb=e.target.closest(".famBtn");
     if(fb){const [f,l]=FAMS[+fb.dataset.fam];famAbierta=fb.dataset.fam;
-      n2.innerHTML=`<button type="button" class="nivVolver"><span aria-hidden="true">←</span> Todas las secciones</button><h3>${f}</h3><div class="mgrid">${l.map(x=>`<button type="button" data-ir="${slug(x)}"><span>${x}</span><small>${deCat(x).length} producto${deCat(x).length===1?"":"s"}</small></button>`).join("")}</div>`;
+      n2.innerHTML=`<button type="button" class="nivVolver"><span aria-hidden="true">←</span> Volver al menú</button><h3>${f}</h3><div class="mgrid">${l.map(x=>`<button type="button" data-ir="${slug(x)}"><span>${x}</span><small>${deCat(x).length} producto${deCat(x).length===1?"":"s"}</small></button>`).join("")}</div>`;
       n1.hidden=true;n2.hidden=false;tit.textContent=f;$("menuScroll").scrollTop=0;n2.querySelector(".nivVolver").focus({preventScroll:true});return}
-    if(e.target.closest(".nivVolver")){nivel1();const b=n1.querySelector(`.famBtn[data-fam="${famAbierta}"]`);if(b)b.focus({preventScroll:true})}
+    if(e.target.closest(".nivVolver")){nivel1(true);const b=n1.querySelector(`.famBtn[data-fam="${famAbierta}"]`);if(b)b.focus({preventScroll:true})}
   });
-  $("veloMenu").addEventListener("click",e=>{if(e.target===$("veloMenu"))cerrarHoja("veloMenu")});
+  $("veloMenu").addEventListener("click",e=>{if(e.target===$("veloMenu"))cerrarMenu()});
+  /* Mi cuenta (registro e ingreso) vive en el menú: al tocar sus botones se cierra el menú y se abre el formulario */
+  const mc=mn.querySelector(".mcuenta-in");mc.append($("reg"),$("bCuenta"));
+  mn.addEventListener("click",e=>{if(e.target.closest("#regBtn,#bCuenta"))cerrarMenu()},true);
+  mn.querySelector(".mpedido").onclick=()=>{cerrarMenu();$("bCarro").click()};
   /* Pedidos a la avícola: no se ven en la carta; están dentro del menú, en su propio panel */
   const avi=$("g-avicola"),nAvi=document.createElement("div");
   nAvi.className="niv2 nivAvi";nAvi.hidden=true;
-  nAvi.innerHTML='<button type="button" class="nivVolver"><span aria-hidden="true">←</span> Todas las secciones</button>';
+  nAvi.innerHTML='<button type="button" class="nivVolver"><span aria-hidden="true">←</span> Volver al menú</button>';
   avi.classList.remove("wrap");nAvi.appendChild(avi);mn.appendChild(nAvi);
   mn.addEventListener("click",e=>{
     if(e.target.closest('button[data-ir="avicola"]')){e.stopImmediatePropagation();n1.hidden=true;n2.hidden=true;nAvi.hidden=false;tit.textContent="Pedidos a la avícola";$("menuScroll").scrollTop=0;nAvi.querySelector(".nivVolver").focus({preventScroll:true});return}
-    if(nAvi.contains(e.target)&&e.target.closest(".nivVolver")){nAvi.hidden=true;nivel1();const b=n1.querySelector('button[data-ir="avicola"]');if(b)b.focus({preventScroll:true})}
+    if(nAvi.contains(e.target)&&e.target.closest(".nivVolver")){nAvi.hidden=true;nivel1(true);const b=n1.querySelector('button[data-ir="avicola"]');if(b)b.focus({preventScroll:true})}
   },true);
   /* se abre como diálogo a pantalla completa (desde «Ver todo» o desde la perilla lateral); abrirHoja bloquea el fondo y atrapa el foco */
   const abre=()=>{nivel1();abrirHoja("veloMenu",$("cerrarMenu"))};
   bt.onclick=abre; $("perilla").onclick=abre;
-  $("cerrarMenu").onclick=()=>cerrarHoja("veloMenu");
-  mn.addEventListener("click",e=>{const b=e.target.closest("button[data-ir]");if(!b)return;cerrarHoja("veloMenu");
+  $("cerrarMenu").onclick=()=>cerrarMenu();
+  mn.addEventListener("click",e=>{const b=e.target.closest("button[data-ir]");if(!b)return;cerrarMenu();
     const id="g-"+b.dataset.ir;if(esSeccion(id))verSeccion(id,{enfocar:true});else $(id).scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})});
 })();
 /* Fila de categorías: flechas, arrastre con el mouse y rueda de lado */
@@ -1744,6 +1803,10 @@ function abrirHoja(id,foco){
   document.querySelectorAll(`[aria-controls="${id}"]`).forEach(b=>b.setAttribute("aria-expanded","true"));
   (foco||$(id).querySelector("button,input,a")).focus({preventScroll:true});
 }
+/* El menú lateral sale deslizándose antes de ocultarse (sin animación si la persona pidió menos movimiento) */
+function cerrarMenu(){const v=$("veloMenu");if(v.hidden||v.classList.contains("saliendo"))return;
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches){cerrarHoja("veloMenu");return}
+  v.classList.add("saliendo");setTimeout(()=>{v.classList.remove("saliendo");cerrarHoja("veloMenu")},280)}
 function cerrarHoja(id){
   $(id).hidden=true;
   document.querySelectorAll(`[aria-controls="${id}"]`).forEach(b=>b.setAttribute("aria-expanded","false"));
