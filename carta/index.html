@@ -373,6 +373,26 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 .subfam{display:flex;gap:7px;overflow-x:auto;margin:0 0 12px;padding-bottom:4px;scrollbar-width:thin}
 .subfam button{flex:none;min-height:40px;padding:7px 13px;border:1.5px solid var(--campo);border-radius:999px;background:#fff;color:var(--campo);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
 .subfam button[aria-current="true"]{background:var(--campo);color:#fff}
+/* Menú lateral: nace desde el costado (donde está la perilla) y abre un segundo panel por familia */
+.velo-menu{background:rgba(20,30,20,.45);align-items:stretch;justify-content:flex-end}
+.velo-menu .panel-menu{width:min(88vw,400px);height:100%;box-shadow:-14px 0 34px rgba(0,0,0,.28);animation:menuEntra .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes menuEntra{from{transform:translateX(100%)}to{transform:none}}
+.velo-menu .menu-cats{max-width:none}
+.velo-menu .menu-cats .mgrid{grid-template-columns:1fr 1fr}
+.niv1,.niv2{display:grid;align-content:start;gap:12px}
+.niv1[hidden],.niv2[hidden]{display:none}
+.niv2{animation:nivEntra .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes nivEntra{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:none}}
+.famlista{display:grid;gap:8px}
+.famBtn{display:flex;align-items:center;gap:10px;min-height:54px;padding:10px 16px;border:1.5px solid var(--borde);border-radius:14px;background:#fff;color:var(--campo);font-family:inherit;font-weight:700;font-size:16px;text-align:left;cursor:pointer}
+.famBtn small{margin-left:auto;font-weight:600;font-size:12.5px;color:#6b6b66}
+.famBtn::after{content:"";width:9px;height:9px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(-45deg);flex:none}
+.famBtn:hover,.famBtn:focus-visible{border-color:var(--campo)}
+.nivVolver{justify-self:start;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:8px 14px;border:1.5px solid var(--campo);border-radius:999px;background:#fff;color:var(--campo);font-family:inherit;font-weight:700;font-size:14.5px;cursor:pointer}
+.niv2 h3{font-family:var(--display);font-size:22px;letter-spacing:0;text-transform:none;color:var(--campo);margin:2px 0 0}
+.niv2 .mgrid>*{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:58px}
+.niv2 .mgrid small{font-weight:500;font-size:12px;color:#6b6b66}
+@media (prefers-reduced-motion:reduce){.velo-menu .panel-menu,.niv2{animation:none}}
 </style>
 </head>
 <body>
@@ -1323,10 +1343,23 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
 (()=>{const bt=$("catMenu"),mn=$("menuCats");
   const ig=[["emporio.sabroso","Emporio Sabroso"],["pollitasoroverde","Pollitas Oro Verde"]];
   mn.innerHTML=`<h3>Pedidos a la avícola</h3><div class="mgrid"><button type="button" class="dest" data-ir="avicola">Pollitas de 14 semanas y alimento</button></div>`
-    +`<h3>Productos</h3>${favs.length?`<div class="mgrid"><button type="button" data-ir="${slug(FAV)}">★ ${FAV}</button></div>`:""}<div class="fams">${FAMS.map(([f,l])=>`<details class="fam" name="familias"><summary><span>${f}</span><small>${l.length===1?"1 página":l.length+" páginas"}</small></summary><div class="mgrid">${l.map(x=>`<button type="button" data-ir="${slug(x)}">${x}</button>`).join("")}</div></details>`).join("")}</div>`
+    +`<h3>Productos</h3>${favs.length?`<div class="mgrid"><button type="button" data-ir="${slug(FAV)}">★ ${FAV}</button></div>`:""}<div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${l.length===1?"1 página":l.length+" páginas"}</small></button>`).join("")}</div>`
     +`<h3>Conócenos</h3><div class="mgrid"><a href="../">Nuestra página web</a>${ig.map(([u,n])=>`<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">Instagram ${n}</a>`).join("")}</div>`;
+  /* Menú en dos niveles: primero las familias; al tocar una entra un segundo panel con sus páginas */
+  mn.innerHTML='<div class="niv1">'+mn.innerHTML+'</div><div class="niv2" hidden></div>';
+  const n1=mn.querySelector(".niv1"),n2=mn.querySelector(".niv2"),tit=$("tituloMenu");
+  let famAbierta=null;
+  const nivel1=()=>{n2.hidden=true;n1.hidden=false;tit.textContent="Todas las secciones";$("menuScroll").scrollTop=0};
+  mn.addEventListener("click",e=>{
+    const fb=e.target.closest(".famBtn");
+    if(fb){const [f,l]=FAMS[+fb.dataset.fam];famAbierta=fb.dataset.fam;
+      n2.innerHTML=`<button type="button" class="nivVolver"><span aria-hidden="true">←</span> Todas las secciones</button><h3>${f}</h3><div class="mgrid">${l.map(x=>`<button type="button" data-ir="${slug(x)}"><span>${x}</span><small>${deCat(x).length} producto${deCat(x).length===1?"":"s"}</small></button>`).join("")}</div>`;
+      n1.hidden=true;n2.hidden=false;tit.textContent=f;$("menuScroll").scrollTop=0;n2.querySelector(".nivVolver").focus({preventScroll:true});return}
+    if(e.target.closest(".nivVolver")){nivel1();const b=n1.querySelector(`.famBtn[data-fam="${famAbierta}"]`);if(b)b.focus({preventScroll:true})}
+  });
+  $("veloMenu").addEventListener("click",e=>{if(e.target===$("veloMenu"))cerrarHoja("veloMenu")});
   /* se abre como diálogo a pantalla completa (desde «Ver todo» o desde la perilla lateral); abrirHoja bloquea el fondo y atrapa el foco */
-  const abre=()=>{$("menuScroll").scrollTop=0;abrirHoja("veloMenu",$("cerrarMenu"))};
+  const abre=()=>{nivel1();abrirHoja("veloMenu",$("cerrarMenu"))};
   bt.onclick=abre; $("perilla").onclick=abre;
   $("cerrarMenu").onclick=()=>cerrarHoja("veloMenu");
   mn.addEventListener("click",e=>{const b=e.target.closest("button[data-ir]");if(!b)return;cerrarHoja("veloMenu");
