@@ -518,18 +518,98 @@ body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
 #carta .prod.agregado{animation:tarjetaOk .9s ease-out}
 @keyframes tarjetaOk{0%{box-shadow:0 0 0 0 rgba(63,125,52,.55);border-color:var(--brote)}60%{box-shadow:0 0 0 10px rgba(63,125,52,0);border-color:var(--brote)}100%{box-shadow:0 0 0 0 rgba(63,125,52,0)}}
 @media (prefers-reduced-motion:reduce){.aviso-carro{transition:none}#bCarro.salta,#bCarro.salta .nc{animation:none}}
+/* Encabezado: logo y presentación al centro; página web e Instagram a un costado */
+.marca-centro{display:grid;justify-items:center;gap:10px;text-align:center}
+.marca-lado{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.marca-lado .redes{display:contents}
+@media (min-width:1000px){
+  .marca .wrap.marca-in{max-width:1220px;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;justify-items:stretch;column-gap:24px}
+  .marca-centro{grid-column:2}
+  .marca-lado{grid-column:3;flex-direction:column;align-items:flex-end;justify-self:end;gap:8px}
+  .marca-lado .aweb{margin:0;background:rgba(0,0,0,.12);backdrop-filter:blur(3px)}
+}
+@media (max-width:999px){.marca-lado .aweb{font-size:12.5px;padding:6px 12px}}
+/* Barra superior (logo, menú, buscador, cuenta y carro) */
+.perilla,.herram{display:none!important}
+@media (max-width:700px){.como,#carta.wrap{padding-left:max(16px,env(safe-area-inset-left,0px))}}
+.topbar{position:sticky;top:0;z-index:12;background:var(--campo);color:#fff;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.tb-in{max-width:1480px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:8px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px))}
+.tb-logo{flex:none;display:block;border-radius:8px}
+.tb-logo img{display:block;height:40px;width:auto}
+.tb-menu{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:6px 12px;border:0;border-radius:12px;background:none;color:#fff;font-family:inherit;font-size:17px;font-weight:700;cursor:pointer}
+.tb-menu:hover,.tb-cuenta:hover,.tb-carro:hover{background:rgba(255,255,255,.12)}
+.tb-busca{flex:1;min-width:0;max-width:760px;margin-inline:auto}
+.tb-busca .busca input{min-height:46px;border-color:#fff;box-shadow:none}
+.tb-cuenta{flex:none;display:grid;justify-items:start;gap:1px;min-height:44px;padding:4px 14px;border:0;border-left:1px solid rgba(255,255,255,.3);background:none;color:#fff;font-family:inherit;line-height:1.15;text-align:left;cursor:pointer}
+.tb-cuenta small{font-size:12.5px;opacity:.9;max-width:14ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-cuenta b{font-size:15.5px}
+.tb-carro{flex:none;position:relative;display:grid;place-items:center;width:52px;height:46px;border:0;border-left:1px solid rgba(255,255,255,.3);background:none;color:#fff;cursor:pointer}
+.tb-n{position:absolute;top:2px;right:4px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:var(--sol);color:#1c1c1a;font:800 11.5px/20px var(--texto);text-align:center}
+.tb-n.cero{background:#fff;color:var(--campo)}
+#tbCarro.salta{animation:carroSalta .55s cubic-bezier(.3,1.6,.5,1)}
+@media (max-width:759px){
+  .tb-in{flex-wrap:wrap;gap:8px 6px;padding-block:6px 8px}
+  .tb-logo{margin-right:auto}.tb-logo img{height:32px}
+  .tb-menu{order:4;font-size:15px;padding:6px 8px}
+  .tb-busca{order:5;flex:1 1 0;max-width:none}
+  .tb-busca .busca input{min-height:42px}
+  .tb-cuenta{padding:2px 10px}.tb-cuenta small{font-size:11px;max-width:11ch}.tb-cuenta b{font-size:13.5px}
+  .tb-carro{width:46px;height:42px}
+}
+/* Ofertas en el menú */
+.mofertas{display:flex;align-items:center;gap:12px;min-height:58px;padding:10px 14px;border:0;border-radius:14px;background:linear-gradient(120deg,#c98a1c,#e8b94d);color:#1c1c1a;font-family:inherit;text-align:left;cursor:pointer;box-shadow:0 8px 18px -12px rgba(0,0,0,.5)}
+.mofertas .mo-et{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:50%;background:#fff;color:#b4301e;font-weight:900;font-size:17px}
+.mofertas b{display:block;font-size:16.5px}
+.mofertas small{display:block;font-size:12.5px;font-weight:600;opacity:.85}
+.mofertas:not([data-ir]){cursor:default;opacity:.85}
+/* Panel «Mi cuenta» desde la derecha */
+.velo-cuenta{background:rgba(20,30,20,.45);align-items:stretch;justify-content:flex-end;animation:veloAparece .32s ease-out}
+.panel-cuenta{width:min(88vw,400px);height:100%;background:var(--masa);display:flex;flex-direction:column;box-shadow:-14px 0 34px rgba(0,0,0,.28);animation:cuentaEntra .42s cubic-bezier(.22,1,.36,1)}
+@keyframes cuentaEntra{from{transform:translateX(100%)}to{transform:none}}
+.velo-cuenta.saliendo{transition:background-color .28s ease-in;background-color:rgba(20,30,20,0)}
+.velo-cuenta.saliendo .panel-cuenta{transition:transform .28s cubic-bezier(.4,0,1,1);transform:translateX(100%)}
+.pc-cab{justify-content:space-between}
+.cuenta-in{padding:12px 16px calc(24px + env(safe-area-inset-bottom,0px));display:grid;gap:14px}
+.cuenta-in h3{margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave)}
+.cu-datos .reg{margin:0}.cu-datos .bcuenta{max-width:none;width:100%;justify-content:center}.cu-datos .bcuenta span{max-width:none}
+.cu-btn{display:flex;align-items:center;gap:12px;min-height:54px;padding:10px 14px;border:1.5px solid var(--borde);border-radius:14px;background:#fff;color:var(--campo);font-family:inherit;font-size:15px;text-align:left;cursor:pointer}
+.cu-btn b{display:block;font-size:15.5px}.cu-btn small{display:block;font-size:12.5px;color:#6b6b66;font-weight:600}
+.cu-ico{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:50%;background:#fde7e3;color:#c8281f;font-size:17px}
+.cu-dos{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cu-btn.sec,.cu-btn.prim{justify-content:center;font-weight:800;min-height:48px}
+.cu-btn.prim{background:var(--campo);border-color:var(--campo);color:#fff}
+.cu-nota{margin:0;font-size:13px;color:#6b6b66}
+@media (prefers-reduced-motion:reduce){.velo-cuenta,.panel-cuenta{animation:none}}
+/* Corazón de favoritos en cada producto */
+.prod{position:relative}
+.corazon{position:absolute;top:6px;right:6px;z-index:1;display:grid;place-items:center;width:38px;height:38px;border:0;border-radius:50%;background:rgba(255,255,255,.92);cursor:pointer}
+.corazon svg{fill:none;stroke:#b9b2a3;stroke-width:1.8;transition:fill .2s,stroke .2s}
+.corazon:hover svg{stroke:#c8281f}
+.corazon[aria-pressed="true"] svg{fill:#d6332a;stroke:#d6332a}
+.corazon.late{animation:late .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes late{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+.prod .info>b{padding-right:34px}
+/* Celular: buscador en su propia fila y aviso más ancho */
+@media (max-width:759px){.tb-busca{flex:1 1 calc(100% - 110px)}.aviso-carro{width:calc(100vw - 24px);max-width:none}}
 </style>
 </head>
 <body>
 <a class="salto" href="#carta">Saltar a los productos</a>
 
+<div class="topbar" id="topbar"><div class="tb-in">
+  <a class="tb-logo" href="#" id="tbInicio" aria-label="Volver al inicio de la carta"><img id="tbLogo" alt="" width="150" height="46"></a>
+  <button type="button" class="tb-menu" id="tbMenu" aria-haspopup="dialog" aria-controls="veloMenu"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menú</span></button>
+  <div class="tb-busca" id="tbBusca"></div>
+  <button type="button" class="tb-cuenta" id="tbCuenta" aria-haspopup="dialog"><small id="tbHola">Hola</small><b>Mi cuenta</b></button>
+  <button type="button" class="tb-carro" id="tbCarro" aria-label="Ver tu pedido"><svg aria-hidden="true" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg><span class="tb-n cero" id="tbN" aria-hidden="true">0</span></button>
+</div></div>
 <header class="marca">
-  <div class="wrap">
-    <p class="lema" id="lema"></p>
+  <div class="wrap marca-in">
+    <div class="marca-centro"><p class="lema" id="lema"></p>
     <h1 class="h1logo"><img class="logo" id="logo" alt="" width="270" height="83"></h1>
-    <p class="datos" id="datos"></p>
-    <a class="aweb" href="../">Conoce quiénes somos en nuestra página web <span aria-hidden="true">→</span></a>
-    <p class="redes"><a class="aweb" href="https://www.instagram.com/emporio.sabroso/" target="_blank" rel="noopener" aria-label="Instagram de Emporio Sabroso, @emporio.sabroso"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@emporio.sabroso</a><a class="aweb" href="https://www.instagram.com/pollitasoroverde/" target="_blank" rel="noopener" aria-label="Instagram de Pollitas Oro Verde, @pollitasoroverde"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@pollitasoroverde</a></p>
+    <p class="datos" id="datos"></p></div>
+    <nav class="marca-lado" aria-label="Conócenos"><a class="aweb" href="../">Conoce nuestra página web <span aria-hidden="true">→</span></a>
+    <p class="redes"><a class="aweb" href="https://www.instagram.com/emporio.sabroso/" target="_blank" rel="noopener" aria-label="Instagram de Emporio Sabroso, @emporio.sabroso"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@emporio.sabroso</a><a class="aweb" href="https://www.instagram.com/pollitasoroverde/" target="_blank" rel="noopener" aria-label="Instagram de Pollitas Oro Verde, @pollitasoroverde"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@pollitasoroverde</a></p></nav>
   </div>
   <svg class="ola" viewBox="0 0 400 22" preserveAspectRatio="none" aria-hidden="true">
     <path d="M0 10 C80 0 140 22 210 12 S340 2 400 10 V22 H0Z" fill="var(--trigo)"/>
@@ -635,6 +715,17 @@ body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
 </div>
 
 <!-- Carro: solo los productos ya agregados, editables; sincronizado con la carta -->
+<!-- Mi cuenta: panel lateral derecho (registro, ingreso, favoritos y pedido anterior) -->
+<div class="velo velo-cuenta" id="veloCuenta" hidden>
+  <section class="panel-cuenta" role="dialog" aria-modal="true" aria-labelledby="tituloCuenta">
+    <div class="pm-cab pc-cab"><h2 id="tituloCuenta">Mi cuenta</h2><button type="button" class="pm-cerrar" id="cerrarCuenta">Cerrar <span aria-hidden="true">✕</span></button></div>
+    <div class="pm-scroll"><div class="cuenta-in" id="cuentaIn">
+      <section class="mbloque cu-datos" aria-label="Registro e ingreso"></section>
+      <section class="mbloque" aria-label="Mis favoritos"><h3>Mis favoritos</h3><button type="button" class="cu-btn" id="cuFavs"><span class="cu-ico" aria-hidden="true">♥</span><span><b>Ver mis favoritos</b><small id="cuFavsN">Aún no guardas productos</small></span></button><p class="cu-nota">Toca el corazón de cualquier producto para guardarlo aquí.</p></section>
+      <section class="mbloque" aria-label="Tu pedido anterior" id="cuAntBloque"><h3>Tu pedido anterior</h3><p class="cu-nota" id="cuAntTxt">Cuando envíes un pedido, lo verás aquí para repetirlo fácil.</p><div class="cu-dos" id="cuAntBtns" hidden><button type="button" class="cu-btn sec" id="cuAntVer">Ver productos</button><button type="button" class="cu-btn prim" id="cuAntRep">Repetir pedido</button></div></section>
+    </div></div>
+  </section>
+</div>
 <div class="velo" id="veloCarro" hidden>
   <section class="hoja hoja-carro" role="dialog" aria-modal="true" aria-labelledby="tituloCarro">
     <div class="carro-cab wrap">
@@ -1225,7 +1316,7 @@ try{
 }catch(e){cart={}}
 const grabar=()=>{try{localStorage.setItem("pedido-"+KEY,JSON.stringify({items:cart,t:Date.now(),enviado}))}catch(e){}};
 const guardar=()=>{enviado=false;grabar()};
-const marcarEnviado=()=>{if(typeof usarDescuento==="function")usarDescuento();enviado=true;grabar()};
+const marcarEnviado=()=>{try{const qs=Object.fromEntries(Object.entries(cart).filter(([,q])=>q>0));if(Object.keys(qs).length)localStorage.setItem("anterior-"+KEY,JSON.stringify({t:Date.now(),cart:qs}))}catch(e){};if(typeof usarDescuento==="function")usarDescuento();enviado=true;grabar()};
 
 /* ---------- Registro de clientes: nombres, apellidos y celular → descuento ---------- */
 // Dirección del servicio de registro de clientes. Vacía: el registro queda solo en el celular del cliente.
@@ -1264,7 +1355,7 @@ if(cliente&&cliente.tel){
   if(!cliente.codigoOk)pedirCodigo();
 }
 /* «Mi cuenta»: muestra el nombre del cliente si ya ingresó en este celular */
-function pintarCuenta(){$("bCuentaTxt").textContent=cliente&&cliente.n1?`Mi cuenta: ${cliente.n1}`:"Ya soy cliente: ingresar";$("bCuenta").hidden=!!(cliente&&!$("reg").hidden);$("bCuenta").setAttribute("aria-label",cliente&&cliente.n1?`Mi cuenta: ${cliente.n1}`:"Ingresar a mi cuenta de cliente o registrarme")}
+function pintarCuenta(){if($("tbHola"))$("tbHola").textContent=cliente&&cliente.n1?`Hola, ${cliente.n1}`:"Hola, ingresa";$("bCuentaTxt").textContent=cliente&&cliente.n1?`Mi cuenta: ${cliente.n1}`:"Ya soy cliente: ingresar";$("bCuenta").hidden=!!(cliente&&!$("reg").hidden);$("bCuenta").setAttribute("aria-label",cliente&&cliente.n1?`Mi cuenta: ${cliente.n1}`:"Ingresar a mi cuenta de cliente o registrarme")}
 function pintarReg(){
   pintarCuenta();
   const hayRegistro=L.descuentoRegistro!=null; // el registro sigue abierto aunque termine la semana del descuento
@@ -1463,8 +1554,11 @@ const modosHTML=p=>fmtDe(p)?`<label class="fmt">Formato <select data-fcod="${p.c
 const sinTapa=n=>{const s=n.replace(/^(tapas?|blondas?)\s+(para\s+)?/i,"");return s?s[0].toUpperCase()+s.slice(1):n};
 const tapasHTML=p=>{const ts=tapasDe[p.cod];if(!ts)return "";const sel=tapaDe(p);
   return `<div class="tapas"><span class="tl">${ts.length>1?`Elige la ${pieza(sel)} (va incluida, 1 por ${porQue(sel)})`:`Incluye ${pieza(sel)} (1 por ${porQue(sel)})`}</span>${ts.length>1?`<div class="tsel" role="group" aria-label="${pieza(sel)==="blonda"?"Blonda":"Tapa"} para ${p.nombre}">${ts.map(t=>`<button type="button" class="tchip${t.stock===0?" sin":""}" data-selenv="${p.cod}" data-seltapa="${t.cod}" aria-pressed="${t===sel}">${sinTapa(t.nombre)}</button>`).join("")}</div>`:`<span class="tuna">${sinTapa(sel.nombre)}</span>`}</div>`};
+/* Favoritos del cliente: se guardan en este celular */
+let favCli=[];try{favCli=JSON.parse(localStorage.getItem("favoritos-"+KEY)||"[]")}catch(e){favCli=[]}
+const esFavCli=cod=>favCli.includes(cod);
 const card=(p,c)=>`
-      <article class="prod${agotado(p)?" agotado":""}${p.oferta!=null?" oferta":""}" data-prod="${p.cod}"${c===FAV?"":` id="p-${p.cod}"`}>
+      <article class="prod${agotado(p)?" agotado":""}${p.oferta!=null?" oferta":""}" data-prod="${p.cod}"${c===FAV?"":` id="p-${p.cod}"`}><button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>
         <div class="ico">${p.foto?`<img src="${p.foto}" alt="${p.nombre}" loading="lazy">`:((ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}</div>
         <div class="info"><b>${p.nombre}</b>${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.sinStock?"Stock 0 en el conteo":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
         <div class="paso">
@@ -1478,7 +1572,7 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
 (()=>{const bt=$("catMenu"),mn=$("menuCats");
   const ig=[["emporio.sabroso","Emporio Sabroso"],["pollitasoroverde","Pollitas Oro Verde"]];
   mn.innerHTML=`<section class="mbloque mcuenta" aria-label="Mi cuenta"><h3>Mi cuenta</h3><div class="mcuenta-in"></div></section>`
-    +`<section class="mbloque" aria-label="Productos"><h3>Productos</h3>${favs.length?`<div class="mgrid"><button type="button" data-ir="${slug(FAV)}">★ ${FAV}</button></div>`:""}<div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${l.length===1?"1 página":l.length+" páginas"}</small></button>`).join("")}</div></section>`
+    +`<section class="mbloque" aria-label="Productos"><h3>Productos</h3><button type="button" class="mofertas"${favs.length?` data-ir="${slug(FAV)}"`:""}><span class="mo-et" aria-hidden="true">%</span><span><b>Ofertas</b><small>${favs.length?`${favs.length} producto${favs.length===1?"":"s"} con precio especial`:"Pronto tendremos ofertas"}</small></span></button><div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${l.length===1?"1 página":l.length+" páginas"}</small></button>`).join("")}</div></section>`
     +`<section class="mbloque" aria-label="Tu pedido"><h3>Tu pedido</h3><button type="button" class="mpedido"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg>Ver y editar mi pedido</button></section>`
     +`<section class="mbloque" aria-label="Pedidos a la avícola"><h3>Pedidos a la avícola</h3><div class="mgrid uno"><button type="button" class="dest" data-ir="avicola">Pollitas de 14 semanas y alimento para aves</button></div></section>`
     +`<section class="mbloque" aria-label="Conócenos"><h3>Conócenos</h3><div class="mgrid"><a href="../">Nuestra página web</a>${ig.map(([u,n])=>`<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">Instagram ${n}</a>`).join("")}</div></section>`;
@@ -1616,7 +1710,7 @@ verSeccion(leePref("seccion-"+KEY)||SECC[0].id,{desplazar:false});
   borrar.onclick=()=>{q.value="";busca();q.focus()};
   // al elegir una sección (desde los resultados, el menú o las pestañas) se deja de buscar
   res.addEventListener("click",e=>{if(e.target.closest("button[data-sec]")){q.value="";borrar.hidden=true;res.hidden=true;res.innerHTML="";estado.textContent=""}});
-  window.limpiarBusqueda=()=>{if(q.value){q.value="";borrar.hidden=true;res.hidden=true;res.innerHTML="";estado.textContent=""}};
+  window.limpiarBusqueda=()=>{if(q.value||!res.hidden){q.value="";borrar.hidden=true;res.hidden=true;res.innerHTML="";estado.textContent=""}};
 })();
 const repintar=p=>{document.querySelectorAll(`article[data-prod="${p.cod}"]`).forEach(a=>{a.outerHTML=card(p,a.id?null:FAV)});refrescar()};
 function ajustarTope(p){const tp=topeDe(p);if(tp==null)return;const kp=clave(p.cod,"P");
@@ -1632,7 +1726,7 @@ function celebraAgregado(p,k,boton){
   const q=cart[k]||0,m=modoDe(p),f=fmtInfo(p,m);
   const como=m==="P"?`${q} paquete${q===1?"":"s"}`:f&&f[2]>1?`${q} × ${f[1].toLowerCase()}`:`${q} u`;
   avisaCarro(`Agregaste ${p.nombre} · llevas ${como}`);
-  const bc=$("bCarro");bc.classList.remove("salta");void bc.offsetWidth;bc.classList.add("salta");
+  for(const bc of [$("bCarro"),$("tbCarro")]){bc.classList.remove("salta");void bc.offsetWidth;bc.classList.add("salta")}
   const t=document.querySelector(`#carta .grupo:not([hidden]) article[data-prod="${p.cod}"], #resBusca article[data-prod="${p.cod}"]`);
   if(t&&!matchMedia("(prefers-reduced-motion:reduce)").matches){t.classList.remove("agregado");void t.offsetWidth;t.classList.add("agregado")}
 }
@@ -1664,6 +1758,49 @@ function fijarCantidad(inp){
   c.addEventListener("keydown",e=>{const i=e.target.closest("input.cant");if(i&&e.key==="Enter"){e.preventDefault();fijarCantidad(i);i.blur()}});
   c.addEventListener("focusin",e=>{const i=e.target.closest("input.cant");if(i)i.select()});
 });
+/* Barra superior: conecta sus botones con los de la carta y mueve el buscador a la barra */
+$("tbLogo").src=$("logo").src;$("tbLogo").alt=L.nombre;
+$("tbInicio").onclick=e=>{e.preventDefault();scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})};
+$("tbMenu").onclick=()=>$("perilla").click();
+$("tbCarro").onclick=()=>$("bCarro").click();
+$("tbCuenta").onclick=()=>$("bCuenta").click();
+$("tbBusca").appendChild(document.querySelector(".busca"));
+(()=>{const n=$("nCarro"),t=$("tbN");const sinc=()=>{t.textContent=n.textContent;t.classList.toggle("cero",n.textContent.trim()==="0");$("tbCarro").setAttribute("aria-label",`Ver tu pedido: ${n.textContent.trim()} productos`)};new MutationObserver(sinc).observe(n,{childList:true,characterData:true,subtree:true});sinc()})();
+pintarCuenta();
+/* Mi cuenta en el costado derecho: el registro y el ingreso salen del menú */
+(()=>{const vc=$("veloCuenta"),datos=vc.querySelector(".cu-datos");
+  datos.append($("reg"),$("bCuenta"));const vieja=document.querySelector(".mcuenta");if(vieja)vieja.remove();
+  const abrir=()=>{pintarCuentaLado();abrirHoja("veloCuenta",$("cerrarCuenta"))};
+  const cerrar=(luego)=>{if(vc.hidden||vc.classList.contains("saliendo"))return;
+    if(matchMedia("(prefers-reduced-motion:reduce)").matches){cerrarHoja("veloCuenta");if(luego)luego();return}
+    vc.classList.add("saliendo");setTimeout(()=>{vc.classList.remove("saliendo");cerrarHoja("veloCuenta");if(luego)luego()},280)};
+  window.cerrarCuenta=cerrar;
+  $("tbCuenta").onclick=abrir;
+  $("cerrarCuenta").onclick=()=>cerrar();
+  vc.addEventListener("click",e=>{if(e.target===vc)cerrar()});
+  // el registro se abre después de cerrar este panel
+  vc.addEventListener("click",e=>{const b=e.target.closest("#regBtn,#bCuenta");if(!b)return;e.stopImmediatePropagation();e.preventDefault();cerrar(()=>{if(b.id==="regBtn")$("regBtn").onclick();else{$("regBtn").onclick();$("tituloReg").firstChild.nodeValue=cliente?"Mi cuenta ":"Ingresa o regístrate "}})},true);
+  $("cuFavs").onclick=()=>cerrar(()=>mostrarLista("Mis favoritos",favCli.map(cod=>PROD[cod]).filter(p=>p&&!p.retirado),"Aún no guardas productos. Toca el corazón de cualquier producto para tenerlo aquí."));
+  const ant=()=>{try{return JSON.parse(localStorage.getItem("anterior-"+KEY)||"null")}catch(e){return null}};
+  $("cuAntVer").onclick=()=>{const a=ant();if(!a)return;cerrar(()=>mostrarLista("Tu pedido anterior",[...new Set(Object.keys(a.cart).map(k=>k.replace(/@.*$/,"")))].map(cod=>PROD[cod]).filter(p=>p&&!p.retirado),"No encontramos los productos de tu pedido anterior."))};
+  $("cuAntRep").onclick=()=>{const a=ant();if(!a)return;let n=0;
+    Object.entries(a.cart).forEach(([k,q])=>{const p=PROD[k.replace(/@.*$/,"")];if(!p||p.retirado||agotado(p))return;cart[k]=q;ajustarTope(p);n++});
+    guardar();refrescar();cerrar(()=>{avisaCarro(n?`Agregamos ${n} producto${n===1?"":"s"} de tu pedido anterior`:"Esos productos ya no están disponibles",!!n);if(n)$("bCarro").click()})};
+  window.pintarCuentaLado=()=>{const f=favCli.filter(cod=>PROD[cod]).length;$("cuFavsN").textContent=f?`${f} producto${f===1?"":"s"} guardado${f===1?"":"s"}`:"Aún no guardas productos";
+    const a=ant();$("cuAntBtns").hidden=!a;
+    if(a){const n=Object.keys(a.cart).length,d=new Date(a.t);$("cuAntTxt").textContent=`Enviado el ${d.toLocaleDateString("es-CL",{day:"numeric",month:"long"})} · ${n} producto${n===1?"":"s"}`}};
+})();
+/* Lista especial (favoritos o pedido anterior) en el lugar de la página, como los resultados de la búsqueda */
+function mostrarLista(titulo,prods,vacio){const res=$("resBusca");if(!res)return;
+  SECC.forEach(x=>{x.hidden=true});document.body.classList.remove("con-fondo");res.hidden=false;
+  res.innerHTML=`<h2 id="resTit">${titulo}</h2>`+(prods.length?`<p class="res-n">${prods.length} producto${prods.length===1?"":"s"}</p><div class="lista">${prods.map(p=>card(p,FAV)).join("")}</div>`:`<p class="res-n">${vacio}</p>`)+`<p class="res-n"><button type="button" class="res-sec" data-sec="${SECC[0].id}">Volver a la carta</button></p>`;
+  refrescar();res.scrollIntoView({block:"start"})}
+/* Corazón: guarda o quita el producto de los favoritos */
+document.addEventListener("click",e=>{const h=e.target.closest(".corazon");if(!h)return;e.preventDefault();e.stopPropagation();
+  const cod=h.dataset.fav,ya=esFavCli(cod);favCli=ya?favCli.filter(x=>x!==cod):[...favCli,cod];
+  try{localStorage.setItem("favoritos-"+KEY,JSON.stringify(favCli))}catch(err){}
+  document.querySelectorAll(`.corazon[data-fav="${cod}"]`).forEach(x=>{x.setAttribute("aria-pressed",String(!ya));x.classList.remove("late");void x.offsetWidth;if(!ya)x.classList.add("late")});
+  const p=PROD[cod];avisaCarro(ya?`Quitaste ${p?p.nombre:"el producto"} de tus favoritos`:`Guardaste ${p?p.nombre:"el producto"} en tus favoritos`);$("avisoVer").hidden=true},true);
 $("avisoVer").onclick=()=>{$("avisoCarro").classList.remove("ver");$("avisoCarro").hidden=true;$("bCarro").click()};
 $("bMayor").hidden=!MAYOR;
 $("bMayor").onclick=()=>{const on=document.body.classList.toggle("vermayor");$("bMayor").setAttribute("aria-pressed",on);$("bMayor").querySelector("span").textContent=on?"Ocultar precios por mayor":"Ver precios por mayor"};
