@@ -549,8 +549,9 @@ body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
 #tbCarro.salta{animation:carroSalta .55s cubic-bezier(.3,1.6,.5,1)}
 @media (max-width:759px){
   .tb-in{flex-wrap:wrap;gap:8px 6px;padding-block:6px 8px}
-  .tb-logo{margin-right:auto}.tb-logo img{height:32px}
-  .tb-menu{order:4;font-size:15px;padding:6px 8px}
+  .tb-logo img{height:32px}
+  .tb-menu{font-size:15px;padding:6px 8px;gap:6px}
+  .tb-cuenta{margin-left:auto}
   .tb-busca{order:5;flex:1 1 0;max-width:none}
   .tb-busca .busca input{min-height:42px}
   .tb-cuenta{padding:2px 10px}.tb-cuenta small{font-size:11px;max-width:11ch}.tb-cuenta b{font-size:13.5px}
@@ -1319,25 +1320,25 @@ const LOCALES = {
       {cod:"HUE002",cat:"Hueveras",nombre:"Bandeja 30 × 75 u",detalle:"Precio por paquete de 75 u",precio:9500},
       {cod:"HUE003",cat:"Hueveras",nombre:"Huevera 6 × 200 u",detalle:"Precio por unidad",precio:300},
       {cod:"HUE004",cat:"Huevos",nombre:"Huevo de quinta",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
-      {cod:"HUE005",cat:"Huevos",nombre:"Huevo tercera blanco Avícola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE005",cat:"Huevos",nombre:"Huevo tercera blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE006",cat:"Huevos",nombre:"Huevo jumbo blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
-      {cod:"HUE007",cat:"Huevos",nombre:"Huevo súper blanco 100 u",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE007",retirado:true,cat:"Huevos",nombre:"Huevo súper blanco 100 u",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
       {cod:"HUE008",cat:"Huevos",nombre:"Huevo súper blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
-      {cod:"HUE009",cat:"Huevos",nombre:"Huevo súper bandeja 30 café",detalle:"Precio por unidad",precio:null,formatos:"huevoGrande"},
-      {cod:"HUE010",cat:"Huevos",nombre:"Huevo extra blanco Avícola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
-      {cod:"HUE011",cat:"Huevos",nombre:"Huevo súper color 20 u (100 u por caja)",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
-      {cod:"HUE012",cat:"Huevos",nombre:"Huevo primera blanco Avícola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE009",retirado:true,cat:"Huevos",nombre:"Huevo súper bandeja 30 café",detalle:"Precio por unidad",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE010",cat:"Huevos",nombre:"Huevo extra blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE011",retirado:true,cat:"Huevos",nombre:"Huevo súper color 20 u (100 u por caja)",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE012",cat:"Huevos",nombre:"Huevo primera blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE013",cat:"Huevos",nombre:"Huevo primera café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE014",cat:"Huevos",nombre:"Huevo segunda blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
-      {cod:"HUE015",cat:"Huevos",nombre:"Huevo segunda café bandeja 30",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
+      {cod:"HUE015",retirado:true,cat:"Huevos",nombre:"Huevo segunda café bandeja 30",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
       {cod:"HUE016",cat:"Huevos",nombre:"Huevo de quinta jumbo × 20",detalle:"Precio por unidad",precio:null,formatos:"huevoGrande"},
-      {cod:"HUE017",cat:"Huevos",nombre:"Huevo quinta × 30",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
+      {cod:"HUE017",retirado:true,cat:"Huevos",nombre:"Huevo quinta × 30",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
       {cod:"HUE018",cat:"Huevos",nombre:"Huevo segunda café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
-      {cod:"HUE019",cat:"Huevos",nombre:"Huevo primera café bandeja",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
-      {cod:"HUE020",cat:"Huevos",nombre:"Huevo extra color Avícola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE019",retirado:true,cat:"Huevos",nombre:"Huevo primera café bandeja",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
+      {cod:"HUE020",cat:"Huevos",nombre:"Huevo extra café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE021",cat:"Huevos",nombre:"Huevo súper café",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
       {cod:"HUE022",cat:"Huevos",nombre:"Huevo jumbo café",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
-      {cod:"HUE023",cat:"Huevos",nombre:"Huevo tercera bandeja café Avícola El Huevo Sabroso",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE023",cat:"Huevos",nombre:"Huevo tercera café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE024",cat:"Huevos",nombre:"Huevo súper jumbo blanco × 20",detalle:"Precio por unidad",precio:null,formatos:"huevoGrande"},
       {cod:"CON001",cat:"Conservas",nombre:"Durazno mitad 567 g Tia Bela",detalle:"Precio por unidad",precio:895,stock:67},
       {cod:"CON002",cat:"Conservas",nombre:"Choritos en aceite 190 g Tenglo",detalle:"Precio por unidad",precio:745,stock:535},
