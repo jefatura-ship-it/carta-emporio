@@ -1937,7 +1937,8 @@ function fijarCantidad(inp){
 });
 /* Barra superior: conecta sus botones con los de la carta y mueve el buscador a la barra */
 $("tbLogo").src=$("logo").src;$("tbLogo").alt=L.nombre;
-$("tbInicio").onclick=e=>{e.preventDefault();scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})};
+/* El logo recarga el catálogo desde el inicio (primera página, sin búsqueda ni filtros), sin perder el pedido */
+$("tbInicio").onclick=e=>{e.preventDefault();try{grabar()}catch(err){}try{localStorage.removeItem("seccion-"+KEY)}catch(err){}try{history.scrollRestoration="manual"}catch(err){}location.replace(location.pathname+location.search)};
 $("tbMenu").onclick=()=>$("perilla").click();
 $("tbCarro").onclick=()=>$("bCarro").click();
 $("tbCuenta").onclick=()=>$("bCuenta").click();
