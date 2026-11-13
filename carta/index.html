@@ -1361,6 +1361,10 @@ const pieza=t=>t&&t.cat==="Blondas"?"blonda":"tapa", porQue=t=>t&&t.cat==="Blond
 const tapasDe={};
 L.productos.filter(t=>!t.retirado).forEach(t=>(t.envase||[]).forEach(c=>{(tapasDe[c]=tapasDe[c]||[]).push(t)}));
 Object.values(tapasDe).forEach(ts=>ts.sort((a,b)=>((a.stock===0)-(b.stock===0))||((a.precio==null)-(b.precio==null))));
+/* Formatos de venta de los huevos: se definen antes de revisar el pedido guardado */
+const FORMATOS={huevo:[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F30","Bandeja de 30",30],["F180","Caja de 180",180]]};
+/* Súper y jumbo: bandeja de 20 y caja de 100 (no van en bandeja de 30 ni en caja de 180) */
+FORMATOS.huevoGrande=[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F20","Bandeja de 20",20],["F100","Caja de 100",100]];
 Object.keys(cart).forEach(k=>{const p=PROD[k.replace(/@.*$/,"")];const f=(k.match(/@(F\d+)$/)||[])[1];if(!p||p.retirado||esPieza(p)||(k.endsWith("@P")&&!(p.upp>1))||(f&&!(FORMATOS[p.formatos]||[]).some(x=>x[0]===f)))delete cart[k]});
 let tapaSel={};try{tapaSel=JSON.parse(leePref("tapas-"+KEY)||"{}")||{}}catch(e){tapaSel={}}
 const tapaDe=p=>{const ts=tapasDe[p.cod];if(!ts)return null;return ts.find(t=>t.cod===tapaSel[p.cod])||ts[0]};
@@ -1427,9 +1431,6 @@ const porUnidad=p=>/por unidad/i.test(p.detalle||"");
 const tienePaq=p=>p.upp>1&&porUnidad(p);
 let modo={};try{modo=JSON.parse(leePref("modos-"+KEY)||"{}")||{}}catch(e){modo={}}
 /* Formatos de venta de los huevos (id, nombre, unidades). Los super y jumbo además van en bandeja de 20 y caja de 100. */
-const FORMATOS={huevo:[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F30","Bandeja de 30",30],["F180","Caja de 180",180]]};
-/* Súper y jumbo: bandeja de 20 y caja de 100 (no van en bandeja de 30 ni en caja de 180) */
-FORMATOS.huevoGrande=[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F20","Bandeja de 20",20],["F100","Caja de 100",100]];
 const fmtDe=p=>FORMATOS[p.formatos]||null;
 const fmtInfo=(p,m)=>(fmtDe(p)||[]).find(f=>f[0]===m);
 const modoDe=p=>fmtDe(p)?(fmtInfo(p,modo[p.cod])?modo[p.cod]:(p.formatos==="huevoGrande"?"F20":"F30")):tienePaq(p)?(modo[p.cod]||"P"):"U";
