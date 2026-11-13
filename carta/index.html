@@ -730,6 +730,10 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
 .cu-pf-borrar{width:38px;height:38px;border:0;border-radius:50%;background:#f3eee2;color:#6b6b66;font-size:16px;cursor:pointer}
 /* Foto de la promo en su tarjeta */
 .prod .ico img{width:100%;height:100%;object-fit:contain;padding:4px}
+/* Botón «Pegar en Instagram» */
+.btn.ig{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(90deg,#f58529,#dd2a7b,#8134af);color:#fff;border:0;font-weight:800}
+.btn.ig.aparece{animation:igAparece .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes igAparece{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
 </style>
 </head>
 <body>
@@ -964,7 +968,7 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
           <button class="btn sec" id="bCopiar">Copiar pedido</button>
           <button class="btn sec" id="bArchivo">Enviar archivo</button>
         </div>
-        <a class="btn sec" id="bIg" href="#" target="_blank" rel="noopener" hidden>Abrir Instagram</a>
+        <a class="btn ig" id="bIg" href="#" target="_blank" rel="noopener" hidden><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>Pegar en Instagram</a>
         <p class="ok" id="ok" hidden></p>
         <p class="nota" id="notaIg"></p>
         <p class="legalnota">Al enviar el pedido aceptas los <a href="../legal.html#terminos" target="_blank" rel="noopener">términos</a> y la <a href="../legal.html#privacidad" target="_blank" rel="noopener">política de privacidad</a>.</p>
@@ -2263,10 +2267,10 @@ function abrirRevision(){
   codigo=enGracia()?cliente.usado.codigo:nuevoCodigo();
   pintarHoja();
   $("ok").hidden=true;
-  $("bIg").hidden=!L.instagram;
+  $("bIg").hidden=true; // se muestra recién después de copiar el pedido
   if(L.instagram)$("bIg").href=`https://ig.me/m/${L.instagram}`;
   $("notaIg").textContent=L.instagram
-    ?`Para Instagram: toca «Copiar pedido» o «Enviar archivo» y pégalo o adjúntalo en el chat de @${L.instagram}.`
+    ?`Para Instagram: toca «Copiar pedido» y luego «Pegar en Instagram»; en el chat de @${L.instagram} mantén presionado y elige «Pegar».`
     :`«Enviar archivo» te permite mandar el pedido por la app que prefieras.`;
   actualizarEnlaces();
   abrirHoja("velo",$("cerrar"));
@@ -2312,14 +2316,17 @@ $("bWsp").addEventListener("click",e=>{
   actualizarEnlaces(); recordarNombre(); marcarEnviado();
   listo("Se abrió WhatsApp con tu pedido. Solo falta tocar Enviar.");
 });
+/* «Pegar en Instagram»: aparece tras copiar; al tocarlo vuelve a copiar el pedido (por si acaso) y abre el chat */
+function mostrarIg(){if(!L.instagram)return;const b=$("bIg");b.hidden=false;b.classList.remove("aparece");void b.offsetWidth;b.classList.add("aparece");b.focus({preventScroll:true})}
+$("bIg").addEventListener("click",()=>{try{navigator.clipboard.writeText(textoPedido()).catch(()=>{})}catch(e){}});
 $("bCopiar").onclick=async()=>{
   if(!nombreOk())return;
   recordarNombre();
   const t=textoPedido();
-  try{await navigator.clipboard.writeText(t);marcarEnviado();listo("Pedido copiado. Pégalo en el chat.")}
+  try{await navigator.clipboard.writeText(t);marcarEnviado();listo(L.instagram?"Pedido copiado. Ahora toca «Pegar en Instagram».":"Pedido copiado. Pégalo en el chat.");mostrarIg()}
   catch(e){
     const a=document.createElement("textarea");a.value=t;document.body.appendChild(a);a.select();
-    try{document.execCommand("copy");marcarEnviado();listo("Pedido copiado. Pégalo en el chat.")}catch(_){listo("Mantén presionado el texto para copiarlo.")}
+    try{document.execCommand("copy");marcarEnviado();listo(L.instagram?"Pedido copiado. Ahora toca «Pegar en Instagram».":"Pedido copiado. Pégalo en el chat.");mostrarIg()}catch(_){listo("Mantén presionado el texto para copiarlo.")}
     a.remove();
   }
 };
