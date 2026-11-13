@@ -11,7 +11,15 @@ const limita = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const mezcla = (a, b, t) => a + (b - a) * t;
 const suave = (a, b, v) => { const t = limita((v - a) / (b - a)); return t * t * (3 - 2 * t); };
 const raiz = document.documentElement;
-const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* El recorrido animado es opcional: quien elige «sin recorrido» ve la versión corta de la página (se recuerda en este navegador) */
+const sinRecorrido = (() => { try { return localStorage.getItem('recorrido') === 'no'; } catch (e) { return false; } })();
+const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches || sinRecorrido;
+document.documentElement.classList.toggle('sin-recorrido', sinRecorrido);
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-recorrido]'); if (!b) return;
+  try { localStorage.setItem('recorrido', b.dataset.recorrido); } catch (err) { /* sin almacenamiento: no se recuerda */ }
+  location.hash = ''; location.reload();
+});
 const avance = el => { const r = el.getBoundingClientRect(); return limita(-r.top / Math.max(1, r.height - innerHeight)); };
 
 /* ---------- Fechas: apertura del local y fin del descuento ---------- */

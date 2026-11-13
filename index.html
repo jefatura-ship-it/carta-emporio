@@ -512,6 +512,20 @@ footer.funde{--fh:110px;padding-top:80px}
 .sl-hola{position:absolute;left:70%;top:-4%;background:#fff;color:var(--carbon);font-size:13px;font-weight:700;line-height:1.15;padding:7px 11px;border-radius:14px 14px 14px 4px;box-shadow:0 8px 18px rgba(0,0,0,.28);white-space:nowrap;opacity:0;text-decoration:none;pointer-events:auto;will-change:opacity,transform}
 @media (max-width:600px){.mov .sabro-lado{width:74px;left:0;bottom:7vh}.sl-hola{font-size:11px;padding:5px 8px}}
 .sl-hola.carta{background:var(--naranjo,#f9740d);color:#fff}
+/* Recorrido opcional */
+.elige-rec{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-top:22px}
+.elige-rec .baja{margin-top:0}
+.rec-btn{min-height:44px;padding:8px 16px;border:1.5px solid currentColor;border-radius:999px;background:transparent;color:#f6f3ee;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer}
+.rec-btn:hover{background:rgba(255,255,255,.1)}
+.rec-si{display:none}
+.sin-recorrido .rec-si{display:inline-flex}
+.sin-recorrido .elige-rec .baja,.sin-recorrido .rec-btn[data-recorrido="no"],.sin-recorrido .saltar{display:none}
+.saltar{display:inline-flex;align-items:center;gap:6px;margin-top:12px;min-height:40px;padding:7px 14px;border-radius:999px;background:rgba(28,28,26,.08);color:inherit;font-size:14px;font-weight:700;text-decoration:none}
+.saltar:hover{background:rgba(28,28,26,.14)}
+.viaje .saltar{background:rgba(255,255,255,.75);color:#1c1c1a}
+.mov .batch .saltar{position:relative;z-index:2}
+@media (max-width:820px){.mov .batch-texto .saltar{margin-top:6px}}
+.sin-recorrido .viaje .sub{display:none}
 </style>
 </head>
 <body>
@@ -572,7 +586,11 @@ footer.funde{--fh:110px;padding-top:80px}
         <img class="logo-av" src="img/logo-huevo-sabroso-amarillo.png" alt="Avícola El Huevo Sabroso" width="1000" height="288">
         <h1 id="h-inicio">Del campo <em>a tu mesa</em></h1>
         <p class="bajada">Producimos huevos en Chillán y los llevamos a Emporio Sabroso, en el centro de la ciudad. También los distribuimos en Santiago, Temuco, Concepción, Talca y comunas aledañas.</p>
-        <a class="baja" href="#quienes"><i aria-hidden="true"></i>Desplácese hacia abajo para iniciar el recorrido</a>
+        <div class="elige-rec">
+          <a class="baja" href="#quienes"><i aria-hidden="true"></i>Desplácese hacia abajo para iniciar el recorrido</a>
+          <button type="button" class="rec-btn" data-recorrido="no">Ver la página sin recorrido (más rápida)</button>
+          <button type="button" class="rec-btn rec-si" data-recorrido="si">Activar el recorrido animado</button>
+        </div>
       </div>
     </div>
 
@@ -833,6 +851,7 @@ footer.funde{--fh:110px;padding-top:80px}
         <li data-n="4"><b>Al saco</b>El alimento mezclado cae al saco.<span class="por">Con la mezcla homogénea, se abre la compuerta: el saco se llena, se pesa (sacos de 25 kilos) y se cierra, listo para despachar.</span></li>
         <li data-n="5"><b>Cerrado y etiquetado</b>Dos manos cosen la boca del saco y le colocan su etiqueta.<span class="por">La etiqueta indica qué alimento contiene y cuánto pesa, para despacharlo sin confusiones.</span></li>
       </ol>
+      <a class="saltar" href="#viaje">Saltar esta animación <span aria-hidden="true">↓</span></a>
     </div>
     <div class="batch-mesa" id="batchMesa">
       <div class="piso" aria-hidden="true"></div>
@@ -867,6 +886,7 @@ footer.funde{--fh:110px;padding-top:80px}
     <div class="viaje-texto wrap">
       <h2 id="h-viaje">El viaje del huevo</h2>
       <p class="sub">Continúe desplazándose hacia abajo: el camión sale de la avícola por la mañana y llega al Emporio por la noche.</p>
+      <a class="saltar" href="#emporio">Saltar esta animación <span aria-hidden="true">↓</span></a>
       <ol class="hitos" id="hitos">
         <li class="activo"><span class="hora">Mañana</span><b>Sale de la avícola</b>Avícola El Huevo Sabroso.</li>
         <li><span class="hora">Día</span><b>Pasa por Oro Verde</b>Por los caminos del sector, hacia Chillán.</li>
