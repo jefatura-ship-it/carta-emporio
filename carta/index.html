@@ -633,10 +633,9 @@ body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
 .tipo-p{display:block;margin:0 0 2px;font-size:11.5px!important;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7b8075!important}
 /* Computador: panel lateral fijo a la izquierda y tarjetas verticales */
 @media (min-width:1000px){
-  .cuerpo{grid-template-columns:270px minmax(0,1fr)!important;max-width:1480px!important;margin-inline:auto;align-items:start;column-gap:24px!important}
-  .filtros{display:block;position:sticky;top:78px;max-height:calc(100vh - 92px);overflow:auto;margin-top:14px}
-  .ob-filtros{display:none}
-  #carta .grupo>.fam-et,#carta .grupo>h2,#carta .grupo>.subfam{display:none}
+  body.fl-abierto .cuerpo{grid-template-columns:270px minmax(0,1fr)!important;max-width:1480px!important;margin-inline:auto;align-items:start;column-gap:24px!important}
+  .filtros.abierto{display:block;position:sticky;top:78px;max-height:calc(100vh - 92px);overflow:auto;margin-top:14px}
+  body.fl-abierto #carta .grupo>.fam-et,body.fl-abierto #carta .grupo>h2,body.fl-abierto #carta .grupo>.subfam{display:none}
   .grupo.foto,body.con-fondo .grupo.foto{padding-top:14px}
   #carta .lista{justify-content:flex-start}
   #carta .lista>.prod{flex:1 1 230px;max-width:290px}
@@ -653,6 +652,8 @@ body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
   #carta .prod>.corazon{top:8px;right:8px}
 }
 body.con-fondo .orden,body.con-fondo .filtros{box-shadow:0 14px 30px -18px rgba(0,0,0,.6)}
+/* Sin el recuadro del descuento por registrarse (ruido visual): queda solo el botón de ingreso */
+#reg{display:none!important}
 </style>
 </head>
 <body>
@@ -1430,7 +1431,7 @@ if(cliente&&cliente.tel){
   if(!cliente.codigoOk)pedirCodigo();
 }
 /* «Mi cuenta»: muestra el nombre del cliente si ya ingresó en este celular */
-function pintarCuenta(){if($("tbHola"))$("tbHola").textContent=cliente&&cliente.n1?`Hola, ${cliente.n1}`:"Hola, ingresa";$("bCuentaTxt").textContent=cliente&&cliente.n1?`Mi cuenta: ${cliente.n1}`:"Ya soy cliente: ingresar";$("bCuenta").hidden=!!(cliente&&!$("reg").hidden);$("bCuenta").setAttribute("aria-label",cliente&&cliente.n1?`Mi cuenta: ${cliente.n1}`:"Ingresar a mi cuenta de cliente o registrarme")}
+function pintarCuenta(){if($("tbHola"))$("tbHola").textContent=cliente&&cliente.n1?`Hola, ${cliente.n1}`:"Hola, ingresa";$("bCuentaTxt").textContent=cliente&&cliente.n1?`Mis datos: ${cliente.n1}`:"Ingresar o registrarme";$("bCuenta").hidden=false;$("bCuenta").setAttribute("aria-label",cliente&&cliente.n1?`Mi cuenta: ${cliente.n1}`:"Ingresar a mi cuenta de cliente o registrarme")}
 function pintarReg(){
   pintarCuenta();
   const hayRegistro=L.descuentoRegistro!=null; // el registro sigue abierto aunque termine la semana del descuento
@@ -1914,13 +1915,13 @@ function mostrarLista(titulo,prods,vacio){const res=$("resBusca");if(!res)return
   $("flForma").addEventListener("change",e=>{const f=e.target.dataset.forma;if(!f)return;e.target.checked?est.formas.add(f):est.formas.delete(f);aplicar()});
   let tt=0;$("flTexto").addEventListener("input",e=>{clearTimeout(tt);tt=setTimeout(()=>{est.texto=e.target.value.trim();aplicar()},150)});
   $("flLimpiar").onclick=()=>{est.stock=est.precio=false;est.formas.clear();est.texto="";$("flStock").checked=$("flPrecio").checked=false;$("flTexto").value="";cabecera()};
-  $("flPagsIn").addEventListener("click",e=>{const b=e.target.closest("button[data-sec]");if(b){verSeccion(b.dataset.sec,{enfocar:true});$("filtros").classList.remove("abierto");$("obFiltros").setAttribute("aria-expanded","false")}});
+  $("flPagsIn").addEventListener("click",e=>{const b=e.target.closest("button[data-sec]");if(b){verSeccion(b.dataset.sec,{enfocar:true});if(innerWidth<1000){$("filtros").classList.remove("abierto");document.body.classList.remove("fl-abierto");$("obFiltros").setAttribute("aria-expanded","false")}}});
   $("obAnt").onclick=()=>{const g=visible(),i=SECC.indexOf(g);if(i>0)verSeccion(SECC[i-1].id,{enfocar:true})};
   $("obSig").onclick=()=>{const g=visible(),i=SECC.indexOf(g);if(i>=0&&i<SECC.length-1)verSeccion(SECC[i+1].id,{enfocar:true})};
   /* en celular y tablet el panel de filtros se despliega bajo la barra; en computador va al costado */
   const ubicarFiltros=()=>{const f=$("filtros");if(innerWidth<1000){if(f.previousElementSibling!==barra)barra.after(f)}else if(f.parentElement!==document.querySelector(".cuerpo"))document.querySelector(".cuerpo").prepend(f)};
   addEventListener("resize",ubicarFiltros);ubicarFiltros();
-  $("obFiltros").onclick=()=>{const ab=$("filtros").classList.toggle("abierto");$("obFiltros").setAttribute("aria-expanded",String(ab))};
+  $("obFiltros").onclick=()=>{const ab=$("filtros").classList.toggle("abierto");document.body.classList.toggle("fl-abierto",ab);$("obFiltros").setAttribute("aria-expanded",String(ab))};
   // se actualiza al cambiar de página, al buscar y al repintar tarjetas
   const vs=verSeccion;verSeccion=function(...a){vs(...a);cabecera()};
   const rf=refrescar;refrescar=function(...a){rf(...a);aplicar()};
