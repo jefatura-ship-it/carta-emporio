@@ -112,9 +112,9 @@ html.bloqueo,html.bloqueo body{overflow:hidden}
 .avi-item .btn{width:100%}
 .avi-item .modos{justify-self:start;margin:0}
 .avi-item a.avi-otro{font-size:13.5px;font-weight:700;color:var(--campo)}
-/* Dos columnas (carta + pedidos a la avícola) desde 820 px: así se mantiene también con zoom en el computador */
+/* La carta en una columna centrada desde 820 px (los pedidos a la avícola están dentro del menú) */
 @media (min-width:820px){
-  .cuerpo{display:grid;grid-template-columns:minmax(0,560px) minmax(240px,300px);gap:clamp(16px,2.4vw,28px);justify-content:center;padding-inline:max(16px,env(safe-area-inset-right,0px)) 40px}
+  .cuerpo{display:grid;grid-template-columns:minmax(0,720px);gap:clamp(16px,2.4vw,28px);justify-content:center;padding-inline:max(16px,env(safe-area-inset-right,0px)) 40px}
   .cuerpo>#carta{max-width:none;margin:0;padding-inline:0}
   .cats .wrap{max-width:920px}
   .cuerpo>.avi{position:sticky;top:64px;align-self:start;max-width:none;margin:0;padding-inline:0;max-height:calc(100vh - 76px);overflow:auto}
@@ -393,6 +393,9 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 .niv2 .mgrid>*{flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-height:58px}
 .niv2 .mgrid small{font-weight:500;font-size:12px;color:#6b6b66}
 @media (prefers-reduced-motion:reduce){.velo-menu .panel-menu,.niv2{animation:none}}
+/* Pedidos a la avícola dentro del menú */
+.nivAvi .avi{padding:0}
+.nivAvi .avi h2{font-size:22px}
 </style>
 </head>
 <body>
@@ -1294,10 +1297,11 @@ const tienePaq=p=>p.upp>1&&porUnidad(p);
 let modo={};try{modo=JSON.parse(leePref("modos-"+KEY)||"{}")||{}}catch(e){modo={}}
 /* Formatos de venta de los huevos (id, nombre, unidades). Los super y jumbo además van en bandeja de 20 y caja de 100. */
 const FORMATOS={huevo:[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F30","Bandeja de 30",30],["F180","Caja de 180",180]]};
-FORMATOS.huevoGrande=[...FORMATOS.huevo,["F20","Bandeja de 20",20],["F100","Caja de 100",100]];
+/* Súper y jumbo: bandeja de 20 y caja de 100 (no van en bandeja de 30 ni en caja de 180) */
+FORMATOS.huevoGrande=[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F20","Bandeja de 20",20],["F100","Caja de 100",100]];
 const fmtDe=p=>FORMATOS[p.formatos]||null;
 const fmtInfo=(p,m)=>(fmtDe(p)||[]).find(f=>f[0]===m);
-const modoDe=p=>fmtDe(p)?(fmtInfo(p,modo[p.cod])?modo[p.cod]:"F30"):tienePaq(p)?(modo[p.cod]||"P"):"U";
+const modoDe=p=>fmtDe(p)?(fmtInfo(p,modo[p.cod])?modo[p.cod]:(p.formatos==="huevoGrande"?"F20":"F30")):tienePaq(p)?(modo[p.cod]||"P"):"U";
 const clave=(cod,m)=>m==="P"?cod+"@P":m&&m[0]==="F"?cod+"@"+m:cod;
 // unidades que trae una unidad de venta en el modo m (paquete, formato de huevos o unidad)
 const porDe=(p,m)=>m==="P"?(p.upp||1):(fmtInfo(p,m)||[0,0,1])[2];
@@ -1349,7 +1353,7 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
   mn.innerHTML='<div class="niv1">'+mn.innerHTML+'</div><div class="niv2" hidden></div>';
   const n1=mn.querySelector(".niv1"),n2=mn.querySelector(".niv2"),tit=$("tituloMenu");
   let famAbierta=null;
-  const nivel1=()=>{n2.hidden=true;n1.hidden=false;tit.textContent="Todas las secciones";$("menuScroll").scrollTop=0};
+  const nivel1=()=>{n2.hidden=true;const na=mn.querySelector(".nivAvi");if(na)na.hidden=true;n1.hidden=false;tit.textContent="Todas las secciones";$("menuScroll").scrollTop=0};
   mn.addEventListener("click",e=>{
     const fb=e.target.closest(".famBtn");
     if(fb){const [f,l]=FAMS[+fb.dataset.fam];famAbierta=fb.dataset.fam;
@@ -1358,6 +1362,15 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
     if(e.target.closest(".nivVolver")){nivel1();const b=n1.querySelector(`.famBtn[data-fam="${famAbierta}"]`);if(b)b.focus({preventScroll:true})}
   });
   $("veloMenu").addEventListener("click",e=>{if(e.target===$("veloMenu"))cerrarHoja("veloMenu")});
+  /* Pedidos a la avícola: no se ven en la carta; están dentro del menú, en su propio panel */
+  const avi=$("g-avicola"),nAvi=document.createElement("div");
+  nAvi.className="niv2 nivAvi";nAvi.hidden=true;
+  nAvi.innerHTML='<button type="button" class="nivVolver"><span aria-hidden="true">←</span> Todas las secciones</button>';
+  avi.classList.remove("wrap");nAvi.appendChild(avi);mn.appendChild(nAvi);
+  mn.addEventListener("click",e=>{
+    if(e.target.closest('button[data-ir="avicola"]')){e.stopImmediatePropagation();n1.hidden=true;n2.hidden=true;nAvi.hidden=false;tit.textContent="Pedidos a la avícola";$("menuScroll").scrollTop=0;nAvi.querySelector(".nivVolver").focus({preventScroll:true});return}
+    if(nAvi.contains(e.target)&&e.target.closest(".nivVolver")){nAvi.hidden=true;nivel1();const b=n1.querySelector('button[data-ir="avicola"]');if(b)b.focus({preventScroll:true})}
+  },true);
   /* se abre como diálogo a pantalla completa (desde «Ver todo» o desde la perilla lateral); abrirHoja bloquea el fondo y atrapa el foco */
   const abre=()=>{nivel1();abrirHoja("veloMenu",$("cerrarMenu"))};
   bt.onclick=abre; $("perilla").onclick=abre;
