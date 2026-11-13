@@ -503,6 +503,21 @@ body.con-fondo .lista .prod{box-shadow:0 14px 30px -18px rgba(0,0,0,.65)}
 body.con-fondo .pie-wrap:has(.pie-mas:not([open])){background:transparent;box-shadow:none}
 body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .pie-mas>summary,body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra{color:#f3ead2}
 body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
+/* Aviso al agregar al pedido */
+.aviso-carro{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;align-items:center;gap:10px;max-width:min(560px,calc(100vw - 24px));padding:10px 10px 10px 14px;border-radius:16px;background:var(--campo);color:#fff;box-shadow:0 14px 34px -12px rgba(0,0,0,.55);font-size:14.5px;font-weight:600;line-height:1.3;transform:translate(-50%,24px);opacity:0;transition:transform .35s cubic-bezier(.22,1,.36,1),opacity .25s}
+.aviso-carro.ver{transform:translate(-50%,0);opacity:1}
+.aviso-carro.mal{background:#8a2b1f}
+.aviso-carro .ac-ico{display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.2);font-weight:800}
+.aviso-carro.mal .ac-ico{font-size:0}.aviso-carro.mal .ac-ico::before{content:"!";font-size:15px}
+.aviso-carro .ac-txt{flex:1;min-width:0}
+.aviso-carro .ac-ver{flex:none;min-height:38px;padding:6px 12px;border:0;border-radius:11px;background:#fff;color:var(--campo);font-family:inherit;font-weight:800;font-size:14px;cursor:pointer}
+#bCarro.salta{animation:carroSalta .55s cubic-bezier(.3,1.6,.5,1)}
+#bCarro.salta .nc{animation:ncPop .55s ease-out}
+@keyframes carroSalta{0%{transform:none}30%{transform:translateY(-6px) scale(1.06)}60%{transform:translateY(1px) scale(.98)}100%{transform:none}}
+@keyframes ncPop{0%{transform:scale(1)}35%{transform:scale(1.45)}100%{transform:scale(1)}}
+#carta .prod.agregado{animation:tarjetaOk .9s ease-out}
+@keyframes tarjetaOk{0%{box-shadow:0 0 0 0 rgba(63,125,52,.55);border-color:var(--brote)}60%{box-shadow:0 0 0 10px rgba(63,125,52,0);border-color:var(--brote)}100%{box-shadow:0 0 0 0 rgba(63,125,52,0)}}
+@media (prefers-reduced-motion:reduce){.aviso-carro{transition:none}#bCarro.salta,#bCarro.salta .nc{animation:none}}
 </style>
 </head>
 <body>
@@ -592,6 +607,7 @@ body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
   </footer>
 </div>
 
+<div class="aviso-carro" id="avisoCarro" role="status" aria-live="polite" hidden><span class="ac-ico" aria-hidden="true">✓</span><span class="ac-txt" id="avisoTxt"></span><button type="button" class="ac-ver" id="avisoVer">Ver pedido</button></div>
 <button type="button" class="volver" id="volver" hidden>↩ Volver a la tapa</button>
 <section class="galleta" id="galleta" aria-labelledby="galletaTit" hidden>
   <div class="wrap">
@@ -1608,6 +1624,18 @@ function ajustarTope(p){const tp=topeDe(p);if(tp==null)return;const kp=clave(p.c
 /* tras repintar una tarjeta, el foco vuelve al mismo botón (en la carta o en el carro) */
 const reenfocar=(cont,sel)=>{const n=cont.querySelector(sel);if(n)n.focus({preventScroll:true})};
 /* Mismos controles en la carta y en el carro: modalidad, tapa, − y + */
+/* Al agregar: aviso abajo con el producto, la tarjeta se ilumina y el carro da un saltito */
+let avisoT=0;
+function avisaCarro(txt,ok=true){const a=$("avisoCarro");$("avisoTxt").textContent=txt;a.classList.toggle("mal",!ok);$("avisoVer").hidden=!ok;
+  a.hidden=false;a.classList.remove("ver");void a.offsetWidth;a.classList.add("ver");clearTimeout(avisoT);avisoT=setTimeout(()=>{a.classList.remove("ver");setTimeout(()=>{if(!a.classList.contains("ver"))a.hidden=true},300)},2600)}
+function celebraAgregado(p,k,boton){
+  const q=cart[k]||0,m=modoDe(p),f=fmtInfo(p,m);
+  const como=m==="P"?`${q} paquete${q===1?"":"s"}`:f&&f[2]>1?`${q} × ${f[1].toLowerCase()}`:`${q} u`;
+  avisaCarro(`Agregaste ${p.nombre} · llevas ${como}`);
+  const bc=$("bCarro");bc.classList.remove("salta");void bc.offsetWidth;bc.classList.add("salta");
+  const t=document.querySelector(`#carta .grupo:not([hidden]) article[data-prod="${p.cod}"], #resBusca article[data-prod="${p.cod}"]`);
+  if(t&&!matchMedia("(prefers-reduced-motion:reduce)").matches){t.classList.remove("agregado");void t.offsetWidth;t.classList.add("agregado")}
+}
 function clickTarjeta(e){
   const cont=e.currentTarget;
   const mo=e.target.closest("button[data-modo]");
@@ -1616,9 +1644,10 @@ function clickTarjeta(e){
   if(s){const p=PROD[s.dataset.selenv];tapaSel[p.cod]=s.dataset.seltapa;guardaPref("tapas-"+KEY,JSON.stringify(tapaSel));ajustarTope(p);repintar(p);reenfocar(cont,`button[data-selenv="${p.cod}"][data-seltapa="${s.dataset.seltapa}"]`);return}
   const b=e.target.closest("button[data-cod]"); if(!b)return;
   const p=PROD[b.dataset.cod], m=modoDe(p), k=clave(p.cod,m), d=Number(b.dataset.d), tp=topeDe(p);
-  if(d>0&&tp!=null&&unidadesEn(p)+porDe(p,m)>tp)return;   // no alcanza el stock (envase con tapa: manda el menor)
+  if(d>0&&tp!=null&&unidadesEn(p)+porDe(p,m)>tp){avisaCarro(`No queda más stock de ${p.nombre}`,false);return}   // no alcanza el stock (envase con tapa: manda el menor)
   const n=Math.max(0,(cart[k]||0)+d); if(n)cart[k]=n; else delete cart[k];
   guardar(); refrescar();
+  if(d>0&&cont.id==="carta")celebraAgregado(p,k,b);
 }
 /* La cantidad también se puede escribir: al salir del campo (o con Enter) se ajusta al stock disponible */
 function fijarCantidad(inp){
@@ -1635,6 +1664,7 @@ function fijarCantidad(inp){
   c.addEventListener("keydown",e=>{const i=e.target.closest("input.cant");if(i&&e.key==="Enter"){e.preventDefault();fijarCantidad(i);i.blur()}});
   c.addEventListener("focusin",e=>{const i=e.target.closest("input.cant");if(i)i.select()});
 });
+$("avisoVer").onclick=()=>{$("avisoCarro").classList.remove("ver");$("avisoCarro").hidden=true;$("bCarro").click()};
 $("bMayor").hidden=!MAYOR;
 $("bMayor").onclick=()=>{const on=document.body.classList.toggle("vermayor");$("bMayor").setAttribute("aria-pressed",on);$("bMayor").querySelector("span").textContent=on?"Ocultar precios por mayor":"Ver precios por mayor"};
 $("cats").addEventListener("click",e=>{
