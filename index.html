@@ -518,7 +518,7 @@ footer.funde{--fh:110px;padding-top:80px}
 .rec-btn{min-height:44px;padding:8px 16px;border:1.5px solid currentColor;border-radius:999px;background:transparent;color:#f6f3ee;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer}
 .rec-btn:hover{background:rgba(255,255,255,.1)}
 .rec-si{display:none}
-.sin-recorrido .rec-si{display:inline-flex}
+.sin-recorrido .rec-si{display:inline-flex;align-items:center;gap:7px}
 .sin-recorrido .elige-rec .baja,.sin-recorrido .rec-btn[data-recorrido="no"],.sin-recorrido .saltar{display:none}
 .saltar{display:inline-flex;align-items:center;gap:6px;margin-top:12px;min-height:40px;padding:7px 14px;border-radius:999px;background:rgba(28,28,26,.08);color:inherit;font-size:14px;font-weight:700;text-decoration:none}
 .saltar:hover{background:rgba(28,28,26,.14)}
@@ -526,7 +526,15 @@ footer.funde{--fh:110px;padding-top:80px}
 .mov .batch .saltar{position:relative;z-index:2}
 @media (max-width:820px){.mov .batch-texto .saltar{margin-top:6px}}
 .sin-recorrido .viaje .sub{display:none}
+/* «Probar la animación»: solo en la página rápida */
+.probar{display:none;align-items:center;gap:8px;margin-top:12px;min-height:44px;padding:8px 16px;border:1.5px solid currentColor;border-radius:999px;background:transparent;color:inherit;font-family:inherit;font-size:14.5px;font-weight:700;cursor:pointer}
+.probar:hover{background:rgba(28,28,26,.08)}
+.sin-recorrido .probar{display:inline-flex}
+.viaje .probar{background:rgba(255,255,255,.75);color:#1c1c1a;border-color:transparent}
+.rec-si span,.probar span{font-size:.85em}
 </style>
+<script>/* Por defecto, la página rápida (sin recorrido animado); la animación solo si la persona la elige */
+try{if(localStorage.getItem('recorrido')!=='si')document.documentElement.classList.add('sin-recorrido')}catch(e){document.documentElement.classList.add('sin-recorrido')}</script>
 </head>
 <body>
 <a class="salto" href="#avicola">Saltar al contenido</a>
@@ -588,8 +596,8 @@ footer.funde{--fh:110px;padding-top:80px}
         <p class="bajada">Producimos huevos en Chillán y los llevamos a Emporio Sabroso, en el centro de la ciudad. También los distribuimos en Santiago, Temuco, Concepción, Talca y comunas aledañas.</p>
         <div class="elige-rec">
           <a class="baja" href="#quienes"><i aria-hidden="true"></i>Desplácese hacia abajo para iniciar el recorrido</a>
-          <button type="button" class="rec-btn" data-recorrido="no">Ver la página sin recorrido (más rápida)</button>
-          <button type="button" class="rec-btn rec-si" data-recorrido="si">Activar el recorrido animado</button>
+          <button type="button" class="rec-btn" data-recorrido="no">Volver a la página rápida</button>
+          <button type="button" class="rec-btn rec-si" data-recorrido="si"><span aria-hidden="true">▶</span> Probar el recorrido animado</button>
         </div>
       </div>
     </div>
@@ -852,6 +860,7 @@ footer.funde{--fh:110px;padding-top:80px}
         <li data-n="5"><b>Cerrado y etiquetado</b>Dos manos cosen la boca del saco y le colocan su etiqueta.<span class="por">La etiqueta indica qué alimento contiene y cuánto pesa, para despacharlo sin confusiones.</span></li>
       </ol>
       <a class="saltar" href="#viaje">Saltar esta animación <span aria-hidden="true">↓</span></a>
+      <button type="button" class="probar" data-recorrido="si" data-ir="batch"><span aria-hidden="true">▶</span> Probar la animación</button>
     </div>
     <div class="batch-mesa" id="batchMesa">
       <div class="piso" aria-hidden="true"></div>
@@ -887,6 +896,7 @@ footer.funde{--fh:110px;padding-top:80px}
       <h2 id="h-viaje">El viaje del huevo</h2>
       <p class="sub">Continúe desplazándose hacia abajo: el camión sale de la avícola por la mañana y llega al Emporio por la noche.</p>
       <a class="saltar" href="#emporio">Saltar esta animación <span aria-hidden="true">↓</span></a>
+      <button type="button" class="probar" data-recorrido="si" data-ir="viaje"><span aria-hidden="true">▶</span> Probar la animación</button>
       <ol class="hitos" id="hitos">
         <li class="activo"><span class="hora">Mañana</span><b>Sale de la avícola</b>Avícola El Huevo Sabroso.</li>
         <li><span class="hora">Día</span><b>Pasa por Oro Verde</b>Por los caminos del sector, hacia Chillán.</li>
@@ -909,34 +919,6 @@ footer.funde{--fh:110px;padding-top:80px}
       <div class="acciones">
         <a class="btn prim" href="carta/?local=emporio">Ver el Catálogo Sabroso y pedir</a>
         <a class="btn claro" href="#donde">Cómo llegar</a>
-      </div>
-    </div>
-    <ol class="pasos" aria-label="Cómo se compra en el local">
-      <li data-entra><h3>Haga su pedido a un vendedor</h3><p>Le ayudará a elegir y preparará su pedido.</p></li>
-      <li data-entra><h3>Pague en caja</h3><p>Pague el total y reciba su boleta o factura.</p></li>
-      <li data-entra><h3>Retire sus productos</h3><p>Le entregamos su pedido listo.</p></li>
-    </ol>
-    <div class="trio">
-      <div class="caja" data-entra>
-        <h3>Pida antes de venir</h3>
-        <p>Elija desde su celular, envíenos el pedido por WhatsApp o Instagram y luego puede retirarlo.</p>
-        <p class="letra">El uso del Catálogo Sabroso no tiene costo. El pago se realiza en el local al momento del retiro.</p>
-        <a class="btn prim" href="carta/?local=emporio">Abrir el Catálogo Sabroso</a>
-      </div>
-      <div class="caja" data-entra>
-        <h3>Venta por mayor</h3>
-        <p>Si compra por paquete o en cantidad, el precio disminuye. El Catálogo Sabroso muestra los tramos de cada producto.</p>
-        <a class="btn linea" href="carta/?local=emporio">Ver precios por mayor</a>
-      </div>
-      <div class="caja sol" id="bienvenida" data-entra>
-        <h3>5 % de bienvenida</h3>
-        <p>Regístrese en el Catálogo Sabroso y obtenga un 5 % de descuento en una compra.</p>
-        <ul>
-          <li>Del 23 de noviembre al 4 de diciembre de 2026.</li>
-          <li>Una sola vez por cliente.</li>
-          <li>En productos a precio normal. No se suma a ofertas ni a precios por mayor.</li>
-        </ul>
-        <a class="btn prim" href="carta/?local=emporio">Registrarme</a>
       </div>
     </div>
   </div>

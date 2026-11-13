@@ -735,6 +735,24 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
 .btn.ig{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(90deg,#f58529,#dd2a7b,#8134af);color:#fff;border:0;font-weight:800}
 .btn.ig.aparece{animation:igAparece .45s cubic-bezier(.3,1.6,.5,1)}
 @keyframes igAparece{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+/* Agregar: con 0 se ve un solo botón «+ Agregar»; al agregar aparece − cantidad + */
+.paso.vacio .menos,.paso.vacio .cant{display:none}
+article.prod .paso.vacio button.mas,#carta .prod .paso.vacio button.mas{display:inline-flex;align-items:center;justify-content:center;gap:4px;width:auto;min-width:128px;height:44px;padding:0 18px;border-radius:999px;font-family:inherit;font-size:20px;font-weight:800}
+article.prod .paso.vacio button.mas::after{content:"Agregar";font-size:15.5px}
+@media (min-width:481px){#carta .prod .paso.vacio button.mas{height:38px;min-width:116px}}
+/* Aviso de privacidad: compacto, encima de la barra del pedido; se oculta con un panel abierto */
+.galleta{bottom:var(--alto-barra,0px)}
+body:has(.velo:not([hidden])) .galleta{display:none}
+.galleta p{font-size:13px}
+body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-area-inset-bottom,0px))}
+/* Sin contador de secciones */
+.pasasec .n:empty{min-width:0}
+@media (max-width:560px){.pasasec .n:empty{display:none}}
+.ob-pag{display:none!important}
+/* Garantías del pedido */
+.garantias{list-style:none;margin:12px 0 4px;padding:0;display:grid;gap:8px}
+.garantias li{position:relative;padding:8px 12px 8px 38px;border-radius:12px;background:#eef6f0;color:var(--tinta);font-size:14px;line-height:1.35}
+.garantias li::before{content:"";position:absolute;left:12px;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--campo) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M5 12.5l4.5 4.5L19 7.5%27/%3E%3C/svg%3E") center/11px no-repeat}
 </style>
 </head>
 <body>
@@ -763,10 +781,9 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
   </svg>
 </header>
 
-<section class="wrap como" aria-label="Cómo pedir">
+<section class="wrap como" aria-label="Opciones de compra">
   <button type="button" class="mayorBtn" id="bMayor" aria-pressed="false"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13v10H3z"/><path d="M16 10h3l2 3v4h-5"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg><span>Ver precios por mayor</span></button>
   <p class="aviso" id="aviso" hidden>Carta en revisión: los precios son provisorios, algunos están por confirmar y los productos en rojo quedaron con stock 0 en el conteo.</p>
-  <p class="intro"><b>Arma tu pedido y te lo tenemos listo</b><span id="introTxt">Primero elige lo que quieres; luego envíanos el pedido por WhatsApp y, cuando esté listo, pasa a retirarlo.</span></p>
   <div class="reg" id="reg" hidden>
     <div><b id="regTit"></b><span id="regTxt"></span><span class="regcod" id="regCod" hidden></span></div>
     <button type="button" class="btn prim mini" id="regBtn">Registrarme</button>
@@ -849,17 +866,17 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
 <section class="galleta" id="galleta" aria-labelledby="galletaTit" hidden>
   <div class="wrap">
     <h2 id="galletaTit">Qué guarda el Catálogo Sabroso en tu celular</h2>
-    <p><b>Sin cookies de publicidad ni de seguimiento.</b> Solo guardamos tu pedido en este celular y, si aceptas, también tu nombre y tus preferencias. <a href="../legal.html#cookies">Ver detalle</a></p>
+    <p><b>Sin publicidad ni seguimiento.</b> Tu pedido se guarda en este celular. <a href="../legal.html#cookies">Detalle</a></p>
     <div class="dos">
       <button type="button" class="btn" id="gNec">Solo lo necesario</button>
-      <button type="button" class="btn" id="gTodo">Aceptar todo</button>
+      <button type="button" class="btn" id="gTodo">Aceptar</button>
     </div>
   </div>
 </section>
 <section class="barra" aria-label="Tu pedido">
   <div class="wrap">
     <div class="resumen"><span id="cuenta">Tu pedido está vacío</span><b id="totalBarra">$0</b></div>
-    <button type="button" class="bcarro" id="bCarro" aria-haspopup="dialog" aria-expanded="false" aria-controls="veloCarro" aria-label="Ver tu carro: vacío"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg><span class="nc" id="nCarro" aria-hidden="true">0</span><span class="bt" aria-hidden="true">Ver mi pedido</span></button>
+    <button type="button" class="bcarro" id="bCarro" aria-haspopup="dialog" aria-expanded="false" aria-controls="veloCarro" aria-label="Ver tu pedido: vacío"><svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg><span class="nc" id="nCarro" aria-hidden="true">0</span><span class="bt" aria-hidden="true">Ver mi pedido</span></button>
   </div>
 </section>
 
@@ -893,12 +910,12 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
   <section class="hoja hoja-carro" role="dialog" aria-modal="true" aria-labelledby="tituloCarro">
     <div class="carro-cab wrap">
       <button type="button" class="seguir" id="seguirCarro"><span aria-hidden="true">←</span> Seguir comprando</button>
-      <h3 id="tituloCarro">Tu carro</h3>
+      <h3 id="tituloCarro">Tu pedido</h3>
     </div>
     <div class="wrap carro-cuerpo">
       <div id="carroLista" class="lista"></div>
       <div class="carro-vacio" id="carroVacio" hidden>
-        <p><b>Tu carro está vacío.</b> Para empezar, agrega productos desde el catálogo con el botón <span aria-hidden="true">+</span><span class="sr">más</span>; luego, aquí podrás revisarlos y cambiar las cantidades.</p>
+        <p><b>Tu pedido está vacío.</b></p>
         <button type="button" class="btn prim" id="volverVacio"><span aria-hidden="true">←</span> Volver al catálogo</button>
       </div>
     </div>
@@ -906,7 +923,7 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
       <div class="total"><span id="carroCuenta"></span><span id="carroTotal"></span></div>
       <div class="dos">
         <button type="button" class="btn sec" id="seguirCarro2"><span aria-hidden="true">←</span> Seguir comprando</button>
-        <button type="button" class="btn prim" id="irPedido">Continuar al pedido <span aria-hidden="true">→</span></button>
+        <button type="button" class="btn prim" id="irPedido">Continuar <span aria-hidden="true">→</span></button>
       </div>
     </div>
   </section>
@@ -940,10 +957,14 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
 <div class="velo" id="velo" hidden>
   <section class="hoja" role="dialog" aria-modal="true" aria-labelledby="tituloHoja">
     <div class="wrap">
-      <h3 id="tituloHoja">Tu pedido <button type="button" class="cerrar" id="cerrar">Seguir eligiendo</button></h3>
+      <h3 id="tituloHoja">Confirmar pedido <button type="button" class="cerrar" id="cerrar">Seguir eligiendo</button></h3>
       <div class="ticket" id="ticket"></div>
       <div class="total"><span>Total aprox.</span><span id="totalHoja"></span></div>
-      <p class="legalnota">Pagas en el local al retirar y, además, no hay cargos por armar o enviar el pedido. Si algún precio cambió, te avisamos antes de pagar; en ese caso, puedes dejar el pedido sin costo.</p>
+      <ul class="garantias">
+        <li>Pagas en el local al retirar</li>
+        <li>Sin cargos por armar ni enviar el pedido</li>
+        <li>Si un precio cambia, te avisamos antes y puedes desistir sin costo</li>
+      </ul>
       <div class="alerta" id="alertaTapas" role="status" aria-live="polite" hidden></div>
       <div class="campo" id="campoNombre">
         <label for="nombre">Tu nombre</label>
@@ -971,7 +992,7 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
         </div>
         <a class="btn ig" id="bIg" href="#" target="_blank" rel="noopener" hidden><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>Pegar en Instagram</a>
         <p class="ok" id="ok" hidden></p>
-        <p class="nota" id="notaIg"></p>
+        <p class="nota" id="notaIg" hidden></p>
         <p class="legalnota">Al enviar el pedido aceptas los <a href="../legal.html#terminos" target="_blank" rel="noopener">términos</a> y la <a href="../legal.html#privacidad" target="_blank" rel="noopener">política de privacidad</a>.</p>
       </div>
     </div>
@@ -1458,7 +1479,7 @@ $("datos").textContent=L.datos;
 $("logo").src=L.logo; $("logo").alt=L.nombre;
 if(L.logoBadge)$("logo").classList.add("badge");
 $("aviso").hidden=true; // ya no se muestra el aviso de carta en revisión
-if(L.instagram)$("introTxt").textContent="Primero elige lo que quieres; luego envíanos el pedido por WhatsApp o Instagram y, cuando esté listo, pasa a retirarlo.";
+
 const otraKey=KEY==="emporio"?"distribuidora":"emporio";
 $("otra").innerHTML=`¿Buscas el catálogo de ${LOCALES[otraKey].nombre}? <a href="?local=${otraKey}">Ábrela aquí</a>`;
 
@@ -1747,7 +1768,7 @@ const card=(p,c)=>`
       <article class="prod${agotado(p)?" agotado":""}${p.oferta!=null||p.ofertaFmt||p.promo?" oferta":""}" data-prod="${p.cod}"${c===FAV?"":` id="p-${p.cod}"`}><button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>
         <div class="ico">${p.foto?`<img src="${p.foto}" alt="${p.nombre}" loading="lazy">`:((ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}</div>
         <div class="info"><small class="tipo-p">${p.cat}</small><b>${p.nombre}</b>${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.sinStock?"Stock 0 en el conteo":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
-        <div class="paso">
+        <div class="paso vacio">
           <button class="menos" data-cod="${p.cod}" data-d="-1" aria-label="Quitar ${p.nombre}">−</button>
           <input class="cant" type="number" inputmode="numeric" min="0" step="1" data-q="${p.cod}" value="0" aria-label="Cantidad de ${p.nombre}${tienePaq(p)?" (en la modalidad elegida)":""}">
           <button class="mas" data-cod="${p.cod}" data-d="1" aria-label="Agregar ${p.nombre}">+</button>
@@ -1758,7 +1779,7 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
 (()=>{const bt=$("catMenu"),mn=$("menuCats");
   const ig=[["emporio.sabroso","Emporio Sabroso"],["pollitasoroverde","Pollitas Oro Verde"]];
   mn.innerHTML=`<section class="mbloque mcuenta" aria-label="Mi cuenta"><h3>Mi cuenta</h3><div class="mcuenta-in"></div></section>`
-    +`<section class="mbloque" aria-label="Productos"><h3>Productos</h3><button type="button" class="mofertas"${favs.length?` data-ir="${slug(FAV)}"`:""}><span class="mo-et" aria-hidden="true">%</span><span><b>Ofertas y promos</b><small>${favs.length?`${favs.length} producto${favs.length===1?"":"s"} con precio especial`:"Pronto tendremos ofertas"}</small></span></button><div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${l.length===1?"1 página":l.length+" páginas"}</small></button>`).join("")}</div></section>`
+    +`<section class="mbloque" aria-label="Productos"><h3>Productos</h3><button type="button" class="mofertas"${favs.length?` data-ir="${slug(FAV)}"`:""}><span class="mo-et" aria-hidden="true">%</span><span><b>Ofertas y promos</b><small>${favs.length?`${favs.length} producto${favs.length===1?"":"s"} con precio especial`:"Pronto tendremos ofertas"}</small></span></button><div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${(n=>n===1?"1 producto":n+" productos")(l.reduce((t,x)=>t+deCat(x).length,0))}</small></button>`).join("")}</div></section>`
     +`<section class="mbloque" aria-label="Tu pedido"><h3>Tu pedido</h3><button type="button" class="mpedido"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg>Ver y editar mi pedido</button></section>`
     +`<section class="mbloque" aria-label="Pedidos a la avícola"><h3>Pedidos a la avícola</h3><div class="mgrid uno"><button type="button" class="dest" data-ir="avicola">Pollitas de 14 semanas y alimento para aves</button></div></section>`
     +`<section class="mbloque" aria-label="Conócenos"><h3>Conócenos</h3><div class="mgrid"><a href="../">Nuestra página web</a>${ig.map(([u,n])=>`<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">Instagram ${n}</a>`).join("")}</div></section>`;
@@ -1833,7 +1854,7 @@ const nomSec=g=>g.querySelector("h2").textContent.trim();
 SECC.forEach((g,i)=>{const a=SECC[i-1],sg=SECC[i+1],nav=document.createElement("nav");
   nav.className="pasasec";nav.setAttribute("aria-label","Cambiar de sección");
   nav.innerHTML=(a?`<button type="button" class="ant" data-sec="${a.id}"><small>Anterior</small><span><span aria-hidden="true">← </span>${nomSec(a)}</span></button>`:"<span></span>")
-    +`<span class="n">Sección ${i+1} de ${SECC.length}</span>`
+    +`<span class="n"></span>`
     +(sg?`<button type="button" class="sig" data-sec="${sg.id}"><small>Siguiente</small><span>${nomSec(sg)}<span aria-hidden="true"> →</span></span></button>`:`<button type="button" class="sig" data-sec="${SECC[0].id}"><small>Terminaste el catálogo</small><span>Volver a la primera<span aria-hidden="true"> ↺</span></span></button>`);
   g.appendChild(nav)});
 function verSeccion(id,{enfocar=false,desplazar=true}={}){
@@ -1981,7 +2002,7 @@ pintarCuenta();
   const pintarPf=()=>{const l=leerPf();
     $("cuPfLista").innerHTML=l.length?l.map((x,i)=>{const n=Object.keys(x.cart).length;return `<div class="cu-pf"><div><b>${esc(x.nombre)}</b><small>${n} producto${n===1?"":"s"} · guardado el ${new Date(x.t).toLocaleDateString("es-CL",{day:"numeric",month:"short"})}</small></div><button type="button" class="cu-btn prim" data-pfusar="${i}">Agregar al carro</button><button type="button" class="cu-pf-borrar" data-pfborrar="${i}" aria-label="Borrar el pedido favorito ${esc(x.nombre)}">✕</button></div>`}).join(""):""};
   $("cuPfGuardar").onclick=()=>{const qs=Object.fromEntries(Object.entries(cart).filter(([,q])=>q>0));
-    if(!Object.keys(qs).length){$("cuPfMsg").textContent="Tu carro está vacío: agrega productos y vuelve a guardar.";return}
+    if(!Object.keys(qs).length){$("cuPfMsg").textContent="Tu pedido está vacío: agrega productos y vuelve a guardar.";return}
     const nombre=($("cuPfNom").value.trim()||"Mi pedido "+(leerPf().length+1)).slice(0,40);
     const l=leerPf().filter(x=>x.nombre.toLowerCase()!==nombre.toLowerCase());l.unshift({nombre,t:Date.now(),cart:qs});grabarPf(l);
     $("cuPfNom").value="";$("cuPfMsg").textContent=`Guardado: «${nombre}».`;pintarPf()};
@@ -1989,7 +2010,7 @@ pintarCuenta();
     if(b){const x=l.splice(+b.dataset.pfborrar,1)[0];grabarPf(l);$("cuPfMsg").textContent=x?`Borrado: «${x.nombre}».`:"";pintarPf();return}
     if(u){const x=l[+u.dataset.pfusar];if(!x)return;let n=0;
       Object.entries(x.cart).forEach(([k,q])=>{const p=PROD[k.replace(/@.*$/,"")];if(!p||p.retirado||agotado(p))return;cart[k]=q;ajustarTope(p);n++});
-      guardar();refrescar();cerrar(()=>{avisaCarro(n?`Agregamos «${x.nombre}» a tu carro`:"Esos productos ya no están disponibles",!!n);if(n)$("bCarro").click()})}});
+      guardar();refrescar();cerrar(()=>{avisaCarro(n?`Agregamos «${x.nombre}» a tu pedido`:"Esos productos ya no están disponibles",!!n);if(n)$("bCarro").click()})}});
   window.pintarCuentaLado=()=>{pintarPf();$("cuPfMsg").textContent="";const f=favCli.filter(cod=>PROD[cod]).length;$("cuFavsN").textContent=f?`${f} producto${f===1?"":"s"} guardado${f===1?"":"s"}`:"Aún no guardas productos";
     const a=ant();$("cuAntBtns").hidden=!a;
     if(a){const n=Object.keys(a.cart).length,d=new Date(a.t);$("cuAntTxt").textContent=`Enviado el ${d.toLocaleDateString("es-CL",{day:"numeric",month:"long"})} · ${n} producto${n===1?"":"s"}`}};
@@ -2117,6 +2138,7 @@ function refrescar(){
     document.querySelectorAll(`article[data-prod="${p.cod}"]`).forEach(a=>{
       a.classList.toggle("on",q+otra>0);
       a.querySelector(".menos").disabled=q===0; a.querySelector(".mas").disabled=lleno;
+      const ps=a.querySelector(".paso"); if(ps)ps.classList.toggle("vacio",q===0);
       const tg=a.querySelector(".tope"); if(tg){tg.hidden=!(lleno&&tp>0);tg.textContent=`Máximo disponible: ${tp} u`}
       const ep=a.querySelector(".enped"); if(ep){ep.hidden=!otra;ep.textContent=!otra?"":fmtDe(p)?`Además llevas ${otra}`:m==="P"?`Además llevas ${otra} u sueltas`:`Además llevas ${otra} paquete${otra>1?"s":""}`}
     });
@@ -2131,7 +2153,7 @@ function refrescar(){
 /* ---------- Carro: solo lo agregado, con las mismas tarjetas (y funciones) de la carta ---------- */
 function resumenCarro(n){
   const nc=$("nCarro"); nc.textContent=n>99?"99+":n; nc.classList.toggle("cero",!n);
-  $("bCarro").setAttribute("aria-label",n?`Ver tu carro: ${n} producto${n>1?"s":""}`:"Ver tu carro: vacío");
+  $("bCarro").setAttribute("aria-label",n?`Ver tu pedido: ${n} producto${n>1?"s":""}`:"Ver tu pedido: vacío");
   if($("veloCarro").hidden)return;
   $("carroCuenta").textContent=n?`${n} producto${n>1?"s":""} · Total aprox.`:"Sin productos";
   $("carroTotal").textContent=clp(totalFinal());
@@ -2140,7 +2162,7 @@ function resumenCarro(n){
 const enCarro=p=>!esPieza(p)&&!p.retirado&&unidadesEn(p)>0;
 function pintarCarro(){
   const ps=L.productos.filter(enCarro);
-  $("carroLista").innerHTML=ps.map(p=>`<div class="crow" data-crow="${p.cod}">${card(p,FAV)}<button type="button" class="quitar" data-quitar="${p.cod}" aria-label="Quitar ${p.nombre} del carro">Quitar del carro</button></div>`).join("");
+  $("carroLista").innerHTML=ps.map(p=>`<div class="crow" data-crow="${p.cod}">${card(p,FAV)}<button type="button" class="quitar" data-quitar="${p.cod}" aria-label="Quitar ${p.nombre} del pedido">Quitar</button></div>`).join("");
   $("carroLista").hidden=!ps.length; $("carroVacio").hidden=!!ps.length; $("carroPie").hidden=!ps.length;
   refrescar();
 }
@@ -2407,6 +2429,9 @@ document.addEventListener("keydown",e=>{
   $("gNec").onclick=()=>decidir("necesario");
   $("gTodo").onclick=()=>decidir("todo");
   if(!permiso){$("galleta").hidden=false;document.body.classList.add("con-galleta")}
+  const barraP=document.querySelector("section.barra");
+  const medirBarra=()=>document.documentElement.style.setProperty("--alto-barra",(barraP?barraP.offsetHeight:0)+"px");
+  medirBarra(); if(barraP&&"ResizeObserver" in window)new ResizeObserver(medirBarra).observe(barraP); addEventListener("resize",medirBarra);
 })();
 </script>
 </body>

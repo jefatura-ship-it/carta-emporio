@@ -11,15 +11,27 @@ const limita = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
 const mezcla = (a, b, t) => a + (b - a) * t;
 const suave = (a, b, v) => { const t = limita((v - a) / (b - a)); return t * t * (3 - 2 * t); };
 const raiz = document.documentElement;
-/* El recorrido animado es opcional: quien elige «sin recorrido» ve la versión corta de la página (se recuerda en este navegador) */
-const sinRecorrido = (() => { try { return localStorage.getItem('recorrido') === 'no'; } catch (e) { return false; } })();
+/* El recorrido animado es opcional y parte apagado: la página rápida es la de siempre; quien toca «Probar» ve la animación (se recuerda en este navegador) */
+const sinRecorrido = (() => { try { return localStorage.getItem('recorrido') !== 'si'; } catch (e) { return true; } })();
 const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches || sinRecorrido;
 document.documentElement.classList.toggle('sin-recorrido', sinRecorrido);
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-recorrido]'); if (!b) return;
   try { localStorage.setItem('recorrido', b.dataset.recorrido); } catch (err) { /* sin almacenamiento: no se recuerda */ }
-  location.hash = ''; location.reload();
+  const ir = b.dataset.ir;
+  try { if (ir) sessionStorage.setItem('irA', ir); } catch (err) { /* sin almacenamiento: parte desde arriba */ }
+  history.replaceState(null, '', location.pathname + location.search);
+  location.reload();
 });
+/* Tras «Probar la animación» en el batch o el viaje, la página vuelve directo a esa sección, ya animada */
+(() => {
+  let irA = null; try { irA = sessionStorage.getItem('irA'); sessionStorage.removeItem('irA'); } catch (e) { /* nada */ }
+  if (!irA) return;
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  const llevar = () => { const el = document.getElementById(irA); if (el) scrollTo({ top: el.getBoundingClientRect().top + scrollY, behavior: 'instant' }); };
+  if (document.readyState === 'complete') setTimeout(llevar, 60);
+  else addEventListener('load', () => setTimeout(llevar, 60), { once: true });
+})();
 const avance = el => { const r = el.getBoundingClientRect(); return limita(-r.top / Math.max(1, r.height - innerHeight)); };
 
 /* ---------- Fechas: apertura del local y fin del descuento ---------- */
@@ -27,7 +39,6 @@ const avance = el => { const r = el.getBoundingClientRect(); return limita(-r.to
   const ahora = Date.now();
   // Desde el día de la apertura (23/11/2026) ya no se anuncia «abrimos el 23»: se muestra el horario y se quita la fila «Apertura»
   if (ahora >= new Date('2026-11-23T00:00:00-03:00')) { $('#estado').textContent = 'Abierto de lunes a sábado, 8:30 a 17:00'; const f = $('#filaApertura'); if (f) f.remove(); }
-  if (ahora >= new Date('2026-12-05T00:00:00-03:00')) $('#bienvenida').hidden = true;
 }
 
 /* ---------- Aprende el manejo de las aves: pestañas por tema (accesibles con teclado; sin JavaScript se ven todos los temas) ---------- */
