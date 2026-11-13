@@ -153,7 +153,7 @@ html.bloqueo,html.bloqueo body{overflow:hidden}
 .btn.mini{padding:7px 12px;font-size:13px;border-radius:10px}
 .chip.fav{border-color:var(--sol);color:var(--sol-t)}
 .chip.fav[aria-current="true"]{background:var(--sol);border-color:var(--sol);color:var(--tinta)}
-#g-favoritos-y-ofertas{background:#fff7e8;border:1.5px solid var(--trigo);border-radius:18px;padding:14px 12px 12px;margin-top:16px}
+#g-ofertas-y-promos{background:#fff7e8;border:1.5px solid var(--trigo);border-radius:18px;padding:14px 12px 12px;margin-top:16px}
 .prod.oferta{border-color:var(--sol)}
 .badge-of{display:inline-block;background:var(--sol);color:var(--tinta);font-family:var(--texto);font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:6px;padding:2px 6px;vertical-align:2px}
 .precio s{color:var(--suave);font-family:var(--texto);font-weight:500;font-size:13px}
@@ -728,6 +728,8 @@ a.vt-cta{display:inline-flex;align-items:center;text-decoration:none}
 .cu-pf b{display:block;font-size:15px;color:var(--tinta)}.cu-pf small{display:block;font-size:12px;color:#6b6b66}
 .cu-pf .cu-btn{min-height:42px;padding:6px 12px;font-size:13.5px}
 .cu-pf-borrar{width:38px;height:38px;border:0;border-radius:50%;background:#f3eee2;color:#6b6b66;font-size:16px;cursor:pointer}
+/* Foto de la promo en su tarjeta */
+.prod .ico img{width:100%;height:100%;object-fit:contain;padding:4px}
 </style>
 </head>
 <body>
@@ -1614,8 +1616,10 @@ function usarDescuento(){
 const totalFinal=()=>total()-dcto();
 
 /* ---------- Pintar carta ---------- */
-const FAV="Favoritos y ofertas";
+const FAV="Ofertas y promos";
 /* las tapas no van como producto aparte: cada envase/pote se vende con 1 tapa (1 envase = 1 tapa) */
+/* Promociones armadas (no son un producto del inventario): se venden como un solo ítem */
+L.productos.push({cod:"PROMO-GYMBRO",cat:"Promos",nombre:"Promo Gym Bro: bandeja de 30 huevos tercera + Monster Ultra",detalle:"Monster Ultra blanca, sin azúcar · bebida no recomendada para menores de 18 años, embarazadas ni personas sensibles a la cafeína",precio:3800,fav:true,promo:true,foto:"../img/productos/monster.webp"});
 const PROD=Object.fromEntries(L.productos.map(p=>[p.cod,p]));
 const esPieza=p=>p.cat==="Tapas"||p.cat==="Blondas"; // piezas que van incluidas en otro producto, no se venden solas
 const pieza=t=>t&&t.cat==="Blondas"?"blonda":"tapa", porQue=t=>t&&t.cat==="Blondas"?"bandeja":"envase";
@@ -1680,7 +1684,7 @@ const FAMILIAS=[
   ["Aseo",["Bolsas de basura","Traperos","Papel higiénico y afeitado","Guantes y cofias"]],
   ["Otros",["Hilos y pitas","Otros"]]
 ];
-const hayCat=new Set(visibles.map(p=>p.cat));
+const hayCat=new Set(visibles.filter(p=>!p.promo).map(p=>p.cat));
 const FAMS=FAMILIAS.map(([f,l])=>[f,l.filter(x=>hayCat.has(x))]).filter(([,l])=>l.length);
 const sueltas=ordenCats([...hayCat].filter(x=>!FAMS.some(([,l])=>l.includes(x))));
 if(sueltas.length){const o=FAMS.find(([f])=>f==="Otros");if(o)o[1].push(...sueltas);else FAMS.push(["Otros",sueltas])}
@@ -1735,7 +1739,7 @@ const tapasHTML=p=>{const ts=tapasDe[p.cod];if(!ts)return "";const sel=tapaDe(p)
 let favCli=[];try{favCli=JSON.parse(localStorage.getItem("favoritos-"+KEY)||"[]")}catch(e){favCli=[]}
 const esFavCli=cod=>favCli.includes(cod);
 const card=(p,c)=>`
-      <article class="prod${agotado(p)?" agotado":""}${p.oferta!=null||p.ofertaFmt?" oferta":""}" data-prod="${p.cod}"${c===FAV?"":` id="p-${p.cod}"`}><button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>
+      <article class="prod${agotado(p)?" agotado":""}${p.oferta!=null||p.ofertaFmt||p.promo?" oferta":""}" data-prod="${p.cod}"${c===FAV?"":` id="p-${p.cod}"`}><button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>
         <div class="ico">${p.foto?`<img src="${p.foto}" alt="${p.nombre}" loading="lazy">`:((ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}</div>
         <div class="info"><small class="tipo-p">${p.cat}</small><b>${p.nombre}</b>${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.sinStock?"Stock 0 en el conteo":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
         <div class="paso">
@@ -1749,7 +1753,7 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
 (()=>{const bt=$("catMenu"),mn=$("menuCats");
   const ig=[["emporio.sabroso","Emporio Sabroso"],["pollitasoroverde","Pollitas Oro Verde"]];
   mn.innerHTML=`<section class="mbloque mcuenta" aria-label="Mi cuenta"><h3>Mi cuenta</h3><div class="mcuenta-in"></div></section>`
-    +`<section class="mbloque" aria-label="Productos"><h3>Productos</h3><button type="button" class="mofertas"${favs.length?` data-ir="${slug(FAV)}"`:""}><span class="mo-et" aria-hidden="true">%</span><span><b>Ofertas</b><small>${favs.length?`${favs.length} producto${favs.length===1?"":"s"} con precio especial`:"Pronto tendremos ofertas"}</small></span></button><div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${l.length===1?"1 página":l.length+" páginas"}</small></button>`).join("")}</div></section>`
+    +`<section class="mbloque" aria-label="Productos"><h3>Productos</h3><button type="button" class="mofertas"${favs.length?` data-ir="${slug(FAV)}"`:""}><span class="mo-et" aria-hidden="true">%</span><span><b>Ofertas y promos</b><small>${favs.length?`${favs.length} producto${favs.length===1?"":"s"} con precio especial`:"Pronto tendremos ofertas"}</small></span></button><div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${l.length===1?"1 página":l.length+" páginas"}</small></button>`).join("")}</div></section>`
     +`<section class="mbloque" aria-label="Tu pedido"><h3>Tu pedido</h3><button type="button" class="mpedido"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg>Ver y editar mi pedido</button></section>`
     +`<section class="mbloque" aria-label="Pedidos a la avícola"><h3>Pedidos a la avícola</h3><div class="mgrid uno"><button type="button" class="dest" data-ir="avicola">Pollitas de 14 semanas y alimento para aves</button></div></section>`
     +`<section class="mbloque" aria-label="Conócenos"><h3>Conócenos</h3><div class="mgrid"><a href="../">Nuestra página web</a>${ig.map(([u,n])=>`<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">Instagram ${n}</a>`).join("")}</div></section>`;
@@ -1998,7 +2002,7 @@ function mostrarLista(titulo,prods,vacio){const res=$("resBusca");if(!res)return
   $("carta").prepend(barra);
   /* Vitrina: fotos reales de la avícola (más adelante, las ofertas especiales del mes con sus propias fotos) */
   const VITRINA=[
-    {img:"../img/huevos-cafe-bandeja.jpg",et:"Oferta del mes",precio:"$2.000",tit:"Huevo tercera, bandeja de 30",txt:"En blanco o café. Elija la bandeja de 30 y agréguela a su pedido.",alt:"Bandeja de huevos café.",ir:"g-favoritos-y-ofertas",cta:"Ver la oferta"},
+    {img:"../img/huevos-cafe-bandeja.jpg",et:"Oferta del mes",precio:"$2.000",tit:"Huevo tercera, bandeja de 30",txt:"En blanco o café. Elija la bandeja de 30 y agréguela a su pedido.",alt:"Bandeja de huevos café.",ir:"g-ofertas-y-promos",cta:"Ver la oferta"},
     {img:"../img/huevos-blancos-bandeja.jpg",et:"Promo Gym Bro",precio:"$3.800",tit:"Bandeja de huevo tercera + una Monster",txt:"Para quienes no omiten el entrenamiento de piernas: una bandeja de 30 huevos tercera junto con una Monster Ultra, la blanca sin azúcar.",alt:"Bandeja de huevos blancos.",extra:"../img/productos/monster.webp",wa:"https://wa.me/56933903395?text=Hola%2C%20quiero%20la%20Promo%20Gym%20Bro%3A%20bandeja%20de%2030%20huevos%20tercera%20%2B%20Monster%20Ultra%20blanca%2C%20a%20%243.800.",letra:"La bebida energética no se recomienda para menores de 18 años, embarazadas ni personas sensibles a la cafeína."},
     {img:"../img/avicola-pabellon-silos.jpg",et:"Nuestra avícola",tit:"Del campo de Oro Verde a tu mesa",txt:"Nuestro pabellón nuevo y sus silos, en las afueras de Chillán.",alt:"Pabellón nuevo de la avícola, de techo rojo, con dos silos metálicos bajo un cielo azul."},
     {img:"../img/huevos-cafe-bandeja.jpg",et:"Huevos",tit:"Huevos frescos, sanos, ricos y naturales",txt:"Blancos, de color y azules, por bandeja y por caja.",alt:"Bandeja de huevos café sobre una mesa de madera.",ir:"g-huevos-de-color"},
