@@ -237,6 +237,9 @@ p{margin:0 0 12px}
 .batch-pasos .por{grid-column:2;display:block;margin-top:6px;font-size:14.5px;line-height:1.45;color:var(--gris)}
 .mov .batch-pasos .por{max-height:0;opacity:0;margin-top:0;overflow:hidden;transition:max-height .5s ease,opacity .4s ease,margin-top .4s ease}
 .mov .batch-pasos li.activo .por{max-height:14em;opacity:1;margin-top:6px}
+/* En escritorio los pasos que no están activos muestran solo su número y título (así caben los cinco con el activo desplegado) */
+@media (min-width:821px){.mov .batch-pasos li:not(.activo){font-size:0;row-gap:0;padding-block:7px}.mov .batch-pasos li:not(.activo) b{font-size:19px}.mov .batch-pasos li{transition:border-color .3s,box-shadow .3s,transform .3s,padding .3s}}
+@media (min-width:821px) and (max-height:820px){.mov .batch-texto>p{display:none}.mov .batch h2{font-size:clamp(34px,4vw,48px);margin-bottom:6px}}
 .batch-pasos li.activo{border-color:var(--carbon);box-shadow:0 10px 24px rgba(28,28,26,.12);transform:translateX(4px);color:var(--carbon)}
 .batch-mesa{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:end}
 .batch-mesa .ing{margin:0;text-align:center}
