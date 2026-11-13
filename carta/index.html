@@ -654,6 +654,23 @@ body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
 body.con-fondo .orden,body.con-fondo .filtros{box-shadow:0 14px 30px -18px rgba(0,0,0,.6)}
 /* Sin el recuadro del descuento por registrarse (ruido visual): queda solo el botón de ingreso */
 #reg{display:none!important}
+/* Vitrina (carrusel) del panel central */
+.vitrina{position:relative;margin:14px 0 4px;border-radius:20px;overflow:hidden;background:#1c2a20;box-shadow:0 18px 40px -26px rgba(0,0,0,.7);touch-action:pan-y}
+.vt-pista{display:flex;transition:transform .7s cubic-bezier(.22,1,.36,1);will-change:transform}
+.vt-slide{position:relative;flex:0 0 100%;margin:0;aspect-ratio:16/6;min-height:220px}
+.vt-slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vt-slide figcaption{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:4px;padding:22px clamp(18px,4vw,40px);color:#fff;background:linear-gradient(90deg,rgba(14,30,18,.78),rgba(14,30,18,.35) 55%,rgba(14,30,18,0))}
+.vt-slide small{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#f3d27a}
+.vt-slide b{font-family:var(--display);font-size:clamp(22px,3.2vw,36px);line-height:1.1;max-width:22ch}
+.vt-slide span{font-size:15px;max-width:44ch;opacity:.95}
+.vt-cta{margin-top:8px;min-height:42px;padding:8px 18px;border:0;border-radius:12px;background:#fff;color:var(--campo);font-family:inherit;font-weight:800;font-size:14.5px;cursor:pointer}
+.vt-fl{position:absolute;top:50%;translate:0 -50%;width:42px;height:42px;border:0;border-radius:50%;background:rgba(255,255,255,.88);color:var(--campo);font-size:24px;font-weight:700;cursor:pointer;box-shadow:0 6px 14px rgba(0,0,0,.25)}
+.vt-ant{left:12px}.vt-sig{right:12px}
+.vt-puntos{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:center;gap:6px}
+.vt-puntos button{width:9px;height:9px;padding:0;border:0;border-radius:99px;background:rgba(255,255,255,.55);cursor:pointer;transition:width .3s,background .3s}
+.vt-puntos button[aria-current="true"]{width:26px;background:#fff}
+@media (max-width:700px){.vt-slide{aspect-ratio:4/3}.vt-fl{display:none}.vt-slide figcaption{padding:16px 16px 30px;background:linear-gradient(0deg,rgba(14,30,18,.85),rgba(14,30,18,.2) 70%)}.vt-slide span{font-size:13.5px}}
+@media (prefers-reduced-motion:reduce){.vt-pista{transition:none}}
 </style>
 </head>
 <body>
@@ -1877,6 +1894,29 @@ function mostrarLista(titulo,prods,vacio){const res=$("resBusca");if(!res)return
     +'<button type="button" class="ob-filtros" id="obFiltros" aria-expanded="false" aria-controls="filtros"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtros<span class="ob-nf" id="obNf" hidden></span></button>'
     +'<div class="ob-pag"><button type="button" id="obAnt" aria-label="Página anterior">‹</button><span id="obN"></span><button type="button" id="obSig" aria-label="Página siguiente">›</button></div>';
   $("carta").prepend(barra);
+  /* Vitrina: fotos reales de la avícola (más adelante, las ofertas especiales del mes con sus propias fotos) */
+  const VITRINA=[
+    {img:"../img/avicola-pabellon-silos.jpg",et:"Nuestra avícola",tit:"Del campo de Oro Verde a tu mesa",txt:"Nuestro pabellón nuevo y sus silos, en las afueras de Chillán.",alt:"Pabellón nuevo de la avícola, de techo rojo, con dos silos metálicos bajo un cielo azul."},
+    {img:"../img/huevos-cafe-bandeja.jpg",et:"Huevos",tit:"Huevos frescos, sanos, ricos y naturales",txt:"Blancos, de color y azules, por bandeja y por caja.",alt:"Bandeja de huevos café sobre una mesa de madera.",ir:"g-huevos-de-color"},
+    {img:"../img/pollitas-llegada.jpg",et:"Pollitas Oro Verde",tit:"Pollitas de 14 semanas para tu gallinero",txt:"Llegan con 1 día de vida y cumplen su calendario de vacunación.",alt:"Pollitas amarillas recién nacidas dentro de cajas de cartón.",avi:true},
+    {img:"../img/avicola-interior.jpg",et:"Cómo trabajamos",tit:"Cuidado en cada etapa",txt:"Nuestros pabellones, por dentro.",alt:"Pasillo interior de un pabellón, entre hileras de jaulas metálicas iluminadas."},
+    {img:"../img/fabrica-nueva-vista.jpg",et:"ALL FOOD",tit:"Hacemos el alimento de nuestras aves",txt:"Nuestra fábrica de alimentos está creciendo.",alt:"Obra de la fábrica nueva con tres silos metálicos."}
+  ];
+  const vit=document.createElement("section");vit.className="vitrina";vit.setAttribute("aria-roledescription","carrusel");vit.setAttribute("aria-label","Desde nuestra avícola");
+  vit.innerHTML='<div class="vt-pista">'+VITRINA.map((v,i)=>`<figure class="vt-slide" role="group" aria-roledescription="diapositiva" aria-label="${i+1} de ${VITRINA.length}"${i?' aria-hidden="true"':""}><img src="${v.img}" alt="${v.alt}" loading="${i?"lazy":"eager"}"><figcaption><small>${v.et}</small><b>${v.tit}</b><span>${v.txt}</span>${v.ir?`<button type="button" class="vt-cta" data-sec="${v.ir}">Ver productos</button>`:v.avi?'<button type="button" class="vt-cta" data-vavi="1">Pedir pollitas</button>':""}</figcaption></figure>`).join("")+'</div>'
+    +'<button type="button" class="vt-fl vt-ant" aria-label="Foto anterior">‹</button><button type="button" class="vt-fl vt-sig" aria-label="Foto siguiente">›</button>'
+    +'<div class="vt-puntos">'+VITRINA.map((v,i)=>`<button type="button" aria-label="Ver foto ${i+1}"${i?"":' aria-current="true"'}></button>`).join("")+'</div>';
+  barra.before(vit);
+  (()=>{const pista=vit.querySelector(".vt-pista"),sl=[...vit.querySelectorAll(".vt-slide")],pt=[...vit.querySelectorAll(".vt-puntos button")];let i=0,auto=0;
+    const ir=k=>{i=(k+sl.length)%sl.length;pista.style.transform=`translate3d(${-i*100}%,0,0)`;sl.forEach((x,j)=>x.setAttribute("aria-hidden",String(j!==i)));pt.forEach((x,j)=>x.setAttribute("aria-current",String(j===i)))};
+    const reloj=()=>{clearInterval(auto);if(!matchMedia("(prefers-reduced-motion:reduce)").matches)auto=setInterval(()=>ir(i+1),5500)};
+    vit.querySelector(".vt-ant").onclick=()=>{ir(i-1);reloj()};vit.querySelector(".vt-sig").onclick=()=>{ir(i+1);reloj()};
+    pt.forEach((b,j)=>b.onclick=()=>{ir(j);reloj()});
+    vit.addEventListener("mouseenter",()=>clearInterval(auto));vit.addEventListener("mouseleave",reloj);
+    let x0=null;vit.addEventListener("pointerdown",e=>{x0=e.clientX});vit.addEventListener("pointerup",e=>{if(x0==null)return;const dx=e.clientX-x0;x0=null;if(Math.abs(dx)>40){ir(i+(dx<0?1:-1));reloj()}});
+    vit.addEventListener("click",e=>{const b=e.target.closest("button[data-sec]");if(b){verSeccion(b.dataset.sec,{enfocar:true});return}
+      if(e.target.closest("[data-vavi]")){$("tbMenu").click();setTimeout(()=>{const d=document.querySelector('#menuCats button[data-ir="avicola"]');if(d)d.click()},350)}});
+    reloj()})();
   const est={stock:false,precio:false,formas:new Set(),texto:""};
   const forma=p=>tienePaq(p)?"paq":fmtDe(p)?"fmt":"uni";
   const NFORMA={uni:"Por unidad",paq:"Por paquete",fmt:"Por bandeja o caja"};
