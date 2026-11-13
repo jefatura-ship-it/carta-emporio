@@ -704,6 +704,8 @@ button,select,input,.paso,.prod,.corazon{touch-action:manipulation}
   #carta .prod>.corazon{top:4px;right:4px;width:32px;height:32px}
   #carta .prod>.corazon svg{width:18px;height:18px}
 }
+/* Aviso (solo para falta de stock y pedido repetido): una línea pareja en el celular */
+@media (max-width:759px){.aviso-carro{left:12px;right:12px;width:auto;max-width:none;transform:translateY(24px)}.aviso-carro.ver{transform:none}.aviso-carro .ac-txt{font-size:13.5px}}
 </style>
 </head>
 <body>
@@ -1866,7 +1868,7 @@ function avisaCarro(txt,ok=true){const a=$("avisoCarro");$("avisoTxt").textConte
 function celebraAgregado(p,k,boton){
   const q=cart[k]||0,m=modoDe(p),f=fmtInfo(p,m);
   const como=m==="P"?`${q} paquete${q===1?"":"s"}`:f&&f[2]>1?`${q} × ${f[1].toLowerCase()}`:`${q} u`;
-  avisaCarro(`Agregaste ${p.nombre} · llevas ${como}`);
+  /* sin mensaje al agregar (se veía recargado en el celular): basta el brillo de la tarjeta y el saltito del carro */
   for(const bc of [$("bCarro"),$("tbCarro")]){bc.classList.remove("salta");void bc.offsetWidth;bc.classList.add("salta")}
   const t=document.querySelector(`#carta .grupo:not([hidden]) article[data-prod="${p.cod}"], #resBusca article[data-prod="${p.cod}"]`);
   if(t&&!matchMedia("(prefers-reduced-motion:reduce)").matches){t.classList.remove("agregado");void t.offsetWidth;t.classList.add("agregado")}
@@ -2021,7 +2023,7 @@ document.addEventListener("click",e=>{const h=e.target.closest(".corazon");if(!h
   const cod=h.dataset.fav,ya=esFavCli(cod);favCli=ya?favCli.filter(x=>x!==cod):[...favCli,cod];
   try{localStorage.setItem("favoritos-"+KEY,JSON.stringify(favCli))}catch(err){}
   document.querySelectorAll(`.corazon[data-fav="${cod}"]`).forEach(x=>{x.setAttribute("aria-pressed",String(!ya));x.classList.remove("late");void x.offsetWidth;if(!ya)x.classList.add("late")});
-  const p=PROD[cod];avisaCarro(ya?`Quitaste ${p?p.nombre:"el producto"} de tus favoritos`:`Guardaste ${p?p.nombre:"el producto"} en tus favoritos`);$("avisoVer").hidden=true},true);
+  },true);
 $("avisoVer").onclick=()=>{$("avisoCarro").classList.remove("ver");$("avisoCarro").hidden=true;$("bCarro").click()};
 $("bMayor").hidden=!MAYOR;
 $("bMayor").onclick=()=>{const on=document.body.classList.toggle("vermayor");$("bMayor").setAttribute("aria-pressed",on);$("bMayor").querySelector("span").textContent=on?"Ocultar precios por mayor":"Ver precios por mayor"};
