@@ -1247,6 +1247,7 @@ const precioBase=p=>{const t=tapaDe(p),b=precioDe(p);if(!t)return b;return b==nu
 /* Cada página de la carta es de un solo tipo de producto: las secciones compuestas («Envases y contenedores», «Potes y salseros»…)
    se dividen según el nombre del producto. p.catBase guarda la sección original (para el ícono). El último tipo de cada lista recibe lo que no calza. */
 const SUBCATS={
+  "Huevos":[["Huevos blancos",/blanco/],["Huevos de color",/(cafe|color)/],["Huevos de quinta",/quinta/],["Huevos",/./]],
   "Envases y contenedores":[["Envases",/^(envase|bandeja plastica|caja plastica)/],["Contenedores",/^(ct |contenedor|p 1 contenedor|clamshell|sushi)/],["Cúpulas",/./]],
   "Cajas y bandejas de cartón":[["Cajas de cartón",/^(caja|huicha|sandwich)/],["Bandejas de cartón",/^(bandeja|completero)/],["Bowls y conos de cartón",/./]],
   "Bolsas, sacos y papeles":[["Bolsas",/^(bolsa|cartucho)/],["Sacos y mallas",/^(saco|malla)/],["Papeles y film",/./]],
@@ -1268,7 +1269,7 @@ const visibles=L.productos.filter(p=>!esPieza(p)&&!p.retirado); // retirado: ya 
 const favs=visibles.filter(p=>p.fav||p.oferta!=null);
 /* Familias: en el menú se ve primero la familia («Plásticos») y al tocarla se despliegan sus páginas («Envases», «Contenedores»…) */
 const FAMILIAS=[
-  ["Huevos",["Huevos","Hueveras"]],
+  ["Huevos",["Huevos blancos","Huevos de color","Huevos de quinta","Huevos","Hueveras"]],
   ["Plásticos",["Envases","Contenedores","Cúpulas","Potes","Salseros"]],
   ["Cartón",["Cajas de cartón","Bandejas de cartón","Bowls y conos de cartón"]],
   ["Aluminio",["Envases de aluminio","Foil y moldes de aluminio"]],
