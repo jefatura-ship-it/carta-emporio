@@ -17,6 +17,14 @@
  *  uso      {tel, codigo, monto, local}                  anota el descuento de bienvenida usado
  *  baja      {tel, local}                                 deja de recibir ofertas (se aplica de inmediato)
  *  eliminar  {tel, local}                                 solicitud de eliminación (queda pendiente)
+ *  pedido    {codigo, nombre, tel?, codigoCliente?, fechaRetiro, hora, items[], total, nota, local}
+ *            anota el pedido enviado desde la carta en "Pedidos" (y sus productos en "Detalle de pedidos")
+ *            y deja la planilla ordenada: por día de retiro, primero los de prioridad alta
+ *            (cliente frecuente o pedido grande), luego los de más unidades y por hora.
+ *            "Por preparar" suma, para cada día desde hoy, cuánto hay que tener listo de cada producto.
+ *
+ * DESPUÉS DE PEGAR ESTA VERSIÓN: Implementar → Gestionar implementaciones → editar la actual →
+ * Versión: "Nueva versión" → Implementar. Así la URL de la carta no cambia.
  *
  * La eliminación NO es automática: cualquiera que conozca un celular podría enviarla.
  * Queda anotada en "Solicitudes" y una persona la confirma con el cliente (por WhatsApp
@@ -50,10 +58,17 @@ function doPost(e) {
   try {
     candado.waitLock(20000);
     const cuerpo = (e && e.postData && e.postData.contents) || '';
-    if (!cuerpo || cuerpo.length > 4000) throw new Error('cuerpo vacío o demasiado largo');
+    if (!cuerpo || cuerpo.length > 20000) throw new Error('cuerpo vacío o demasiado largo');
     const d = JSON.parse(cuerpo);
     const tel = celular(d.tel);
     const local = LOCALES_VALIDOS.indexOf(String(d.local || '').toLowerCase()) >= 0 ? String(d.local).toLowerCase() : 'emporio';
+    if (d.tipo === 'pedido') {
+      limitar(tel || 'pedido-' + local);
+      anotarPedido(d, tel, local);
+      respuesta = { ok: true };
+      return ContentService.createTextOutput(JSON.stringify(respuesta)).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (cuerpo.length > 4000) throw new Error('cuerpo demasiado largo');
     if (!tel) throw new Error('celular no válido');
     limitar(tel); // contra envíos masivos: máximo por minuto en total y por celular
     respuesta = { ok: true };
@@ -175,6 +190,124 @@ function solicitarEliminacion(tel, local) {
   anotarSolicitud('Eliminación de datos', tel, local, filas.length ? 'Pendiente de verificar' : 'Sin registro en la planilla', filas.length ? '' : ahora);
 }
 
+/* ---------- Pedidos de la carta ---------- */
+
+const HOJA_PEDIDOS = 'Pedidos';
+const HOJA_DETALLE = 'Detalle de pedidos';
+const HOJA_PREPARAR = 'Por preparar';
+const COLUMNAS_PEDIDOS = ['Día de retiro', 'Hora', 'Prioridad', 'Cliente', 'Celular', 'Código de cliente', 'Cliente frecuente',
+  'N.º de pedidos del cliente', 'Unidades', 'Total aprox.', 'Productos', 'Comentario', 'Código del pedido', 'Recibido', 'Estado', 'Local'];
+const COLUMNAS_DETALLE = ['Día de retiro', 'Hora', 'Código del pedido', 'Cliente', 'Producto', 'Código de producto', 'Cantidad', 'Unidades', 'Precio unitario'];
+const CP = {}; COLUMNAS_PEDIDOS.forEach(function (nombre, i) { CP[nombre] = i + 1; });
+// Prioridad alta: cliente frecuente (3 pedidos o más) o pedido grande
+const FRECUENTE_DESDE = 3, UNIDADES_GRANDE = 180, TOTAL_GRANDE = 50000;
+
+function anotarPedido(d, tel, local) {
+  const codigo = String(d.codigo || '').trim();
+  if (!/^[A-Z]{1,3}\d{4}-\d{4}$/.test(codigo)) throw new Error('código de pedido no válido');
+  const fecha = fechaRetiro(d.fechaRetiro);
+  if (!fecha) throw new Error('día de retiro no válido');
+  const hoja = hojaPedidos();
+  const n = hoja.getLastRow();
+  const filas = n > 1 ? hoja.getRange(2, 1, n - 1, COLUMNAS_PEDIDOS.length).getValues() : [];
+  if (filas.some(function (f) { return String(f[CP['Código del pedido'] - 1]) === codigo; })) return; // ya anotado
+  const cliente = texto(String(d.nombre || '').replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9' .-]/g, ' ')) || '(sin nombre)';
+  const codCli = /^[ED]-(P)?\d{4,}$/.test(String(d.codigoCliente || '')) ? String(d.codigoCliente) : '';
+  const its = (Array.isArray(d.items) ? d.items : []).slice(0, 100).map(function (x) {
+    return { cod: texto(x.cod).slice(0, 20), nombre: textoLargo(x.nombre, 140), q: entero(x.q, 100000), uds: entero(x.uds, 1000000),
+      precio: x.precio == null || x.precio === '' ? '' : entero(x.precio, 10000000) };
+  }).filter(function (x) { return x.q > 0; });
+  if (!its.length) throw new Error('pedido vacío');
+  const unidades = its.reduce(function (a, x) { return a + (x.uds || x.q); }, 0);
+  const total = entero(d.total, 100000000);
+  // Cliente frecuente: cuenta sus pedidos anteriores (por celular; si no dejó, por nombre)
+  const previos = filas.filter(function (f) {
+    return tel ? celular(f[CP['Celular'] - 1]) === tel : String(f[CP['Cliente'] - 1]).toLowerCase() === cliente.toLowerCase();
+  }).length;
+  const veces = previos + 1;
+  const frecuente = veces >= FRECUENTE_DESDE ? 'Sí' : 'No';
+  const alta = frecuente === 'Sí' || unidades >= UNIDADES_GRANDE || total >= TOTAL_GRANDE;
+  const hora = texto(d.hora).slice(0, 20) || 'Lo antes posible';
+  hoja.appendRow([fecha, hora, alta ? 'Alta' : 'Normal', cliente, tel ? texto(tel) : '', codCli, frecuente, veces, unidades, total || '',
+    textoLargo(its.map(function (x) { return x.q + ' × ' + x.nombre; }).join(' · '), 2000), textoLargo(d.nota, 300), codigo, new Date(), 'Pendiente', local]);
+  hojaDetalle().getRange(hojaDetalle().getLastRow() + 1, 1, its.length, COLUMNAS_DETALLE.length).setValues(its.map(function (x) {
+    return [fecha, hora, codigo, cliente, x.nombre, x.cod, x.q, x.uds || x.q, x.precio];
+  }));
+  // Si ahora es frecuente, sus pedidos pendientes también pasan a prioridad alta
+  if (frecuente === 'Sí' && filas.length) filas.forEach(function (f, i) {
+    const mismo = tel ? celular(f[CP['Celular'] - 1]) === tel : String(f[CP['Cliente'] - 1]).toLowerCase() === cliente.toLowerCase();
+    if (mismo) hoja.getRange(i + 2, CP['Prioridad'], 1, CP['Cliente frecuente'] - CP['Prioridad'] + 1)
+      .setValues([['Alta', f[CP['Cliente'] - 1], f[CP['Celular'] - 1], f[CP['Código de cliente'] - 1], 'Sí']]);
+  });
+  ordenarPedidos();
+}
+
+// Deja "Pedidos" ordenada: día de retiro, prioridad (Alta primero), más unidades, hora. Y el detalle por día y pedido.
+function ordenarPedidos() {
+  const hoja = hojaPedidos(), n = hoja.getLastRow();
+  if (n > 2) hoja.getRange(2, 1, n - 1, COLUMNAS_PEDIDOS.length).sort([
+    { column: CP['Día de retiro'], ascending: true }, { column: CP['Prioridad'], ascending: true },
+    { column: CP['Unidades'], ascending: false }, { column: CP['Hora'], ascending: true }]);
+  const det = hojaDetalle(), m = det.getLastRow();
+  if (m > 2) det.getRange(2, 1, m - 1, COLUMNAS_DETALLE.length).sort([{ column: 1, ascending: true }, { column: 3, ascending: true }]);
+}
+
+function hojaPedidos() {
+  const hoja = hojaCon(HOJA_PEDIDOS, COLUMNAS_PEDIDOS);
+  if (hoja.getConditionalFormatRules().length) return hoja;
+  // Formato una sola vez: fechas legibles, estado con lista, colores por día y prioridad
+  hoja.getRange('A2:A').setNumberFormat('dddd dd/mm/yyyy');
+  hoja.getRange('N2:N').setNumberFormat('dd/mm/yyyy hh:mm');
+  hoja.getRange('J2:J').setNumberFormat('$#,##0');
+  hoja.getRange('K2:K').setWrap(true);
+  hoja.setColumnWidth(CP['Productos'], 420);
+  hoja.getRange('O2:O').setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['Pendiente', 'Preparado', 'Entregado', 'Anulado'], true).build());
+  const r = hoja.getRange('A2:P');
+  hoja.setConditionalFormatRules([
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=OR($O2="Entregado",$O2="Anulado")').setFontColor('#9a9a92').setRanges([r]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND($A2<>"",$A2<TODAY())').setBackground('#eeeeee').setRanges([r]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$A2=TODAY()').setBackground('#fff2c2').setRanges([r]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$A2=TODAY()+1').setBackground('#e3f1dc').setRanges([r]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Alta').setFontColor('#b3261e').setBold(true).setRanges([hoja.getRange('C2:C')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Sí').setBold(true).setFontColor('#1d5c36').setRanges([hoja.getRange('G2:G')]).build()
+  ]);
+  return hoja;
+}
+
+function hojaDetalle() {
+  const hoja = hojaCon(HOJA_DETALLE, COLUMNAS_DETALLE);
+  hoja.getRange('A2:A').setNumberFormat('dddd dd/mm/yyyy');
+  return hoja;
+}
+
+// Totales por día y producto desde hoy (se actualiza solo con una fórmula)
+function hojaPorPreparar() {
+  const libro = SpreadsheetApp.getActiveSpreadsheet();
+  const hoja = libro.getSheetByName(HOJA_PREPARAR) || libro.insertSheet(HOJA_PREPARAR);
+  if (!hoja.getRange('A1').getFormula()) {
+    hoja.getRange('A1').setFormula('=QUERY(\'' + HOJA_DETALLE + '\'!A2:I, "select A, E, sum(G), sum(H) where A >= date \'"&TEXT(TODAY(),"yyyy-mm-dd")&"\' group by A, E order by A, sum(H) desc label A \'Día de retiro\', E \'Producto\', sum(G) \'Cantidad\', sum(H) \'Unidades\'", 0)');
+    hoja.getRange('A:A').setNumberFormat('dddd dd/mm/yyyy');
+    hoja.setFrozenRows(1);
+  }
+  return hoja;
+}
+
+// "AAAA-MM-DD" entre hoy y 60 días más; null si no
+function fechaRetiro(v) {
+  const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const f = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  if (isNaN(f.getTime()) || f < hoy || f.getTime() > hoy.getTime() + 60 * 864e5) return null;
+  return f;
+}
+function entero(v, max) { const n = Math.round(Number(v) || 0); return Math.max(0, Math.min(max, n)); }
+// Texto más largo (productos, comentario): igual de seguro que texto() pero con otro largo máximo
+function textoLargo(v, max) {
+  const s = String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+  return /^[=+\-@]/.test(s) ? "'" + s : s;
+}
+
 /* ---------- Menú de la planilla ---------- */
 
 function onOpen() {
@@ -182,10 +315,12 @@ function onOpen() {
     .addItem('Eliminar clientes verificados', 'eliminarVerificados')
     .addItem('Asignar códigos faltantes', 'asignarCodigosFaltantes')
     .addItem('Preparar hojas', 'prepararHojas')
+    .addSeparator()
+    .addItem('Ordenar pedidos', 'ordenarPedidos')
     .addToUi();
 }
 
-function prepararHojas() { hojaClientes(); hojaSolicitudes(); }
+function prepararHojas() { hojaClientes(); hojaSolicitudes(); hojaPedidos(); hojaDetalle(); hojaPorPreparar(); }
 
 // Borra las filas de "Clientes" que tienen SI en "Eliminar (verificado)" y cierra sus solicitudes.
 function eliminarVerificados() {

@@ -671,6 +671,14 @@ body.con-fondo .orden,body.con-fondo .filtros{box-shadow:0 14px 30px -18px rgba(
 .vt-puntos button[aria-current="true"]{width:26px;background:#fff}
 @media (max-width:700px){.vt-slide{aspect-ratio:4/3}.vt-fl{display:none}.vt-slide figcaption{padding:16px 16px 30px;background:linear-gradient(0deg,rgba(14,30,18,.85),rgba(14,30,18,.2) 70%)}.vt-slide span{font-size:13.5px}}
 @media (prefers-reduced-motion:reduce){.vt-pista{transition:none}}
+/* Día y hora de retiro */
+.campo .lbl{display:block;font-weight:700;margin-bottom:6px}
+.retiro{display:grid;grid-template-columns:1.2fr 1fr;gap:10px}
+.retiro label{display:grid;gap:4px}
+.retiro small{font-size:12.5px;color:#6b6b66;font-weight:600}
+.retiro input,.retiro select{min-height:46px;padding:8px 10px;border:1.5px solid var(--borde);border-radius:12px;background:#fff;font-family:inherit;font-size:16px;color:var(--tinta)}
+.retiro input[aria-invalid="true"]{border-color:#b3261e}
+.ret-nota{display:block;margin-top:6px;color:var(--campo);font-weight:700}
 </style>
 </head>
 <body>
@@ -881,8 +889,13 @@ body.con-fondo .orden,body.con-fondo .filtros{box-shadow:0 14px 30px -18px rgba(
         <div class="msg" id="msgNombre" hidden>Escribe tu nombre para que sepamos de quién es el pedido.</div>
       </div>
       <div class="campo" id="campoHora">
-        <label for="hora">¿Cuándo pasas a retirar?</label>
-        <select id="hora"></select>
+        <span class="lbl">¿Para cuándo quieres tu pedido?</span>
+        <div class="retiro">
+          <label class="ret-f"><small>Día</small><input type="date" id="fechaRet" required aria-describedby="msgFecha"></label>
+          <label class="ret-h"><small>Hora de retiro</small><select id="hora"></select></label>
+        </div>
+        <div class="msg" id="msgFecha" hidden></div>
+        <small class="ret-nota" id="retNota"></small>
       </div>
       <div class="campo">
         <label for="nota">Comentario (opcional)</label>
@@ -1409,7 +1422,16 @@ try{
 }catch(e){cart={}}
 const grabar=()=>{try{localStorage.setItem("pedido-"+KEY,JSON.stringify({items:cart,t:Date.now(),enviado}))}catch(e){}};
 const guardar=()=>{enviado=false;grabar()};
-const marcarEnviado=()=>{try{const qs=Object.fromEntries(Object.entries(cart).filter(([,q])=>q>0));if(Object.keys(qs).length)localStorage.setItem("anterior-"+KEY,JSON.stringify({t:Date.now(),cart:qs}))}catch(e){};if(typeof usarDescuento==="function")usarDescuento();enviado=true;grabar()};
+/* El pedido enviado se anota en la planilla de pedidos (la ordena el script de Google) */
+const pedidosAnotados=new Set();
+function anotarPedido(){
+  if(!REGISTRO_URL||!codigo||pedidosAnotados.has(codigo))return;pedidosAnotados.add(codigo);
+  const its=items().map(x=>({cod:x.cod,nombre:x.nombre,q:x.q,uds:x.uds||x.q,precio:x.precio}));
+  const d={tipo:"pedido",local:KEY,codigo,nombre:$("nombre").value.trim().slice(0,80),tel:cliente&&cliente.tel||"",codigoCliente:cliente&&cliente.codigo||"",
+    fechaRetiro:$("fechaRet").value,hora:$("hora").value||"Lo antes posible",items:its,total:totalFinal(),nota:($("nota").value||"").trim().slice(0,300)};
+  try{fetch(REGISTRO_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(d)})}catch(e){}
+}
+const marcarEnviado=()=>{anotarPedido();try{const qs=Object.fromEntries(Object.entries(cart).filter(([,q])=>q>0));if(Object.keys(qs).length)localStorage.setItem("anterior-"+KEY,JSON.stringify({t:Date.now(),cart:qs}))}catch(e){};if(typeof usarDescuento==="function")usarDescuento();enviado=true;grabar()};
 
 /* ---------- Registro de clientes: nombres, apellidos y celular → descuento ---------- */
 // Dirección del servicio de registro de clientes. Vacía: el registro queda solo en el celular del cliente.
@@ -2079,7 +2101,35 @@ $("volver").onclick=()=>{
 };
 
 /* ---------- Hora de retiro ---------- */
-(function horas(){
+/* Fecha de retiro: desde hoy hasta 30 días; el domingo el local está cerrado */
+const isoDia=d=>{const p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())};
+const DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+const fechaRetLarga=iso=>{if(!iso)return"";const [y,m,d]=iso.split("-").map(Number),f=new Date(y,m-1,d);return `${DIAS[f.getDay()]} ${String(d).padStart(2,"0")}/${String(m).padStart(2,"0")}/${y}`};
+const cierraMin=()=>{if(!L.horario)return 17*60;const[a,b]=L.horario.hasta.split(":").map(Number);return a*60+b};
+function horasPara(iso){
+  const s=$("hora"),hoy=isoDia(new Date()),ahora=new Date(),mins=ahora.getHours()*60+ahora.getMinutes();
+  const prev=s.value;let o=[];
+  if(iso===hoy)o.push('<option value="">Lo antes posible</option>');
+  if(L.horario){const m=t=>{const[a,b]=t.split(":").map(Number);return a*60+b};
+    for(let t=Math.ceil(m(L.horario.desde)/30)*30+30;t<=m(L.horario.hasta)-30;t+=30){if(iso===hoy&&t<mins+30)continue;
+      const h=String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");o.push(`<option>${h}</option>`)}}
+  else ["En la mañana","A mediodía","En la tarde"].forEach(x=>o.push(`<option>${x}</option>`));
+  s.innerHTML=o.join("");if([...s.options].some(x=>x.value===prev))s.value=prev;
+}
+function fechaOk(){const f=$("fechaRet"),m=$("msgFecha"),v=f.value;let err="";
+  if(!v)err="Elige el día en que quieres tu pedido.";
+  else{const [y,mo,d]=v.split("-").map(Number),dia=new Date(y,mo-1,d).getDay();
+    if(v<f.min)err="Esa fecha ya pasó; elige hoy o un día siguiente.";else if(v>f.max)err="Puedes pedir hasta con 30 días de anticipación.";else if(dia===0)err="El domingo estamos cerrados; elige otro día.";}
+  m.textContent=err;m.hidden=!err;f.setAttribute("aria-invalid",String(!!err));
+  $("retNota").textContent=!err&&v?`Retiras el ${fechaRetLarga(v)}${$("hora").value?" a las "+$("hora").value:""}.`:"";return !err}
+(function fechas(){const f=$("fechaRet"),hoy=new Date(),max=new Date();max.setDate(max.getDate()+30);
+  f.min=isoDia(hoy);f.max=isoDia(max);
+  // por defecto: hoy si aún alcanza a prepararse; si no, el siguiente día abierto
+  const d=new Date();if(d.getDay()===0||d.getHours()*60+d.getMinutes()>cierraMin()-60){do{d.setDate(d.getDate()+1)}while(d.getDay()===0)}
+  f.value=isoDia(d);horasPara(f.value);
+  f.addEventListener("change",()=>{horasPara(f.value);fechaOk()});$("hora").addEventListener("change",fechaOk);fechaOk();
+})();
+(function horas(){ return;
   const s=$("hora"); let o=['<option value="">Lo antes posible</option>'];
   if(L.horario){
     const m=t=>{const[a,b]=t.split(":").map(Number);return a*60+b};
@@ -2102,7 +2152,7 @@ function nuevoCodigo(){
 }
 function textoPedido(){
   const nom=$("nombre").value.trim()||"(sin nombre)";
-  const hora=$("hora").value||"Lo antes posible";
+  const hora=(fechaRetLarga($("fechaRet").value)||"Hoy")+" · "+($("hora").value?"a las "+$("hora").value:"lo antes posible");
   let t=`PEDIDO ${codigo} · ${L.nombre}\nCliente: ${nom}\n`;
   if(cliente)t+=`Cliente registrado${cliente.codigo?" "+cliente.codigo+(cliente.codigoOk?"":" (provisorio)"):""}: ${nombreCompleto(cliente)} · ${cliente.tel}${cliente.acepta?" · acepta ofertas":""}\n`;
   t+=`Retira: ${hora}\n\n`;
@@ -2116,7 +2166,7 @@ function textoPedido(){
 function actualizarEnlaces(){
   $("bWsp").href=`https://wa.me/${L.whatsapp}?text=${encodeURIComponent(textoPedido())}`;
 }
-function nombreOk(){
+function nombreOk(){if(!fechaOk()){$("fechaRet").focus();return false}
   const ok=!!$("nombre").value.trim();
   $("campoNombre").classList.toggle("err",!ok); $("msgNombre").hidden=ok;
   if(!ok)$("nombre").focus();
