@@ -493,6 +493,16 @@ body.con-fondo .pasasec .ant{border-color:#fff}
 body.con-fondo .pie-wrap{background:var(--masa);border-radius:22px;margin-block:26px 20px;padding-block:6px 14px}
 body.con-fondo .lista .prod{box-shadow:0 14px 30px -18px rgba(0,0,0,.65)}
 @media (prefers-reduced-motion:reduce){body.con-fondo::before{animation:none}}
+/* Pie discreto: la información legal y de privacidad queda plegada */
+.pie-mas>summary{display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;cursor:pointer;list-style:none;font-size:13.5px;font-weight:600;color:var(--suave)}
+.pie-mas>summary::-webkit-details-marker{display:none}
+.pie-mas>summary::after{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translateY(-2px);transition:transform .25s}
+.pie-mas[open]>summary::after{transform:rotate(-135deg)}
+.pie-mas[open]>summary{margin-bottom:8px}
+.pie:has(.pie-mas:not([open])){background:transparent;border-color:transparent;box-shadow:none;padding-block:4px}
+body.con-fondo .pie-wrap:has(.pie-mas:not([open])){background:transparent;box-shadow:none}
+body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .pie-mas>summary,body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra{color:#f3ead2}
+body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
 </style>
 </head>
 <body>
@@ -558,6 +568,7 @@ body.con-fondo .lista .prod{box-shadow:0 14px 30px -18px rgba(0,0,0,.65)}
 
 <div class="wrap pie-wrap"><nav class="otra" id="otra" aria-label="Carta del otro local"></nav>
   <footer class="pie" id="pie">
+    <details class="pie-mas"><summary>Información legal y privacidad</summary>
     <h2 id="pieNombre"></h2>
     <p id="pieDatos"></p>
     <p>Los precios están en pesos chilenos. Usar la carta y armar el pedido no tiene costo: pagas en el local al retirar y no se agregan cargos al total.</p>
@@ -576,6 +587,7 @@ body.con-fondo .lista .prod{box-shadow:0 14px 30px -18px rgba(0,0,0,.65)}
       <a class="btn sec" id="bBaja" href="#" target="_blank" rel="noopener">Dejar de recibir ofertas (darme de baja)</a>
       <a class="btn sec" id="bEliminar" href="#" target="_blank" rel="noopener">Pedir que eliminen mis datos del registro</a>
     </div>
+    </details>
     <p class="hecho" id="pieMsg" role="status" aria-live="polite" hidden></p>
   </footer>
 </div>
