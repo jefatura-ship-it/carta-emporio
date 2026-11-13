@@ -678,7 +678,7 @@ if (!quieto) {
     // La repisa ya no secuestra el desplazamiento: bajar con la rueda o el dedo sigue de largo por la página.
     // Los productos se recorren deslizando de lado (dedo, mouse o panel táctil), con las flechas o tocando un nombre.
     hay3d = true; raiz.classList.add('mov3d');
-    $('#repAyuda').textContent = 'Desliza de lado o arrastra la repisa para ver los productos; para seguir, solo baja. Toca un producto para girarlo y verlo de cerca.';
+    $('#repAyuda').textContent = 'Deslice horizontalmente o arrastre la repisa para ver los productos; para continuar, desplácese hacia abajo. Toque un producto para girarlo y verlo de cerca.';
     const ficha = { nombre: $('#repNombre'), desc: $('#repDesc'), n: $('#repN'), abrir: $('#repAbrir') }, lista = $('#repLista');
     const DIST = [7.4, 5.2, 3.9];
     let pR = 0, objetivo = 0, foco = -1, abierto = false, zoom = 1, dist = DIST[1];
@@ -777,7 +777,7 @@ if (!quieto) {
       const oh = suave(0.8, 1, vis);
       if (oh > 0.95 && tSaludo < 0) tSaludo = t;
       if (vis < 0.3 && tSaludo >= 0) { tSaludo = -1; if (invita) { invita = false; hola.textContent = '¡Hola! Soy Sabrosita'; hola.classList.remove('carta'); } }
-      if (tSaludo >= 0 && !invita && t - tSaludo > 1.5) { invita = true; hola.textContent = '¡Abre nuestra carta!'; hola.classList.add('carta'); }
+      if (tSaludo >= 0 && !invita && t - tSaludo > 1.5) { invita = true; hola.textContent = '¡Abra nuestro Catálogo Sabroso!'; hola.classList.add('carta'); }
       // un saltito al cambiar el mensaje
       const salto = invita ? Math.max(0, 1 - (t - tSaludo - 1.5) / 0.35) : 0;
       hola.style.opacity = oh.toFixed(3); hola.style.transform = `translateY(${((1 - oh) * 8 + Math.sin(t * 3) * 2 - Math.sin(salto * Math.PI) * 6).toFixed(1)}px) scale(${(1 + 0.12 * Math.sin(salto * Math.PI)).toFixed(3)})`;
