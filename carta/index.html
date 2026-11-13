@@ -477,6 +477,22 @@ html{scrollbar-gutter:stable}
 .grupo.foto .subfam button[aria-current="true"]{background:var(--campo);border-color:var(--campo);color:#fff}
 .grupo.foto .lista .prod{box-shadow:0 10px 26px -18px rgba(18,40,24,.55)}
 @media (min-width:700px){.grupo.foto{padding-top:44px}.grupo.foto::before{height:340px}.grupo.foto>h2{font-size:30px}}
+/* Foto a pantalla completa en las páginas de huevos (fija detrás de los productos) */
+body.con-fondo::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,rgba(18,40,24,.58),rgba(18,40,24,.48) 45%,rgba(18,40,24,.62)),var(--fondo-pag) center/cover no-repeat;animation:fondoAparece .5s ease-out}
+@keyframes fondoAparece{from{opacity:0}to{opacity:1}}
+body.con-fondo .grupo.foto::before{display:none}
+body.con-fondo .grupo.foto{padding-top:28px}
+body.con-fondo .herram{background:transparent}
+body.con-fondo .herram .busca input{box-shadow:0 10px 24px -14px rgba(0,0,0,.6);border-color:#fff}
+@media (max-width:700px){body.con-fondo .herram{background:rgba(18,40,24,.55);backdrop-filter:blur(6px)}}
+body.con-fondo .como{background:var(--masa);border-radius:20px;padding-top:6px;padding-bottom:14px;margin-top:14px;box-shadow:0 14px 34px -22px rgba(0,0,0,.7)}
+body.con-fondo .pasasec{border-top-color:rgba(255,255,255,.3)}
+body.con-fondo .pasasec .n{color:#f3ead2}
+body.con-fondo .pasasec .ant{border-color:#fff}
+body.con-fondo .pie-wrap{background:var(--masa);border-radius:22px;margin-block:26px 20px;padding-block:6px 14px}
+body.con-fondo .lista .prod{box-shadow:0 14px 30px -18px rgba(0,0,0,.65)}
+@media (prefers-reduced-motion:reduce){body.con-fondo::before{animation:none}}
 </style>
 </head>
 <body>
@@ -1518,6 +1534,8 @@ function verSeccion(id,{enfocar=false,desplazar=true}={}){
   /* como pasar de página: la nueva sección entra de lado (desde la derecha si va hacia adelante) */
   const antes=SECC.findIndex(x=>!x.hidden),ahora=SECC.indexOf(g);
   SECC.forEach(x=>{x.hidden=x!==g});
+  /* si la página tiene foto, inunda todo el fondo de la pantalla */
+  const fo=g.style.getPropertyValue("--foto");document.body.classList.toggle("con-fondo",!!fo);if(fo)document.body.style.setProperty("--fondo-pag",fo);
   if(antes>=0&&antes!==ahora&&!matchMedia("(prefers-reduced-motion:reduce)").matches){g.classList.remove("pag-der","pag-izq");void g.offsetWidth;g.classList.add(ahora>antes?"pag-der":"pag-izq")}
   const fg=nomSec(g)===FAV?FAV:famDe(nomSec(g));
   document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-current",x.dataset.fam===fg));
@@ -1549,7 +1567,7 @@ verSeccion(leePref("seccion-"+KEY)||SECC[0].id,{desplazar:false});
   let antes=null;
   const busca=()=>{const txt=q.value.trim(),ws=pal(txt);borrar.hidden=!txt;
     if(!ws.length){if(!res.hidden){res.hidden=true;res.innerHTML="";verSeccion(antes||SECC[0].id,{desplazar:false})}estado.textContent="";return}
-    if(res.hidden){const v=SECC.find(x=>!x.hidden);antes=v?v.id:null;SECC.forEach(x=>{x.hidden=true});res.hidden=false}
+    if(res.hidden){const v=SECC.find(x=>!x.hidden);antes=v?v.id:null;SECC.forEach(x=>{x.hidden=true});res.hidden=false;document.body.classList.remove("con-fondo")}
     const r=IDX.map(o=>{const ps=ws.map(w=>puntaje(w,o.todo,o.nom));return {p:o.p,todos:ps.every(v=>v>0),suma:ps.reduce((a,v)=>a+v,0)}}).filter(o=>o.suma>0);
     const exactos=r.filter(o=>o.todos).sort((a,b)=>b.suma-a.suma||a.p.nombre.localeCompare(b.p.nombre));
     const parecidos=exactos.length?[]:r.sort((a,b)=>b.suma-a.suma).slice(0,24);
