@@ -601,6 +601,58 @@ body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
 .tb-redes small{font-size:10.5px;font-weight:700;opacity:.9}
 @media (max-width:1099px){.tb-redes small{display:none}.tb-redes a{min-width:38px}}
 @media (max-width:759px){.tb-redes{display:none}}
+/* ===== Catálogo: panel lateral, barra de orden y tarjetas verticales ===== */
+.filtros{display:none;background:#fff;border:1px solid var(--borde);border-radius:18px;padding:18px 18px 14px;margin:12px 0}
+.filtros.abierto{display:block}
+.fl-fam{margin:0;font-size:22px;font-family:var(--display);color:#8a8f84;line-height:1.1}
+.fl-tit{margin:2px 0 6px;font-family:var(--display);font-size:24px;color:var(--campo);line-height:1.15}
+.fl-n{margin:0 0 12px;font-size:13.5px;color:#6b6b66}
+.fl-bloque{border-top:1px solid var(--borde);padding:12px 0}
+.fl-bloque h3{margin:0 0 8px;font-size:15px;color:var(--tinta)}
+.fl-ch{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:38px;font-size:14.5px;cursor:pointer}
+.fl-ch small{color:#8a8f84}
+.fl-ch input{width:22px;height:22px;accent-color:var(--campo);flex:none}
+.fl-pags{display:flex;flex-wrap:wrap;gap:6px}
+.fl-pags button{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:5px 11px;border:1px solid var(--borde);border-radius:10px;background:#fff;color:var(--tinta);font-family:inherit;font-size:13.5px;cursor:pointer}
+.fl-pags button small{color:#8a8f84}
+.fl-pags button[aria-current="true"]{border-color:var(--campo);background:var(--campo);color:#fff}.fl-pags button[aria-current="true"] small{color:#d8e8d0}
+.fl-texto{width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--borde);border-radius:10px;font-family:inherit;font-size:15px}
+.fl-limpiar{width:100%;min-height:42px;margin-top:6px;border:1.5px solid var(--campo);border-radius:12px;background:#fff;color:var(--campo);font-family:inherit;font-weight:700;cursor:pointer}
+.orden{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0 4px;padding:10px 14px;background:#fff;border:1px solid var(--borde);border-radius:16px}
+.ob-ord{display:grid;gap:0;flex:1 1 200px;max-width:320px}
+.ob-ord span{font-size:12px;color:#6b6b66}
+.ob-ord select{min-height:36px;padding:2px 26px 4px 0;border:0;border-bottom:1px solid #9a9a92;background:transparent;font-family:inherit;font-size:15.5px;font-weight:700;color:var(--tinta);cursor:pointer}
+.ob-filtros{display:inline-flex;align-items:center;gap:7px;min-height:42px;padding:6px 14px;border:1.5px solid var(--campo);border-radius:12px;background:#fff;color:var(--campo);font-family:inherit;font-weight:700;font-size:14.5px;cursor:pointer}
+.ob-nf{display:grid;place-items:center;min-width:20px;height:20px;border-radius:99px;background:var(--campo);color:#fff;font-size:11.5px}
+.ob-pag{margin-left:auto;display:flex;align-items:center;gap:6px}
+.ob-pag button{width:40px;height:40px;border:0;border-radius:50%;background:var(--masa);color:var(--campo);font-size:22px;font-weight:700;cursor:pointer}
+.ob-pag button:disabled{opacity:.35;cursor:default}
+.ob-pag span{min-width:62px;text-align:center;font-weight:700;font-size:14px;color:var(--tinta)}
+#carta .prod.fuera{display:none!important}
+.sin-filtro{margin:16px 0;padding:14px;border-radius:12px;background:#fff;text-align:center;color:#6b6b66}
+.tipo-p{display:block;margin:0 0 2px;font-size:11.5px!important;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7b8075!important}
+/* Computador: panel lateral fijo a la izquierda y tarjetas verticales */
+@media (min-width:1000px){
+  .cuerpo{grid-template-columns:270px minmax(0,1fr)!important;max-width:1480px!important;margin-inline:auto;align-items:start;column-gap:24px!important}
+  .filtros{display:block;position:sticky;top:78px;max-height:calc(100vh - 92px);overflow:auto;margin-top:14px}
+  .ob-filtros{display:none}
+  #carta .grupo>.fam-et,#carta .grupo>h2,#carta .grupo>.subfam{display:none}
+  .grupo.foto,body.con-fondo .grupo.foto{padding-top:14px}
+  #carta .lista{justify-content:flex-start}
+  #carta .lista>.prod{flex:1 1 230px;max-width:290px}
+}
+@media (min-width:700px){
+  #carta .prod{display:flex;flex-direction:column;align-items:stretch;gap:0;padding:0;overflow:hidden;border-radius:16px}
+  #carta .prod>.ico{width:100%;height:150px;border-radius:0;background:linear-gradient(#f7f4ec,#efe9db)}
+  #carta .prod>.ico svg{width:78px;height:78px}
+  #carta .prod>.ico img{width:100%;height:100%;object-fit:cover}
+  #carta .prod>.info{padding:12px 14px 4px}
+  #carta .prod>.info>b{font-size:16.5px;line-height:1.2;padding-right:0}
+  #carta .prod>.paso{padding:6px 14px 14px;margin-top:auto}
+  #carta .prod>*:not(.ico):not(.corazon):not(.info):not(.paso){padding-inline:14px}
+  #carta .prod>.corazon{top:8px;right:8px}
+}
+body.con-fondo .orden,body.con-fondo .filtros{box-shadow:0 14px 30px -18px rgba(0,0,0,.6)}
 </style>
 </head>
 <body>
@@ -649,6 +701,18 @@ body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
   <button type="button" class="bcuenta" id="bCuenta" aria-haspopup="dialog"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span id="bCuentaTxt">Mi cuenta</span></button>
 </div><p class="sr" id="qEstado" role="status" aria-live="polite"></p></div>
 <div class="cuerpo">
+<aside class="filtros" id="filtros" aria-label="Filtros de la página">
+  <p class="fl-fam" id="flFam"></p>
+  <h2 class="fl-tit" id="flTit">Carta</h2>
+  <p class="fl-n" id="flN"></p>
+  <nav class="fl-bloque" id="flPags" aria-label="Páginas de esta familia"><h3>En esta familia</h3><div class="fl-pags" id="flPagsIn"></div></nav>
+  <div class="fl-bloque"><h3>Disponibilidad</h3>
+    <label class="fl-ch"><span>Solo con stock</span><input type="checkbox" id="flStock"></label>
+    <label class="fl-ch"><span>Solo con precio confirmado</span><input type="checkbox" id="flPrecio"></label></div>
+  <div class="fl-bloque" id="flFormaB"><h3>Forma de venta</h3><div id="flForma"></div></div>
+  <div class="fl-bloque"><h3><label for="flTexto">Buscar en esta página</label></h3><input type="search" class="fl-texto" id="flTexto" placeholder="Ej.: tapa, 1 kg, café" autocomplete="off"></div>
+  <button type="button" class="fl-limpiar" id="flLimpiar">Limpiar filtros</button>
+</aside>
 <main class="wrap" id="carta" tabindex="-1"></main>
 <aside class="wrap avi" id="g-avicola" aria-labelledby="aviTit">
   <h2 id="aviTit">Pedidos a la avícola</h2>
@@ -1571,7 +1635,7 @@ const esFavCli=cod=>favCli.includes(cod);
 const card=(p,c)=>`
       <article class="prod${agotado(p)?" agotado":""}${p.oferta!=null?" oferta":""}" data-prod="${p.cod}"${c===FAV?"":` id="p-${p.cod}"`}><button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>
         <div class="ico">${p.foto?`<img src="${p.foto}" alt="${p.nombre}" loading="lazy">`:((ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}</div>
-        <div class="info"><b>${p.nombre}</b>${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.sinStock?"Stock 0 en el conteo":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
+        <div class="info"><small class="tipo-p">${p.cat}</small><b>${p.nombre}</b>${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.sinStock?"Stock 0 en el conteo":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
         <div class="paso">
           <button class="menos" data-cod="${p.cod}" data-d="-1" aria-label="Quitar ${p.nombre}">−</button>
           <input class="cant" type="number" inputmode="numeric" min="0" step="1" data-q="${p.cod}" value="0" aria-label="Cantidad de ${p.nombre}${tienePaq(p)?" (en la modalidad elegida)":""}">
@@ -1806,6 +1870,63 @@ function mostrarLista(titulo,prods,vacio){const res=$("resBusca");if(!res)return
   SECC.forEach(x=>{x.hidden=true});document.body.classList.remove("con-fondo");res.hidden=false;
   res.innerHTML=`<h2 id="resTit">${titulo}</h2>`+(prods.length?`<p class="res-n">${prods.length} producto${prods.length===1?"":"s"}</p><div class="lista">${prods.map(p=>card(p,FAV)).join("")}</div>`:`<p class="res-n">${vacio}</p>`)+`<p class="res-n"><button type="button" class="res-sec" data-sec="${SECC[0].id}">Volver a la carta</button></p>`;
   refrescar();res.scrollIntoView({block:"start"})}
+/* ===== Catálogo: ordenar, paginar y filtrar la página que se ve ===== */
+(()=>{const barra=document.createElement("div");barra.className="orden";barra.id="ordenBarra";
+  barra.innerHTML='<label class="ob-ord"><span>Ordenar por</span><select id="obOrden"><option value="rec">Recomendados</option><option value="pmen">Precio: menor a mayor</option><option value="pmay">Precio: mayor a menor</option><option value="az">Nombre: A a Z</option></select></label>'
+    +'<button type="button" class="ob-filtros" id="obFiltros" aria-expanded="false" aria-controls="filtros"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtros<span class="ob-nf" id="obNf" hidden></span></button>'
+    +'<div class="ob-pag"><button type="button" id="obAnt" aria-label="Página anterior">‹</button><span id="obN"></span><button type="button" id="obSig" aria-label="Página siguiente">›</button></div>';
+  $("carta").prepend(barra);
+  const est={stock:false,precio:false,formas:new Set(),texto:""};
+  const forma=p=>tienePaq(p)?"paq":fmtDe(p)?"fmt":"uni";
+  const NFORMA={uni:"Por unidad",paq:"Por paquete",fmt:"Por bandeja o caja"};
+  const visible=()=>{const r=$("resBusca");if(r&&!r.hidden)return r;return SECC.find(x=>!x.hidden)};
+  const nplano=t=>String(t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  function aplicar(){const g=visible();if(!g)return;let n=0;
+    const arts=[...g.querySelectorAll(".lista>article.prod")];
+    arts.forEach(a=>{const p=PROD[a.dataset.prod];if(!p)return;
+      const ok=(!est.stock||!agotado(p))&&(!est.precio||precioBase(p)!=null)&&(!est.formas.size||est.formas.has(forma(p)))&&(!est.texto||nplano(p.nombre+" "+(p.detalle||"")).includes(nplano(est.texto)));
+      a.classList.toggle("fuera",!ok);if(ok)n++});
+    // ordenar
+    const o=$("obOrden").value,base=arts.map((a,i)=>({a,i,p:PROD[a.dataset.prod]}));
+    const pr=x=>{const v=x.p&&precioBase(x.p);return v==null?null:v};
+    base.sort((x,y)=>{if(o==="az")return x.p.nombre.localeCompare(y.p.nombre,"es");
+      if(o==="pmen"||o==="pmay"){const a=pr(x),b=pr(y);if(a==null&&b==null)return x.i-y.i;if(a==null)return 1;if(b==null)return -1;return o==="pmen"?a-b:b-a}
+      return x.i-y.i}).forEach((x,k)=>{x.a.style.order=o==="rec"?"":String(k)});
+    $("flN").textContent=`Resultados (${n})`;
+    let vac=g.querySelector(".sin-filtro");if(!n&&arts.length){if(!vac){vac=document.createElement("p");vac.className="sin-filtro";vac.textContent="Ningún producto cumple con los filtros elegidos.";const l=g.querySelector(".lista");if(l)l.after(vac)}vac.hidden=false}else if(vac)vac.hidden=true;
+    const nf=(est.stock?1:0)+(est.precio?1:0)+est.formas.size+(est.texto?1:0);$("obNf").hidden=!nf;$("obNf").textContent=nf;$("flLimpiar").hidden=!nf}
+  function cabecera(){const g=visible();if(!g)return;const esRes=g.id==="resBusca";
+    const nom=esRes?(g.querySelector("h2")||{}).textContent||"Resultados":nomSec(g),fam=esRes?"":(nom===FAV?"":famDe(nom)||"");
+    $("flFam").textContent=fam;$("flTit").textContent=nom;
+    const l=fam?(FAMS.find(([f])=>f===fam)||[])[1]:null;$("flPags").hidden=!(l&&l.length>1);
+    if(l)$("flPagsIn").innerHTML=l.map(x=>`<button type="button" data-sec="g-${slug(x)}"${x===nom?' aria-current="true"':""}>${x}<small>${deCat(x).length}</small></button>`).join("");
+    // formas de venta presentes en la página
+    const fs=new Map();[...g.querySelectorAll(".lista>article.prod")].forEach(a=>{const p=PROD[a.dataset.prod];if(p){const f=forma(p);fs.set(f,(fs.get(f)||0)+1)}});
+    est.formas.forEach(f=>{if(!fs.has(f))est.formas.delete(f)});
+    $("flFormaB").hidden=fs.size<2;
+    $("flForma").innerHTML=[...fs].map(([f,k])=>`<label class="fl-ch"><span>${NFORMA[f]} <small>(${k})</small></span><input type="checkbox" data-forma="${f}"${est.formas.has(f)?" checked":""}></label>`).join("");
+    const i=SECC.indexOf(g);$("obN").textContent=i>=0?`${i+1} de ${SECC.length}`:"";$("obAnt").disabled=i<=0;$("obSig").disabled=i<0||i>=SECC.length-1;
+    aplicar()}
+  window.actualizarCatalogo=cabecera;
+  $("obOrden").onchange=aplicar;
+  $("flStock").onchange=e=>{est.stock=e.target.checked;aplicar()};
+  $("flPrecio").onchange=e=>{est.precio=e.target.checked;aplicar()};
+  $("flForma").addEventListener("change",e=>{const f=e.target.dataset.forma;if(!f)return;e.target.checked?est.formas.add(f):est.formas.delete(f);aplicar()});
+  let tt=0;$("flTexto").addEventListener("input",e=>{clearTimeout(tt);tt=setTimeout(()=>{est.texto=e.target.value.trim();aplicar()},150)});
+  $("flLimpiar").onclick=()=>{est.stock=est.precio=false;est.formas.clear();est.texto="";$("flStock").checked=$("flPrecio").checked=false;$("flTexto").value="";cabecera()};
+  $("flPagsIn").addEventListener("click",e=>{const b=e.target.closest("button[data-sec]");if(b){verSeccion(b.dataset.sec,{enfocar:true});$("filtros").classList.remove("abierto");$("obFiltros").setAttribute("aria-expanded","false")}});
+  $("obAnt").onclick=()=>{const g=visible(),i=SECC.indexOf(g);if(i>0)verSeccion(SECC[i-1].id,{enfocar:true})};
+  $("obSig").onclick=()=>{const g=visible(),i=SECC.indexOf(g);if(i>=0&&i<SECC.length-1)verSeccion(SECC[i+1].id,{enfocar:true})};
+  /* en celular y tablet el panel de filtros se despliega bajo la barra; en computador va al costado */
+  const ubicarFiltros=()=>{const f=$("filtros");if(innerWidth<1000){if(f.previousElementSibling!==barra)barra.after(f)}else if(f.parentElement!==document.querySelector(".cuerpo"))document.querySelector(".cuerpo").prepend(f)};
+  addEventListener("resize",ubicarFiltros);ubicarFiltros();
+  $("obFiltros").onclick=()=>{const ab=$("filtros").classList.toggle("abierto");$("obFiltros").setAttribute("aria-expanded",String(ab))};
+  // se actualiza al cambiar de página, al buscar y al repintar tarjetas
+  const vs=verSeccion;verSeccion=function(...a){vs(...a);cabecera()};
+  const rf=refrescar;refrescar=function(...a){rf(...a);aplicar()};
+  new MutationObserver(()=>cabecera()).observe($("resBusca"),{attributes:true,attributeFilter:["hidden"]});
+  cabecera();
+})();
 /* Corazón: guarda o quita el producto de los favoritos */
 document.addEventListener("click",e=>{const h=e.target.closest(".corazon");if(!h)return;e.preventDefault();e.stopPropagation();
   const cod=h.dataset.fav,ya=esFavCli(cod);favCli=ya?favCli.filter(x=>x!==cod):[...favCli,cod];
