@@ -679,6 +679,31 @@ body.con-fondo .orden,body.con-fondo .filtros{box-shadow:0 14px 30px -18px rgba(
 .retiro input,.retiro select{min-height:46px;padding:8px 10px;border:1.5px solid var(--borde);border-radius:12px;background:#fff;font-family:inherit;font-size:16px;color:var(--tinta)}
 .retiro input[aria-invalid="true"]{border-color:#b3261e}
 .ret-nota{display:block;margin-top:6px;color:var(--campo);font-weight:700}
+/* Celular: tarjetas más bajas y sin zoom al tocar + varias veces */
+button,select,input,.paso,.prod,.corazon{touch-action:manipulation}
+.fmt select{font-size:16px}
+@media (max-width:699px){
+  #carta .lista{gap:8px}
+  #carta .prod{grid-template-columns:40px 1fr;column-gap:10px;row-gap:2px;padding:9px 10px 9px 9px;border-radius:14px;align-items:start}
+  #carta .prod>.ico{width:40px;height:40px;border-radius:10px}
+  #carta .prod>.ico svg{width:26px;height:26px}
+  #carta .prod .tipo-p{display:none}
+  #carta .prod .info>b{font-size:15px;line-height:1.25;padding-right:30px}
+  #carta .prod .info small{font-size:12px}
+  #carta .prod .modos{margin:5px 0 2px}
+  #carta .prod .mchip{min-height:32px;padding:4px 10px;font-size:13px}
+  #carta .prod .fmt{margin:4px 0 2px;gap:4px 6px;font-size:13px}
+  #carta .prod .fmt select{min-height:36px;padding:4px 8px}
+  #carta .prod .precio{font-size:17px}
+  #carta .prod .precio.pc{font-size:12.5px;font-weight:600}
+  #carta .prod:has(.fmt)>.paso{margin-top:4px}
+  /* los botones − cantidad + van en la línea del precio, a la derecha */
+  #carta .prod>.paso{grid-column:2;justify-content:flex-end;gap:6px;margin-top:-38px;padding-top:0}
+  #carta .prod .paso button{width:36px;height:36px;font-size:19px}
+  #carta .prod .paso .cant{width:46px;height:36px;font-size:16px}
+  #carta .prod>.corazon{top:4px;right:4px;width:32px;height:32px}
+  #carta .prod>.corazon svg{width:18px;height:18px}
+}
 </style>
 </head>
 <body>
