@@ -1330,6 +1330,11 @@ const SUBCATS={
 const BASEDE={}, ORDENSUB={};
 Object.entries(SUBCATS).forEach(([b,l])=>l.forEach(([n],i)=>{BASEDE[n]=b;ORDENSUB[n]=i}));
 const nPlano=t=>String(t).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+/* Huevos siempre del más grande al más chico: súper jumbo, jumbo, súper, extra, primera, segunda, tercera, cuarta y quinta */
+const CALIBRE=p=>{const n=nPlano(p.nombre);if(/quinta/.test(n))return /jumbo/.test(n)?7.5:8;if(/super jumbo/.test(n))return 0;if(/jumbo/.test(n))return 1;if(/super/.test(n))return 2;
+  const pal=n.split(/[^a-z0-9]+/),k=['extra','primera','segunda','tercera','cuarta'].findIndex(w=>pal.includes(w));return k<0?9:3+k};
+(()=>{const pos=[],hv=[];L.productos.forEach((p,i)=>{if(p.cat==="Huevos"&&!esPieza(p)){pos.push(i);hv.push(p)}});
+  hv.map((p,i)=>({p,i,k:CALIBRE(p)})).sort((a,b)=>a.k-b.k||a.i-b.i).forEach((o,j)=>{L.productos[pos[j]]=o.p})})();
 L.productos.forEach(p=>{const r=SUBCATS[p.cat];if(!r||esPieza(p))return;p.catBase=p.cat;p.cat=(r.find(([,re])=>re.test(nPlano(p.nombre)))||r[r.length-1])[0]});
 // las páginas de una misma sección van juntas y en el orden de la lista
 const ordenCats=lista=>{const pos={};lista.forEach((c,i)=>{const b=BASEDE[c]||c;if(!(b in pos))pos[b]=i});return lista.slice().sort((a,b)=>(pos[BASEDE[a]||a]-pos[BASEDE[b]||b])||((ORDENSUB[a]||0)-(ORDENSUB[b]||0)))};
