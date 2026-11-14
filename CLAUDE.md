@@ -160,3 +160,11 @@ David no quiere que la dirección diga «jefatura»; eligió **avicolasb.com**, 
 - Logos oficiales: solo mover, escalar o atenuar.
 - Sin RUT de personas ni datos personales en el repositorio (el RUT de la empresa sí).
 - Los textos legales son un borrador: recomendar revisión de un abogado antes de publicar.
+
+## Panel de pedidos (vendedores) — instalado el 14/11/2026
+- Archivo `apps-script/Panel.html` (en el proyecto de Apps Script se llama «Panel»), servido por `doGet` del mismo script.
+- Implementación propia: **«Panel de pedidos (vendedores)»**, versión 4, «Ejecutar como: usuario que accede», «Cualquier persona con cuenta de Google». URL: https://script.google.com/macros/s/AKfycbxONgjXb60YrstnwakNqI3futdIfO6EOXTKx5oLBrNvPdntemqaJVQiNoIf2alIPPSX/exec
+- Solo entra quien tiene acceso a la planilla «EM27-0802 Pedidos y clientes Catálogo Sabroso» (para sumar un vendedor, compartirle la planilla). Lee la planilla cada 12 s.
+- La implementación del catálogo (AKfycbzP_…) quedó en la versión 3 con el mismo código; a un visitante anónimo solo le responde «activo».
+- Estados: Por confirmar → Confirmado (casilla) → Preparado → Entregado / Anulado; «No llegó» si nadie confirma en 24 h. La planilla quedó en hora de Chile (America/Santiago).
+- Para pegar código nuevo en el editor: el editor de Apps Script no acepta pegar con el teclado desde el navegador del panel; se aplican los cambios con `monaco.editor.getModels()[i].pushEditOperations` y se comprueba con una huella antes de guardar.
