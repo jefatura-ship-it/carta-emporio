@@ -168,3 +168,11 @@ David no quiere que la dirección diga «jefatura»; eligió **avicolasb.com**, 
 - La implementación del catálogo (AKfycbzP_…) quedó en la versión 6 con el mismo código (guarda el correo en la columna «Correo» de Pedidos); a un visitante anónimo solo le responde «activo».
 - Estados: Por confirmar → Confirmado (casilla) → Preparado → Entregado / Anulado; «No llegó» si nadie confirma en 24 h. La planilla quedó en hora de Chile (America/Santiago).
 - Para pegar código nuevo en el editor: el editor de Apps Script no acepta pegar con el teclado desde el navegador del panel; se aplican los cambios con `monaco.editor.getModels()[i].pushEditOperations` y se comprueba con una huella antes de guardar.
+
+## Editor del catálogo (solo para David) — creado el 14/11/2026
+- Carpeta `herramientas/editor/` (no se publica: el despliegue solo copia index.html, legal.html, carta, web, img, js, modelos, video y fonts).
+- Se abre con «Editor del catálogo» en el escritorio de David (`Abrir editor del catálogo.bat`): enciende `python -m http.server 8791 --bind 127.0.0.1` en la raíz del repo y abre `http://localhost:8791/herramientas/editor/`.
+- Vista en vivo de `carta/index.html` (iframe con srcdoc y `<base href="/carta/">`), en celular, tablet o PC, con «Ver antes».
+- Herramientas: colores de marca con revisión de contraste, menú y orden (familias y secciones), vitrina, productos y precios (en huevos el precio es POR HUEVO), promos, ofertas por formato, textos, «Elegir en la vista» (estilo por selector), opciones, CSS libre, deshacer y rehacer. El borrador se guarda en el navegador.
+- Motor compartido `herramientas/editor/cambios.js` (navegador y Node). David descarga `cambios-catalogo-AAAA-MM-DD-HHMM.json` y pide «aplica los cambios del editor»: `node herramientas/editor/aplicar.js` (sin argumentos toma el más reciente de Descargas; `--solo-ver` no modifica). Luego probar y publicar con su sí.
+- Los estilos del editor quedan en carta/index.html entre `/* ==== EDITOR DEL CATÁLOGO: inicio …` y `… fin ==== */`, con sus datos en `/* EDITOR-DATOS {…} */` para volver a editarlos.
