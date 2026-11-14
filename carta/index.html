@@ -755,6 +755,15 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 .garantias li::before{content:"";position:absolute;left:12px;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--campo) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M5 12.5l4.5 4.5L19 7.5%27/%3E%3C/svg%3E") center/11px no-repeat}
 /* Ayuda bajo un campo del pedido */
 .campo .ayuda{font-size:12.5px;color:var(--suave);margin-top:4px}
+/* Celular con +56 fijo */
+.tel-grupo{display:flex;align-items:stretch;border:1px solid var(--linea);border-radius:10px;background:#fff;overflow:hidden}
+.tel-grupo:focus-within{outline:3px solid var(--trigo);outline-offset:1px;border-color:var(--campo)}
+.tel-pref{display:flex;align-items:center;padding:0 10px 0 12px;background:var(--masa);color:var(--tinta);font-weight:800;font-size:16px;border-right:1px solid var(--linea);font-variant-numeric:tabular-nums}
+.campo .tel-grupo input{flex:1;min-width:0;border:0;border-radius:0;outline:none;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.campo.err .tel-grupo{border-color:#c0392b}
+/* Pedido a nombre del cliente con cuenta */
+.anombre{margin:12px 0 4px;padding:10px 12px;border-radius:10px;background:#eef6f0;color:var(--tinta);font-size:14.5px}
+.anombre b{color:var(--campo)}
 </style>
 </head>
 <body>
@@ -945,7 +954,7 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
         <div class="campo"><label for="rA1">Apellido paterno</label><input id="rA1" autocomplete="family-name" required aria-required="true"></div>
         <div class="campo"><label for="rA2">Apellido materno <small>(opcional)</small></label><input id="rA2"></div>
       </div>
-      <div class="campo"><label for="rTel">Celular</label><input id="rTel" type="tel" inputmode="tel" autocomplete="tel" placeholder="+56 9 1234 5678" required aria-required="true"></div>
+      <div class="campo"><label for="rTel">Celular <span class="sr">(el +56 ya está puesto: escriba desde el 9)</span></label><div class="tel-grupo"><span class="tel-pref" aria-hidden="true">+56</span><input id="rTel" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="9 1234 5678" maxlength="11" required aria-required="true"></div></div>
       <label class="check"><input type="checkbox" id="rEdad"><span>Tengo 18 años o más y acepto la <a href="../legal.html#privacidad" target="_blank" rel="noopener">política de privacidad</a>.</span></label>
       <label class="check"><input type="checkbox" id="rOk"><span>Quiero recibir ofertas por WhatsApp o teléfono <span class="opc">(opcional)</span>. Puedo darme de baja cuando quiera.</span></label>
       <p class="msgreg" id="rMsg" role="alert" hidden></p>
@@ -968,14 +977,15 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
         <li>Si un precio cambia, te avisamos antes y puedes desistir sin costo</li>
       </ul>
       <div class="alerta" id="alertaTapas" role="status" aria-live="polite" hidden></div>
+      <p class="anombre" id="aNombre" hidden></p>
       <div class="campo" id="campoNombre">
         <label for="nombre">Tu nombre</label>
         <input id="nombre" autocomplete="name" placeholder="Para identificar tu pedido">
         <div class="msg" id="msgNombre" hidden>Escribe tu nombre para que sepamos de quién es el pedido.</div>
       </div>
       <div class="campo" id="campoCel">
-        <label for="celPedido">Tu celular <span class="opc">(opcional)</span></label>
-        <input id="celPedido" type="tel" inputmode="tel" autocomplete="tel" placeholder="9 1234 5678" maxlength="16">
+        <label for="celPedido">Tu celular <span class="opc">(opcional)</span><span class="sr"> (el +56 ya está puesto: escriba desde el 9)</span></label>
+        <div class="tel-grupo"><span class="tel-pref" aria-hidden="true">+56</span><input id="celPedido" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="9 1234 5678" maxlength="11"></div>
         <div class="ayuda">Para avisarte por WhatsApp cuando tu pedido esté listo.</div>
         <div class="msg" id="msgCel" hidden>Revisa el número: un celular chileno tiene 9 dígitos y empieza con 9.</div>
       </div>
@@ -1540,7 +1550,12 @@ const DCTO=promoActiva()?(L.descuentoRegistro||0):0;
 let cliente=null;
 try{cliente=JSON.parse(localStorage.getItem("cliente-"+KEY)||"null")}catch(e){cliente=null}
 const nombreCompleto=c=>[c.n1,c.n2,c.a1,c.a2].filter(Boolean).join(" ");
+const escHTML=t=>String(t).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
 const celular=s=>{const d=String(s).replace(/\D/g,"").replace(/^56/,"");return /^9\d{8}$/.test(d)?"+56"+d:null};
+/* Celular: el +56 va fijo al lado del campo; el cliente escribe desde el 9 y queda ordenado como 9 1234 5678 */
+const soloCel=v=>{let d=String(v||"").replace(/\D/g,"");if(d.length>9&&d.startsWith("56"))d=d.slice(2);d=d.replace(/^[^9]+/,"");return d.slice(0,9)}; // siempre parte en 9
+const formatoCel=v=>{const d=soloCel(v);return d.length>5?d[0]+" "+d.slice(1,5)+" "+d.slice(5):d.length>1?d[0]+" "+d.slice(1):d};
+["rTel","celPedido"].forEach(id=>{const el=$(id);if(el)el.addEventListener("input",()=>{const f=formatoCel(el.value);if(el.value!==f){el.value=f;try{el.setSelectionRange(f.length,f.length)}catch(e){}}})});
 /* Código de cliente: lo asigna la planilla (E-0001 en el Emporio, D-0001 en la Distribuidora) para que no se repita.
    Mientras no responda (o REGISTRO_URL esté vacía) se usa uno provisorio: prefijo + "-P" + últimos 4 dígitos del celular.
    cliente.codigo = el que se muestra; cliente.codigoOk = true cuando ya viene de la planilla. */
@@ -1608,7 +1623,7 @@ $("regBtn").onclick=()=>{
     :`Regístrate en ${L.nombre} para que te avisemos de ofertas y productos nuevos.`;
   const c=cliente||{};
   $("rN1").value=c.n1||""; $("rN2").value=c.n2||""; $("rA1").value=c.a1||""; $("rA2").value=c.a2||"";
-  $("rTel").value=c.tel||""; $("rOk").checked=!!c.acepta; $("rEdad").checked=!!cliente; $("rMsg").hidden=true;
+  $("rTel").value=formatoCel(c.tel||""); $("rOk").checked=!!c.acepta; $("rEdad").checked=!!cliente; $("rMsg").hidden=true;
   $("rSalir").hidden=!cliente;
   $("rGuardar").textContent=cliente?"Guardar mis datos":"Ingresar o registrarme";
   $("regIngreso").hidden=!!cliente;
@@ -2318,7 +2333,10 @@ function abrirRevision(){
   abrirHoja("velo",$("cerrar"));
   $("nombre").value||($("nombre").value=leePref("nombre-cliente")||"");
   $("campoCel").hidden=!!(cliente&&cliente.tel);
-  $("celPedido").value||($("celPedido").value=leePref("celular-cliente")||"");
+  const conCuenta=!!(cliente&&cliente.n1&&cliente.a1);
+  $("campoNombre").hidden=conCuenta; $("aNombre").hidden=!conCuenta;
+  if(conCuenta){$("nombre").value=nombreCompleto(cliente);$("aNombre").innerHTML=`Pedido a nombre de <b>${escHTML(nombreCompleto(cliente))}</b>${cliente.codigo?` · ${escHTML(cliente.codigo)}`:""}`}
+  $("celPedido").value||($("celPedido").value=formatoCel(leePref("celular-cliente")||""));
   actualizarEnlaces();
 };
 const cerrar=()=>cerrarHoja("velo");
