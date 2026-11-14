@@ -622,6 +622,7 @@ function panelDatos() {
   const notas = n > 1 ? hoja.getRange(2, CP['Estado'], n - 1, 1).getNotes() : [];
   const pedidos = filas.map(function (f, i) {
     const aviso = String((notas[i] || [''])[0] || '').match(/Avisado por (WhatsApp|correo) por \S+ el (\d{2}\/\d{2}\/\d{4} \d{2}:\d{2})/);
+    const atiende = String((notas[i] || [''])[0] || '').match(/Aviso al cliente por (correo|WhatsApp): (.+?) atiende su pedido/);
     const codigo = String(valor(f, 'Código del pedido') || ''), dia = valor(f, 'Día de retiro'), rec = valor(f, 'Recibido'), hora = valor(f, 'Hora');
     return {
       codigo: codigo,
@@ -644,6 +645,8 @@ function panelDatos() {
       avisado: !!aviso,
       avisadoPor: aviso ? aviso[1] : '',
       avisadoEl: aviso ? aviso[2] : '',
+      avisoAtiende: atiende ? atiende[1] : '',
+      avisoAtiendeQuien: atiende ? atiende[2] : '',
       items: items[codigo] || []
     };
   }).filter(function (p) {
@@ -655,7 +658,9 @@ function panelDatos() {
 // Cambia el estado de un pedido desde el panel (con la casilla al día y una nota de quién lo hizo y cuándo).
 // avisado: el vendedor abrió WhatsApp ('wsp') o el correo ('correo') con el aviso de «listo» en el mismo toque.
 // prepara: quién prepara el pedido (se elige al confirmarlo).
-function panelCambiar(codigo, estado, avisado, prepara) {
+// avisoWsp: SabAPP abrió WhatsApp con «X atenderá tu pedido» (cliente en el local sin correo).
+function panelCambiar(codigo, estado, avisado, prepara, avisoWsp) {
+  let avisoAtiende = null;
   const usuario = exigirVendedor();
   if (ESTADOS.indexOf(estado) < 0) throw new Error('Estado no válido.');
   const candado = LockService.getScriptLock();
@@ -666,10 +671,12 @@ function panelCambiar(codigo, estado, avisado, prepara) {
     anotarEnEstado(hoja, fila, estado + ' por ' + usuario);
     if (avisado === true || avisado === 'wsp') anotarEnEstado(hoja, fila, 'Avisado por WhatsApp por ' + usuario);
     if (avisado === 'correo') anotarEnEstado(hoja, fila, 'Avisado por correo por ' + usuario);
-    if (prepara) asignarPreparacion(hoja, fila, prepara, usuario);
+    if (prepara) avisoAtiende = asignarPreparacion(hoja, fila, prepara, usuario, avisoWsp);
     hoja.getRange(fila, CP['Confirmado']).setValue(CONFIRMADOS.indexOf(estado) >= 0);
   } finally { candado.releaseLock(); }
-  return panelDatos();
+  const d = panelDatos();
+  if (avisoAtiende) d.avisoAtiende = avisoAtiende;
+  return d;
 }
 
 // El vendedor abrió WhatsApp o el correo para avisar al cliente que su pedido está listo: queda anotado (lo ven todos los PC).
@@ -685,21 +692,68 @@ function panelAvisado(codigo, medio) {
 }
 
 // Cambia quién prepara un pedido ya confirmado.
-function panelAsignar(codigo, prepara) {
+function panelAsignar(codigo, prepara, avisoWsp) {
   const usuario = exigirVendedor();
   const candado = LockService.getScriptLock();
+  let avisoAtiende = null;
   candado.waitLock(15000);
   try {
     const hoja = hojaPedidos();
-    asignarPreparacion(hoja, filaDelPedido(hoja, codigo), prepara, usuario);
+    avisoAtiende = asignarPreparacion(hoja, filaDelPedido(hoja, codigo), prepara, usuario, avisoWsp);
   } finally { candado.releaseLock(); }
-  return panelDatos();
+  const d = panelDatos();
+  if (avisoAtiende) d.avisoAtiende = avisoAtiende;
+  return d;
 }
 
-function asignarPreparacion(hoja, fila, prepara, usuario) {
+// Anota quién prepara. Si el cliente espera en el local y es la primera vez que se elige a alguien,
+// se le avisa «Sofía atenderá tu pedido…»: por correo lo envía este script al instante; por WhatsApp lo abre SabAPP.
+function asignarPreparacion(hoja, fila, prepara, usuario, avisoWsp) {
   if (VENDEDORES.indexOf(prepara) < 0) throw new Error('Esa persona no está en la lista de vendedores.');
+  const f = hoja.getRange(fila, 1, 1, COLUMNAS_PEDIDOS.length).getValues()[0];
+  const v = function (nombre) { return f[CP[nombre] - 1]; };
+  const antes = String(v('Prepara') || '');
   hoja.getRange(fila, CP['Prepara']).setValue(prepara);
   anotarEnEstado(hoja, fila, 'Prepara ' + prepara + ' (asignado por ' + usuario + ')');
+  if (antes || String(v('Hora')) !== EN_LOCAL) return null;
+  const correo = correoValido(v('Correo'));
+  if (correo) {
+    try {
+      enviarCorreoAtiende(correo, String(v('Cliente') || ''), String(v('Código del pedido') || ''), prepara);
+      anotarEnEstado(hoja, fila, 'Aviso al cliente por correo: ' + prepara + ' atiende su pedido');
+      return { medio: 'correo', ok: true, prepara: prepara };
+    } catch (err) {
+      const msg = String(err && err.message || err).slice(0, 150);
+      anotarEnEstado(hoja, fila, 'No se pudo enviar el correo al cliente: ' + msg);
+      return { medio: 'correo', ok: false, error: msg, prepara: prepara };
+    }
+  }
+  if (avisoWsp) {
+    anotarEnEstado(hoja, fila, 'Aviso al cliente por WhatsApp: ' + prepara + ' atiende su pedido');
+    return { medio: 'wsp', ok: true, prepara: prepara };
+  }
+  return null;
+}
+
+// Correo «Sofía atenderá tu pedido…» (sale de la cuenta dueña del script, con el nombre Emporio Sabroso).
+function enviarCorreoAtiende(correo, cliente, codigo, prepara) {
+  const html = function (t) { return String(t).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); };
+  const nombre = /^\(/.test(cliente) ? '' : String(cliente).trim().split(/\s+/)[0] || '';
+  const saludo = nombre ? '¡Hola ' + nombre.charAt(0).toUpperCase() + nombre.slice(1) + '!' : '¡Hola!';
+  MailApp.sendEmail({
+    to: correo,
+    name: 'Emporio Sabroso',
+    subject: prepara + ' atenderá tu pedido ' + codigo + ' · Emporio Sabroso',
+    body: saludo + ' ' + prepara + ' atenderá tu pedido ' + codigo + ', ¡lo estamos preparando!\n\nTe lo entregamos en el mesón.\nEmporio Sabroso · Arturo Prat 720, Chillán',
+    htmlBody: '<div style="font:16px/1.5 Arial,Helvetica,sans-serif;color:#1c1c1a">'
+      + '<p style="margin:0 0 12px">' + html(saludo) + ' <b>' + html(prepara) + '</b> atenderá tu pedido <b>' + html(codigo) + '</b>, ¡lo estamos preparando!</p>'
+      + '<p style="margin:0;color:#66645c;font-size:14px">Te lo entregamos en el mesón.<br>Emporio Sabroso · Arturo Prat 720, Chillán</p></div>'
+  });
+}
+
+// Ejecutar UNA vez desde el editor con la cuenta dueña: da el permiso de enviar correos (no envía nada).
+function autorizarCorreo() {
+  Logger.log('Permiso de correo listo. Correos que quedan hoy: ' + MailApp.getRemainingDailyQuota());
 }
 
 function filaDelPedido(hoja, codigo) {

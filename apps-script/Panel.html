@@ -356,6 +356,18 @@ function wspEnlace(p, tipo) {
   if (!/^569\d{8}$/.test(num)) return '';
   return 'https://wa.me/' + num + '?text=' + encodeURIComponent(mensaje(p, tipo));
 }
+// «Sofía atenderá tu pedido…» para el cliente que espera en el local
+function mensajeAtiende(p, quien) {
+  var nom = /^\(/.test(p.cliente || '') ? '' : String(p.cliente || '').trim().split(/\s+/)[0];
+  nom = nom ? nom.charAt(0).toUpperCase() + nom.slice(1) : '';
+  return '¡Hola' + (nom ? ' ' + nom : '') + '! ' + quien + ' atenderá tu pedido ' + p.codigo + ', ¡lo estamos preparando! Te lo entregamos en el mesón de Emporio Sabroso.';
+}
+// Se avisa a quien está en el local la primera vez que se elige quién lo atiende: por correo (lo envía la planilla) o por WhatsApp (se abre aquí)
+function avisoAtiendePor(p) {
+  if (!p || !enLocal(p) || p.prepara) return '';
+  if (correoEnlace(p, 'listo')) return 'correo';
+  return wspEnlace(p, 'listo') ? 'wsp' : '';
+}
 function asunto(p, tipo) {
   return tipo === 'listo' ? 'Su pedido ' + p.codigo + ' está listo para retirar · Emporio Sabroso' : 'Pedido ' + p.codigo + ' confirmado · Emporio Sabroso';
 }
@@ -422,6 +434,7 @@ function tarjeta(p) {
     + (enLocal(p) ? '<div class="p-ret local">🛍️ Está en el local · ' + esc(diaLargo(p.dia)) + ' ' + etiquetaDia(p.dia) + '</div>'
       : '<div class="p-ret">Retira ' + esc(diaLargo(p.dia)) + ' · ' + esc(p.hora || 'lo antes posible') + ' ' + etiquetaDia(p.dia) + '</div>')
     + chipPrepara(p, cerrado)
+    + (p.avisoAtiende && p.prepara && !cerrado ? '<div class="p-avisado">✓ Le avisamos por ' + (p.avisoAtiende === 'correo' ? 'correo' : 'WhatsApp') + ' que ' + esc(p.avisoAtiendeQuien || p.prepara) + ' lo atiende</div>' : '')
     + '<ul class="p-items">' + verItems.map(function (x) { return '<li><b>' + x.q + ' ×</b><span>' + esc(x.nombre) + (x.cod ? ' <small class="p-sku">' + esc(x.cod) + '</small>' : '') + '</span></li>'; }).join('') + '</ul>'
     + (largo ? '<button type="button" class="p-mas" data-abrir="' + esc(p.codigo) + '">Ver los ' + items.length + ' productos</button>' : '')
     + (p.comentario ? '<div class="p-nota">💬 ' + esc(p.comentario) + '</div>' : '')
@@ -464,8 +477,10 @@ function elegirQuienPrepara(cod, modo) {
   var p = pedido(cod); if (!p) return;
   var ultimo = ''; try { ultimo = localStorage.getItem('panel-ultimo-prepara') || ''; } catch (e) {}
   modalDe = { cod: cod, modo: modo, volver: document.activeElement };
+  var por = avisoAtiendePor(p);
   $('mSub').textContent = p.codigo + ' · ' + (p.cliente || '(sin nombre)') + ' · ' + (enLocal(p) ? 'está en el local' : 'retira ' + diaLargo(p.dia))
-    + (modo === 'confirmar' ? '. Al elegir, el pedido queda confirmado.' : '.');
+    + (modo === 'confirmar' ? '. Al elegir, el pedido queda confirmado.' : '.')
+    + (por === 'correo' ? ' Le enviamos al cliente un correo: «(nombre) atenderá tu pedido».' : por === 'wsp' ? ' Se abre WhatsApp con el aviso para el cliente: «(nombre) atenderá tu pedido».' : '');
   $('mVend').innerHTML = datos.vendedores.map(function (n) {
     var cl = n === p.prepara ? 'actual' : (!p.prepara && n === ultimo ? 'ult' : '');
     return '<button type="button" data-vend="' + esc(n) + '"' + (cl ? ' class="' + cl + '"' : '') + '><i aria-hidden="true">' + esc(iniciales(n)) + '</i>' + esc(n)
@@ -483,11 +498,17 @@ function quienPrepara(nombre) {
   var m = modalDe; if (!m) return;
   cerrarModal();
   try { localStorage.setItem('panel-ultimo-prepara', nombre); } catch (e) {}
-  if (m.modo === 'confirmar') { cambiarEstado(m.cod, 'Confirmado', false, nombre); return; }
-  var p = pedido(m.cod), antes = p ? p.prepara : '';
+  var p = pedido(m.cod), por = avisoAtiendePor(p), avisoWsp = false;
+  if (por === 'wsp') { // se abre en el mismo toque (si no, el navegador lo bloquea)
+    var num = String(p.celular).replace(/\D/g, '');
+    window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(mensajeAtiende(p, nombre)), '_blank', 'noopener');
+    avisoWsp = true;
+  }
+  if (m.modo === 'confirmar') { cambiarEstado(m.cod, 'Confirmado', false, nombre, avisoWsp); return; }
+  var antes = p ? p.prepara : '';
   if (p) p.prepara = nombre;
   ocupado[m.cod] = true; pintar();
-  servidor('panelAsignar', [m.cod, nombre], function (d) { delete ocupado[m.cod]; recibir(d); estadoConexion(true); avisar(m.cod + ': prepara ' + nombre); },
+  servidor('panelAsignar', [m.cod, nombre, avisoWsp], function (d) { delete ocupado[m.cod]; recibir(d); estadoConexion(true); avisar(textoAviso(m.cod, 'prepara ' + nombre, d.avisoAtiende)); },
     function (err) { delete ocupado[m.cod]; if (p) p.prepara = antes; pintar(); avisar('No se pudo guardar: ' + String(err && err.message || err)); });
 }
 document.addEventListener('keydown', function (e) {
@@ -500,16 +521,23 @@ document.addEventListener('keydown', function (e) {
   }
 });
 
-function cambiarEstado(cod, est, conAviso, prepara) {
+// Texto del aviso de abajo a la derecha, con el resultado del aviso al cliente
+function textoAviso(cod, hecho, a) {
+  if (!a) return cod + ': ' + hecho;
+  if (a.medio === 'correo') return a.ok ? cod + ': ' + hecho + ' · correo enviado al cliente («' + a.prepara + ' atenderá tu pedido»)' : cod + ': ' + hecho + ' · NO se pudo enviar el correo al cliente';
+  return cod + ': ' + hecho + ' · se abrió WhatsApp con el aviso: falta tocar Enviar';
+}
+
+function cambiarEstado(cod, est, conAviso, prepara, avisoWsp) {
   delete seguro[cod + '>' + est]; delete nuevos[cod];
   ocupado[cod] = true;
   var p = pedido(cod);
   var antes = p ? p.estado : '', antesP = p ? p.prepara : '';
   if (p) { p.estado = est; if (prepara) p.prepara = prepara; } // se ve al instante; la planilla confirma enseguida
   pintar();
-  servidor('panelCambiar', [cod, est, conAviso, prepara || ''], function (d) {
+  servidor('panelCambiar', [cod, est, conAviso, prepara || '', !!avisoWsp], function (d) {
     delete ocupado[cod]; recibir(d); estadoConexion(true);
-    avisar(cod + ': ' + est.toLowerCase() + (prepara ? ' · prepara ' + prepara : ''));
+    avisar(textoAviso(cod, est.toLowerCase() + (prepara ? ' · prepara ' + prepara : ''), d.avisoAtiende));
   }, function (err) {
     delete ocupado[cod]; if (p) { p.estado = antes; p.prepara = antesP; } pintar();
     avisar('No se pudo guardar: ' + String(err && err.message || err));
