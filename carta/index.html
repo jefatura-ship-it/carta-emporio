@@ -2265,7 +2265,10 @@ function nuevoCodigo(){
 function textoPedido(){
   const nom=$("nombre").value.trim()||"(sin nombre)";
   const hora=(fechaRetLarga($("fechaRet").value)||"Hoy")+" · "+($("hora").value?"a las "+$("hora").value:"lo antes posible");
-  let t=`PEDIDO ${codigo} · ${L.nombre}\nCliente: ${nom}\n`;
+  /* Fecha y hora en que se envía o copia el pedido: queda escrita en el chat aunque no haya otros mensajes */
+  const ahora=new Date(),p2=n=>String(n).padStart(2,"0");
+  const hecho=`${DIAS[ahora.getDay()]} ${p2(ahora.getDate())}/${p2(ahora.getMonth()+1)}/${ahora.getFullYear()} a las ${p2(ahora.getHours())}:${p2(ahora.getMinutes())}`;
+  let t=`PEDIDO ${codigo} · ${L.nombre}\nFecha del pedido: ${hecho}\nCliente: ${nom}\n`;
   if(cliente)t+=`Cliente registrado${cliente.codigo?" "+cliente.codigo+(cliente.codigoOk?"":" (provisorio)"):""}: ${nombreCompleto(cliente)} · ${cliente.tel}${cliente.acepta?" · acepta ofertas":""}\n`;
   t+=`Retira: ${hora}\n\n`;
   t+=items().map(x=>`${x.q} x ${x.nombre}${x.detalle?" ("+x.detalle+")":""}${x.mayor?" [precio por mayor "+clp(x.precio)+(x.paq?" c/paquete]":" c/u]"):""} = ${sub(x)}`).join("\n");
