@@ -753,6 +753,8 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 .garantias{list-style:none;margin:12px 0 4px;padding:0;display:grid;gap:8px}
 .garantias li{position:relative;padding:8px 12px 8px 38px;border-radius:12px;background:#eef6f0;color:var(--tinta);font-size:14px;line-height:1.35}
 .garantias li::before{content:"";position:absolute;left:12px;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--campo) url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27white%27 stroke-width=%273.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3E%3Cpath d=%27M5 12.5l4.5 4.5L19 7.5%27/%3E%3C/svg%3E") center/11px no-repeat}
+/* Ayuda bajo un campo del pedido */
+.campo .ayuda{font-size:12.5px;color:var(--suave);margin-top:4px}
 </style>
 </head>
 <body>
@@ -970,6 +972,12 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
         <label for="nombre">Tu nombre</label>
         <input id="nombre" autocomplete="name" placeholder="Para identificar tu pedido">
         <div class="msg" id="msgNombre" hidden>Escribe tu nombre para que sepamos de quién es el pedido.</div>
+      </div>
+      <div class="campo" id="campoCel">
+        <label for="celPedido">Tu celular <span class="opc">(opcional)</span></label>
+        <input id="celPedido" type="tel" inputmode="tel" autocomplete="tel" placeholder="9 1234 5678" maxlength="16">
+        <div class="ayuda">Para avisarte por WhatsApp cuando tu pedido esté listo.</div>
+        <div class="msg" id="msgCel" hidden>Revisa el número: un celular chileno tiene 9 dígitos y empieza con 9.</div>
       </div>
       <div class="campo" id="campoHora">
         <span class="lbl">¿Para cuándo quieres tu pedido?</span>
@@ -1487,7 +1495,7 @@ $("otra").innerHTML=`¿Buscas el catálogo de ${LOCALES[otraKey].nombre}? <a hre
    Necesario: el pedido mientras se arma y el registro que el cliente hace a propósito.
    Opcional (solo con "Aceptar todo"): recordar el nombre y las preferencias de tapa / paquete-unidad. */
 let permiso=null; try{permiso=localStorage.getItem("permiso-datos")}catch(e){}
-const PREFS=["nombre-cliente","tapas-emporio","tapas-distribuidora","modos-emporio","modos-distribuidora"];
+const PREFS=["nombre-cliente","celular-cliente","tapas-emporio","tapas-distribuidora","modos-emporio","modos-distribuidora"];
 const guardaPref=(k,v)=>{if(permiso!=="todo")return;try{localStorage.setItem(k,v)}catch(e){}};
 const leePref=k=>{if(permiso!=="todo")return null;try{return localStorage.getItem(k)}catch(e){return null}};
 function decidir(v){
@@ -1510,7 +1518,7 @@ const pedidosAnotados=new Set();
 function anotarPedido(){
   if(!REGISTRO_URL||!codigo||pedidosAnotados.has(codigo))return;pedidosAnotados.add(codigo);
   const its=items().map(x=>({cod:x.cod,nombre:x.nombre,q:x.q,uds:x.uds||x.q,precio:x.precio}));
-  const d={tipo:"pedido",local:KEY,codigo,nombre:$("nombre").value.trim().slice(0,80),tel:cliente&&cliente.tel||"",codigoCliente:cliente&&cliente.codigo||"",
+  const d={tipo:"pedido",local:KEY,codigo,nombre:$("nombre").value.trim().slice(0,80),tel:cliente&&cliente.tel||celPedido(),codigoCliente:cliente&&cliente.codigo||"",
     fechaRetiro:$("fechaRet").value,hora:$("hora").value||"Lo antes posible",items:its,total:totalFinal(),nota:($("nota").value||"").trim().slice(0,300)};
   try{fetch(REGISTRO_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(d)})}catch(e){}
 }
@@ -1646,6 +1654,8 @@ const FAV="Ofertas y promos";
 /* las tapas no van como producto aparte: cada envase/pote se vende con 1 tapa (1 envase = 1 tapa) */
 /* Promociones armadas (no son un producto del inventario): se venden como un solo ítem */
 L.productos.push({cod:"PROMO-GYMBRO",cat:"Promos",nombre:"Promo Gym Bro: bandeja de 30 huevos tercera + Monster Ultra",detalle:"Monster Ultra blanca, sin azúcar · bebida no recomendada para menores de 18 años, embarazadas ni personas sensibles a la cafeína",precio:3800,fav:true,promo:true,foto:"../img/productos/monster.webp"});
+L.productos.push({cod:"PROMO-EXTRA-RC",cat:"Promos",nombre:"Promo huevo extra + queso chanco Río Cruces ¼ kg",detalle:"Bandeja de 30 huevos extra (blanco o café) y ¼ kg de queso chanco Río Cruces · 5 % menos que por separado",precio:7450,fav:true,promo:true,foto:"../img/huevos-blancos-bandeja.jpg"});
+L.productos.push({cod:"PROMO-EXTRA-DI",cat:"Promos",nombre:"Promo huevo extra + queso chanco Don Isidro ¼ kg",detalle:"Bandeja de 30 huevos extra (blanco o café) y ¼ kg de queso chanco Don Isidro · 5 % menos que por separado",precio:7400,fav:true,promo:true,foto:"../img/huevos-blancos-bandeja.jpg"});
 const PROD=Object.fromEntries(L.productos.map(p=>[p.cod,p]));
 const esPieza=p=>p.cat==="Tapas"||p.cat==="Blondas"; // piezas que van incluidas en otro producto, no se venden solas
 const pieza=t=>t&&t.cat==="Blondas"?"blonda":"tapa", porQue=t=>t&&t.cat==="Blondas"?"bandeja":"envase";
@@ -2262,6 +2272,8 @@ function nuevoCodigo(){
   const d=new Date(),p=n=>String(n).padStart(2,"0");
   return L.pref+p(d.getDate())+p(d.getMonth()+1)+"-"+p(d.getHours())+p(d.getMinutes());
 }
+/* Celular del pedido (opcional): +569XXXXXXXX, o vacío si no lo dejó o no es válido */
+const celPedido=()=>{const d=($("celPedido").value||"").replace(/\D/g,"").replace(/^56/,"");return /^9\d{8}$/.test(d)?"+56"+d:""};
 function textoPedido(){
   const nom=$("nombre").value.trim()||"(sin nombre)";
   const hora=(fechaRetLarga($("fechaRet").value)||"Hoy")+" · "+($("hora").value?"a las "+$("hora").value:"lo antes posible");
@@ -2270,6 +2282,7 @@ function textoPedido(){
   const hecho=`${DIAS[ahora.getDay()]} ${p2(ahora.getDate())}/${p2(ahora.getMonth()+1)}/${ahora.getFullYear()} a las ${p2(ahora.getHours())}:${p2(ahora.getMinutes())}`;
   let t=`PEDIDO ${codigo} · ${L.nombre}\nFecha del pedido: ${hecho}\nCliente: ${nom}\n`;
   if(cliente)t+=`Cliente registrado${cliente.codigo?" "+cliente.codigo+(cliente.codigoOk?"":" (provisorio)"):""}: ${nombreCompleto(cliente)} · ${cliente.tel}${cliente.acepta?" · acepta ofertas":""}\n`;
+  if(!cliente&&celPedido())t+=`Celular: ${celPedido()} (avisar por WhatsApp cuando esté listo)\n`;
   t+=`Retira: ${hora}\n\n`;
   t+=items().map(x=>`${x.q} x ${x.nombre}${x.detalle?" ("+x.detalle+")":""}${x.mayor?" [precio por mayor "+clp(x.precio)+(x.paq?" c/paquete]":" c/u]"):""} = ${sub(x)}`).join("\n");
   if(dcto())t+=`\n\nSUBTOTAL: ${clp(total())}\nDESCUENTO BIENVENIDA ${DCTO}% (1 sola vez, precio normal): -${clp(dcto())}\nTOTAL APROX.: ${clp(totalFinal())}`;
@@ -2284,8 +2297,11 @@ function actualizarEnlaces(){
 function nombreOk(){if(!fechaOk()){$("fechaRet").focus();return false}
   const ok=!!$("nombre").value.trim();
   $("campoNombre").classList.toggle("err",!ok); $("msgNombre").hidden=ok;
-  if(!ok)$("nombre").focus();
-  return ok;
+  if(!ok){$("nombre").focus();return false}
+  const v=$("celPedido").value.trim(),bien=$("campoCel").hidden||!v||!!celPedido();
+  $("campoCel").classList.toggle("err",!bien); $("msgCel").hidden=bien;
+  if(!bien)$("celPedido").focus();
+  return bien;
 }
 
 function abrirRevision(){
@@ -2301,6 +2317,8 @@ function abrirRevision(){
   actualizarEnlaces();
   abrirHoja("velo",$("cerrar"));
   $("nombre").value||($("nombre").value=leePref("nombre-cliente")||"");
+  $("campoCel").hidden=!!(cliente&&cliente.tel);
+  $("celPedido").value||($("celPedido").value=leePref("celular-cliente")||"");
   actualizarEnlaces();
 };
 const cerrar=()=>cerrarHoja("velo");
@@ -2330,11 +2348,12 @@ $("alertaTapas").addEventListener("click",e=>{
 });
 $("cerrar").onclick=cerrar;
 $("velo").addEventListener("click",e=>{if(e.target===$("velo"))cerrar()});
-["nombre","hora","nota"].forEach(id=>$(id).addEventListener("input",()=>{
+["nombre","celPedido","hora","nota"].forEach(id=>$(id).addEventListener("input",()=>{
   if(id==="nombre"&&$("nombre").value.trim()){$("campoNombre").classList.remove("err");$("msgNombre").hidden=true}
+  if(id==="celPedido"){$("campoCel").classList.remove("err");$("msgCel").hidden=true}
   actualizarEnlaces();
 }));
-const recordarNombre=()=>guardaPref("nombre-cliente",$("nombre").value.trim());
+const recordarNombre=()=>{guardaPref("nombre-cliente",$("nombre").value.trim());if(celPedido())guardaPref("celular-cliente",celPedido().replace(/^\+56/,""))};
 const listo=msg=>{$("ok").textContent=msg;$("ok").hidden=false};
 
 $("bWsp").addEventListener("click",e=>{
@@ -2424,7 +2443,7 @@ document.addEventListener("keydown",e=>{
     aviso("Se abrió WhatsApp con tu solicitud lista: envíala y te avisaremos cuando tus datos estén eliminados. Para borrarlos también de este celular, usa el botón «Borrar mis datos de este celular».");
   });
   $("bBorrar").onclick=()=>{
-    try{Object.keys(localStorage).filter(k=>/^(pedido-|cliente-|tapas-|modos-|nombre-cliente|permiso-datos)/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}
+    try{Object.keys(localStorage).filter(k=>/^(pedido-|cliente-|tapas-|modos-|nombre-cliente|celular-cliente|permiso-datos)/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}
     aviso("Listo: se borró de este celular tu pedido, tu registro y tus preferencias. El catálogo se va a recargar.");
     setTimeout(()=>location.reload(),1800);
   };
