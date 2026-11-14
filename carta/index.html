@@ -772,6 +772,25 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 .medio input:checked+span{border-color:var(--campo);background:#eef6f0;color:var(--campo)}
 .medio input:focus-visible+span{outline:3px solid var(--trigo);outline-offset:1px}
 .campo-sub.err .tel-grupo,.campo-sub.err input{border-color:#c0392b}
+/* ¿Dónde estás? (primer paso de la hoja del pedido) */
+.dondes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 0}
+.donde{position:relative;display:block}
+.campo .donde input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:pointer;z-index:1}
+.donde span{display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:66px;padding:10px 12px;border:1.5px solid var(--linea);border-radius:14px;background:#fff;color:var(--tinta);line-height:1.25}
+.donde b{font-size:15.5px}
+.donde small{font-size:12.5px;color:var(--suave);font-weight:500}
+.donde input:checked+span{border-color:var(--campo);background:#eef6f0;box-shadow:inset 0 0 0 1px var(--campo)}
+.donde input:checked+span b{color:var(--campo)}
+.donde input:focus-visible+span{outline:3px solid var(--trigo);outline-offset:1px}
+.campo .donde input:disabled{cursor:not-allowed}
+.donde input:disabled+span{opacity:.55}
+.campo.err .donde span{border-color:#c0392b}
+#pasoDatos{display:grid;gap:12px}
+#pasoDatos[hidden]{display:none}
+.btn.enviar{background:var(--campo);color:#fff;font-size:16px;padding:15px 18px}
+.btn.enviar:disabled{opacity:.7;cursor:default}
+.envios .bloq{opacity:.55}
+.ok.mal{color:#c0392b}
 #celCuenta{margin:0}
 </style>
 </head>
@@ -986,14 +1005,22 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
         <li>Si un precio cambia, te avisamos antes y puedes desistir sin costo</li>
       </ul>
       <div class="alerta" id="alertaTapas" role="status" aria-live="polite" hidden></div>
+      <div class="campo" id="campoModo" hidden>
+        <span class="lbl" id="modoTit">¿Dónde estás?</span>
+        <div class="dondes" role="radiogroup" aria-labelledby="modoTit">
+          <label class="donde"><input type="radio" name="modoRetiro" value="local"><span><b>Estoy en el local</b><small id="modoLocalNota">Te lo preparamos ahora</small></span></label>
+          <label class="donde"><input type="radio" name="modoRetiro" value="retiro"><span><b>Retiro más tarde</b><small>Eliges el día y la hora</small></span></label>
+        </div>
+        <div class="msg" id="msgModo" hidden>Elige una opción para seguir.</div>
+      </div>
+      <div id="pasoDatos">
       <p class="anombre" id="aNombre" hidden></p>
       <div class="campo" id="campoNombre">
-        <label for="nombre">Tu nombre</label>
+        <label for="nombre">Tu nombre <span class="opc">(opcional)</span></label>
         <input id="nombre" autocomplete="name" placeholder="Para identificar tu pedido">
-        <div class="msg" id="msgNombre" hidden>Escribe tu nombre para que sepamos de quién es el pedido.</div>
       </div>
       <div class="campo" id="campoAviso">
-        <span class="lbl" id="avisoTit">¿Cómo te avisamos cuando esté listo? <span class="opc">(opcional)</span></span>
+        <span class="lbl" id="avisoTit">¿Cómo te avisamos cuando esté listo?</span>
         <div class="medios" role="radiogroup" aria-labelledby="avisoTit">
           <label class="medio"><input type="radio" name="medioAviso" value="wsp" checked><span>WhatsApp</span></label>
           <label class="medio"><input type="radio" name="medioAviso" value="correo"><span>Correo</span></label>
@@ -1002,12 +1029,14 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
           <label for="celPedido" class="sr">Tu celular (el +56 ya está puesto: escriba desde el 9)</label>
           <div class="tel-grupo"><span class="tel-pref" aria-hidden="true">+56</span><input id="celPedido" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="9 1234 5678" maxlength="11"></div>
           <div class="msg" id="msgCel" hidden>Revisa el número: un celular chileno tiene 9 dígitos y empieza con 9.</div>
+          <p class="ayuda" id="ayudaCel">Obligatorio: lo necesitamos para enviar tu pedido.</p>
         </div>
         <p class="ayuda" id="celCuenta" hidden></p>
         <div class="campo-sub" id="campoCorreo" hidden>
           <label for="correoPedido" class="sr">Tu correo</label>
           <input id="correoPedido" type="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.cl" maxlength="80">
           <div class="msg" id="msgCorreo" hidden>Revisa el correo: debe tener la forma nombre@dominio.cl.</div>
+          <p class="ayuda">Obligatorio: lo necesitamos para enviar tu pedido.</p>
         </div>
       </div>
       <div class="campo" id="campoHora">
@@ -1024,8 +1053,9 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
         <textarea id="nota" rows="2" placeholder="Ej.: huevos blancos; si no hay, que sean café"></textarea>
       </div>
       <div class="envios">
+        <button type="button" class="btn enviar" id="bEnviar" hidden>Enviar pedido</button>
         <a class="btn wsp" id="bWsp" href="#" target="_blank" rel="noopener">Enviar por WhatsApp</a>
-        <div class="dos">
+        <div class="dos" id="dosBtns">
           <button class="btn sec" id="bCopiar">Copiar pedido</button>
           <button class="btn sec" id="bArchivo">Enviar archivo</button>
         </div>
@@ -1033,6 +1063,7 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
         <p class="ok" id="ok" hidden></p>
         <p class="nota" id="notaIg" hidden></p>
         <p class="legalnota">Al enviar el pedido aceptas los <a href="../legal.html#terminos" target="_blank" rel="noopener">términos</a> y la <a href="../legal.html#privacidad" target="_blank" rel="noopener">política de privacidad</a>.</p>
+      </div>
       </div>
     </div>
   </section>
@@ -1548,10 +1579,12 @@ const guardar=()=>{enviado=false;grabar()};
 const pedidosAnotados=new Set();
 function anotarPedido(){
   if(!REGISTRO_URL||!codigo||pedidosAnotados.has(codigo))return;pedidosAnotados.add(codigo);
+  try{fetch(REGISTRO_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(datosPedido())})}catch(e){}
+}
+function datosPedido(){
   const its=items().map(x=>({cod:x.cod,nombre:x.nombre,q:x.q,uds:x.uds||x.q,precio:x.precio}));
-  const d={tipo:"pedido",local:KEY,codigo,nombre:$("nombre").value.trim().slice(0,80),tel:cliente&&cliente.tel||celPedido(),correo:correoPedido(),codigoCliente:cliente&&cliente.codigo||"",
-    fechaRetiro:$("fechaRet").value,hora:$("hora").value||"Lo antes posible",items:its,total:totalFinal(),nota:($("nota").value||"").trim().slice(0,300)};
-  try{fetch(REGISTRO_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(d)})}catch(e){}
+  return {tipo:"pedido",local:KEY,codigo,nombre:$("nombre").value.trim().slice(0,80),tel:cliente&&cliente.tel||celPedido(),correo:correoPedido(),codigoCliente:cliente&&cliente.codigo||"",
+    fechaRetiro:fechaPedido(),hora:horaPedido()||"Lo antes posible",items:its,total:totalFinal(),nota:($("nota").value||"").trim().slice(0,300)};
 }
 const marcarEnviado=()=>{anotarPedido();try{const qs=Object.fromEntries(Object.entries(cart).filter(([,q])=>q>0));if(Object.keys(qs).length)localStorage.setItem("anterior-"+KEY,JSON.stringify({t:Date.now(),cart:qs}))}catch(e){};if(typeof usarDescuento==="function")usarDescuento();enviado=true;grabar()};
 
@@ -2268,34 +2301,49 @@ const cierraMin=()=>{if(!L.horario)return 17*60;const[a,b]=L.horario.hasta.split
 const EN_LOCAL="Estoy en el local";
 const abiertoAhora=()=>{const d=new Date();if(d.getDay()===0)return false;if(!L.horario)return true;
   const m=t=>{const[a,b]=t.split(":").map(Number);return a*60+b},n=d.getHours()*60+d.getMinutes();return n>=m(L.horario.desde)&&n<m(L.horario.hasta)};
-const optLocal=hoy=>`<option value="${EN_LOCAL}">${hoy?"Estoy en el local (lo retiro ahora)":"Estoy en el local (hoy, ahora)"}</option>`;
 function horasPara(iso){
   const s=$("hora"),hoy=isoDia(new Date()),ahora=new Date(),mins=ahora.getHours()*60+ahora.getMinutes();
   const prev=s.value;let o=[];
   if(iso===hoy)o.push('<option value="">Lo antes posible</option>');
-  if(iso===hoy&&abiertoAhora())o.push(optLocal(true));
   if(L.horario){const m=t=>{const[a,b]=t.split(":").map(Number);return a*60+b};
     for(let t=Math.ceil(m(L.horario.desde)/30)*30+30;t<=m(L.horario.hasta)-30;t+=30){if(iso===hoy&&t<mins+30)continue;
       const h=String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");o.push(`<option>${h}</option>`)}}
   else ["En la mañana","A mediodía","En la tarde"].forEach(x=>o.push(`<option>${x}</option>`));
-  // Otro día elegido: igual se ofrece al final (al tocarla, el día pasa a hoy)
-  if(iso!==hoy&&abiertoAhora())o.push(optLocal(false));
   s.innerHTML=o.join("");if([...s.options].some(x=>x.value===prev))s.value=prev;
 }
-function horaEnLocal(){const f=$("fechaRet"),hoy=isoDia(new Date());
-  if($("hora").value===EN_LOCAL&&f.value!==hoy){f.value=hoy;horasPara(hoy);$("hora").value=EN_LOCAL}}
+/* ¿Dónde estás? «Estoy en el local» (solo con el local abierto) se envía directo a SabAPP; «Retiro más tarde» pide día y hora */
+const puedeLocal=()=>!!(L.horario&&REGISTRO_URL);
+const modoRetiro=()=>{if(!puedeLocal())return "retiro";const r=document.querySelector('input[name="modoRetiro"]:checked');return r?r.value:""};
+const enLocal=()=>modoRetiro()==="local";
+const fechaPedido=()=>enLocal()?isoDia(new Date()):$("fechaRet").value;
+const horaPedido=()=>enLocal()?EN_LOCAL:$("hora").value;
+function pintarModo(){
+  const pl=puedeLocal(),ab=pl&&abiertoAhora(),rl=document.querySelector('input[name="modoRetiro"][value="local"]'),rr=document.querySelector('input[name="modoRetiro"][value="retiro"]');
+  $("campoModo").hidden=!pl;
+  rl.disabled=!ab;
+  if(!ab&&rl.checked)rl.checked=false;
+  if(pl&&!ab&&!rr.checked)rr.checked=true; // cerrado: solo queda retirar más tarde
+  $("modoLocalNota").textContent=ab?"Te lo preparamos ahora":pl?`Cerrado ahora (lun a sáb, ${L.horario.desde} a ${L.horario.hasta})`:"";
+  const m=modoRetiro();
+  $("pasoDatos").hidden=!m;
+  $("campoHora").hidden=m!=="retiro";
+  $("bEnviar").hidden=m!=="local";
+  $("bWsp").hidden=$("dosBtns").hidden=m==="local";
+  if(m==="local"){$("bIg").hidden=true;$("notaIg").hidden=true}
+  if(m){$("campoModo").classList.remove("err");$("msgModo").hidden=true}
+}
 function fechaOk(){const f=$("fechaRet"),m=$("msgFecha"),v=f.value;let err="";
   if(!v)err="Elige el día en que quieres tu pedido.";
   else{const [y,mo,d]=v.split("-").map(Number),dia=new Date(y,mo-1,d).getDay();
     if(v<f.min)err="Esa fecha ya pasó; elige hoy o un día siguiente.";else if(v>f.max)err="Puedes pedir hasta con 30 días de anticipación.";else if(dia===0)err="El domingo estamos cerrados; elige otro día.";}
   m.textContent=err;m.hidden=!err;f.setAttribute("aria-invalid",String(!!err));
-  $("retNota").textContent=!err&&v?($("hora").value===EN_LOCAL?"Estás en el local: envía el pedido y te lo preparamos de inmediato.":`Retiras el ${fechaRetLarga(v)}${$("hora").value?" a las "+$("hora").value:""}.`):"";return !err}
+  $("retNota").textContent=!err&&v?`Retiras el ${fechaRetLarga(v)}${$("hora").value?" a las "+$("hora").value:""}.`:"";return !err}
 (function fechas(){const f=$("fechaRet"),hoy=new Date(),max=new Date();max.setDate(max.getDate()+30);
   f.min=isoDia(hoy);f.max=isoDia(max);
   // por defecto: hoy si aún alcanza a prepararse; si no, el siguiente día abierto
   const d=new Date();if(d.getDay()===0||d.getHours()*60+d.getMinutes()>cierraMin()-60){do{d.setDate(d.getDate()+1)}while(d.getDay()===0)}
   f.value=isoDia(d);horasPara(f.value);
-  f.addEventListener("change",()=>{horasPara(f.value);fechaOk()});$("hora").addEventListener("change",()=>{horaEnLocal();fechaOk()});fechaOk();
+  f.addEventListener("change",()=>{horasPara(f.value);fechaOk()});$("hora").addEventListener("change",fechaOk);fechaOk();
 })();
 (function horas(){ return;
   const s=$("hora"); let o=['<option value="">Lo antes posible</option>'];
@@ -2328,8 +2376,8 @@ function pintarAviso(){const m=medioAviso(),tc=!!(cliente&&cliente.tel);
 const celPedido=()=>{if(medioAviso()!=="wsp")return "";const d=($("celPedido").value||"").replace(/\D/g,"").replace(/^56/,"");return /^9\d{8}$/.test(d)?"+56"+d:""};
 function textoPedido(){
   const nom=$("nombre").value.trim()||"(sin nombre)";
-  const hv=$("hora").value;
-  const hora=hv===EN_LOCAL?"AHORA · estoy en el local ("+(fechaRetLarga($("fechaRet").value)||"hoy")+")":(fechaRetLarga($("fechaRet").value)||"Hoy")+" · "+(hv?"a las "+hv:"lo antes posible");
+  const hv=horaPedido(),fp=fechaPedido();
+  const hora=hv===EN_LOCAL?"AHORA · estoy en el local ("+(fechaRetLarga(fp)||"hoy")+")":(fechaRetLarga(fp)||"Hoy")+" · "+(hv?"a las "+hv:"lo antes posible");
   /* Fecha y hora en que se envía o copia el pedido: queda escrita en el chat aunque no haya otros mensajes */
   const ahora=new Date(),p2=n=>String(n).padStart(2,"0");
   const hecho=`${DIAS[ahora.getDay()]} ${p2(ahora.getDate())}/${p2(ahora.getMonth()+1)}/${ahora.getFullYear()} a las ${p2(ahora.getHours())}:${p2(ahora.getMinutes())}`;
@@ -2348,18 +2396,30 @@ function textoPedido(){
 function actualizarEnlaces(){
   $("bWsp").href=`https://wa.me/${L.whatsapp}?text=${encodeURIComponent(textoPedido())}`;
 }
-function nombreOk(){if(!fechaOk()){$("fechaRet").focus();return false}
-  const ok=!!$("nombre").value.trim();
-  $("campoNombre").classList.toggle("err",!ok); $("msgNombre").hidden=ok;
-  if(!ok){$("nombre").focus();return false}
-  const vc=$("celPedido").value.trim(),bienC=$("campoCel").hidden||!vc||!!celPedido();
-  $("campoCel").classList.toggle("err",!bienC); $("msgCel").hidden=bienC;
-  if(!bienC){$("celPedido").focus();return false}
-  const ve=$("correoPedido").value.trim(),bienE=$("campoCorreo").hidden||!ve||!!correoPedido();
-  $("campoCorreo").classList.toggle("err",!bienE); $("msgCorreo").hidden=bienE;
-  if(!bienE)$("correoPedido").focus();
-  return bienE;
+function nombreOk(){
+  const m=modoRetiro();
+  if(!m){$("campoModo").classList.add("err");$("msgModo").hidden=false;const r=document.querySelector('input[name="modoRetiro"]:not(:disabled)');if(r)r.focus();return false}
+  if(m==="retiro"&&!fechaOk()){$("fechaRet").focus();return false}
+  return contactoOk(true);
 }
+/* Celular (o el de la cuenta) si se avisa por WhatsApp; correo si se avisa por correo. Sin uno válido no se envía. */
+function contactoOk(marcar){
+  if(medioAviso()==="correo"){
+    const ok=!!correoPedido();
+    if(marcar){const ve=$("correoPedido").value.trim();
+      $("msgCorreo").textContent=ve?"Revisa el correo: debe tener la forma nombre@dominio.cl.":"Escribe tu correo para poder enviar el pedido.";
+      $("campoCorreo").classList.toggle("err",!ok);$("msgCorreo").hidden=ok;if(!ok)$("correoPedido").focus()}
+    return ok;
+  }
+  if(cliente&&cliente.tel)return true;
+  const ok=!!celPedido();
+  if(marcar){const vc=$("celPedido").value.trim();
+    $("msgCel").textContent=vc?"Revisa el número: un celular chileno tiene 9 dígitos y empieza con 9.":"Escribe tu celular para poder enviar el pedido.";
+    $("campoCel").classList.toggle("err",!ok);$("msgCel").hidden=ok;$("ayudaCel").hidden=!ok;if(!ok)$("celPedido").focus()}
+  return ok;
+}
+/* Los botones de envío se ven apagados mientras falte el celular o el correo (al tocarlos se explica qué falta) */
+const pintarBloqueo=()=>{const ok=contactoOk(false);["bEnviar","bWsp","bCopiar","bArchivo"].forEach(id=>$(id).classList.toggle("bloq",!ok))};
 
 function abrirRevision(){
   if(!items().length)return;
@@ -2381,6 +2441,8 @@ function abrirRevision(){
   $("campoNombre").hidden=conCuenta; $("aNombre").hidden=!conCuenta;
   if(conCuenta){$("nombre").value=nombreCompleto(cliente);$("aNombre").innerHTML=`Pedido a nombre de <b>${escHTML(nombreCompleto(cliente))}</b>${cliente.codigo?` · ${escHTML(cliente.codigo)}`:""}`}
   $("celPedido").value||($("celPedido").value=formatoCel(leePref("celular-cliente")||""));
+  const be=$("bEnviar");be.disabled=false;be.textContent="Enviar pedido";
+  pintarModo(); pintarBloqueo();
   actualizarEnlaces();
 };
 const cerrar=()=>cerrarHoja("velo");
@@ -2410,15 +2472,38 @@ $("alertaTapas").addEventListener("click",e=>{
 });
 $("cerrar").onclick=cerrar;
 $("velo").addEventListener("click",e=>{if(e.target===$("velo"))cerrar()});
-document.querySelectorAll('input[name="medioAviso"]').forEach(r=>r.addEventListener("change",()=>{pintarAviso();guardaPref("medio-aviso",medioAviso());actualizarEnlaces()}));
+document.querySelectorAll('input[name="medioAviso"]').forEach(r=>r.addEventListener("change",()=>{pintarAviso();guardaPref("medio-aviso",medioAviso());pintarBloqueo();actualizarEnlaces()}));
+document.querySelectorAll('input[name="modoRetiro"]').forEach(r=>r.addEventListener("change",()=>{pintarModo();pintarBloqueo();actualizarEnlaces();$("ok").hidden=true}));
 ["nombre","celPedido","correoPedido","hora","nota"].forEach(id=>$(id).addEventListener("input",()=>{
-  if(id==="nombre"&&$("nombre").value.trim()){$("campoNombre").classList.remove("err");$("msgNombre").hidden=true}
-  if(id==="celPedido"){$("campoCel").classList.remove("err");$("msgCel").hidden=true}
+  if(id==="celPedido"){$("campoCel").classList.remove("err");$("msgCel").hidden=true;$("ayudaCel").hidden=false}
   if(id==="correoPedido"){$("campoCorreo").classList.remove("err");$("msgCorreo").hidden=true}
+  pintarBloqueo();
   actualizarEnlaces();
 }));
 const recordarNombre=()=>{guardaPref("nombre-cliente",$("nombre").value.trim());if(celPedido())guardaPref("celular-cliente",celPedido().replace(/^\+56/,""));if(correoPedido())guardaPref("correo-cliente",correoPedido())};
-const listo=msg=>{$("ok").textContent=msg;$("ok").hidden=false};
+const listo=(msg,mal)=>{$("ok").textContent=msg;$("ok").classList.toggle("mal",!!mal);$("ok").hidden=false};
+
+/* «Enviar pedido» (cliente en el local): va directo a la planilla y aparece en SabAPP; si falla, queda WhatsApp de respaldo */
+$("bEnviar").addEventListener("click",async()=>{
+  const b=$("bEnviar");if(b.disabled)return;
+  if(!nombreOk())return;
+  if(!abiertoAhora()){pintarModo();pintarBloqueo();actualizarEnlaces();listo("El local ya cerró: elige el día y la hora de retiro.",true);return}
+  recordarNombre();
+  b.disabled=true;b.textContent="Enviando…";$("ok").hidden=true;
+  const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),25000);
+  try{
+    const r=await fetch(REGISTRO_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(datosPedido()),signal:ctl.signal});
+    const j=await r.json();
+    if(!j||!j.ok)throw new Error(j&&j.error||"sin respuesta");
+    pedidosAnotados.add(codigo);marcarEnviado();
+    b.textContent="✓ Pedido enviado";
+    listo(`¡Listo! Tu pedido ${codigo} llegó al mesón y ya lo estamos preparando. Lo pagas al retirarlo.`);
+  }catch(e){
+    b.disabled=false;b.textContent="Reintentar envío";
+    actualizarEnlaces();$("bWsp").hidden=false;
+    listo("No pudimos enviarlo. Reintenta, envíalo por WhatsApp o muéstrale este pedido a quien te atiende.",true);
+  }finally{clearTimeout(t)}
+});
 
 $("bWsp").addEventListener("click",e=>{
   if(!nombreOk()){e.preventDefault();return}
