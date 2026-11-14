@@ -36,8 +36,8 @@
  *
  * PANEL DE PEDIDOS (pantalla en vivo para los PC de los vendedores; archivo HTML "Panel" de este proyecto)
  *  Implementar → Nueva implementación → Aplicación web.
- *    Ejecutar como: el usuario que accede a la aplicación web.
- *    Quién tiene acceso: cualquier usuario con una cuenta de Google.
+ *    Ejecutar como: yo (dte@avicolasb.com).
+ *    Quién tiene acceso: cualquier usuario de Avícola El Huevo Sabroso (cuentas @avicolasb.com).
  *  Solo lo abre quien tiene acceso a esta planilla: para sumar a un vendedor, se le comparte la planilla
  *  (o la unidad compartida) con su cuenta de Google. Se actualiza solo cada pocos segundos.
  *  La implementación pública del catálogo (Ejecutar como: yo) no muestra el panel a nadie más que al dueño.
@@ -570,12 +570,15 @@ function fechaValida(v) {
 
 /* ---------- Panel de pedidos (vendedores) ---------- */
 
-// Correo de quien abre el panel, solo si el script corre con su propia cuenta y esa cuenta tiene acceso a la planilla.
-// En la implementación pública del catálogo (que corre como el dueño) cualquier otra persona queda fuera.
+// Correo de quien abre el panel. El panel corre con la cuenta dueña del script (dte@) y solo deja entrar a cuentas
+// del mismo dominio de Google Workspace (avicolasb.com): Google entrega ese correo solo a usuarios del dominio.
+// Un visitante anónimo o de otra cuenta queda fuera (también en la implementación pública del catálogo).
 function vendedor() {
   let activo = '', efectivo = '';
   try { activo = Session.getActiveUser().getEmail(); efectivo = Session.getEffectiveUser().getEmail(); } catch (err) { return ''; }
-  if (!activo || activo !== efectivo) return '';
+  if (!activo || !efectivo) return '';
+  const dominio = function (c) { return String(c).toLowerCase().split('@')[1] || ''; };
+  if (activo !== efectivo && dominio(activo) !== dominio(efectivo)) return '';
   try { SpreadsheetApp.getActiveSpreadsheet().getId(); } catch (err) { return ''; }
   return activo;
 }
