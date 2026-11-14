@@ -592,7 +592,9 @@ function panelDatos() {
   });
   const hace = Date.now() - 14 * 864e5;
   const valor = function (f, nombre) { return f[CP[nombre] - 1]; };
-  const pedidos = filas.map(function (f) {
+  const notas = n > 1 ? hoja.getRange(2, CP['Estado'], n - 1, 1).getNotes() : [];
+  const pedidos = filas.map(function (f, i) {
+    const aviso = String((notas[i] || [''])[0] || '').match(/Avisado por WhatsApp por \S+ el (\d{2}\/\d{2}\/\d{4} \d{2}:\d{2})/);
     const codigo = String(valor(f, 'Código del pedido') || ''), dia = valor(f, 'Día de retiro'), rec = valor(f, 'Recibido'), hora = valor(f, 'Hora');
     return {
       codigo: codigo,
@@ -610,6 +612,8 @@ function panelDatos() {
       recibido: rec instanceof Date ? rec.getTime() : 0,
       estado: ESTADOS.indexOf(String(valor(f, 'Estado'))) >= 0 ? String(valor(f, 'Estado')) : 'Por confirmar',
       local: String(valor(f, 'Local') || ''),
+      avisado: !!aviso,
+      avisadoEl: aviso ? aviso[1] : '',
       items: items[codigo] || []
     };
   }).filter(function (p) {
@@ -619,22 +623,44 @@ function panelDatos() {
 }
 
 // Cambia el estado de un pedido desde el panel (con la casilla al día y una nota de quién lo hizo y cuándo).
-function panelCambiar(codigo, estado) {
+// avisado: el vendedor abrió WhatsApp con el aviso de «listo» en el mismo toque.
+function panelCambiar(codigo, estado, avisado) {
   const usuario = exigirVendedor();
   if (ESTADOS.indexOf(estado) < 0) throw new Error('Estado no válido.');
   const candado = LockService.getScriptLock();
   candado.waitLock(15000);
   try {
-    const hoja = hojaPedidos(), n = hoja.getLastRow();
-    const cods = n > 1 ? hoja.getRange(2, CP['Código del pedido'], n - 1, 1).getValues() : [];
-    let fila = 0;
-    cods.forEach(function (f, i) { if (!fila && String(f[0]) === String(codigo)) fila = i + 2; });
-    if (!fila) throw new Error('No se encontró el pedido ' + codigo + '.');
-    const celda = hoja.getRange(fila, CP['Estado']);
-    celda.setValue(estado);
-    const nota = estado + ' por ' + usuario + ' el ' + Utilities.formatDate(new Date(), SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'dd/MM/yyyy HH:mm');
-    celda.setNote([nota, celda.getNote()].filter(String).join('\n').slice(0, 1000));
+    const hoja = hojaPedidos(), fila = filaDelPedido(hoja, codigo);
+    hoja.getRange(fila, CP['Estado']).setValue(estado);
+    anotarEnEstado(hoja, fila, estado + ' por ' + usuario);
+    if (avisado === true) anotarEnEstado(hoja, fila, 'Avisado por WhatsApp por ' + usuario);
     hoja.getRange(fila, CP['Confirmado']).setValue(CONFIRMADOS.indexOf(estado) >= 0);
   } finally { candado.releaseLock(); }
   return panelDatos();
+}
+
+// El vendedor abrió WhatsApp para avisar al cliente que su pedido está listo: queda anotado (lo ven todos los PC).
+function panelAvisado(codigo) {
+  const usuario = exigirVendedor();
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  try {
+    const hoja = hojaPedidos();
+    anotarEnEstado(hoja, filaDelPedido(hoja, codigo), 'Avisado por WhatsApp por ' + usuario);
+  } finally { candado.releaseLock(); }
+  return panelDatos();
+}
+
+function filaDelPedido(hoja, codigo) {
+  const n = hoja.getLastRow();
+  const cods = n > 1 ? hoja.getRange(2, CP['Código del pedido'], n - 1, 1).getValues() : [];
+  for (let i = 0; i < cods.length; i++) if (String(cods[i][0]) === String(codigo)) return i + 2;
+  throw new Error('No se encontró el pedido ' + codigo + '.');
+}
+
+// Historial en la nota de la celda «Estado»: lo más nuevo arriba, con fecha y hora de Chile.
+function anotarEnEstado(hoja, fila, texto) {
+  const celda = hoja.getRange(fila, CP['Estado']);
+  const linea = texto + ' el ' + Utilities.formatDate(new Date(), SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'dd/MM/yyyy HH:mm');
+  celda.setNote([linea, celda.getNote()].filter(String).join('\n').slice(0, 1000));
 }

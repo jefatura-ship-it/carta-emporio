@@ -59,6 +59,9 @@ button{font:inherit;cursor:pointer}
 .p-items li{display:flex;gap:8px;padding:3px 0;border-bottom:1px dashed var(--linea)}
 .p-items li:last-child{border-bottom:0}
 .p-items b{min-width:28px;text-align:right}
+.p-sku{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:var(--papel);color:var(--suave);font-size:11.5px;font-weight:800;letter-spacing:.03em;white-space:nowrap;vertical-align:1px}
+.p-avisado{display:flex;align-items:center;gap:6px;margin-top:8px;padding:6px 10px;border-radius:8px;background:#e6f6ec;color:#14663a;font-size:13px;font-weight:700}
+.caja li small{display:block;color:var(--suave);font-size:11.5px;font-weight:700;letter-spacing:.03em}
 .p-mas{border:0;background:none;color:var(--azul);font-weight:700;font-size:13px;padding:2px 0}
 .p-nota{margin:6px 0;padding:6px 10px;border-radius:8px;background:#fff7d6;font-size:13.5px}
 .p-pie{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 10px;margin-top:6px;font-size:13px;color:var(--suave)}
@@ -236,7 +239,7 @@ function pasaFiltro(p) {
     if (!activo && !cerradoHoy) return false;
   }
   if (busqueda) {
-    var t = (p.cliente + ' ' + p.codigo + ' ' + p.celular + ' ' + p.codigoCliente + ' ' + p.items.map(function (x) { return x.nombre; }).join(' ')).toLowerCase()
+    var t = (p.cliente + ' ' + p.codigo + ' ' + p.celular + ' ' + p.codigoCliente + ' ' + p.items.map(function (x) { return x.nombre + ' ' + x.cod; }).join(' ')).toLowerCase()
       .normalize('NFD').replace(/[̀-ͯ]/g, '');
     var q = busqueda.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     if (q.split(/\s+/).some(function (w) { return w && t.indexOf(w) < 0; })) return false;
@@ -283,23 +286,35 @@ function pintar() {
   document.title = (activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length ? '(' + activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length + ') ' : '') + 'Pedidos · Catálogo Sabroso';
 }
 
+// Mensajes para el cliente: «confirmado» (al recibir el pedido) y «listo» (para retirar)
+function mensaje(p, tipo) {
+  var nom = (p.cliente || '').split(' ')[0] || 'cliente';
+  var cuando = diaLargo(p.dia) + (p.hora && !/antes/i.test(p.hora) ? ' a las ' + p.hora : '');
+  return tipo === 'listo'
+    ? 'Hola ' + nom + ', su pedido ' + p.codigo + ' ya está listo para retirar en Emporio Sabroso (Arturo Prat 720, Chillán, lunes a sábado de 8:30 a 17:00). ¡Lo esperamos!'
+    : 'Hola ' + nom + ', recibimos su pedido ' + p.codigo + ' en Emporio Sabroso. Queda confirmado para retirar el ' + cuando + '. ¡Gracias!';
+}
 function wspEnlace(p, tipo) {
   var num = String(p.celular).replace(/\D/g, '');
   if (!/^569\d{8}$/.test(num)) return '';
-  var nom = p.cliente.split(' ')[0];
-  var cuando = diaLargo(p.dia) + (p.hora && !/antes/i.test(p.hora) ? ' a las ' + p.hora : '');
-  var t = tipo === 'listo'
-    ? 'Hola ' + nom + ', su pedido ' + p.codigo + ' ya está listo para retirar en Emporio Sabroso (Arturo Prat 720, Chillán). ¡Lo esperamos!'
-    : 'Hola ' + nom + ', recibimos su pedido ' + p.codigo + ' en Emporio Sabroso. Queda confirmado para retirar el ' + cuando + '. ¡Gracias!';
-  return 'https://wa.me/' + num + '?text=' + encodeURIComponent(t);
+  return 'https://wa.me/' + num + '?text=' + encodeURIComponent(mensaje(p, tipo));
+}
+function copiar(texto) {
+  var ok = false, t = document.createElement('textarea');
+  t.value = texto; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+  document.body.appendChild(t); t.select();
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  t.remove();
+  if (!ok && navigator.clipboard) { navigator.clipboard.writeText(texto).then(function () {}, function () {}); ok = true; }
+  return ok;
 }
 
-function boton(p, estado, texto, clase) {
+function boton(p, estado, texto, clase, avisa) {
   var k = p.codigo + '>' + estado;
   var pide = ['Anulado', 'No llegó'].indexOf(estado) >= 0;
   var t = pide && seguro[k] ? '¿Seguro? ' + texto : texto;
   return '<button type="button" class="b ' + (clase || '') + (pide && seguro[k] ? ' seguro' : '') + '" data-cod="' + esc(p.codigo) + '" data-estado="' + esc(estado) + '" data-foco="' + esc(k) + '"'
-    + (ocupado[p.codigo] ? ' disabled' : '') + '>' + t + '</button>';
+    + (avisa ? ' data-wsp="1"' : '') + (ocupado[p.codigo] ? ' disabled' : '') + '>' + t + '</button>';
 }
 
 function tarjeta(p) {
@@ -313,12 +328,15 @@ function tarjeta(p) {
       + (wspEnlace(p, 'confirmar') ? '<a class="b wsp" href="' + wspEnlace(p, 'confirmar') + '">WhatsApp</a>' : '')
       + boton(p, 'No llegó', 'No llegó', 'peq peligro');
   } else if (p.estado === 'Confirmado') {
-    acc = boton(p, 'Preparado', 'Listo para retirar', 'prim azul')
-      + (wspEnlace(p, 'confirmar') ? '<a class="b wsp" href="' + wspEnlace(p, 'confirmar') + '">WhatsApp</a>' : '')
+    // Con celular: un solo toque deja el pedido «listo» y abre WhatsApp con el aviso escrito
+    acc = (wspEnlace(p, 'listo') ? boton(p, 'Preparado', 'Listo · avisar por WhatsApp', 'prim azul', true) : boton(p, 'Preparado', 'Listo para retirar', 'prim azul'))
+      + (wspEnlace(p, 'confirmar') ? '<a class="b wsp peq" href="' + wspEnlace(p, 'confirmar') + '">Enviar confirmación</a>' : '')
       + boton(p, 'Por confirmar', '↩ Volver', 'peq') + boton(p, 'Anulado', 'Anular', 'peq peligro');
   } else if (p.estado === 'Preparado') {
     acc = boton(p, 'Entregado', '✓ Entregado', 'prim')
-      + (wspEnlace(p, 'listo') ? '<a class="b wsp" href="' + wspEnlace(p, 'listo') + '">Avisar que está listo</a>' : '')
+      + (wspEnlace(p, 'listo')
+        ? '<a class="b wsp" data-avisado="' + esc(p.codigo) + '" href="' + wspEnlace(p, 'listo') + '">' + (p.avisado ? 'Volver a avisar' : 'Avisar por WhatsApp') + '</a>'
+        : '<button type="button" class="b wsp" data-copiar="' + esc(p.codigo) + '">Copiar aviso para el chat</button>')
       + boton(p, 'Confirmado', '↩ Volver', 'peq') + boton(p, 'Anulado', 'Anular', 'peq peligro');
   } else {
     acc = '<span class="p-cel">' + esc(p.estado) + '</span>' + boton(p, p.estado === 'Entregado' ? 'Preparado' : 'Por confirmar', '↩ Reabrir', 'peq');
@@ -331,22 +349,23 @@ function tarjeta(p) {
     + '<div class="p-cli">' + esc(p.cliente || '(sin nombre)') + '</div>'
     + (p.celular || p.codigoCliente ? '<div class="p-cel">' + esc([p.celular, p.codigoCliente].filter(Boolean).join(' · ')) + '</div>' : '')
     + '<div class="p-ret">Retira ' + esc(diaLargo(p.dia)) + ' · ' + esc(p.hora || 'lo antes posible') + ' ' + etiquetaDia(p.dia) + '</div>'
-    + '<ul class="p-items">' + verItems.map(function (x) { return '<li><b>' + x.q + ' ×</b><span>' + esc(x.nombre) + '</span></li>'; }).join('') + '</ul>'
+    + '<ul class="p-items">' + verItems.map(function (x) { return '<li><b>' + x.q + ' ×</b><span>' + esc(x.nombre) + (x.cod ? ' <small class="p-sku">' + esc(x.cod) + '</small>' : '') + '</span></li>'; }).join('') + '</ul>'
     + (largo ? '<button type="button" class="p-mas" data-abrir="' + esc(p.codigo) + '">Ver los ' + items.length + ' productos</button>' : '')
     + (p.comentario ? '<div class="p-nota">💬 ' + esc(p.comentario) + '</div>' : '')
     + '<div class="p-pie"><span>' + esc(hace(p.recibido)) + ' · ' + p.unidades + ' u</span><span>Total aprox. <strong>' + (p.total ? clp(p.total) : 'por confirmar') + '</strong></span></div>'
+    + (p.avisado && ['Preparado', 'Entregado'].indexOf(p.estado) >= 0 ? '<div class="p-avisado">✓ Cliente avisado por WhatsApp' + (p.avisadoEl ? ' · ' + esc(p.avisadoEl) : '') + '</div>' : '')
     + '<div class="acc">' + acc + '</div></article>';
 }
 
 function ladoHTML() {
   var man = sumarDias(datos.hoy, 1);
   var bloque = function (iso, titulo) {
-    var tot = {};
+    var tot = {}, cod = {};
     datos.pedidos.filter(function (p) { return p.estado === 'Confirmado' && p.dia === iso; }).forEach(function (p) {
-      p.items.forEach(function (x) { tot[x.nombre] = (tot[x.nombre] || 0) + x.q; });
+      p.items.forEach(function (x) { tot[x.nombre] = (tot[x.nombre] || 0) + x.q; if (x.cod) cod[x.nombre] = x.cod; });
     });
     var ks = Object.keys(tot).sort(function (a, b) { return tot[b] - tot[a]; });
-    return '<h4>' + titulo + '</h4>' + (ks.length ? '<ul>' + ks.map(function (k) { return '<li><span>' + esc(k) + '</span><b>' + tot[k] + '</b></li>'; }).join('') + '</ul>' : '<p>Nada confirmado todavía.</p>');
+    return '<h4>' + titulo + '</h4>' + (ks.length ? '<ul>' + ks.map(function (k) { return '<li><span>' + (cod[k] ? '<small>' + esc(cod[k]) + '</small>' : '') + esc(k) + '</span><b>' + tot[k] + '</b></li>'; }).join('') + '</ul>' : '<p>Nada confirmado todavía.</p>');
   };
   var pc = datos.pedidos.filter(function (p) { return p.estado === 'Por confirmar'; }).length;
   return '<aside class="lado"><div class="caja"><h3>Por preparar</h3><p>Suma de los pedidos confirmados.</p>' + bloque(datos.hoy, 'Hoy') + bloque(man, 'Mañana') + '</div>'
@@ -360,9 +379,31 @@ document.addEventListener('click', function (e) {
   if (ab) { abiertos[ab.dataset.abrir] = true; pintar(); return; }
   var tj = e.target.closest('[data-ped]');
   if (tj && nuevos[tj.dataset.ped] && !e.target.closest('button,a')) { delete nuevos[tj.dataset.ped]; pintar(); }
+  var pedido = function (c) { return datos.pedidos.filter(function (x) { return x.codigo === c; })[0]; };
+  // «Avisar por WhatsApp»: el enlace abre el chat y la planilla anota que el cliente fue avisado
+  var av = e.target.closest('a[data-avisado]');
+  if (av) {
+    var pa = pedido(av.dataset.avisado);
+    if (pa) { pa.avisado = true; pa.avisadoEl = horaCorta(new Date()); }
+    servidor('panelAvisado', [av.dataset.avisado], function (d) { recibir(d); }, function () {});
+    setTimeout(pintar, 50);
+    return;
+  }
+  // Cliente sin celular: se copia el aviso para pegarlo en su chat (WhatsApp o Instagram)
+  var cp = e.target.closest('button[data-copiar]');
+  if (cp) {
+    var pc = pedido(cp.dataset.copiar);
+    if (pc) avisar(copiar(mensaje(pc, 'listo')) ? 'Aviso copiado: péguelo en el chat del cliente.' : 'No se pudo copiar el aviso.');
+    return;
+  }
   var b = e.target.closest('button[data-estado]');
   if (!b) return;
   var cod = b.dataset.cod, est = b.dataset.estado, k = cod + '>' + est;
+  var conAviso = b.dataset.wsp === '1';
+  if (conAviso) { // se abre en el mismo toque (si no, el navegador lo bloquea)
+    var pw = pedido(cod), enlace = pw && wspEnlace(pw, 'listo');
+    if (enlace) { window.open(enlace, '_blank', 'noopener'); pw.avisado = true; pw.avisadoEl = horaCorta(new Date()); }
+  }
   if (['Anulado', 'No llegó'].indexOf(est) >= 0 && !seguro[k]) {
     seguro[k] = true; pintar();
     setTimeout(function () { delete seguro[k]; pintar(); }, 4000);
@@ -370,11 +411,11 @@ document.addEventListener('click', function (e) {
   }
   delete seguro[k]; delete nuevos[cod];
   ocupado[cod] = true;
-  var p = datos.pedidos.filter(function (x) { return x.codigo === cod; })[0];
+  var p = pedido(cod);
   var antes = p ? p.estado : '';
   if (p) p.estado = est; // se ve al instante; la planilla confirma enseguida
   pintar();
-  servidor('panelCambiar', [cod, est], function (d) {
+  servidor('panelCambiar', [cod, est, conAviso], function (d) {
     delete ocupado[cod]; recibir(d); estadoConexion(true);
     avisar(cod + ': ' + est.toLowerCase());
   }, function (err) {
