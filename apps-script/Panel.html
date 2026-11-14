@@ -32,8 +32,22 @@ button{font:inherit;cursor:pointer}
 .tablero{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:14px;align-items:start;overflow-x:auto;padding-bottom:6px}
 .col{background:#ece6d8;border-radius:16px;padding:10px;min-height:120px}
 .col h2{display:flex;align-items:center;justify-content:space-between;margin:2px 4px 10px;font-size:15px}
-.col h2 span{min-width:28px;height:24px;padding:0 8px;border-radius:999px;background:#fff;font-size:13px;line-height:24px;text-align:center}
-.col.c-pc h2{color:#8a3a00}.col.c-pc h2 span{background:var(--sol);color:#fff}
+.plegar{display:flex;align-items:center;gap:6px;flex:1;min-width:0;padding:0;border:0;background:none;color:inherit;font:inherit;font-weight:800;text-align:left;cursor:pointer}
+.plegar .flecha{display:inline-block;width:14px;font-size:15px;line-height:1;transition:transform .2s}
+.plegada .plegar .flecha{transform:rotate(-90deg)}
+.col.plegada{min-height:0;padding-bottom:2px}
+.col.plegada>.ped,.col.plegada>.vacio,.caja.plegada>:not(h3){display:none}
+.caja h3{display:flex}
+.col h2>span.hay-nuevo{background:var(--sol);color:#fff;animation:pulso 1.6s infinite}
+@media (min-width:1101px){
+  .tablero{grid-template-columns:var(--cols,repeat(4,minmax(240px,1fr)))}
+  .col.plegada h2{flex-direction:column;gap:10px;margin:4px 0}
+  .col.plegada .plegar{writing-mode:vertical-rl;flex:none}
+  .col.plegada .plegar .flecha{transform:none}
+}
+.b.correo{background:#e9f0fb;border-color:#c5d6f2;color:#1d4f9a}
+.col h2>span{min-width:28px;height:24px;padding:0 8px;border-radius:999px;background:#fff;font-size:13px;line-height:24px;text-align:center}
+.col.c-pc h2{color:#8a3a00}.col.c-pc h2>span{background:var(--sol);color:#fff}
 .col.c-co h2{color:var(--campo)}
 .col.c-pr h2{color:var(--azul)}
 .col.c-ce h2{color:var(--suave)}
@@ -115,7 +129,8 @@ button{font:inherit;cursor:pointer}
    Los cambios de estado se guardan en la planilla (casilla «Confirmado» y columna «Estado»). */
 var CADA = 12000;
 var datos = null, filtro = 'proximos', busqueda = '', vistos = null, nuevos = {}, abiertos = {}, ocupado = {}, seguro = {};
-var audio = null, sonidoOn = false, ultimaOk = 0, temporizador = null;
+var audio = null, sonidoOn = false, ultimaOk = 0, temporizador = null, plegadas = {};
+try { plegadas = JSON.parse(localStorage.getItem('panel-plegadas') || '{}') || {}; } catch (e) { plegadas = {}; }
 var DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 var $ = function (id) { return document.getElementById(id); };
 var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -239,7 +254,7 @@ function pasaFiltro(p) {
     if (!activo && !cerradoHoy) return false;
   }
   if (busqueda) {
-    var t = (p.cliente + ' ' + p.codigo + ' ' + p.celular + ' ' + p.codigoCliente + ' ' + p.items.map(function (x) { return x.nombre + ' ' + x.cod; }).join(' ')).toLowerCase()
+    var t = (p.cliente + ' ' + p.codigo + ' ' + p.celular + ' ' + (p.correo || '') + ' ' + p.codigoCliente + ' ' + p.items.map(function (x) { return x.nombre + ' ' + x.cod; }).join(' ')).toLowerCase()
       .normalize('NFD').replace(/[̀-ͯ]/g, '');
     var q = busqueda.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     if (q.split(/\s+/).some(function (w) { return w && t.indexOf(w) < 0; })) return false;
@@ -275,15 +290,22 @@ function pintar() {
   $('nMan').textContent = activos.filter(function (p) { return p.dia === man; }).length || '';
   var lista = datos.pedidos.filter(pasaFiltro);
   var foco = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.foco : null;
-  var html = '<section class="tablero" aria-label="Pedidos por estado">' + COLUMNAS.map(function (c) {
+  var cols = COLUMNAS.map(function (c) { return plegadas[c.id] ? '56px' : 'minmax(240px,1fr)'; }).join(' ');
+  var html = '<section class="tablero" aria-label="Pedidos por estado" style="--cols:' + cols + '">' + COLUMNAS.map(function (c) {
     var ps = lista.filter(function (p) { return c.estados.indexOf(p.estado) >= 0; }).sort(orden);
     if (c.id === 'c-ce') ps = ps.reverse();
-    return '<div class="col ' + c.id + '"><h2>' + c.titulo + '<span>' + ps.length + '</span></h2>'
+    var pl = !!plegadas[c.id], nuevo = ps.some(function (p) { return nuevos[p.codigo]; });
+    return '<div class="col ' + c.id + (pl ? ' plegada' : '') + '"><h2>' + titulo(c.id, c.titulo, pl) + '<span' + (nuevo && pl ? ' class="hay-nuevo"' : '') + '>' + ps.length + '</span></h2>'
       + (ps.length ? ps.map(tarjeta).join('') : '<p class="vacio">' + c.vacio + '</p>') + '</div>';
   }).join('') + '</section>' + ladoHTML();
   $('cuerpo').innerHTML = html;
   if (foco) { var f = document.querySelector('[data-foco="' + foco + '"]'); if (f) f.focus(); }
   document.title = (activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length ? '(' + activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length + ') ' : '') + 'Pedidos · Catálogo Sabroso';
+}
+
+// Título que minimiza o abre su columna (o recuadro)
+function titulo(id, texto, pl) {
+  return '<button type="button" class="plegar" data-plegar="' + id + '" data-foco="pl-' + id + '" aria-expanded="' + !pl + '" title="' + (pl ? 'Mostrar' : 'Minimizar') + '"><span class="flecha" aria-hidden="true">▾</span>' + texto + '</button>';
 }
 
 // Mensajes para el cliente: «confirmado» (al recibir el pedido) y «listo» (para retirar)
@@ -299,6 +321,14 @@ function wspEnlace(p, tipo) {
   if (!/^569\d{8}$/.test(num)) return '';
   return 'https://wa.me/' + num + '?text=' + encodeURIComponent(mensaje(p, tipo));
 }
+function asunto(p, tipo) {
+  return tipo === 'listo' ? 'Su pedido ' + p.codigo + ' está listo para retirar · Emporio Sabroso' : 'Pedido ' + p.codigo + ' confirmado · Emporio Sabroso';
+}
+function correoEnlace(p, tipo) {
+  if (!/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(String(p.correo || ''))) return '';
+  return 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(p.correo) + '&su=' + encodeURIComponent(asunto(p, tipo)) + '&body=' + encodeURIComponent(mensaje(p, tipo));
+}
+function enlaceDe(p, medio, tipo) { return medio === 'correo' ? correoEnlace(p, tipo) : wspEnlace(p, tipo); }
 function copiar(texto) {
   var ok = false, t = document.createElement('textarea');
   t.value = texto; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
@@ -309,12 +339,12 @@ function copiar(texto) {
   return ok;
 }
 
-function boton(p, estado, texto, clase, avisa) {
+function boton(p, estado, texto, clase, medio) {
   var k = p.codigo + '>' + estado;
   var pide = ['Anulado', 'No llegó'].indexOf(estado) >= 0;
   var t = pide && seguro[k] ? '¿Seguro? ' + texto : texto;
   return '<button type="button" class="b ' + (clase || '') + (pide && seguro[k] ? ' seguro' : '') + '" data-cod="' + esc(p.codigo) + '" data-estado="' + esc(estado) + '" data-foco="' + esc(k) + '"'
-    + (avisa ? ' data-wsp="1"' : '') + (ocupado[p.codigo] ? ' disabled' : '') + '>' + t + '</button>';
+    + (medio ? ' data-avisa="' + medio + '"' : '') + (ocupado[p.codigo] ? ' disabled' : '') + '>' + t + '</button>';
 }
 
 function tarjeta(p) {
@@ -323,19 +353,24 @@ function tarjeta(p) {
   var largo = items.length > 5 && !abiertos[p.codigo];
   var verItems = largo ? items.slice(0, 4) : items;
   var acc = '';
+  // Medios para avisar: el correo primero si el cliente lo dejó (lo eligió en el pedido); luego WhatsApp
+  var medios = [];
+  if (correoEnlace(p, 'listo')) medios.push('correo');
+  if (wspEnlace(p, 'listo')) medios.push('wsp');
+  var nombreMedio = function (m) { return m === 'correo' ? 'correo' : 'WhatsApp'; };
+  var confirmacion = function (clase) {
+    return medios.map(function (m) { return '<a class="b ' + (m === 'correo' ? 'correo' : 'wsp') + ' ' + (clase || '') + '" href="' + enlaceDe(p, m, 'confirmar') + '">' + (clase ? 'Confirmación por ' + nombreMedio(m) : nombreMedio(m) === 'correo' ? 'Correo' : 'WhatsApp') + '</a>'; }).join('');
+  };
   if (p.estado === 'Por confirmar') {
-    acc = boton(p, 'Confirmado', '✓ Confirmar pedido', 'prim')
-      + (wspEnlace(p, 'confirmar') ? '<a class="b wsp" href="' + wspEnlace(p, 'confirmar') + '">WhatsApp</a>' : '')
-      + boton(p, 'No llegó', 'No llegó', 'peq peligro');
+    acc = boton(p, 'Confirmado', '✓ Confirmar pedido', 'prim') + confirmacion('') + boton(p, 'No llegó', 'No llegó', 'peq peligro');
   } else if (p.estado === 'Confirmado') {
-    // Con celular: un solo toque deja el pedido «listo» y abre WhatsApp con el aviso escrito
-    acc = (wspEnlace(p, 'listo') ? boton(p, 'Preparado', 'Listo · avisar por WhatsApp', 'prim azul', true) : boton(p, 'Preparado', 'Listo para retirar', 'prim azul'))
-      + (wspEnlace(p, 'confirmar') ? '<a class="b wsp peq" href="' + wspEnlace(p, 'confirmar') + '">Enviar confirmación</a>' : '')
-      + boton(p, 'Por confirmar', '↩ Volver', 'peq') + boton(p, 'Anulado', 'Anular', 'peq peligro');
+    // Un solo toque deja el pedido «listo» y abre el aviso escrito (por correo o WhatsApp)
+    acc = (medios.length ? medios.map(function (m, i) { return boton(p, 'Preparado', 'Listo · avisar por ' + nombreMedio(m), i ? (m === 'correo' ? 'correo' : 'wsp') : 'prim azul', m); }).join('') : boton(p, 'Preparado', 'Listo para retirar', 'prim azul'))
+      + confirmacion('peq') + boton(p, 'Por confirmar', '↩ Volver', 'peq') + boton(p, 'Anulado', 'Anular', 'peq peligro');
   } else if (p.estado === 'Preparado') {
     acc = boton(p, 'Entregado', '✓ Entregado', 'prim')
-      + (wspEnlace(p, 'listo')
-        ? '<a class="b wsp" data-avisado="' + esc(p.codigo) + '" href="' + wspEnlace(p, 'listo') + '">' + (p.avisado ? 'Volver a avisar' : 'Avisar por WhatsApp') + '</a>'
+      + (medios.length
+        ? medios.map(function (m) { return '<a class="b ' + (m === 'correo' ? 'correo' : 'wsp') + '" data-avisado="' + esc(p.codigo) + '" data-medio="' + m + '" href="' + enlaceDe(p, m, 'listo') + '">' + (p.avisado && (p.avisadoPor === 'correo') === (m === 'correo') ? 'Volver a avisar por ' : 'Avisar por ') + nombreMedio(m) + '</a>'; }).join('')
         : '<button type="button" class="b wsp" data-copiar="' + esc(p.codigo) + '">Copiar aviso para el chat</button>')
       + boton(p, 'Confirmado', '↩ Volver', 'peq') + boton(p, 'Anulado', 'Anular', 'peq peligro');
   } else {
@@ -347,13 +382,13 @@ function tarjeta(p) {
     + (p.prioridad === 'Alta' ? '<span class="tag t-alta">Prioridad alta</span>' : '')
     + (p.frecuente ? '<span class="tag t-frec">Frecuente · ' + p.veces + ' pedidos</span>' : '') + '</div>'
     + '<div class="p-cli">' + esc(p.cliente || '(sin nombre)') + '</div>'
-    + (p.celular || p.codigoCliente ? '<div class="p-cel">' + esc([p.celular, p.codigoCliente].filter(Boolean).join(' · ')) + '</div>' : '')
+    + (p.celular || p.correo || p.codigoCliente ? '<div class="p-cel">' + esc([p.celular, p.correo, p.codigoCliente].filter(Boolean).join(' · ')) + '</div>' : '')
     + '<div class="p-ret">Retira ' + esc(diaLargo(p.dia)) + ' · ' + esc(p.hora || 'lo antes posible') + ' ' + etiquetaDia(p.dia) + '</div>'
     + '<ul class="p-items">' + verItems.map(function (x) { return '<li><b>' + x.q + ' ×</b><span>' + esc(x.nombre) + (x.cod ? ' <small class="p-sku">' + esc(x.cod) + '</small>' : '') + '</span></li>'; }).join('') + '</ul>'
     + (largo ? '<button type="button" class="p-mas" data-abrir="' + esc(p.codigo) + '">Ver los ' + items.length + ' productos</button>' : '')
     + (p.comentario ? '<div class="p-nota">💬 ' + esc(p.comentario) + '</div>' : '')
     + '<div class="p-pie"><span>' + esc(hace(p.recibido)) + ' · ' + p.unidades + ' u</span><span>Total aprox. <strong>' + (p.total ? clp(p.total) : 'por confirmar') + '</strong></span></div>'
-    + (p.avisado && ['Preparado', 'Entregado'].indexOf(p.estado) >= 0 ? '<div class="p-avisado">✓ Cliente avisado por WhatsApp' + (p.avisadoEl ? ' · ' + esc(p.avisadoEl) : '') + '</div>' : '')
+    + (p.avisado && ['Preparado', 'Entregado'].indexOf(p.estado) >= 0 ? '<div class="p-avisado">✓ Cliente avisado por ' + (p.avisadoPor === 'correo' ? 'correo' : 'WhatsApp') + (p.avisadoEl ? ' · ' + esc(p.avisadoEl) : '') + '</div>' : '')
     + '<div class="acc">' + acc + '</div></article>';
 }
 
@@ -370,22 +405,28 @@ function ladoHTML() {
   };
   // Solo aparece cuando hay algo confirmado para hoy o mañana
   var dias = bloque(datos.hoy, 'Hoy') + bloque(man, 'Mañana');
-  return dias ? '<aside class="lado"><div class="caja"><h3>Por preparar</h3>' + dias + '</div></aside>' : '';
+  return dias ? '<aside class="lado"><div class="caja' + (plegadas.lado ? ' plegada' : '') + '"><h3>' + titulo('lado', 'Por preparar', !!plegadas.lado) + '</h3>' + dias + '</div></aside>' : '';
 }
 
 /* ---------- Acciones ---------- */
 document.addEventListener('click', function (e) {
+  var pg = e.target.closest('[data-plegar]');
+  if (pg) {
+    plegadas[pg.dataset.plegar] = !plegadas[pg.dataset.plegar];
+    try { localStorage.setItem('panel-plegadas', JSON.stringify(plegadas)); } catch (err) {}
+    pintar(); return;
+  }
   var ab = e.target.closest('[data-abrir]');
   if (ab) { abiertos[ab.dataset.abrir] = true; pintar(); return; }
   var tj = e.target.closest('[data-ped]');
   if (tj && nuevos[tj.dataset.ped] && !e.target.closest('button,a')) { delete nuevos[tj.dataset.ped]; pintar(); }
   var pedido = function (c) { return datos.pedidos.filter(function (x) { return x.codigo === c; })[0]; };
-  // «Avisar por WhatsApp»: el enlace abre el chat y la planilla anota que el cliente fue avisado
+  // «Avisar por WhatsApp / correo»: el enlace abre el aviso escrito y la planilla anota que el cliente fue avisado
   var av = e.target.closest('a[data-avisado]');
   if (av) {
-    var pa = pedido(av.dataset.avisado);
-    if (pa) { pa.avisado = true; pa.avisadoEl = horaCorta(new Date()); }
-    servidor('panelAvisado', [av.dataset.avisado], function (d) { recibir(d); }, function () {});
+    var pa = pedido(av.dataset.avisado), medioA = av.dataset.medio || 'wsp';
+    if (pa) { pa.avisado = true; pa.avisadoPor = medioA === 'correo' ? 'correo' : 'WhatsApp'; pa.avisadoEl = horaCorta(new Date()); }
+    servidor('panelAvisado', [av.dataset.avisado, medioA], function (d) { recibir(d); }, function () {});
     setTimeout(pintar, 50);
     return;
   }
@@ -399,10 +440,10 @@ document.addEventListener('click', function (e) {
   var b = e.target.closest('button[data-estado]');
   if (!b) return;
   var cod = b.dataset.cod, est = b.dataset.estado, k = cod + '>' + est;
-  var conAviso = b.dataset.wsp === '1';
+  var conAviso = b.dataset.avisa || false; // 'wsp' o 'correo'
   if (conAviso) { // se abre en el mismo toque (si no, el navegador lo bloquea)
-    var pw = pedido(cod), enlace = pw && wspEnlace(pw, 'listo');
-    if (enlace) { window.open(enlace, '_blank', 'noopener'); pw.avisado = true; pw.avisadoEl = horaCorta(new Date()); }
+    var pw = pedido(cod), enlace = pw && enlaceDe(pw, conAviso, 'listo');
+    if (enlace) { window.open(enlace, '_blank', 'noopener'); pw.avisado = true; pw.avisadoPor = conAviso === 'correo' ? 'correo' : 'WhatsApp'; pw.avisadoEl = horaCorta(new Date()); }
   }
   if (['Anulado', 'No llegó'].indexOf(est) >= 0 && !seguro[k]) {
     seguro[k] = true; pintar();

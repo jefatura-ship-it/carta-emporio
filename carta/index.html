@@ -764,6 +764,15 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 /* Pedido a nombre del cliente con cuenta */
 .anombre{margin:12px 0 4px;padding:10px 12px;border-radius:10px;background:#eef6f0;color:var(--tinta);font-size:14.5px}
 .anombre b{color:var(--campo)}
+/* ¿Cómo te avisamos? WhatsApp o correo */
+.medios{display:flex;gap:8px;margin:2px 0 10px}
+.medio{flex:1;position:relative;display:block}
+.campo .medio input{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;opacity:0;cursor:pointer}
+.medio span{display:flex;align-items:center;justify-content:center;min-height:44px;border:1.5px solid var(--linea);border-radius:12px;background:#fff;font-weight:700;color:var(--tinta)}
+.medio input:checked+span{border-color:var(--campo);background:#eef6f0;color:var(--campo)}
+.medio input:focus-visible+span{outline:3px solid var(--trigo);outline-offset:1px}
+.campo-sub.err .tel-grupo,.campo-sub.err input{border-color:#c0392b}
+#celCuenta{margin:0}
 </style>
 </head>
 <body>
@@ -983,11 +992,23 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
         <input id="nombre" autocomplete="name" placeholder="Para identificar tu pedido">
         <div class="msg" id="msgNombre" hidden>Escribe tu nombre para que sepamos de quién es el pedido.</div>
       </div>
-      <div class="campo" id="campoCel">
-        <label for="celPedido">Tu celular <span class="opc">(opcional)</span><span class="sr"> (el +56 ya está puesto: escriba desde el 9)</span></label>
-        <div class="tel-grupo"><span class="tel-pref" aria-hidden="true">+56</span><input id="celPedido" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="9 1234 5678" maxlength="11"></div>
-        <div class="ayuda">Para avisarte por WhatsApp cuando tu pedido esté listo.</div>
-        <div class="msg" id="msgCel" hidden>Revisa el número: un celular chileno tiene 9 dígitos y empieza con 9.</div>
+      <div class="campo" id="campoAviso">
+        <span class="lbl" id="avisoTit">¿Cómo te avisamos cuando esté listo? <span class="opc">(opcional)</span></span>
+        <div class="medios" role="radiogroup" aria-labelledby="avisoTit">
+          <label class="medio"><input type="radio" name="medioAviso" value="wsp" checked><span>WhatsApp</span></label>
+          <label class="medio"><input type="radio" name="medioAviso" value="correo"><span>Correo</span></label>
+        </div>
+        <div class="campo-sub" id="campoCel">
+          <label for="celPedido" class="sr">Tu celular (el +56 ya está puesto: escriba desde el 9)</label>
+          <div class="tel-grupo"><span class="tel-pref" aria-hidden="true">+56</span><input id="celPedido" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="9 1234 5678" maxlength="11"></div>
+          <div class="msg" id="msgCel" hidden>Revisa el número: un celular chileno tiene 9 dígitos y empieza con 9.</div>
+        </div>
+        <p class="ayuda" id="celCuenta" hidden></p>
+        <div class="campo-sub" id="campoCorreo" hidden>
+          <label for="correoPedido" class="sr">Tu correo</label>
+          <input id="correoPedido" type="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.cl" maxlength="80">
+          <div class="msg" id="msgCorreo" hidden>Revisa el correo: debe tener la forma nombre@dominio.cl.</div>
+        </div>
       </div>
       <div class="campo" id="campoHora">
         <span class="lbl">¿Para cuándo quieres tu pedido?</span>
@@ -1505,7 +1526,7 @@ $("otra").innerHTML=`¿Buscas el catálogo de ${LOCALES[otraKey].nombre}? <a hre
    Necesario: el pedido mientras se arma y el registro que el cliente hace a propósito.
    Opcional (solo con "Aceptar todo"): recordar el nombre y las preferencias de tapa / paquete-unidad. */
 let permiso=null; try{permiso=localStorage.getItem("permiso-datos")}catch(e){}
-const PREFS=["nombre-cliente","celular-cliente","tapas-emporio","tapas-distribuidora","modos-emporio","modos-distribuidora"];
+const PREFS=["nombre-cliente","celular-cliente","correo-cliente","medio-aviso","tapas-emporio","tapas-distribuidora","modos-emporio","modos-distribuidora"];
 const guardaPref=(k,v)=>{if(permiso!=="todo")return;try{localStorage.setItem(k,v)}catch(e){}};
 const leePref=k=>{if(permiso!=="todo")return null;try{return localStorage.getItem(k)}catch(e){return null}};
 function decidir(v){
@@ -1528,7 +1549,7 @@ const pedidosAnotados=new Set();
 function anotarPedido(){
   if(!REGISTRO_URL||!codigo||pedidosAnotados.has(codigo))return;pedidosAnotados.add(codigo);
   const its=items().map(x=>({cod:x.cod,nombre:x.nombre,q:x.q,uds:x.uds||x.q,precio:x.precio}));
-  const d={tipo:"pedido",local:KEY,codigo,nombre:$("nombre").value.trim().slice(0,80),tel:cliente&&cliente.tel||celPedido(),codigoCliente:cliente&&cliente.codigo||"",
+  const d={tipo:"pedido",local:KEY,codigo,nombre:$("nombre").value.trim().slice(0,80),tel:cliente&&cliente.tel||celPedido(),correo:correoPedido(),codigoCliente:cliente&&cliente.codigo||"",
     fechaRetiro:$("fechaRet").value,hora:$("hora").value||"Lo antes posible",items:its,total:totalFinal(),nota:($("nota").value||"").trim().slice(0,300)};
   try{fetch(REGISTRO_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(d)})}catch(e){}
 }
@@ -2288,7 +2309,13 @@ function nuevoCodigo(){
   return L.pref+p(d.getDate())+p(d.getMonth()+1)+"-"+p(d.getHours())+p(d.getMinutes());
 }
 /* Celular del pedido (opcional): +569XXXXXXXX, o vacío si no lo dejó o no es válido */
-const celPedido=()=>{const d=($("celPedido").value||"").replace(/\D/g,"").replace(/^56/,"");return /^9\d{8}$/.test(d)?"+56"+d:""};
+const medioAviso=()=>{const r=document.querySelector('input[name="medioAviso"]:checked');return r?r.value:"wsp"};
+const correoPedido=()=>{if(medioAviso()!=="correo")return "";const v=($("correoPedido").value||"").trim().toLowerCase();return /^[^\s@<>"',;:()\[\]]+@[^\s@<>"',;:()\[\]]+\.[a-z]{2,}$/.test(v)?v.slice(0,80):""};
+function pintarAviso(){const m=medioAviso(),tc=!!(cliente&&cliente.tel);
+  $("campoCel").hidden=m!=="wsp"||tc; $("celCuenta").hidden=!(m==="wsp"&&tc);
+  if(tc)$("celCuenta").textContent="Al "+String(cliente.tel).replace(/^\+56(\d)(\d{4})(\d{4})$/,"+56 $1 $2 $3")+" de tu cuenta.";
+  $("campoCorreo").hidden=m!=="correo"}
+const celPedido=()=>{if(medioAviso()!=="wsp")return "";const d=($("celPedido").value||"").replace(/\D/g,"").replace(/^56/,"");return /^9\d{8}$/.test(d)?"+56"+d:""};
 function textoPedido(){
   const nom=$("nombre").value.trim()||"(sin nombre)";
   const hora=(fechaRetLarga($("fechaRet").value)||"Hoy")+" · "+($("hora").value?"a las "+$("hora").value:"lo antes posible");
@@ -2298,6 +2325,7 @@ function textoPedido(){
   let t=`PEDIDO ${codigo} · ${L.nombre}\nFecha del pedido: ${hecho}\nCliente: ${nom}\n`;
   if(cliente)t+=`Cliente registrado${cliente.codigo?" "+cliente.codigo+(cliente.codigoOk?"":" (provisorio)"):""}: ${nombreCompleto(cliente)} · ${cliente.tel}${cliente.acepta?" · acepta ofertas":""}\n`;
   if(!cliente&&celPedido())t+=`Celular: ${celPedido()} (avisar por WhatsApp cuando esté listo)\n`;
+  if(correoPedido())t+=`Correo: ${correoPedido()} (avisar por correo cuando esté listo)\n`;
   t+=`Retira: ${hora}\n\n`;
   t+=items().map(x=>`${x.q} x ${x.nombre}${x.detalle?" ("+x.detalle+")":""}${x.mayor?" [precio por mayor "+clp(x.precio)+(x.paq?" c/paquete]":" c/u]"):""} = ${sub(x)}`).join("\n");
   if(dcto())t+=`\n\nSUBTOTAL: ${clp(total())}\nDESCUENTO BIENVENIDA ${DCTO}% (1 sola vez, precio normal): -${clp(dcto())}\nTOTAL APROX.: ${clp(totalFinal())}`;
@@ -2313,10 +2341,13 @@ function nombreOk(){if(!fechaOk()){$("fechaRet").focus();return false}
   const ok=!!$("nombre").value.trim();
   $("campoNombre").classList.toggle("err",!ok); $("msgNombre").hidden=ok;
   if(!ok){$("nombre").focus();return false}
-  const v=$("celPedido").value.trim(),bien=$("campoCel").hidden||!v||!!celPedido();
-  $("campoCel").classList.toggle("err",!bien); $("msgCel").hidden=bien;
-  if(!bien)$("celPedido").focus();
-  return bien;
+  const vc=$("celPedido").value.trim(),bienC=$("campoCel").hidden||!vc||!!celPedido();
+  $("campoCel").classList.toggle("err",!bienC); $("msgCel").hidden=bienC;
+  if(!bienC){$("celPedido").focus();return false}
+  const ve=$("correoPedido").value.trim(),bienE=$("campoCorreo").hidden||!ve||!!correoPedido();
+  $("campoCorreo").classList.toggle("err",!bienE); $("msgCorreo").hidden=bienE;
+  if(!bienE)$("correoPedido").focus();
+  return bienE;
 }
 
 function abrirRevision(){
@@ -2332,7 +2363,9 @@ function abrirRevision(){
   actualizarEnlaces();
   abrirHoja("velo",$("cerrar"));
   $("nombre").value||($("nombre").value=leePref("nombre-cliente")||"");
-  $("campoCel").hidden=!!(cliente&&cliente.tel);
+  {const mp=leePref("medio-aviso"),r=mp&&document.querySelector(`input[name="medioAviso"][value="${mp}"]`);if(r)r.checked=true}
+  $("correoPedido").value||($("correoPedido").value=leePref("correo-cliente")||"");
+  pintarAviso();
   const conCuenta=!!(cliente&&cliente.n1&&cliente.a1);
   $("campoNombre").hidden=conCuenta; $("aNombre").hidden=!conCuenta;
   if(conCuenta){$("nombre").value=nombreCompleto(cliente);$("aNombre").innerHTML=`Pedido a nombre de <b>${escHTML(nombreCompleto(cliente))}</b>${cliente.codigo?` · ${escHTML(cliente.codigo)}`:""}`}
@@ -2366,12 +2399,14 @@ $("alertaTapas").addEventListener("click",e=>{
 });
 $("cerrar").onclick=cerrar;
 $("velo").addEventListener("click",e=>{if(e.target===$("velo"))cerrar()});
-["nombre","celPedido","hora","nota"].forEach(id=>$(id).addEventListener("input",()=>{
+document.querySelectorAll('input[name="medioAviso"]').forEach(r=>r.addEventListener("change",()=>{pintarAviso();guardaPref("medio-aviso",medioAviso());actualizarEnlaces()}));
+["nombre","celPedido","correoPedido","hora","nota"].forEach(id=>$(id).addEventListener("input",()=>{
   if(id==="nombre"&&$("nombre").value.trim()){$("campoNombre").classList.remove("err");$("msgNombre").hidden=true}
   if(id==="celPedido"){$("campoCel").classList.remove("err");$("msgCel").hidden=true}
+  if(id==="correoPedido"){$("campoCorreo").classList.remove("err");$("msgCorreo").hidden=true}
   actualizarEnlaces();
 }));
-const recordarNombre=()=>{guardaPref("nombre-cliente",$("nombre").value.trim());if(celPedido())guardaPref("celular-cliente",celPedido().replace(/^\+56/,""))};
+const recordarNombre=()=>{guardaPref("nombre-cliente",$("nombre").value.trim());if(celPedido())guardaPref("celular-cliente",celPedido().replace(/^\+56/,""));if(correoPedido())guardaPref("correo-cliente",correoPedido())};
 const listo=msg=>{$("ok").textContent=msg;$("ok").hidden=false};
 
 $("bWsp").addEventListener("click",e=>{
@@ -2461,7 +2496,7 @@ document.addEventListener("keydown",e=>{
     aviso("Se abrió WhatsApp con tu solicitud lista: envíala y te avisaremos cuando tus datos estén eliminados. Para borrarlos también de este celular, usa el botón «Borrar mis datos de este celular».");
   });
   $("bBorrar").onclick=()=>{
-    try{Object.keys(localStorage).filter(k=>/^(pedido-|cliente-|tapas-|modos-|nombre-cliente|celular-cliente|permiso-datos)/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}
+    try{Object.keys(localStorage).filter(k=>/^(pedido-|cliente-|tapas-|modos-|nombre-cliente|celular-cliente|correo-cliente|medio-aviso|permiso-datos)/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){}
     aviso("Listo: se borró de este celular tu pedido, tu registro y tus preferencias. El catálogo se va a recargar.");
     setTimeout(()=>location.reload(),1800);
   };

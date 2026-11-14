@@ -18,7 +18,7 @@
  *  uso      {tel, codigo, monto, local}                  anota el descuento de bienvenida usado
  *  baja      {tel, local}                                 deja de recibir ofertas (se aplica de inmediato)
  *  eliminar  {tel, local}                                 solicitud de eliminación (queda pendiente)
- *  pedido    {codigo, nombre, tel?, codigoCliente?, fechaRetiro, hora, items[], total, nota, local}
+ *  pedido    {codigo, nombre, tel?, correo?, codigoCliente?, fechaRetiro, hora, items[], total, nota, local}
  *            anota el pedido enviado desde la carta en "Pedidos" (y sus productos en "Detalle de pedidos")
  *            y deja la planilla ordenada: por día de retiro, primero los de prioridad alta
  *            (cliente frecuente o pedido grande), luego los de más unidades y por hora.
@@ -215,7 +215,7 @@ const HOJA_PEDIDOS = 'Pedidos';
 const HOJA_DETALLE = 'Detalle de pedidos';
 const HOJA_PREPARAR = 'Por preparar';
 const COLUMNAS_PEDIDOS = ['Confirmado', 'Día de retiro', 'Hora', 'Prioridad', 'Cliente', 'Celular', 'Código de cliente', 'Cliente frecuente',
-  'N.º de pedidos del cliente', 'Unidades', 'Total aprox.', 'Productos', 'Comentario', 'Código del pedido', 'Recibido', 'Estado', 'Local'];
+  'N.º de pedidos del cliente', 'Unidades', 'Total aprox.', 'Productos', 'Comentario', 'Código del pedido', 'Recibido', 'Estado', 'Local', 'Correo'];
 const ZONA = 'America/Santiago';
 const ESTADOS = ['Por confirmar', 'Confirmado', 'Preparado', 'Entregado', 'Anulado', 'No llegó'];
 const CONFIRMADOS = ['Confirmado', 'Preparado', 'Entregado']; // estados con la casilla marcada
@@ -252,7 +252,7 @@ function anotarPedido(d, tel, local) {
   const alta = frecuente === 'Sí' || unidades >= UNIDADES_GRANDE || total >= TOTAL_GRANDE;
   const hora = texto(d.hora).slice(0, 20) || 'Lo antes posible';
   hoja.appendRow([false, fecha, hora, alta ? 'Alta' : 'Normal', cliente, tel ? texto(tel) : '', codCli, frecuente, veces, unidades, total || '',
-    textoLargo(its.map(function (x) { return x.q + ' × ' + x.nombre; }).join(' · '), 2000), textoLargo(d.nota, 300), codigo, new Date(), 'Por confirmar', local]);
+    textoLargo(its.map(function (x) { return x.q + ' × ' + x.nombre; }).join(' · '), 2000), textoLargo(d.nota, 300), codigo, new Date(), 'Por confirmar', local, correoValido(d.correo)]);
   hoja.getRange(hoja.getLastRow(), CP['Confirmado']).setDataValidation(casilla());
   hojaDetalle().getRange(hojaDetalle().getLastRow() + 1, 1, its.length, COLUMNAS_DETALLE.length).setValues(its.map(function (x) {
     return [fecha, hora, codigo, cliente, x.nombre, x.cod, x.q, x.uds || x.q, x.precio];
@@ -317,9 +317,15 @@ function formatoPedidos(hoja) {
 function migrarPedidos() {
   corregirZonaHoraria();
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_PEDIDOS);
-  if (!hoja || String(hoja.getRange(1, 1).getValue()) !== 'Día de retiro') return;
+  if (!hoja) return;
+  // Hoja ya con «Confirmado» pero sin «Correo» (versión del 14/11): se agrega al final
+  if (String(hoja.getRange(1, 1).getValue()) === 'Confirmado' && String(hoja.getRange(1, CP['Correo']).getValue()) === '' && String(hoja.getRange(1, CP['Local']).getValue()) === 'Local') {
+    hoja.getRange(1, CP['Correo']).setValue('Correo').setFontWeight('bold');
+  }
+  if (String(hoja.getRange(1, 1).getValue()) !== 'Día de retiro') return;
   hoja.insertColumnBefore(1);
   hoja.getRange(1, 1).setValue('Confirmado').setFontWeight('bold');
+  hoja.getRange(1, CP['Correo']).setValue('Correo').setFontWeight('bold');
   hoja.clearConditionalFormatRules(); // se rehacen con las columnas nuevas
   hoja.getRange(2, CP['Estado'], hoja.getMaxRows() - 1, 1).clearDataValidations();
   const n = hoja.getLastRow();
@@ -551,6 +557,12 @@ function texto(v) {
   return /^[=+\-@]/.test(s) ? "'" + s : s;
 }
 
+// Correo con forma nombre@dominio.ext (máximo 80 caracteres), en minúsculas; vacío si no cumple.
+function correoValido(v) {
+  const s = String(v == null ? '' : v).trim().toLowerCase().slice(0, 80);
+  return /^[^\s@<>"',;:()\[\]]+@[^\s@<>"',;:()\[\]]+\.[a-z]{2,}$/.test(s) ? s : '';
+}
+
 function fechaValida(v) {
   const f = new Date(v);
   return isNaN(f.getTime()) || f.getTime() > Date.now() + 864e5 ? null : f;
@@ -594,7 +606,7 @@ function panelDatos() {
   const valor = function (f, nombre) { return f[CP[nombre] - 1]; };
   const notas = n > 1 ? hoja.getRange(2, CP['Estado'], n - 1, 1).getNotes() : [];
   const pedidos = filas.map(function (f, i) {
-    const aviso = String((notas[i] || [''])[0] || '').match(/Avisado por WhatsApp por \S+ el (\d{2}\/\d{2}\/\d{4} \d{2}:\d{2})/);
+    const aviso = String((notas[i] || [''])[0] || '').match(/Avisado por (WhatsApp|correo) por \S+ el (\d{2}\/\d{2}\/\d{4} \d{2}:\d{2})/);
     const codigo = String(valor(f, 'Código del pedido') || ''), dia = valor(f, 'Día de retiro'), rec = valor(f, 'Recibido'), hora = valor(f, 'Hora');
     return {
       codigo: codigo,
@@ -612,8 +624,10 @@ function panelDatos() {
       recibido: rec instanceof Date ? rec.getTime() : 0,
       estado: ESTADOS.indexOf(String(valor(f, 'Estado'))) >= 0 ? String(valor(f, 'Estado')) : 'Por confirmar',
       local: String(valor(f, 'Local') || ''),
+      correo: String(valor(f, 'Correo') || ''),
       avisado: !!aviso,
-      avisadoEl: aviso ? aviso[1] : '',
+      avisadoPor: aviso ? aviso[1] : '',
+      avisadoEl: aviso ? aviso[2] : '',
       items: items[codigo] || []
     };
   }).filter(function (p) {
@@ -623,7 +637,7 @@ function panelDatos() {
 }
 
 // Cambia el estado de un pedido desde el panel (con la casilla al día y una nota de quién lo hizo y cuándo).
-// avisado: el vendedor abrió WhatsApp con el aviso de «listo» en el mismo toque.
+// avisado: el vendedor abrió WhatsApp ('wsp') o el correo ('correo') con el aviso de «listo» en el mismo toque.
 function panelCambiar(codigo, estado, avisado) {
   const usuario = exigirVendedor();
   if (ESTADOS.indexOf(estado) < 0) throw new Error('Estado no válido.');
@@ -633,20 +647,21 @@ function panelCambiar(codigo, estado, avisado) {
     const hoja = hojaPedidos(), fila = filaDelPedido(hoja, codigo);
     hoja.getRange(fila, CP['Estado']).setValue(estado);
     anotarEnEstado(hoja, fila, estado + ' por ' + usuario);
-    if (avisado === true) anotarEnEstado(hoja, fila, 'Avisado por WhatsApp por ' + usuario);
+    if (avisado === true || avisado === 'wsp') anotarEnEstado(hoja, fila, 'Avisado por WhatsApp por ' + usuario);
+    if (avisado === 'correo') anotarEnEstado(hoja, fila, 'Avisado por correo por ' + usuario);
     hoja.getRange(fila, CP['Confirmado']).setValue(CONFIRMADOS.indexOf(estado) >= 0);
   } finally { candado.releaseLock(); }
   return panelDatos();
 }
 
-// El vendedor abrió WhatsApp para avisar al cliente que su pedido está listo: queda anotado (lo ven todos los PC).
-function panelAvisado(codigo) {
+// El vendedor abrió WhatsApp o el correo para avisar al cliente que su pedido está listo: queda anotado (lo ven todos los PC).
+function panelAvisado(codigo, medio) {
   const usuario = exigirVendedor();
   const candado = LockService.getScriptLock();
   candado.waitLock(15000);
   try {
     const hoja = hojaPedidos();
-    anotarEnEstado(hoja, filaDelPedido(hoja, codigo), 'Avisado por WhatsApp por ' + usuario);
+    anotarEnEstado(hoja, filaDelPedido(hoja, codigo), (medio === 'correo' ? 'Avisado por correo por ' : 'Avisado por WhatsApp por ') + usuario);
   } finally { candado.releaseLock(); }
   return panelDatos();
 }
