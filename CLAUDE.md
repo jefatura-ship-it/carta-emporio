@@ -163,8 +163,8 @@ David no quiere que la dirección diga «jefatura»; eligió **avicolasb.com**, 
 
 ## Panel de pedidos (vendedores) — instalado el 14/11/2026
 - Archivo `apps-script/Panel.html` (en el proyecto de Apps Script se llama «Panel»), servido por `doGet` del mismo script.
-- Implementación propia: **«Panel de pedidos (vendedores)»**, versión 5 (14/11: códigos de producto, aviso de «listo» por WhatsApp, logo y sin guías), «Ejecutar como: usuario que accede», «Cualquier persona con cuenta de Google». URL: https://script.google.com/macros/s/AKfycbxONgjXb60YrstnwakNqI3futdIfO6EOXTKx5oLBrNvPdntemqaJVQiNoIf2alIPPSX/exec
+- Implementación propia: **«Panel de pedidos (vendedores)»**, versión 6 (14/11: códigos de producto, aviso de «listo» por WhatsApp o correo (Gmail), logo, sin guías y columnas que se minimizan), «Ejecutar como: usuario que accede», «Cualquier persona con cuenta de Google». URL: https://script.google.com/macros/s/AKfycbxONgjXb60YrstnwakNqI3futdIfO6EOXTKx5oLBrNvPdntemqaJVQiNoIf2alIPPSX/exec
 - Solo entra quien tiene acceso a la planilla «EM27-0802 Pedidos y clientes Catálogo Sabroso» (para sumar un vendedor, compartirle la planilla). Lee la planilla cada 12 s.
-- La implementación del catálogo (AKfycbzP_…) quedó en la versión 3 con el mismo código; a un visitante anónimo solo le responde «activo».
+- La implementación del catálogo (AKfycbzP_…) quedó en la versión 6 con el mismo código (guarda el correo en la columna «Correo» de Pedidos); a un visitante anónimo solo le responde «activo».
 - Estados: Por confirmar → Confirmado (casilla) → Preparado → Entregado / Anulado; «No llegó» si nadie confirma en 24 h. La planilla quedó en hora de Chile (America/Santiago).
 - Para pegar código nuevo en el editor: el editor de Apps Script no acepta pegar con el teclado desde el navegador del panel; se aplican los cambios con `monaco.editor.getModels()[i].pushEditOperations` y se comprueba con una huella antes de guardar.
