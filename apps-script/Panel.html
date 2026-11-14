@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<base target="_blank">
+<meta charset="utf-8">
+<title>Pedidos · Catálogo Sabroso</title>
+<style>
+:root{--campo:#1f5f3a;--campo-2:#2d7a4d;--sol:#e8761a;--sol-2:#fde3cf;--papel:#f6f2e9;--tarjeta:#fff;--tinta:#1c1c1a;--suave:#66645c;--linea:#e2dccd;--rojo:#b3261e;--azul:#2357a8}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--papel);color:var(--tinta);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+button{font:inherit;cursor:pointer}
+.barra{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:12px 20px;background:var(--campo);color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.marca{display:flex;align-items:baseline;gap:10px;margin-right:auto}
+.marca b{font-size:20px;letter-spacing:.01em}
+.marca span{opacity:.85;font-size:14px}
+.vivo{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;opacity:.95}
+.vivo i{width:10px;height:10px;border-radius:50%;background:#7be08f;box-shadow:0 0 0 0 rgba(123,224,143,.7);animation:pulso 2s infinite}
+.vivo.error i{background:#ff8a7a;animation:none}
+@keyframes pulso{70%{box-shadow:0 0 0 8px rgba(123,224,143,0)}100%{box-shadow:0 0 0 0 rgba(123,224,143,0)}}
+.sonido{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 14px;border:1.5px solid rgba(255,255,255,.7);border-radius:999px;background:transparent;color:#fff;font-weight:700;font-size:13.5px}
+.sonido.on{background:#fff;color:var(--campo);border-color:#fff}
+.usuario{font-size:12.5px;opacity:.8}
+.herr{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px 20px 4px}
+.chip{min-height:38px;padding:6px 16px;border:1.5px solid var(--linea);border-radius:999px;background:#fff;color:var(--tinta);font-weight:700;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--tinta);border-color:var(--tinta);color:#fff}
+.chip small{font-weight:800;margin-left:4px;opacity:.75}
+.busca{flex:1 1 260px;max-width:420px;margin-left:auto;position:relative}
+.busca input{width:100%;min-height:40px;padding:8px 14px 8px 38px;border:1.5px solid var(--linea);border-radius:12px;background:#fff;font:inherit}
+.busca svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--suave)}
+.cuerpo{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;padding:12px 20px 40px}
+@media (min-width:1280px){.cuerpo{grid-template-columns:minmax(0,1fr) 300px}}
+.tablero{display:grid;grid-template-columns:repeat(4,minmax(240px,1fr));gap:14px;align-items:start;overflow-x:auto;padding-bottom:6px}
+.col{background:#ece6d8;border-radius:16px;padding:10px;min-height:120px}
+.col h2{display:flex;align-items:center;justify-content:space-between;margin:2px 4px 10px;font-size:15px}
+.col h2 span{min-width:28px;height:24px;padding:0 8px;border-radius:999px;background:#fff;font-size:13px;line-height:24px;text-align:center}
+.col.c-pc h2{color:#8a3a00}.col.c-pc h2 span{background:var(--sol);color:#fff}
+.col.c-co h2{color:var(--campo)}
+.col.c-pr h2{color:var(--azul)}
+.col.c-ce h2{color:var(--suave)}
+.vacio{margin:6px 4px 10px;color:var(--suave);font-size:13.5px}
+.ped{position:relative;margin-bottom:10px;padding:12px 12px 10px;border-radius:14px;background:var(--tarjeta);box-shadow:0 1px 2px rgba(0,0,0,.08);border:1.5px solid transparent}
+.ped.alta{border-color:#f0b8b2}
+.ped.nuevo{border-color:var(--sol);box-shadow:0 0 0 3px rgba(232,118,26,.25);animation:llega 1.2s ease-out 3}
+@keyframes llega{0%{transform:scale(1)}20%{transform:scale(1.02)}40%{transform:scale(1)}}
+.ped.cerrado{opacity:.72}
+.p-cab{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:4px}
+.p-cod{font-weight:800;font-size:13px;color:var(--suave);letter-spacing:.02em}
+.tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase}
+.t-nuevo{background:var(--sol);color:#fff}
+.t-alta{background:#fbe1de;color:var(--rojo)}
+.t-frec{background:#dff0e5;color:var(--campo)}
+.t-hoy{background:#fff2c2;color:#7a5b00}
+.t-man{background:#e3f1dc;color:var(--campo)}
+.t-atr{background:#eeeeee;color:var(--suave)}
+.p-cli{font-size:17px;font-weight:800;line-height:1.25}
+.p-cel{color:var(--suave);font-size:13.5px}
+.p-ret{display:flex;align-items:center;gap:8px;margin:8px 0;padding:7px 10px;border-radius:10px;background:var(--papel);font-weight:700;font-size:14px}
+.p-items{margin:6px 0;padding:0;list-style:none;font-size:14px}
+.p-items li{display:flex;gap:8px;padding:3px 0;border-bottom:1px dashed var(--linea)}
+.p-items li:last-child{border-bottom:0}
+.p-items b{min-width:28px;text-align:right}
+.p-mas{border:0;background:none;color:var(--azul);font-weight:700;font-size:13px;padding:2px 0}
+.p-nota{margin:6px 0;padding:6px 10px;border-radius:8px;background:#fff7d6;font-size:13.5px}
+.p-pie{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:2px 10px;margin-top:6px;font-size:13px;color:var(--suave)}
+.p-pie span{white-space:nowrap}
+.p-pie strong{font-size:16px;color:var(--tinta)}
+.acc{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:6px 12px;border-radius:10px;border:1.5px solid var(--linea);background:#fff;color:var(--tinta);font-weight:700;font-size:13.5px;text-decoration:none}
+.b:disabled{opacity:.5;cursor:default}
+.b.prim{flex:1 1 auto;background:var(--campo);border-color:var(--campo);color:#fff}
+.b.prim.azul{background:var(--azul);border-color:var(--azul)}
+.b.wsp{background:#e6f6ec;border-color:#bfe3cc;color:#14663a}
+.b.peq{min-height:32px;padding:4px 10px;font-size:12.5px;color:var(--suave)}
+.b.peligro{color:var(--rojo)}
+.b.seguro{background:var(--rojo);border-color:var(--rojo);color:#fff}
+.lado{display:grid;gap:14px;align-content:start}
+.caja{background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.caja h3{margin:0 0 8px;font-size:15px}
+.caja h4{margin:10px 0 4px;font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:var(--suave)}
+.caja ul{margin:0;padding:0;list-style:none;font-size:14px}
+.caja li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid var(--papel)}
+.caja li b{white-space:nowrap}
+.caja p{margin:0;color:var(--suave);font-size:13.5px}
+.aviso{position:fixed;right:20px;bottom:20px;z-index:9;display:none;max-width:360px;padding:14px 16px;border-radius:14px;background:var(--tinta);color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.3);font-weight:700}
+.aviso.ver{display:block;animation:sube .3s ease-out}
+@keyframes sube{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+.cargando{padding:40px;text-align:center;color:var(--suave)}
+.sinacceso{max-width:520px;margin:60px auto;padding:24px;border-radius:16px;background:#fff;text-align:center}
+@media (max-width:1100px){.tablero{grid-template-columns:repeat(2,minmax(240px,1fr))}}
+@media (max-width:640px){.tablero{grid-template-columns:1fr}.barra,.herr,.cuerpo{padding-left:12px;padding-right:12px}}
+</style>
+</head>
+<body>
+<header class="barra">
+  <div class="marca"><b>Pedidos</b><span>Emporio Sabroso · Catálogo Sabroso</span></div>
+  <span class="vivo" id="vivo" role="status" aria-live="polite"><i aria-hidden="true"></i><span id="vivoTxt">Conectando…</span></span>
+  <button type="button" class="sonido" id="bSonido" aria-pressed="false">🔔 Activar sonido</button>
+  <span class="usuario" id="usuario"></span>
+</header>
+<div class="herr" role="toolbar" aria-label="Filtros">
+  <button type="button" class="chip" data-filtro="proximos" aria-pressed="true">Activos y próximos</button>
+  <button type="button" class="chip" data-filtro="hoy" aria-pressed="false">Para hoy <small id="nHoy"></small></button>
+  <button type="button" class="chip" data-filtro="manana" aria-pressed="false">Para mañana <small id="nMan"></small></button>
+  <button type="button" class="chip" data-filtro="todo" aria-pressed="false">Últimas 2 semanas</button>
+  <label class="busca"><span hidden>Buscar</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg><input id="q" type="search" placeholder="Buscar cliente, código o producto" autocomplete="off"></label>
+</div>
+<main class="cuerpo" id="cuerpo"><div class="cargando">Cargando pedidos…</div></main>
+<div class="aviso" id="aviso" role="alert"></div>
+
+<script>
+/* Panel de pedidos del Catálogo Sabroso: lee la planilla cada 12 segundos y muestra los pedidos nuevos al instante.
+   Los cambios de estado se guardan en la planilla (casilla «Confirmado» y columna «Estado»). */
+var CADA = 12000;
+var datos = null, filtro = 'proximos', busqueda = '', vistos = null, nuevos = {}, abiertos = {}, ocupado = {}, seguro = {};
+var audio = null, sonidoOn = false, ultimaOk = 0, temporizador = null;
+var DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+var $ = function (id) { return document.getElementById(id); };
+var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+var clp = function (n) { return '$' + Math.round(n || 0).toLocaleString('es-CL'); };
+try { vistos = JSON.parse(localStorage.getItem('panel-vistos') || 'null'); sonidoOn = localStorage.getItem('panel-sonido') === 'si'; } catch (e) { vistos = null; }
+
+function servidor(fn, args, ok, mal) {
+  var r = google.script.run.withSuccessHandler(ok).withFailureHandler(mal || function (e) { estadoConexion(false, e); });
+  r[fn].apply(r, args || []);
+}
+
+function cargar() {
+  servidor('panelDatos', [], function (d) { recibir(d); estadoConexion(true); }, function (e) { estadoConexion(false, e); });
+}
+function programar() { clearTimeout(temporizador); temporizador = setTimeout(function () { cargar(); programar(); }, CADA); }
+
+function recibir(d) {
+  var primera = !datos;
+  datos = d;
+  $('usuario').textContent = d.usuario;
+  var cods = d.pedidos.map(function (p) { return p.codigo; });
+  if (vistos === null) vistos = cods.slice(); // primera vez en este PC: lo que ya existía no se anuncia
+  var llegados = d.pedidos.filter(function (p) { return vistos.indexOf(p.codigo) < 0; });
+  llegados.forEach(function (p) { nuevos[p.codigo] = true; vistos.push(p.codigo); });
+  vistos = vistos.slice(-500);
+  try { localStorage.setItem('panel-vistos', JSON.stringify(vistos)); } catch (e) {}
+  if (llegados.length && !primera) anunciar(llegados);
+  else if (llegados.length && primera) anunciar(llegados);
+  pintar();
+}
+
+function estadoConexion(ok, e) {
+  if (ok) ultimaOk = Date.now();
+  var v = $('vivo');
+  v.classList.toggle('error', !ok);
+  if (!ok && e && /Sin acceso/.test(String(e.message || e))) { sinAcceso(String(e.message || e)); return; }
+  $('vivoTxt').textContent = ok ? 'En vivo · actualizado ' + horaCorta(new Date()) : 'Sin conexión: reintentando…';
+}
+
+function sinAcceso(msg) {
+  clearTimeout(temporizador);
+  $('cuerpo').innerHTML = '<div class="sinacceso"><h2>No tiene acceso a los pedidos</h2><p>' + esc(msg) + '</p><p>Pida que le compartan la planilla «EM27-0802 Pedidos y clientes Catálogo Sabroso» y vuelva a abrir el panel.</p></div>';
+  $('vivoTxt').textContent = 'Sin acceso';
+}
+
+/* ---------- Sonido y avisos ---------- */
+function activarSonido() {
+  try {
+    if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state === 'suspended') audio.resume();
+  } catch (e) { audio = null; }
+}
+function campana() {
+  if (!sonidoOn || !audio) return;
+  try {
+    [0, 0.22].forEach(function (t, i) {
+      var o = audio.createOscillator(), g = audio.createGain();
+      o.type = 'sine'; o.frequency.value = i ? 1320 : 988;
+      g.gain.setValueAtTime(0.0001, audio.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.35, audio.currentTime + t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + t + 0.35);
+      o.connect(g); g.connect(audio.destination); o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.4);
+    });
+  } catch (e) {}
+}
+function anunciar(lista) {
+  campana();
+  var p = lista[0];
+  avisar(lista.length > 1 ? lista.length + ' pedidos nuevos' : 'Pedido nuevo de ' + p.cliente + ' · ' + p.codigo);
+}
+var avisoT = null;
+function avisar(t) {
+  var a = $('aviso'); a.textContent = t; a.classList.add('ver');
+  clearTimeout(avisoT); avisoT = setTimeout(function () { a.classList.remove('ver'); }, 6000);
+}
+function pintarSonido() {
+  var b = $('bSonido');
+  b.classList.toggle('on', sonidoOn && !!audio);
+  b.setAttribute('aria-pressed', String(sonidoOn));
+  b.textContent = sonidoOn ? (audio && audio.state === 'running' ? '🔔 Sonido activado' : '🔔 Toque para activar el sonido') : '🔕 Activar sonido';
+}
+$('bSonido').addEventListener('click', function () {
+  if (sonidoOn && audio && audio.state === 'running') { sonidoOn = false; }
+  else { sonidoOn = true; activarSonido(); setTimeout(function () { campana(); pintarSonido(); }, 80); }
+  try { localStorage.setItem('panel-sonido', sonidoOn ? 'si' : 'no'); } catch (e) {}
+  pintarSonido();
+});
+// El navegador exige un toque antes de sonar: cualquier clic en la página deja el sonido listo
+document.addEventListener('pointerdown', function () { if (sonidoOn) { activarSonido(); setTimeout(pintarSonido, 80); } }, { passive: true });
+
+/* ---------- Fechas ---------- */
+function horaCorta(d) { return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+function diaDe(iso) { if (!iso) return null; var p = iso.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+function sumarDias(iso, n) { var d = diaDe(iso); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function diaLargo(iso) { var d = diaDe(iso); return d ? DIAS[d.getDay()] + ' ' + ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) : 'sin día'; }
+function hace(ms) {
+  if (!ms) return '';
+  var m = Math.round((Date.now() - ms) / 60000);
+  if (m < 1) return 'recién llegado';
+  if (m < 60) return 'hace ' + m + ' min';
+  var h = Math.floor(m / 60);
+  if (h < 24) return 'hace ' + h + ' h';
+  return 'recibido el ' + diaLargo(new Date(ms).toISOString().slice(0, 10));
+}
+function etiquetaDia(iso) {
+  if (!datos || !iso) return '';
+  if (iso === datos.hoy) return '<span class="tag t-hoy">Hoy</span>';
+  if (iso === sumarDias(datos.hoy, 1)) return '<span class="tag t-man">Mañana</span>';
+  if (iso < datos.hoy) return '<span class="tag t-atr">Atrasado</span>';
+  return '';
+}
+
+/* ---------- Filtros ---------- */
+function pasaFiltro(p) {
+  var man = sumarDias(datos.hoy, 1);
+  if (filtro === 'hoy' && p.dia !== datos.hoy) return false;
+  if (filtro === 'manana' && p.dia !== man) return false;
+  if (filtro === 'proximos') {
+    var activo = ['Por confirmar', 'Confirmado', 'Preparado'].indexOf(p.estado) >= 0;
+    var cerradoHoy = !activo && (p.dia >= datos.hoy || (p.recibido && Date.now() - p.recibido < 864e5));
+    if (!activo && !cerradoHoy) return false;
+  }
+  if (busqueda) {
+    var t = (p.cliente + ' ' + p.codigo + ' ' + p.celular + ' ' + p.codigoCliente + ' ' + p.items.map(function (x) { return x.nombre; }).join(' ')).toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '');
+    var q = busqueda.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (q.split(/\s+/).some(function (w) { return w && t.indexOf(w) < 0; })) return false;
+  }
+  return true;
+}
+document.querySelectorAll('[data-filtro]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    filtro = b.dataset.filtro;
+    document.querySelectorAll('[data-filtro]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    pintar();
+  });
+});
+$('q').addEventListener('input', function () { busqueda = this.value.trim(); pintar(); });
+
+/* ---------- Tablero ---------- */
+var COLUMNAS = [
+  { id: 'c-pc', titulo: 'Por confirmar', estados: ['Por confirmar'], vacio: 'Sin pedidos por confirmar.' },
+  { id: 'c-co', titulo: 'Confirmados · por preparar', estados: ['Confirmado'], vacio: 'Nada por preparar.' },
+  { id: 'c-pr', titulo: 'Listos para retirar', estados: ['Preparado'], vacio: 'Ningún pedido esperando retiro.' },
+  { id: 'c-ce', titulo: 'Cerrados', estados: ['Entregado', 'Anulado', 'No llegó'], vacio: 'Sin pedidos cerrados.' }
+];
+function orden(a, b) {
+  return (a.dia || '9999').localeCompare(b.dia || '9999') || (a.prioridad === 'Alta' ? -1 : 0) - (b.prioridad === 'Alta' ? -1 : 0)
+    || String(a.hora).localeCompare(String(b.hora)) || a.recibido - b.recibido;
+}
+
+function pintar() {
+  if (!datos) return;
+  var man = sumarDias(datos.hoy, 1);
+  var activos = datos.pedidos.filter(function (p) { return ['Por confirmar', 'Confirmado', 'Preparado'].indexOf(p.estado) >= 0; });
+  $('nHoy').textContent = activos.filter(function (p) { return p.dia === datos.hoy; }).length || '';
+  $('nMan').textContent = activos.filter(function (p) { return p.dia === man; }).length || '';
+  var lista = datos.pedidos.filter(pasaFiltro);
+  var foco = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.foco : null;
+  var html = '<section class="tablero" aria-label="Pedidos por estado">' + COLUMNAS.map(function (c) {
+    var ps = lista.filter(function (p) { return c.estados.indexOf(p.estado) >= 0; }).sort(orden);
+    if (c.id === 'c-ce') ps = ps.reverse();
+    return '<div class="col ' + c.id + '"><h2>' + c.titulo + '<span>' + ps.length + '</span></h2>'
+      + (ps.length ? ps.map(tarjeta).join('') : '<p class="vacio">' + c.vacio + '</p>') + '</div>';
+  }).join('') + '</section>' + ladoHTML();
+  $('cuerpo').innerHTML = html;
+  if (foco) { var f = document.querySelector('[data-foco="' + foco + '"]'); if (f) f.focus(); }
+  document.title = (activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length ? '(' + activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length + ') ' : '') + 'Pedidos · Catálogo Sabroso';
+}
+
+function wspEnlace(p, tipo) {
+  var num = String(p.celular).replace(/\D/g, '');
+  if (!/^569\d{8}$/.test(num)) return '';
+  var nom = p.cliente.split(' ')[0];
+  var cuando = diaLargo(p.dia) + (p.hora && !/antes/i.test(p.hora) ? ' a las ' + p.hora : '');
+  var t = tipo === 'listo'
+    ? 'Hola ' + nom + ', su pedido ' + p.codigo + ' ya está listo para retirar en Emporio Sabroso (Arturo Prat 720, Chillán). ¡Lo esperamos!'
+    : 'Hola ' + nom + ', recibimos su pedido ' + p.codigo + ' en Emporio Sabroso. Queda confirmado para retirar el ' + cuando + '. ¡Gracias!';
+  return 'https://wa.me/' + num + '?text=' + encodeURIComponent(t);
+}
+
+function boton(p, estado, texto, clase) {
+  var k = p.codigo + '>' + estado;
+  var pide = ['Anulado', 'No llegó'].indexOf(estado) >= 0;
+  var t = pide && seguro[k] ? '¿Seguro? ' + texto : texto;
+  return '<button type="button" class="b ' + (clase || '') + (pide && seguro[k] ? ' seguro' : '') + '" data-cod="' + esc(p.codigo) + '" data-estado="' + esc(estado) + '" data-foco="' + esc(k) + '"'
+    + (ocupado[p.codigo] ? ' disabled' : '') + '>' + t + '</button>';
+}
+
+function tarjeta(p) {
+  var cerrado = ['Entregado', 'Anulado', 'No llegó'].indexOf(p.estado) >= 0;
+  var items = p.items.length ? p.items : [];
+  var largo = items.length > 5 && !abiertos[p.codigo];
+  var verItems = largo ? items.slice(0, 4) : items;
+  var acc = '';
+  if (p.estado === 'Por confirmar') {
+    acc = boton(p, 'Confirmado', '✓ Confirmar pedido', 'prim')
+      + (wspEnlace(p, 'confirmar') ? '<a class="b wsp" href="' + wspEnlace(p, 'confirmar') + '">WhatsApp</a>' : '')
+      + boton(p, 'No llegó', 'No llegó', 'peq peligro');
+  } else if (p.estado === 'Confirmado') {
+    acc = boton(p, 'Preparado', 'Listo para retirar', 'prim azul')
+      + (wspEnlace(p, 'confirmar') ? '<a class="b wsp" href="' + wspEnlace(p, 'confirmar') + '">WhatsApp</a>' : '')
+      + boton(p, 'Por confirmar', '↩ Volver', 'peq') + boton(p, 'Anulado', 'Anular', 'peq peligro');
+  } else if (p.estado === 'Preparado') {
+    acc = boton(p, 'Entregado', '✓ Entregado', 'prim')
+      + (wspEnlace(p, 'listo') ? '<a class="b wsp" href="' + wspEnlace(p, 'listo') + '">Avisar que está listo</a>' : '')
+      + boton(p, 'Confirmado', '↩ Volver', 'peq') + boton(p, 'Anulado', 'Anular', 'peq peligro');
+  } else {
+    acc = '<span class="p-cel">' + esc(p.estado) + '</span>' + boton(p, p.estado === 'Entregado' ? 'Preparado' : 'Por confirmar', '↩ Reabrir', 'peq');
+  }
+  return '<article class="ped' + (p.prioridad === 'Alta' ? ' alta' : '') + (nuevos[p.codigo] ? ' nuevo' : '') + (cerrado ? ' cerrado' : '') + '" data-ped="' + esc(p.codigo) + '">'
+    + '<div class="p-cab"><span class="p-cod">' + esc(p.codigo) + '</span>'
+    + (nuevos[p.codigo] ? '<span class="tag t-nuevo">Nuevo</span>' : '')
+    + (p.prioridad === 'Alta' ? '<span class="tag t-alta">Prioridad alta</span>' : '')
+    + (p.frecuente ? '<span class="tag t-frec">Frecuente · ' + p.veces + ' pedidos</span>' : '') + '</div>'
+    + '<div class="p-cli">' + esc(p.cliente || '(sin nombre)') + '</div>'
+    + (p.celular || p.codigoCliente ? '<div class="p-cel">' + esc([p.celular, p.codigoCliente].filter(Boolean).join(' · ')) + '</div>' : '')
+    + '<div class="p-ret">Retira ' + esc(diaLargo(p.dia)) + ' · ' + esc(p.hora || 'lo antes posible') + ' ' + etiquetaDia(p.dia) + '</div>'
+    + '<ul class="p-items">' + verItems.map(function (x) { return '<li><b>' + x.q + ' ×</b><span>' + esc(x.nombre) + '</span></li>'; }).join('') + '</ul>'
+    + (largo ? '<button type="button" class="p-mas" data-abrir="' + esc(p.codigo) + '">Ver los ' + items.length + ' productos</button>' : '')
+    + (p.comentario ? '<div class="p-nota">💬 ' + esc(p.comentario) + '</div>' : '')
+    + '<div class="p-pie"><span>' + esc(hace(p.recibido)) + ' · ' + p.unidades + ' u</span><span>Total aprox. <strong>' + (p.total ? clp(p.total) : 'por confirmar') + '</strong></span></div>'
+    + '<div class="acc">' + acc + '</div></article>';
+}
+
+function ladoHTML() {
+  var man = sumarDias(datos.hoy, 1);
+  var bloque = function (iso, titulo) {
+    var tot = {};
+    datos.pedidos.filter(function (p) { return p.estado === 'Confirmado' && p.dia === iso; }).forEach(function (p) {
+      p.items.forEach(function (x) { tot[x.nombre] = (tot[x.nombre] || 0) + x.q; });
+    });
+    var ks = Object.keys(tot).sort(function (a, b) { return tot[b] - tot[a]; });
+    return '<h4>' + titulo + '</h4>' + (ks.length ? '<ul>' + ks.map(function (k) { return '<li><span>' + esc(k) + '</span><b>' + tot[k] + '</b></li>'; }).join('') + '</ul>' : '<p>Nada confirmado todavía.</p>');
+  };
+  var pc = datos.pedidos.filter(function (p) { return p.estado === 'Por confirmar'; }).length;
+  return '<aside class="lado"><div class="caja"><h3>Por preparar</h3><p>Suma de los pedidos confirmados.</p>' + bloque(datos.hoy, 'Hoy') + bloque(man, 'Mañana') + '</div>'
+    + (pc ? '<div class="caja"><h3>' + pc + ' por confirmar</h3><p>Revise el WhatsApp o Instagram del Emporio y confirme los que llegaron. Los que nadie confirme en 24 horas pasan solos a «No llegó».</p></div>' : '')
+    + '</aside>';
+}
+
+/* ---------- Acciones ---------- */
+document.addEventListener('click', function (e) {
+  var ab = e.target.closest('[data-abrir]');
+  if (ab) { abiertos[ab.dataset.abrir] = true; pintar(); return; }
+  var tj = e.target.closest('[data-ped]');
+  if (tj && nuevos[tj.dataset.ped] && !e.target.closest('button,a')) { delete nuevos[tj.dataset.ped]; pintar(); }
+  var b = e.target.closest('button[data-estado]');
+  if (!b) return;
+  var cod = b.dataset.cod, est = b.dataset.estado, k = cod + '>' + est;
+  if (['Anulado', 'No llegó'].indexOf(est) >= 0 && !seguro[k]) {
+    seguro[k] = true; pintar();
+    setTimeout(function () { delete seguro[k]; pintar(); }, 4000);
+    return;
+  }
+  delete seguro[k]; delete nuevos[cod];
+  ocupado[cod] = true;
+  var p = datos.pedidos.filter(function (x) { return x.codigo === cod; })[0];
+  var antes = p ? p.estado : '';
+  if (p) p.estado = est; // se ve al instante; la planilla confirma enseguida
+  pintar();
+  servidor('panelCambiar', [cod, est], function (d) {
+    delete ocupado[cod]; recibir(d); estadoConexion(true);
+    avisar(cod + ': ' + est.toLowerCase());
+  }, function (err) {
+    delete ocupado[cod]; if (p) p.estado = antes; pintar();
+    avisar('No se pudo guardar: ' + String(err && err.message || err));
+  });
+});
+
+/* Inicio */
+pintarSonido();
+cargar(); programar();
+setInterval(function () {
+  if (ultimaOk && Date.now() - ultimaOk > CADA * 3) estadoConexion(false);
+  else if (datos) { $('vivoTxt').textContent = 'En vivo · actualizado ' + horaCorta(new Date(ultimaOk)); pintarRelativos(); }
+}, 30000);
+function pintarRelativos() { if (datos && !document.querySelector('.b:focus') && !$('q').matches(':focus')) pintar(); }
+document.addEventListener('visibilitychange', function () { if (!document.hidden) { cargar(); programar(); } });
+</script>
+</body>
+</html>

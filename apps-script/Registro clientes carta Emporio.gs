@@ -1,6 +1,7 @@
 /**
- * Registro de clientes de la carta QR (Emporio Sabroso y Distribuidora Santa Bárbara).
- * Apps Script ligado a la planilla EM27-07. Recibe lo que envía la carta y lo anota.
+ * Registro de clientes y pedidos del Catálogo Sabroso (Emporio Sabroso y Distribuidora Santa Bárbara).
+ * Apps Script ligado a la planilla «EM27-0802 Pedidos y clientes Catálogo Sabroso» (antes EM27-07).
+ * Recibe lo que envía el catálogo y lo anota. También sirve el Panel de pedidos de los vendedores.
  *
  * INSTALACIÓN
  *  1. Abrir la planilla EM27-07 → Extensiones → Apps Script. Pegar este archivo completo.
@@ -25,6 +26,21 @@
  *
  * DESPUÉS DE PEGAR ESTA VERSIÓN: Implementar → Gestionar implementaciones → editar la actual →
  * Versión: "Nueva versión" → Implementar. Así la URL de la carta no cambia.
+ *
+ * ESTADOS DE UN PEDIDO (columna "Estado", y la casilla "Confirmado" al inicio de cada fila)
+ *  Por confirmar → llegó desde el catálogo; aún no se comprueba que el cliente lo envió por el chat.
+ *  Confirmado    → el pedido llegó por WhatsApp o Instagram (basta marcar la casilla).
+ *  Preparado     → listo para retirar.   Entregado / Anulado → cerrado.
+ *  No llegó      → nadie lo confirmó en 24 horas (el cliente abrió el chat pero no lo envió).
+ *  "Por preparar" suma solo los pedidos confirmados.
+ *
+ * PANEL DE PEDIDOS (pantalla en vivo para los PC de los vendedores; archivo HTML "Panel" de este proyecto)
+ *  Implementar → Nueva implementación → Aplicación web.
+ *    Ejecutar como: el usuario que accede a la aplicación web.
+ *    Quién tiene acceso: cualquier usuario con una cuenta de Google.
+ *  Solo lo abre quien tiene acceso a esta planilla: para sumar a un vendedor, se le comparte la planilla
+ *  (o la unidad compartida) con su cuenta de Google. Se actualiza solo cada pocos segundos.
+ *  La implementación pública del catálogo (Ejecutar como: yo) no muestra el panel a nadie más que al dueño.
  *
  * La eliminación NO es automática: cualquiera que conozca un celular podría enviarla.
  * Queda anotada en "Solicitudes" y una persona la confirma con el cliente (por WhatsApp
@@ -85,9 +101,12 @@ function doPost(e) {
   return ContentService.createTextOutput(JSON.stringify(respuesta)).setMimeType(ContentService.MimeType.JSON);
 }
 
-// Solo para comprobar en el navegador que la implementación responde. No entrega datos.
+// Vendedores con acceso a la planilla: el Panel de pedidos. Cualquier otra persona: solo el aviso de que responde (sin datos).
 function doGet() {
-  return ContentService.createTextOutput('Registro de clientes de la carta: activo.');
+  if (!vendedor()) return ContentService.createTextOutput('Registro de clientes de la carta: activo.');
+  return HtmlService.createHtmlOutputFromFile('Panel')
+    .setTitle('Pedidos · Catálogo Sabroso')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 
 /* ---------- Tipos ---------- */
@@ -195,8 +214,12 @@ function solicitarEliminacion(tel, local) {
 const HOJA_PEDIDOS = 'Pedidos';
 const HOJA_DETALLE = 'Detalle de pedidos';
 const HOJA_PREPARAR = 'Por preparar';
-const COLUMNAS_PEDIDOS = ['Día de retiro', 'Hora', 'Prioridad', 'Cliente', 'Celular', 'Código de cliente', 'Cliente frecuente',
+const COLUMNAS_PEDIDOS = ['Confirmado', 'Día de retiro', 'Hora', 'Prioridad', 'Cliente', 'Celular', 'Código de cliente', 'Cliente frecuente',
   'N.º de pedidos del cliente', 'Unidades', 'Total aprox.', 'Productos', 'Comentario', 'Código del pedido', 'Recibido', 'Estado', 'Local'];
+const ZONA = 'America/Santiago';
+const ESTADOS = ['Por confirmar', 'Confirmado', 'Preparado', 'Entregado', 'Anulado', 'No llegó'];
+const CONFIRMADOS = ['Confirmado', 'Preparado', 'Entregado']; // estados con la casilla marcada
+const HORAS_SIN_CONFIRMAR = 24;
 const COLUMNAS_DETALLE = ['Día de retiro', 'Hora', 'Código del pedido', 'Cliente', 'Producto', 'Código de producto', 'Cantidad', 'Unidades', 'Precio unitario'];
 const CP = {}; COLUMNAS_PEDIDOS.forEach(function (nombre, i) { CP[nombre] = i + 1; });
 // Prioridad alta: cliente frecuente (3 pedidos o más) o pedido grande
@@ -228,8 +251,9 @@ function anotarPedido(d, tel, local) {
   const frecuente = veces >= FRECUENTE_DESDE ? 'Sí' : 'No';
   const alta = frecuente === 'Sí' || unidades >= UNIDADES_GRANDE || total >= TOTAL_GRANDE;
   const hora = texto(d.hora).slice(0, 20) || 'Lo antes posible';
-  hoja.appendRow([fecha, hora, alta ? 'Alta' : 'Normal', cliente, tel ? texto(tel) : '', codCli, frecuente, veces, unidades, total || '',
-    textoLargo(its.map(function (x) { return x.q + ' × ' + x.nombre; }).join(' · '), 2000), textoLargo(d.nota, 300), codigo, new Date(), 'Pendiente', local]);
+  hoja.appendRow([false, fecha, hora, alta ? 'Alta' : 'Normal', cliente, tel ? texto(tel) : '', codCli, frecuente, veces, unidades, total || '',
+    textoLargo(its.map(function (x) { return x.q + ' × ' + x.nombre; }).join(' · '), 2000), textoLargo(d.nota, 300), codigo, new Date(), 'Por confirmar', local]);
+  hoja.getRange(hoja.getLastRow(), CP['Confirmado']).setDataValidation(casilla());
   hojaDetalle().getRange(hojaDetalle().getLastRow() + 1, 1, its.length, COLUMNAS_DETALLE.length).setValues(its.map(function (x) {
     return [fecha, hora, codigo, cliente, x.nombre, x.cod, x.q, x.uds || x.q, x.precio];
   }));
@@ -239,6 +263,7 @@ function anotarPedido(d, tel, local) {
     if (mismo) hoja.getRange(i + 2, CP['Prioridad'], 1, CP['Cliente frecuente'] - CP['Prioridad'] + 1)
       .setValues([['Alta', f[CP['Cliente'] - 1], f[CP['Celular'] - 1], f[CP['Código de cliente'] - 1], 'Sí']]);
   });
+  vencerPendientes(hoja);
   ordenarPedidos();
 }
 
@@ -253,25 +278,119 @@ function ordenarPedidos() {
 }
 
 function hojaPedidos() {
+  migrarPedidos();
   const hoja = hojaCon(HOJA_PEDIDOS, COLUMNAS_PEDIDOS);
-  if (hoja.getConditionalFormatRules().length) return hoja;
-  // Formato una sola vez: fechas legibles, estado con lista, colores por día y prioridad
-  hoja.getRange('A2:A').setNumberFormat('dddd dd/mm/yyyy');
-  hoja.getRange('N2:N').setNumberFormat('dd/mm/yyyy hh:mm');
-  hoja.getRange('J2:J').setNumberFormat('$#,##0');
-  hoja.getRange('K2:K').setWrap(true);
-  hoja.setColumnWidth(CP['Productos'], 420);
-  hoja.getRange('O2:O').setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['Pendiente', 'Preparado', 'Entregado', 'Anulado'], true).build());
-  const r = hoja.getRange('A2:P');
-  hoja.setConditionalFormatRules([
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=OR($O2="Entregado",$O2="Anulado")').setFontColor('#9a9a92').setRanges([r]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND($A2<>"",$A2<TODAY())').setBackground('#eeeeee').setRanges([r]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$A2=TODAY()').setBackground('#fff2c2').setRanges([r]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$A2=TODAY()+1').setBackground('#e3f1dc').setRanges([r]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Alta').setFontColor('#b3261e').setBold(true).setRanges([hoja.getRange('C2:C')]).build(),
-    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Sí').setBold(true).setFontColor('#1d5c36').setRanges([hoja.getRange('G2:G')]).build()
-  ]);
+  const n = hoja.getLastRow();
+  if (n > 1) hoja.getRange(2, CP['Confirmado'], n - 1, 1).setDataValidation(casilla());
+  if (!hoja.getConditionalFormatRules().length) formatoPedidos(hoja);
   return hoja;
+}
+
+// Formato (una vez): fechas legibles, estado con lista, colores por estado, día y prioridad.
+// En Sheets manda la primera regla que se cumple: primero las de una celda, después las de la fila.
+function formatoPedidos(hoja) {
+  const col = function (nombre) { const l = letra(CP[nombre]); return hoja.getRange(l + '2:' + l); };
+  col('Día de retiro').setNumberFormat('dddd dd/mm/yyyy');
+  col('Recibido').setNumberFormat('dd/mm/yyyy hh:mm');
+  col('Total aprox.').setNumberFormat('$#,##0');
+  col('Productos').setWrap(true);
+  hoja.setColumnWidth(CP['Productos'], 420);
+  hoja.setColumnWidth(CP['Confirmado'], 100);
+  hoja.getRange(1, CP['Confirmado']).setNote('Marque la casilla cuando el pedido llegó por WhatsApp o Instagram.');
+  col('Estado').setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(ESTADOS, true).build());
+  const fila = hoja.getRange('A2:' + letra(COLUMNAS_PEDIDOS.length));
+  const e = '$' + letra(CP['Estado']) + '2', d = '$' + letra(CP['Día de retiro']) + '2';
+  const regla = function () { return SpreadsheetApp.newConditionalFormatRule(); };
+  hoja.setConditionalFormatRules([
+    regla().whenTextEqualTo('Por confirmar').setBackground('#fde3cf').setFontColor('#8a3a00').setBold(true).setRanges([col('Estado')]).build(),
+    regla().whenTextEqualTo('Confirmado').setBackground('#d9efe0').setFontColor('#1d5c36').setBold(true).setRanges([col('Estado')]).build(),
+    regla().whenTextEqualTo('Alta').setFontColor('#b3261e').setBold(true).setRanges([col('Prioridad')]).build(),
+    regla().whenTextEqualTo('Sí').setBold(true).setFontColor('#1d5c36').setRanges([col('Cliente frecuente')]).build(),
+    regla().whenFormulaSatisfied('=OR(' + e + '="Entregado",' + e + '="Anulado",' + e + '="No llegó")').setFontColor('#9a9a92').setRanges([fila]).build(),
+    regla().whenFormulaSatisfied('=AND(' + d + '<>"",' + d + '<TODAY())').setBackground('#eeeeee').setRanges([fila]).build(),
+    regla().whenFormulaSatisfied('=' + d + '=TODAY()').setBackground('#fff2c2').setRanges([fila]).build(),
+    regla().whenFormulaSatisfied('=' + d + '=TODAY()+1').setBackground('#e3f1dc').setRanges([fila]).build()
+  ]);
+}
+
+// Una sola vez: pasa la planilla a la hora de Chile y agrega la casilla «Confirmado» a la hoja de la versión anterior.
+function migrarPedidos() {
+  corregirZonaHoraria();
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_PEDIDOS);
+  if (!hoja || String(hoja.getRange(1, 1).getValue()) !== 'Día de retiro') return;
+  hoja.insertColumnBefore(1);
+  hoja.getRange(1, 1).setValue('Confirmado').setFontWeight('bold');
+  hoja.clearConditionalFormatRules(); // se rehacen con las columnas nuevas
+  hoja.getRange(2, CP['Estado'], hoja.getMaxRows() - 1, 1).clearDataValidations();
+  const n = hoja.getLastRow();
+  if (n > 1) {
+    const est = hoja.getRange(2, CP['Estado'], n - 1, 1), v = est.getValues().map(function (f) { return [f[0] === 'Pendiente' ? 'Por confirmar' : f[0]]; });
+    est.setValues(v);
+    hoja.getRange(2, CP['Confirmado'], n - 1, 1).setValues(v.map(function (f) { return [CONFIRMADOS.indexOf(f[0]) >= 0]; }));
+  }
+}
+
+// La planilla nació con la hora del Pacífico de EE. UU.: «Recibido» salía 5 horas antes y el día de retiro, un día antes.
+// Se leen las fechas (quedan como instantes correctos), se cambia la zona a Chile y se vuelven a escribir.
+function corregirZonaHoraria() {
+  const libro = SpreadsheetApp.getActiveSpreadsheet();
+  if (libro.getSpreadsheetTimeZone() === ZONA) return false;
+  const columnas = {};
+  columnas[HOJA_PEDIDOS] = ['Día de retiro', 'Recibido'];
+  columnas[HOJA_DETALLE] = ['Día de retiro'];
+  columnas[HOJA_CLIENTES] = ['Fecha de registro', 'Fecha de baja', 'Descuento usado', 'Eliminación solicitada', 'Actualizado'];
+  columnas[HOJA_SOLICITUDES] = ['Fecha', 'Resuelta el'];
+  const guardadas = [];
+  Object.keys(columnas).forEach(function (nombreHoja) {
+    const hoja = libro.getSheetByName(nombreHoja);
+    if (!hoja || hoja.getLastRow() < 2) return;
+    const cab = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0];
+    columnas[nombreHoja].forEach(function (titulo) {
+      const c = cab.indexOf(titulo) + 1;
+      if (!c) return;
+      const r = hoja.getRange(2, c, hoja.getLastRow() - 1, 1);
+      guardadas.push({ r: r, v: r.getValues() });
+    });
+  });
+  libro.setSpreadsheetTimeZone(ZONA);
+  guardadas.forEach(function (g) { g.r.setValues(g.v); });
+  return true;
+}
+
+// Pedidos «Por confirmar» con más de 24 horas: el cliente abrió el chat pero el pedido nunca llegó.
+function vencerPendientes(hoja) {
+  const n = hoja.getLastRow();
+  if (n < 2) return 0;
+  const v = hoja.getRange(2, 1, n - 1, COLUMNAS_PEDIDOS.length).getValues();
+  const limite = Date.now() - HORAS_SIN_CONFIRMAR * 3600e3;
+  let vencidos = 0;
+  v.forEach(function (f, i) {
+    const rec = f[CP['Recibido'] - 1];
+    if (f[CP['Estado'] - 1] === 'Por confirmar' && rec instanceof Date && rec.getTime() < limite) {
+      hoja.getRange(i + 2, CP['Estado']).setValue('No llegó');
+      vencidos++;
+    }
+  });
+  return vencidos;
+}
+
+function casilla() { return SpreadsheetApp.newDataValidation().requireCheckbox().build(); }
+function letra(n) { return String.fromCharCode(64 + n); } // columnas A a Z
+
+// Al marcar la casilla, el estado pasa a «Confirmado» (y al revés); al elegir un estado, la casilla lo acompaña.
+function onEdit(e) {
+  const r = e && e.range;
+  if (!r || r.getNumRows() !== 1 || r.getNumColumns() !== 1 || r.getRow() < 2) return;
+  const hoja = r.getSheet();
+  if (hoja.getName() !== HOJA_PEDIDOS || String(hoja.getRange(1, 1).getValue()) !== 'Confirmado') return;
+  const fila = r.getRow();
+  if (r.getColumn() === CP['Confirmado']) {
+    const est = hoja.getRange(fila, CP['Estado']), v = est.getValue();
+    if (r.getValue() === true && (v === 'Por confirmar' || v === 'No llegó' || v === '')) est.setValue('Confirmado');
+    if (r.getValue() === false && v === 'Confirmado') est.setValue('Por confirmar');
+  } else if (r.getColumn() === CP['Estado']) {
+    hoja.getRange(fila, CP['Confirmado']).setValue(CONFIRMADOS.indexOf(r.getValue()) >= 0);
+  }
 }
 
 function hojaDetalle() {
@@ -284,21 +403,33 @@ function hojaDetalle() {
 function hojaPorPreparar() {
   const libro = SpreadsheetApp.getActiveSpreadsheet();
   const hoja = libro.getSheetByName(HOJA_PREPARAR) || libro.insertSheet(HOJA_PREPARAR);
-  if (!hoja.getRange('A1').getFormula()) {
-    hoja.getRange('A1').setFormula('=QUERY(\'' + HOJA_DETALLE + '\'!A2:I, "select A, E, sum(G), sum(H) where A >= date \'"&TEXT(TODAY(),"yyyy-mm-dd")&"\' group by A, E order by A, sum(H) desc label A \'Día de retiro\', E \'Producto\', sum(G) \'Cantidad\', sum(H) \'Unidades\'", 0)');
+  const formula = formulaPorPreparar();
+  if (hoja.getRange('A1').getFormula() !== formula) {
+    hoja.getRange('A1').setFormula(formula);
     hoja.getRange('A:A').setNumberFormat('dddd dd/mm/yyyy');
     hoja.setFrozenRows(1);
   }
   return hoja;
 }
 
+// Totales por día y producto desde hoy, solo de los pedidos en estado «Confirmado» (los «Por confirmar» quizá nunca lleguen)
+function formulaPorPreparar() {
+  const det = "'" + HOJA_DETALLE + "'", cod = letra(CP['Código del pedido']), est = letra(CP['Estado']);
+  return '=IFERROR(QUERY(FILTER(' + det + '!A2:I, ISNUMBER(MATCH(' + det + '!C2:C, FILTER(' + HOJA_PEDIDOS + '!' + cod + '2:' + cod + ', '
+    + HOJA_PEDIDOS + '!' + est + '2:' + est + '="Confirmado"), 0))), "select Col1, Col5, sum(Col7), sum(Col8) where Col1 >= date \'"&TEXT(TODAY(),"yyyy-mm-dd")&"\' '
+    + 'group by Col1, Col5 order by Col1, sum(Col8) desc label Col1 \'Día de retiro\', Col5 \'Producto\', sum(Col7) \'Cantidad\', sum(Col8) \'Unidades\'", 0), '
+    + '"Aún no hay pedidos confirmados por preparar")';
+}
+
 // "AAAA-MM-DD" entre hoy y 60 días más; null si no
 function fechaRetiro(v) {
-  const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return null;
-  const f = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
-  if (isNaN(f.getTime()) || f < hoy || f.getTime() > hoy.getTime() + 60 * 864e5) return null;
+  const s = String(v || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const medianoche = function (iso) { return Utilities.parseDate(iso + ' 00:00', ZONA, 'yyyy-MM-dd HH:mm'); };
+  const f = medianoche(s);
+  if (isNaN(f.getTime()) || Utilities.formatDate(f, ZONA, 'yyyy-MM-dd') !== s) return null;
+  const hoy = medianoche(Utilities.formatDate(new Date(), ZONA, 'yyyy-MM-dd'));
+  if (f < hoy || f.getTime() > hoy.getTime() + 60 * 864e5) return null;
   return f;
 }
 function entero(v, max) { const n = Math.round(Number(v) || 0); return Math.max(0, Math.min(max, n)); }
@@ -318,6 +449,7 @@ function onOpen() {
     .addSeparator()
     .addItem('Ordenar pedidos', 'ordenarPedidos')
     .addToUi();
+  try { vencerPendientes(hojaPedidos()); } catch (err) { /* sin permiso de edición: solo se ve */ }
 }
 
 function prepararHojas() { hojaClientes(); hojaSolicitudes(); hojaPedidos(); hojaDetalle(); hojaPorPreparar(); }
@@ -422,4 +554,87 @@ function texto(v) {
 function fechaValida(v) {
   const f = new Date(v);
   return isNaN(f.getTime()) || f.getTime() > Date.now() + 864e5 ? null : f;
+}
+
+/* ---------- Panel de pedidos (vendedores) ---------- */
+
+// Correo de quien abre el panel, solo si el script corre con su propia cuenta y esa cuenta tiene acceso a la planilla.
+// En la implementación pública del catálogo (que corre como el dueño) cualquier otra persona queda fuera.
+function vendedor() {
+  let activo = '', efectivo = '';
+  try { activo = Session.getActiveUser().getEmail(); efectivo = Session.getEffectiveUser().getEmail(); } catch (err) { return ''; }
+  if (!activo || activo !== efectivo) return '';
+  try { SpreadsheetApp.getActiveSpreadsheet().getId(); } catch (err) { return ''; }
+  return activo;
+}
+function exigirVendedor() {
+  const u = vendedor();
+  if (!u) throw new Error('Sin acceso: abra el panel con una cuenta que tenga acceso a la planilla de pedidos.');
+  return u;
+}
+
+// Pedidos para el panel: los activos y los próximos, más los cerrados de las últimas dos semanas.
+function panelDatos() {
+  const usuario = exigirVendedor();
+  const libro = SpreadsheetApp.getActiveSpreadsheet();
+  const hoja = hojaPedidos();
+  try { vencerPendientes(hoja); } catch (err) { /* cuenta solo de lectura */ }
+  const zona = libro.getSpreadsheetTimeZone();
+  const hoy = Utilities.formatDate(new Date(), zona, 'yyyy-MM-dd');
+  const n = hoja.getLastRow();
+  const filas = n > 1 ? hoja.getRange(2, 1, n - 1, COLUMNAS_PEDIDOS.length).getValues() : [];
+  const det = hojaDetalle(), m = det.getLastRow(), items = {};
+  if (m > 1) det.getRange(2, 1, m - 1, COLUMNAS_DETALLE.length).getValues().forEach(function (f) {
+    const cod = String(f[2] || '');
+    if (!cod) return;
+    (items[cod] = items[cod] || []).push({ nombre: String(f[4]), cod: String(f[5]), q: Number(f[6]) || 0, uds: Number(f[7]) || 0,
+      precio: f[8] === '' || f[8] == null ? null : Number(f[8]) });
+  });
+  const hace = Date.now() - 14 * 864e5;
+  const valor = function (f, nombre) { return f[CP[nombre] - 1]; };
+  const pedidos = filas.map(function (f) {
+    const codigo = String(valor(f, 'Código del pedido') || ''), dia = valor(f, 'Día de retiro'), rec = valor(f, 'Recibido'), hora = valor(f, 'Hora');
+    return {
+      codigo: codigo,
+      dia: dia instanceof Date ? Utilities.formatDate(dia, zona, 'yyyy-MM-dd') : '',
+      hora: hora instanceof Date ? Utilities.formatDate(hora, zona, 'HH:mm') : String(hora || ''),
+      prioridad: String(valor(f, 'Prioridad') || 'Normal'),
+      cliente: String(valor(f, 'Cliente') || ''),
+      celular: String(valor(f, 'Celular') || ''),
+      codigoCliente: String(valor(f, 'Código de cliente') || ''),
+      frecuente: valor(f, 'Cliente frecuente') === 'Sí',
+      veces: Number(valor(f, 'N.º de pedidos del cliente')) || 0,
+      unidades: Number(valor(f, 'Unidades')) || 0,
+      total: Number(valor(f, 'Total aprox.')) || 0,
+      comentario: String(valor(f, 'Comentario') || ''),
+      recibido: rec instanceof Date ? rec.getTime() : 0,
+      estado: ESTADOS.indexOf(String(valor(f, 'Estado'))) >= 0 ? String(valor(f, 'Estado')) : 'Por confirmar',
+      local: String(valor(f, 'Local') || ''),
+      items: items[codigo] || []
+    };
+  }).filter(function (p) {
+    return p.codigo && (['Por confirmar', 'Confirmado', 'Preparado'].indexOf(p.estado) >= 0 || p.dia >= hoy || p.recibido >= hace);
+  });
+  return { usuario: usuario, hoy: hoy, ahora: Date.now(), pedidos: pedidos };
+}
+
+// Cambia el estado de un pedido desde el panel (con la casilla al día y una nota de quién lo hizo y cuándo).
+function panelCambiar(codigo, estado) {
+  const usuario = exigirVendedor();
+  if (ESTADOS.indexOf(estado) < 0) throw new Error('Estado no válido.');
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  try {
+    const hoja = hojaPedidos(), n = hoja.getLastRow();
+    const cods = n > 1 ? hoja.getRange(2, CP['Código del pedido'], n - 1, 1).getValues() : [];
+    let fila = 0;
+    cods.forEach(function (f, i) { if (!fila && String(f[0]) === String(codigo)) fila = i + 2; });
+    if (!fila) throw new Error('No se encontró el pedido ' + codigo + '.');
+    const celda = hoja.getRange(fila, CP['Estado']);
+    celda.setValue(estado);
+    const nota = estado + ' por ' + usuario + ' el ' + Utilities.formatDate(new Date(), SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'dd/MM/yyyy HH:mm');
+    celda.setNote([nota, celda.getNote()].filter(String).join('\n').slice(0, 1000));
+    hoja.getRange(fila, CP['Confirmado']).setValue(CONFIRMADOS.indexOf(estado) >= 0);
+  } finally { candado.releaseLock(); }
+  return panelDatos();
 }
