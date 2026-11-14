@@ -791,6 +791,11 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 .btn.enviar:disabled{opacity:.7;cursor:default}
 .envios .bloq{opacity:.55}
 .ok.mal{color:#c0392b}
+/* Segunda oportunidad para aceptar ofertas por WhatsApp (cliente registrado que no las aceptó) */
+.ofertas{padding:12px 14px;border:1.5px dashed var(--linea);border-radius:14px;background:#fff}
+.ofertas.si{border-style:solid;border-color:var(--campo);background:#eef6f0}
+.ofertas .check{font-size:14px}
+.ofertas .ayuda{margin:6px 0 0 30px;font-size:12.5px;color:var(--suave)}
 #celCuenta{margin:0}
 </style>
 </head>
@@ -1038,6 +1043,10 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
           <div class="msg" id="msgCorreo" hidden>Revisa el correo: debe tener la forma nombre@dominio.cl.</div>
           <p class="ayuda">Obligatorio: lo necesitamos para enviar tu pedido.</p>
         </div>
+      </div>
+      <div class="ofertas" id="campoOfertas" hidden>
+        <label class="check"><input type="checkbox" id="pOk"><span>Quiero recibir ofertas por WhatsApp o teléfono <span class="opc">(opcional)</span>. Puedo darme de baja cuando quiera.</span></label>
+        <p class="ayuda" id="ofertasNota" aria-live="polite"></p>
       </div>
       <div class="campo" id="campoHora">
         <span class="lbl">¿Para cuándo quieres tu pedido?</span>
@@ -2442,6 +2451,7 @@ function abrirRevision(){
   if(conCuenta){$("nombre").value=nombreCompleto(cliente);$("aNombre").innerHTML=`Pedido a nombre de <b>${escHTML(nombreCompleto(cliente))}</b>${cliente.codigo?` · ${escHTML(cliente.codigo)}`:""}`}
   $("celPedido").value||($("celPedido").value=formatoCel(leePref("celular-cliente")||""));
   const be=$("bEnviar");be.disabled=false;be.textContent="Enviar pedido";
+  ofrecerOfertas();
   pintarModo(); pintarBloqueo();
   actualizarEnlaces();
 };
@@ -2482,6 +2492,22 @@ document.querySelectorAll('input[name="modoRetiro"]').forEach(r=>r.addEventListe
 }));
 const recordarNombre=()=>{guardaPref("nombre-cliente",$("nombre").value.trim());if(celPedido())guardaPref("celular-cliente",celPedido().replace(/^\+56/,""));if(correoPedido())guardaPref("correo-cliente",correoPedido())};
 const listo=(msg,mal)=>{$("ok").textContent=msg;$("ok").classList.toggle("mal",!!mal);$("ok").hidden=false};
+
+/* Ofertas por WhatsApp: si al registrarse no marcó la casilla (por error o sin leer), aquí puede aceptarlas.
+   Se guarda en este celular y en la planilla (el registro «actualiza solo sus ofertas»). */
+const NOTA_OFERTAS_NO="Al registrarte elegiste no recibirlas. Si fue un error, márcala aquí.";
+function ofrecerOfertas(){
+  const ver=!!(cliente&&cliente.tel&&!cliente.acepta);
+  $("campoOfertas").hidden=!ver; if(!ver)return;
+  $("pOk").checked=false; $("campoOfertas").classList.remove("si"); $("ofertasNota").textContent=NOTA_OFERTAS_NO;
+}
+$("pOk").addEventListener("change",()=>{
+  if(!cliente)return;
+  const si=$("pOk").checked;
+  cliente.acepta=si; guardarCliente(); pedirCodigo(); pintarReg(); actualizarEnlaces();
+  $("campoOfertas").classList.toggle("si",si);
+  $("ofertasNota").textContent=si?"Listo: te avisaremos de nuevas ofertas por WhatsApp. Puedes darte de baja cuando quieras.":NOTA_OFERTAS_NO;
+});
 
 /* «Enviar pedido» (cliente en el local): va directo a la planilla y aparece en SabAPP; si falla, queda WhatsApp de respaldo */
 $("bEnviar").addEventListener("click",async()=>{
