@@ -103,6 +103,28 @@ button{font:inherit;cursor:pointer}
 @keyframes sube{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
 .cargando{padding:40px;text-align:center;color:var(--suave)}
 .sinacceso{max-width:520px;margin:60px auto;padding:24px;border-radius:16px;background:#fff;text-align:center}
+.p-prep{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-height:32px;margin:0 0 6px;padding:4px 12px;border-radius:999px;border:1.5px solid #bfe3cc;background:#e6f6ec;color:#14663a;font-weight:800;font-size:13.5px;text-align:left}
+.p-prep u{margin-left:2px;color:var(--suave);font-size:12px;font-weight:700}
+.p-prep.falta{border-style:dashed;border-color:var(--sol);background:#fff;color:#8a3a00}
+.p-prep.fijo{cursor:default}
+.p-prep:disabled{opacity:.6}
+.t-local{background:var(--rojo);color:#fff}
+.p-ret.local{background:#fbe1de;color:var(--rojo)}
+.modal{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(28,28,26,.5)}
+.modal[hidden]{display:none}
+.dlg{width:100%;max-width:500px;max-height:calc(100vh - 40px);overflow:auto;padding:22px 22px 18px;border-radius:18px;background:#fff;box-shadow:0 20px 50px rgba(0,0,0,.3);animation:sube .2s ease-out}
+.dlg h2{margin:0 0 4px;font-size:21px}
+.dlg p{margin:0 0 16px;color:var(--suave);font-size:14px}
+.vend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.vend button{display:flex;align-items:center;gap:10px;min-height:54px;padding:8px 12px;border:1.5px solid var(--linea);border-radius:12px;background:var(--papel);color:var(--tinta);font-weight:800;font-size:16px;text-align:left}
+.vend button:hover,.vend button:focus-visible{border-color:var(--campo);background:#e6f6ec;outline:none}
+.vend button.ult{border-color:var(--campo);box-shadow:inset 0 0 0 1px var(--campo)}
+.vend button.actual{border-color:var(--campo);background:var(--campo);color:#fff}
+.vend i{flex:none;width:34px;height:34px;border-radius:50%;background:var(--campo);color:#fff;font-style:normal;font-size:13px;line-height:34px;text-align:center;letter-spacing:.02em}
+.vend button.actual i{background:#fff;color:var(--campo)}
+.vend small{margin-left:auto;font-size:11.5px;font-weight:700;opacity:.85}
+.m-pie{display:flex;justify-content:flex-end;margin-top:16px}
+@media (max-width:480px){.vend small{display:none}}
 @media (max-width:1100px){.tablero{grid-template-columns:repeat(2,minmax(240px,1fr))}}
 @media (max-width:640px){.tablero{grid-template-columns:1fr}.barra,.herr,.cuerpo{padding-left:12px;padding-right:12px}}
 </style>
@@ -123,6 +145,14 @@ button{font:inherit;cursor:pointer}
 </div>
 <main class="cuerpo" id="cuerpo"><div class="cargando">Cargando pedidos…</div></main>
 <div class="aviso" id="aviso" role="alert"></div>
+<div class="modal" id="modal" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="mTit" aria-describedby="mSub">
+    <h2 id="mTit">¿Quién prepara este pedido?</h2>
+    <p id="mSub"></p>
+    <div class="vend" id="mVend"></div>
+    <div class="m-pie"><button type="button" class="b" data-cerrar>Cancelar</button></div>
+  </div>
+</div>
 
 <script>
 /* Panel de pedidos del Catálogo Sabroso: lee la planilla cada 12 segundos y muestra los pedidos nuevos al instante.
@@ -199,7 +229,9 @@ function campana() {
 function anunciar(lista) {
   campana();
   var p = lista[0];
-  avisar(lista.length > 1 ? lista.length + ' pedidos nuevos' : 'Pedido nuevo de ' + p.cliente + ' · ' + p.codigo);
+  var local = lista.filter(enLocal).length;
+  avisar(lista.length > 1 ? lista.length + ' pedidos nuevos' + (local ? ' (' + local + ' con el cliente en el local)' : '')
+    : 'Pedido nuevo de ' + p.cliente + ' · ' + p.codigo + (enLocal(p) ? ' · ESTÁ EN EL LOCAL' : ''));
 }
 var avisoT = null;
 function avisar(t) {
@@ -254,7 +286,7 @@ function pasaFiltro(p) {
     if (!activo && !cerradoHoy) return false;
   }
   if (busqueda) {
-    var t = (p.cliente + ' ' + p.codigo + ' ' + p.celular + ' ' + (p.correo || '') + ' ' + p.codigoCliente + ' ' + p.items.map(function (x) { return x.nombre + ' ' + x.cod; }).join(' ')).toLowerCase()
+    var t = (p.cliente + ' ' + p.codigo + ' ' + p.celular + ' ' + (p.correo || '') + ' ' + (p.prepara || '') + ' ' + p.codigoCliente + ' ' + p.items.map(function (x) { return x.nombre + ' ' + x.cod; }).join(' ')).toLowerCase()
       .normalize('NFD').replace(/[̀-ͯ]/g, '');
     var q = busqueda.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     if (q.split(/\s+/).some(function (w) { return w && t.indexOf(w) < 0; })) return false;
@@ -277,8 +309,10 @@ var COLUMNAS = [
   { id: 'c-pr', titulo: 'Listos para retirar', estados: ['Preparado'], vacio: 'Ningún pedido esperando retiro.' },
   { id: 'c-ce', titulo: 'Cerrados', estados: ['Entregado', 'Anulado', 'No llegó'], vacio: 'Sin pedidos cerrados.' }
 ];
+var EN_LOCAL = 'Estoy en el local';
+var enLocal = function (p) { return p.hora === EN_LOCAL; };
 function orden(a, b) {
-  return (a.dia || '9999').localeCompare(b.dia || '9999') || (a.prioridad === 'Alta' ? -1 : 0) - (b.prioridad === 'Alta' ? -1 : 0)
+  return (a.dia || '9999').localeCompare(b.dia || '9999') || (enLocal(b) ? 1 : 0) - (enLocal(a) ? 1 : 0) || (a.prioridad === 'Alta' ? -1 : 0) - (b.prioridad === 'Alta' ? -1 : 0)
     || String(a.hora).localeCompare(String(b.hora)) || a.recibido - b.recibido;
 }
 
@@ -311,7 +345,8 @@ function titulo(id, texto, pl) {
 // Mensajes para el cliente: «confirmado» (al recibir el pedido) y «listo» (para retirar)
 function mensaje(p, tipo) {
   var nom = (p.cliente || '').split(' ')[0] || 'cliente';
-  var cuando = diaLargo(p.dia) + (p.hora && !/antes/i.test(p.hora) ? ' a las ' + p.hora : '');
+  var cuando = diaLargo(p.dia) + (/^\d/.test(p.hora || '') ? ' a las ' + p.hora : '');
+  if (tipo !== 'listo' && enLocal(p)) return 'Hola ' + nom + ', recibimos su pedido ' + p.codigo + ' en Emporio Sabroso y ya lo estamos preparando. ¡Gracias!';
   return tipo === 'listo'
     ? 'Hola ' + nom + ', su pedido ' + p.codigo + ' ya está listo para retirar en Emporio Sabroso (Arturo Prat 720, Chillán, lunes a sábado de 8:30 a 17:00). ¡Lo esperamos!'
     : 'Hola ' + nom + ', recibimos su pedido ' + p.codigo + ' en Emporio Sabroso. Queda confirmado para retirar el ' + cuando + '. ¡Gracias!';
@@ -379,17 +414,30 @@ function tarjeta(p) {
   return '<article class="ped' + (p.prioridad === 'Alta' ? ' alta' : '') + (nuevos[p.codigo] ? ' nuevo' : '') + (cerrado ? ' cerrado' : '') + '" data-ped="' + esc(p.codigo) + '">'
     + '<div class="p-cab"><span class="p-cod">' + esc(p.codigo) + '</span>'
     + (nuevos[p.codigo] ? '<span class="tag t-nuevo">Nuevo</span>' : '')
+    + (enLocal(p) && !cerrado ? '<span class="tag t-local">Cliente en el local</span>' : '')
     + (p.prioridad === 'Alta' ? '<span class="tag t-alta">Prioridad alta</span>' : '')
     + (p.frecuente ? '<span class="tag t-frec">Frecuente · ' + p.veces + ' pedidos</span>' : '') + '</div>'
     + '<div class="p-cli">' + esc(p.cliente || '(sin nombre)') + '</div>'
     + (p.celular || p.correo || p.codigoCliente ? '<div class="p-cel">' + esc([p.celular, p.correo, p.codigoCliente].filter(Boolean).join(' · ')) + '</div>' : '')
-    + '<div class="p-ret">Retira ' + esc(diaLargo(p.dia)) + ' · ' + esc(p.hora || 'lo antes posible') + ' ' + etiquetaDia(p.dia) + '</div>'
+    + (enLocal(p) ? '<div class="p-ret local">🛍️ Está en el local · ' + esc(diaLargo(p.dia)) + ' ' + etiquetaDia(p.dia) + '</div>'
+      : '<div class="p-ret">Retira ' + esc(diaLargo(p.dia)) + ' · ' + esc(p.hora || 'lo antes posible') + ' ' + etiquetaDia(p.dia) + '</div>')
+    + chipPrepara(p, cerrado)
     + '<ul class="p-items">' + verItems.map(function (x) { return '<li><b>' + x.q + ' ×</b><span>' + esc(x.nombre) + (x.cod ? ' <small class="p-sku">' + esc(x.cod) + '</small>' : '') + '</span></li>'; }).join('') + '</ul>'
     + (largo ? '<button type="button" class="p-mas" data-abrir="' + esc(p.codigo) + '">Ver los ' + items.length + ' productos</button>' : '')
     + (p.comentario ? '<div class="p-nota">💬 ' + esc(p.comentario) + '</div>' : '')
     + '<div class="p-pie"><span>' + esc(hace(p.recibido)) + ' · ' + p.unidades + ' u</span><span>Total aprox. <strong>' + (p.total ? clp(p.total) : 'por confirmar') + '</strong></span></div>'
     + (p.avisado && ['Preparado', 'Entregado'].indexOf(p.estado) >= 0 ? '<div class="p-avisado">✓ Cliente avisado por ' + (p.avisadoPor === 'correo' ? 'correo' : 'WhatsApp') + (p.avisadoEl ? ' · ' + esc(p.avisadoEl) : '') + '</div>' : '')
     + '<div class="acc">' + acc + '</div></article>';
+}
+
+// «👤 Prepara: Sofía» (se toca para cambiarla); en un pedido confirmado sin nadie, «Elegir quién prepara»
+function chipPrepara(p, cerrado) {
+  var hay = datos.vendedores && datos.vendedores.length;
+  var verbo = ['Preparado', 'Entregado'].indexOf(p.estado) >= 0 ? 'Preparó' : 'Prepara';
+  if (p.prepara && (cerrado || !hay)) return '<div><span class="p-prep fijo">👤 ' + verbo + ': ' + esc(p.prepara) + '</span></div>';
+  if (p.prepara) return '<div><button type="button" class="p-prep" data-asignar="' + esc(p.codigo) + '" data-foco="as-' + esc(p.codigo) + '" title="Cambiar quién prepara"' + (ocupado[p.codigo] ? ' disabled' : '') + '>👤 ' + verbo + ': ' + esc(p.prepara) + ' <u>cambiar</u></button></div>';
+  if (p.estado === 'Confirmado' && hay) return '<div><button type="button" class="p-prep falta" data-asignar="' + esc(p.codigo) + '" data-foco="as-' + esc(p.codigo) + '"' + (ocupado[p.codigo] ? ' disabled' : '') + '>👤 Elegir quién prepara</button></div>';
+  return '';
 }
 
 function ladoHTML() {
@@ -408,8 +456,76 @@ function ladoHTML() {
   return dias ? '<aside class="lado"><div class="caja' + (plegadas.lado ? ' plegada' : '') + '"><h3>' + titulo('lado', 'Por preparar', !!plegadas.lado) + '</h3>' + dias + '</div></aside>' : '';
 }
 
+/* ---------- Quién prepara ---------- */
+function pedido(c) { return datos ? datos.pedidos.filter(function (x) { return x.codigo === c; })[0] : null; }
+var modalDe = null; // { cod, modo: 'confirmar' (al confirmar) o 'asignar' (cambiar después), volver: botón que la abrió }
+function iniciales(n) { return n.split(/\s+/).map(function (w) { return w.charAt(0); }).join('').slice(0, 2).toUpperCase(); }
+function elegirQuienPrepara(cod, modo) {
+  var p = pedido(cod); if (!p) return;
+  var ultimo = ''; try { ultimo = localStorage.getItem('panel-ultimo-prepara') || ''; } catch (e) {}
+  modalDe = { cod: cod, modo: modo, volver: document.activeElement };
+  $('mSub').textContent = p.codigo + ' · ' + (p.cliente || '(sin nombre)') + ' · ' + (enLocal(p) ? 'está en el local' : 'retira ' + diaLargo(p.dia))
+    + (modo === 'confirmar' ? '. Al elegir, el pedido queda confirmado.' : '.');
+  $('mVend').innerHTML = datos.vendedores.map(function (n) {
+    var cl = n === p.prepara ? 'actual' : (!p.prepara && n === ultimo ? 'ult' : '');
+    return '<button type="button" data-vend="' + esc(n) + '"' + (cl ? ' class="' + cl + '"' : '') + '><i aria-hidden="true">' + esc(iniciales(n)) + '</i>' + esc(n)
+      + (cl === 'actual' ? '<small>ahora</small>' : cl === 'ult' ? '<small>la última vez</small>' : '') + '</button>';
+  }).join('');
+  $('modal').hidden = false;
+  var f = $('mVend').querySelector('.actual,.ult') || $('mVend').querySelector('button');
+  if (f) f.focus();
+}
+function cerrarModal() {
+  var v = modalDe && modalDe.volver; modalDe = null; $('modal').hidden = true;
+  if (v && document.body.contains(v)) v.focus();
+}
+function quienPrepara(nombre) {
+  var m = modalDe; if (!m) return;
+  cerrarModal();
+  try { localStorage.setItem('panel-ultimo-prepara', nombre); } catch (e) {}
+  if (m.modo === 'confirmar') { cambiarEstado(m.cod, 'Confirmado', false, nombre); return; }
+  var p = pedido(m.cod), antes = p ? p.prepara : '';
+  if (p) p.prepara = nombre;
+  ocupado[m.cod] = true; pintar();
+  servidor('panelAsignar', [m.cod, nombre], function (d) { delete ocupado[m.cod]; recibir(d); estadoConexion(true); avisar(m.cod + ': prepara ' + nombre); },
+    function (err) { delete ocupado[m.cod]; if (p) p.prepara = antes; pintar(); avisar('No se pudo guardar: ' + String(err && err.message || err)); });
+}
+document.addEventListener('keydown', function (e) {
+  if (!modalDe) return;
+  if (e.key === 'Escape') { cerrarModal(); return; }
+  if (e.key === 'Tab') { // el foco no sale de la ventana
+    var bs = $('modal').querySelectorAll('button'), pri = bs[0], ult = bs[bs.length - 1];
+    if (e.shiftKey && document.activeElement === pri) { ult.focus(); e.preventDefault(); }
+    else if (!e.shiftKey && document.activeElement === ult) { pri.focus(); e.preventDefault(); }
+  }
+});
+
+function cambiarEstado(cod, est, conAviso, prepara) {
+  delete seguro[cod + '>' + est]; delete nuevos[cod];
+  ocupado[cod] = true;
+  var p = pedido(cod);
+  var antes = p ? p.estado : '', antesP = p ? p.prepara : '';
+  if (p) { p.estado = est; if (prepara) p.prepara = prepara; } // se ve al instante; la planilla confirma enseguida
+  pintar();
+  servidor('panelCambiar', [cod, est, conAviso, prepara || ''], function (d) {
+    delete ocupado[cod]; recibir(d); estadoConexion(true);
+    avisar(cod + ': ' + est.toLowerCase() + (prepara ? ' · prepara ' + prepara : ''));
+  }, function (err) {
+    delete ocupado[cod]; if (p) { p.estado = antes; p.prepara = antesP; } pintar();
+    avisar('No se pudo guardar: ' + String(err && err.message || err));
+  });
+}
+
 /* ---------- Acciones ---------- */
 document.addEventListener('click', function (e) {
+  if (modalDe) {
+    var vb = e.target.closest('[data-vend]');
+    if (vb) { quienPrepara(vb.dataset.vend); return; }
+    if (e.target.closest('[data-cerrar]') || e.target === $('modal')) cerrarModal();
+    return;
+  }
+  var asg = e.target.closest('button[data-asignar]');
+  if (asg) { elegirQuienPrepara(asg.dataset.asignar, 'asignar'); return; }
   var pg = e.target.closest('[data-plegar]');
   if (pg) {
     plegadas[pg.dataset.plegar] = !plegadas[pg.dataset.plegar];
@@ -420,7 +536,6 @@ document.addEventListener('click', function (e) {
   if (ab) { abiertos[ab.dataset.abrir] = true; pintar(); return; }
   var tj = e.target.closest('[data-ped]');
   if (tj && nuevos[tj.dataset.ped] && !e.target.closest('button,a')) { delete nuevos[tj.dataset.ped]; pintar(); }
-  var pedido = function (c) { return datos.pedidos.filter(function (x) { return x.codigo === c; })[0]; };
   // «Avisar por WhatsApp / correo»: el enlace abre el aviso escrito y la planilla anota que el cliente fue avisado
   var av = e.target.closest('a[data-avisado]');
   if (av) {
@@ -450,19 +565,10 @@ document.addEventListener('click', function (e) {
     setTimeout(function () { delete seguro[k]; pintar(); }, 4000);
     return;
   }
-  delete seguro[k]; delete nuevos[cod];
-  ocupado[cod] = true;
-  var p = pedido(cod);
-  var antes = p ? p.estado : '';
-  if (p) p.estado = est; // se ve al instante; la planilla confirma enseguida
-  pintar();
-  servidor('panelCambiar', [cod, est, conAviso], function (d) {
-    delete ocupado[cod]; recibir(d); estadoConexion(true);
-    avisar(cod + ': ' + est.toLowerCase());
-  }, function (err) {
-    delete ocupado[cod]; if (p) p.estado = antes; pintar();
-    avisar('No se pudo guardar: ' + String(err && err.message || err));
-  });
+  // Al confirmar un pedido nuevo se elige quién lo prepara
+  var pq = pedido(cod);
+  if (est === 'Confirmado' && pq && pq.estado === 'Por confirmar' && datos.vendedores && datos.vendedores.length) { elegirQuienPrepara(cod, 'confirmar'); return; }
+  cambiarEstado(cod, est, conAviso);
 });
 
 /* Inicio */

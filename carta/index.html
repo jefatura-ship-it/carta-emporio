@@ -2264,28 +2264,38 @@ const isoDia=d=>{const p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"
 const DIAS=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
 const fechaRetLarga=iso=>{if(!iso)return"";const [y,m,d]=iso.split("-").map(Number),f=new Date(y,m-1,d);return `${DIAS[f.getDay()]} ${String(d).padStart(2,"0")}/${String(m).padStart(2,"0")}/${y}`};
 const cierraMin=()=>{if(!L.horario)return 17*60;const[a,b]=L.horario.hasta.split(":").map(Number);return a*60+b};
+/* «Estoy en el local»: el cliente ya está en el Emporio y lo retira ahora (solo con el local abierto) */
+const EN_LOCAL="Estoy en el local";
+const abiertoAhora=()=>{const d=new Date();if(d.getDay()===0)return false;if(!L.horario)return true;
+  const m=t=>{const[a,b]=t.split(":").map(Number);return a*60+b},n=d.getHours()*60+d.getMinutes();return n>=m(L.horario.desde)&&n<m(L.horario.hasta)};
+const optLocal=hoy=>`<option value="${EN_LOCAL}">${hoy?"Estoy en el local (lo retiro ahora)":"Estoy en el local (hoy, ahora)"}</option>`;
 function horasPara(iso){
   const s=$("hora"),hoy=isoDia(new Date()),ahora=new Date(),mins=ahora.getHours()*60+ahora.getMinutes();
   const prev=s.value;let o=[];
   if(iso===hoy)o.push('<option value="">Lo antes posible</option>');
+  if(iso===hoy&&abiertoAhora())o.push(optLocal(true));
   if(L.horario){const m=t=>{const[a,b]=t.split(":").map(Number);return a*60+b};
     for(let t=Math.ceil(m(L.horario.desde)/30)*30+30;t<=m(L.horario.hasta)-30;t+=30){if(iso===hoy&&t<mins+30)continue;
       const h=String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0");o.push(`<option>${h}</option>`)}}
   else ["En la mañana","A mediodía","En la tarde"].forEach(x=>o.push(`<option>${x}</option>`));
+  // Otro día elegido: igual se ofrece al final (al tocarla, el día pasa a hoy)
+  if(iso!==hoy&&abiertoAhora())o.push(optLocal(false));
   s.innerHTML=o.join("");if([...s.options].some(x=>x.value===prev))s.value=prev;
 }
+function horaEnLocal(){const f=$("fechaRet"),hoy=isoDia(new Date());
+  if($("hora").value===EN_LOCAL&&f.value!==hoy){f.value=hoy;horasPara(hoy);$("hora").value=EN_LOCAL}}
 function fechaOk(){const f=$("fechaRet"),m=$("msgFecha"),v=f.value;let err="";
   if(!v)err="Elige el día en que quieres tu pedido.";
   else{const [y,mo,d]=v.split("-").map(Number),dia=new Date(y,mo-1,d).getDay();
     if(v<f.min)err="Esa fecha ya pasó; elige hoy o un día siguiente.";else if(v>f.max)err="Puedes pedir hasta con 30 días de anticipación.";else if(dia===0)err="El domingo estamos cerrados; elige otro día.";}
   m.textContent=err;m.hidden=!err;f.setAttribute("aria-invalid",String(!!err));
-  $("retNota").textContent=!err&&v?`Retiras el ${fechaRetLarga(v)}${$("hora").value?" a las "+$("hora").value:""}.`:"";return !err}
+  $("retNota").textContent=!err&&v?($("hora").value===EN_LOCAL?"Estás en el local: envía el pedido y te lo preparamos de inmediato.":`Retiras el ${fechaRetLarga(v)}${$("hora").value?" a las "+$("hora").value:""}.`):"";return !err}
 (function fechas(){const f=$("fechaRet"),hoy=new Date(),max=new Date();max.setDate(max.getDate()+30);
   f.min=isoDia(hoy);f.max=isoDia(max);
   // por defecto: hoy si aún alcanza a prepararse; si no, el siguiente día abierto
   const d=new Date();if(d.getDay()===0||d.getHours()*60+d.getMinutes()>cierraMin()-60){do{d.setDate(d.getDate()+1)}while(d.getDay()===0)}
   f.value=isoDia(d);horasPara(f.value);
-  f.addEventListener("change",()=>{horasPara(f.value);fechaOk()});$("hora").addEventListener("change",fechaOk);fechaOk();
+  f.addEventListener("change",()=>{horasPara(f.value);fechaOk()});$("hora").addEventListener("change",()=>{horaEnLocal();fechaOk()});fechaOk();
 })();
 (function horas(){ return;
   const s=$("hora"); let o=['<option value="">Lo antes posible</option>'];
@@ -2318,7 +2328,8 @@ function pintarAviso(){const m=medioAviso(),tc=!!(cliente&&cliente.tel);
 const celPedido=()=>{if(medioAviso()!=="wsp")return "";const d=($("celPedido").value||"").replace(/\D/g,"").replace(/^56/,"");return /^9\d{8}$/.test(d)?"+56"+d:""};
 function textoPedido(){
   const nom=$("nombre").value.trim()||"(sin nombre)";
-  const hora=(fechaRetLarga($("fechaRet").value)||"Hoy")+" · "+($("hora").value?"a las "+$("hora").value:"lo antes posible");
+  const hv=$("hora").value;
+  const hora=hv===EN_LOCAL?"AHORA · estoy en el local ("+(fechaRetLarga($("fechaRet").value)||"hoy")+")":(fechaRetLarga($("fechaRet").value)||"Hoy")+" · "+(hv?"a las "+hv:"lo antes posible");
   /* Fecha y hora en que se envía o copia el pedido: queda escrita en el chat aunque no haya otros mensajes */
   const ahora=new Date(),p2=n=>String(n).padStart(2,"0");
   const hecho=`${DIAS[ahora.getDay()]} ${p2(ahora.getDate())}/${p2(ahora.getMonth()+1)}/${ahora.getFullYear()} a las ${p2(ahora.getHours())}:${p2(ahora.getMinutes())}`;

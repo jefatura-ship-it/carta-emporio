@@ -215,7 +215,9 @@ const HOJA_PEDIDOS = 'Pedidos';
 const HOJA_DETALLE = 'Detalle de pedidos';
 const HOJA_PREPARAR = 'Por preparar';
 const COLUMNAS_PEDIDOS = ['Confirmado', 'Día de retiro', 'Hora', 'Prioridad', 'Cliente', 'Celular', 'Código de cliente', 'Cliente frecuente',
-  'N.º de pedidos del cliente', 'Unidades', 'Total aprox.', 'Productos', 'Comentario', 'Código del pedido', 'Recibido', 'Estado', 'Local', 'Correo'];
+  'N.º de pedidos del cliente', 'Unidades', 'Total aprox.', 'Productos', 'Comentario', 'Código del pedido', 'Recibido', 'Estado', 'Local', 'Correo', 'Prepara'];
+// Quienes pueden preparar pedidos (se eligen en el panel al confirmar). Para sumar o quitar a alguien, editar esta lista.
+const VENDEDORES = ['Sofía', 'Isidora', 'Daniela', 'Francisco', 'Sebastián', 'Ingrid', 'David', 'Juan Carlos'];
 const ZONA = 'America/Santiago';
 const ESTADOS = ['Por confirmar', 'Confirmado', 'Preparado', 'Entregado', 'Anulado', 'No llegó'];
 const CONFIRMADOS = ['Confirmado', 'Preparado', 'Entregado']; // estados con la casilla marcada
@@ -224,6 +226,7 @@ const COLUMNAS_DETALLE = ['Día de retiro', 'Hora', 'Código del pedido', 'Clien
 const CP = {}; COLUMNAS_PEDIDOS.forEach(function (nombre, i) { CP[nombre] = i + 1; });
 // Prioridad alta: cliente frecuente (3 pedidos o más) o pedido grande
 const FRECUENTE_DESDE = 3, UNIDADES_GRANDE = 180, TOTAL_GRANDE = 50000;
+const EN_LOCAL = 'Estoy en el local'; // hora que elige en el catálogo el cliente que ya está en el Emporio
 
 function anotarPedido(d, tel, local) {
   const codigo = String(d.codigo || '').trim();
@@ -249,10 +252,11 @@ function anotarPedido(d, tel, local) {
   }).length;
   const veces = previos + 1;
   const frecuente = veces >= FRECUENTE_DESDE ? 'Sí' : 'No';
-  const alta = frecuente === 'Sí' || unidades >= UNIDADES_GRANDE || total >= TOTAL_GRANDE;
   const hora = texto(d.hora).slice(0, 20) || 'Lo antes posible';
+  // «Estoy en el local»: el cliente espera en el mesón, se atiende primero
+  const alta = hora === EN_LOCAL || frecuente === 'Sí' || unidades >= UNIDADES_GRANDE || total >= TOTAL_GRANDE;
   hoja.appendRow([false, fecha, hora, alta ? 'Alta' : 'Normal', cliente, tel ? texto(tel) : '', codCli, frecuente, veces, unidades, total || '',
-    textoLargo(its.map(function (x) { return x.q + ' × ' + x.nombre; }).join(' · '), 2000), textoLargo(d.nota, 300), codigo, new Date(), 'Por confirmar', local, correoValido(d.correo)]);
+    textoLargo(its.map(function (x) { return x.q + ' × ' + x.nombre; }).join(' · '), 2000), textoLargo(d.nota, 300), codigo, new Date(), 'Por confirmar', local, correoValido(d.correo), '']);
   hoja.getRange(hoja.getLastRow(), CP['Confirmado']).setDataValidation(casilla());
   hojaDetalle().getRange(hojaDetalle().getLastRow() + 1, 1, its.length, COLUMNAS_DETALLE.length).setValues(its.map(function (x) {
     return [fecha, hora, codigo, cliente, x.nombre, x.cod, x.q, x.uds || x.q, x.precio];
@@ -322,10 +326,15 @@ function migrarPedidos() {
   if (String(hoja.getRange(1, 1).getValue()) === 'Confirmado' && String(hoja.getRange(1, CP['Correo']).getValue()) === '' && String(hoja.getRange(1, CP['Local']).getValue()) === 'Local') {
     hoja.getRange(1, CP['Correo']).setValue('Correo').setFontWeight('bold');
   }
+  // Hoja sin «Prepara»: se agrega al final, después de «Correo»
+  if (String(hoja.getRange(1, 1).getValue()) === 'Confirmado' && String(hoja.getRange(1, CP['Correo']).getValue()) === 'Correo' && String(hoja.getRange(1, CP['Prepara']).getValue()) === '') {
+    hoja.getRange(1, CP['Prepara']).setValue('Prepara').setFontWeight('bold');
+  }
   if (String(hoja.getRange(1, 1).getValue()) !== 'Día de retiro') return;
   hoja.insertColumnBefore(1);
   hoja.getRange(1, 1).setValue('Confirmado').setFontWeight('bold');
   hoja.getRange(1, CP['Correo']).setValue('Correo').setFontWeight('bold');
+  hoja.getRange(1, CP['Prepara']).setValue('Prepara').setFontWeight('bold');
   hoja.clearConditionalFormatRules(); // se rehacen con las columnas nuevas
   hoja.getRange(2, CP['Estado'], hoja.getMaxRows() - 1, 1).clearDataValidations();
   const n = hoja.getLastRow();
@@ -628,6 +637,7 @@ function panelDatos() {
       estado: ESTADOS.indexOf(String(valor(f, 'Estado'))) >= 0 ? String(valor(f, 'Estado')) : 'Por confirmar',
       local: String(valor(f, 'Local') || ''),
       correo: String(valor(f, 'Correo') || ''),
+      prepara: String(valor(f, 'Prepara') || ''),
       avisado: !!aviso,
       avisadoPor: aviso ? aviso[1] : '',
       avisadoEl: aviso ? aviso[2] : '',
@@ -636,12 +646,13 @@ function panelDatos() {
   }).filter(function (p) {
     return p.codigo && (['Por confirmar', 'Confirmado', 'Preparado'].indexOf(p.estado) >= 0 || p.dia >= hoy || p.recibido >= hace);
   });
-  return { usuario: usuario, hoy: hoy, ahora: Date.now(), pedidos: pedidos };
+  return { usuario: usuario, hoy: hoy, ahora: Date.now(), vendedores: VENDEDORES, pedidos: pedidos };
 }
 
 // Cambia el estado de un pedido desde el panel (con la casilla al día y una nota de quién lo hizo y cuándo).
 // avisado: el vendedor abrió WhatsApp ('wsp') o el correo ('correo') con el aviso de «listo» en el mismo toque.
-function panelCambiar(codigo, estado, avisado) {
+// prepara: quién prepara el pedido (se elige al confirmarlo).
+function panelCambiar(codigo, estado, avisado, prepara) {
   const usuario = exigirVendedor();
   if (ESTADOS.indexOf(estado) < 0) throw new Error('Estado no válido.');
   const candado = LockService.getScriptLock();
@@ -652,6 +663,7 @@ function panelCambiar(codigo, estado, avisado) {
     anotarEnEstado(hoja, fila, estado + ' por ' + usuario);
     if (avisado === true || avisado === 'wsp') anotarEnEstado(hoja, fila, 'Avisado por WhatsApp por ' + usuario);
     if (avisado === 'correo') anotarEnEstado(hoja, fila, 'Avisado por correo por ' + usuario);
+    if (prepara) asignarPreparacion(hoja, fila, prepara, usuario);
     hoja.getRange(fila, CP['Confirmado']).setValue(CONFIRMADOS.indexOf(estado) >= 0);
   } finally { candado.releaseLock(); }
   return panelDatos();
@@ -667,6 +679,24 @@ function panelAvisado(codigo, medio) {
     anotarEnEstado(hoja, filaDelPedido(hoja, codigo), (medio === 'correo' ? 'Avisado por correo por ' : 'Avisado por WhatsApp por ') + usuario);
   } finally { candado.releaseLock(); }
   return panelDatos();
+}
+
+// Cambia quién prepara un pedido ya confirmado.
+function panelAsignar(codigo, prepara) {
+  const usuario = exigirVendedor();
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  try {
+    const hoja = hojaPedidos();
+    asignarPreparacion(hoja, filaDelPedido(hoja, codigo), prepara, usuario);
+  } finally { candado.releaseLock(); }
+  return panelDatos();
+}
+
+function asignarPreparacion(hoja, fila, prepara, usuario) {
+  if (VENDEDORES.indexOf(prepara) < 0) throw new Error('Esa persona no está en la lista de vendedores.');
+  hoja.getRange(fila, CP['Prepara']).setValue(prepara);
+  anotarEnEstado(hoja, fila, 'Prepara ' + prepara + ' (asignado por ' + usuario + ')');
 }
 
 function filaDelPedido(hoja, codigo) {
