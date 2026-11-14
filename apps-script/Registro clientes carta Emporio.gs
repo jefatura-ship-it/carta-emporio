@@ -322,15 +322,17 @@ function migrarPedidos() {
   corregirZonaHoraria();
   const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_PEDIDOS);
   if (!hoja) return;
+  const total = COLUMNAS_PEDIDOS.length, max = hoja.getMaxColumns();
+  if (max < total) hoja.insertColumnsAfter(max, total - max);
+  // Los títulos se leen de una vez (el panel pasa por aquí cada 12 segundos)
+  const cab = hoja.getRange(1, 1, 1, total).getValues()[0].map(String);
+  const t = function (nombre) { return cab[CP[nombre] - 1]; };
+  const poner = function (nombre) { hoja.getRange(1, CP[nombre]).setValue(nombre).setFontWeight('bold'); cab[CP[nombre] - 1] = nombre; };
   // Hoja ya con «Confirmado» pero sin «Correo» (versión del 14/11): se agrega al final
-  if (String(hoja.getRange(1, 1).getValue()) === 'Confirmado' && String(hoja.getRange(1, CP['Correo']).getValue()) === '' && String(hoja.getRange(1, CP['Local']).getValue()) === 'Local') {
-    hoja.getRange(1, CP['Correo']).setValue('Correo').setFontWeight('bold');
-  }
-  // Hoja sin «Prepara»: se agrega al final, después de «Correo»
-  if (String(hoja.getRange(1, 1).getValue()) === 'Confirmado' && String(hoja.getRange(1, CP['Correo']).getValue()) === 'Correo' && String(hoja.getRange(1, CP['Prepara']).getValue()) === '') {
-    hoja.getRange(1, CP['Prepara']).setValue('Prepara').setFontWeight('bold');
-  }
-  if (String(hoja.getRange(1, 1).getValue()) !== 'Día de retiro') return;
+  if (cab[0] === 'Confirmado' && t('Correo') === '' && t('Local') === 'Local') poner('Correo');
+  // Hoja sin «Prepara» (quién prepara el pedido): se agrega al final, después de «Correo»
+  if (cab[0] === 'Confirmado' && t('Correo') === 'Correo' && t('Prepara') === '') poner('Prepara');
+  if (cab[0] !== 'Día de retiro') return;
   hoja.insertColumnBefore(1);
   hoja.getRange(1, 1).setValue('Confirmado').setFontWeight('bold');
   hoja.getRange(1, CP['Correo']).setValue('Correo').setFontWeight('bold');
