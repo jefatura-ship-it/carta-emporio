@@ -1,7 +1,7 @@
 /**
  * Registro de clientes y pedidos del Catálogo Sabroso (Emporio Sabroso y Distribuidora Santa Bárbara).
  * Apps Script ligado a la planilla «EM27-0802 Pedidos y clientes Catálogo Sabroso» (antes EM27-07).
- * Recibe lo que envía el catálogo y lo anota. También sirve el Panel de pedidos de los vendedores.
+ * Recibe lo que envía el catálogo y lo anota. También sirve SabAPP, el panel de pedidos de los vendedores.
  *
  * INSTALACIÓN
  *  1. Abrir la planilla EM27-07 → Extensiones → Apps Script. Pegar este archivo completo.
@@ -105,7 +105,8 @@ function doPost(e) {
 function doGet() {
   if (!vendedor()) return ContentService.createTextOutput('Registro de clientes de la carta: activo.');
   return HtmlService.createHtmlOutputFromFile('Panel')
-    .setTitle('Pedidos · Catálogo Sabroso')
+    .setTitle('SabAPP')
+    .setFaviconUrl('https://www.avicolasb.com/img/huevo-sabroso-isotipo.png') // la gallina de Avícola El Huevo Sabroso
     .addMetaTag('viewport', 'width=device-width, initial-scale=1');
 }
 

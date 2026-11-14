@@ -3,7 +3,7 @@
 <head>
 <base target="_blank">
 <meta charset="utf-8">
-<title>Pedidos · Catálogo Sabroso</title>
+<title>SabAPP</title>
 <style>
 :root{--campo:#1f5f3a;--campo-2:#2d7a4d;--sol:#e8761a;--sol-2:#fde3cf;--papel:#f6f2e9;--tarjeta:#fff;--tinta:#1c1c1a;--suave:#66645c;--linea:#e2dccd;--rojo:#b3261e;--azul:#2357a8}
 *{box-sizing:border-box}
@@ -131,7 +131,7 @@ button{font:inherit;cursor:pointer}
 </head>
 <body>
 <header class="barra">
-  <div class="marca"><img src="https://www.avicolasb.com/img/logo-emporio.webp" alt="Emporio Sabroso" width="150" height="44"><b>Pedidos</b></div>
+  <div class="marca"><img src="https://www.avicolasb.com/img/logo-emporio.webp" alt="Emporio Sabroso" width="150" height="44"><b>SabAPP</b></div>
   <span class="vivo" id="vivo" role="status" aria-live="polite"><i aria-hidden="true"></i><span id="vivoTxt">Conectando…</span></span>
   <button type="button" class="sonido" id="bSonido" aria-pressed="false">🔔 Activar sonido</button>
   <span class="usuario" id="usuario"></span>
@@ -155,7 +155,7 @@ button{font:inherit;cursor:pointer}
 </div>
 
 <script>
-/* Panel de pedidos del Catálogo Sabroso: lee la planilla cada 12 segundos y muestra los pedidos nuevos al instante.
+/* SabAPP, el panel de pedidos del Catálogo Sabroso: lee la planilla cada 12 segundos y muestra los pedidos nuevos al instante.
    Los cambios de estado se guardan en la planilla (casilla «Confirmado» y columna «Estado»). */
 var CADA = 12000;
 var datos = null, filtro = 'proximos', busqueda = '', vistos = null, nuevos = {}, abiertos = {}, ocupado = {}, seguro = {};
@@ -334,7 +334,7 @@ function pintar() {
   }).join('') + '</section>' + ladoHTML();
   $('cuerpo').innerHTML = html;
   if (foco) { var f = document.querySelector('[data-foco="' + foco + '"]'); if (f) f.focus(); }
-  document.title = (activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length ? '(' + activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length + ') ' : '') + 'Pedidos · Catálogo Sabroso';
+  document.title = (activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length ? '(' + activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length + ') ' : '') + 'SabAPP';
 }
 
 // Título que minimiza o abre su columna (o recuadro)
