@@ -797,6 +797,67 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 .ofertas .check{font-size:14px}
 .ofertas .ayuda{margin:6px 0 0 30px;font-size:12.5px;color:var(--suave)}
 #celCuenta{margin:0}
+
+/* ===== Formato tienda (16/11/2026): tarjeta blanca, el producto con aire, textos de color y «Agregar» a todo el ancho ===== */
+#carta .prod{background:#fff;border:1px solid #e9e7e0;box-shadow:0 1px 3px rgba(30,40,30,.06)}
+#carta .prod.on{border-color:var(--campo);box-shadow:0 0 0 1px var(--campo) inset}
+#carta .prod.oferta{border-color:#f1c79c}
+#carta .prod.oferta.on{border-color:var(--campo)}
+#carta .prod .tipo-p{color:var(--campo)!important;letter-spacing:.07em}
+#carta .prod .info>b{color:var(--tinta);font-weight:700}
+#carta .prod .precio{color:#1f1f1b;font-size:19px}
+#carta .prod.oferta .precio{color:var(--sol-t)}
+#carta .prod .precio small.u{color:var(--suave);font-weight:600}
+#carta .prod .info small.cu{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:6px;background:#f1f0ec;color:#55524a;font-weight:600}
+#carta .prod .venta{background:#eef6f0;border-color:#cfe3d5;color:var(--campo)}
+#carta .prod .mchip{background:#fff}
+#carta .prod .mchip[aria-pressed="true"]{background:var(--campo);color:#fff}
+#carta .prod>.ico{background:#fff}
+/* − cantidad + y «Agregar» ocupan todo el ancho de la tarjeta */
+#carta .prod>.paso{display:grid;grid-template-columns:46px minmax(0,1fr) 46px;gap:8px;align-items:center;justify-content:stretch}
+#carta .prod>.paso.vacio{grid-template-columns:1fr}
+#carta .prod .paso button{width:46px;height:46px;border-radius:50%}
+#carta .prod .paso .cant{width:100%;height:46px;border-radius:12px}
+#carta .prod .paso.vacio button.mas{width:100%;min-width:0;height:48px;border-radius:12px;font-size:20px;box-shadow:0 2px 0 rgba(0,0,0,.12)}
+#carta .prod .paso.vacio button.mas:hover{filter:brightness(1.08)}
+@media (min-width:700px){
+  #carta .prod>.ico{height:176px;border-bottom:1px solid #f0eee8}
+  #carta .prod>.ico svg{width:86px;height:86px}
+  #carta .prod>.ico img{object-fit:contain;padding:12px}
+  #carta .prod>.info{padding:14px 16px 6px}
+  #carta .prod>.paso{padding:10px 16px 16px;margin-top:auto}
+  #carta .prod>*:not(.ico):not(.corazon):not(.info):not(.paso){padding-inline:16px}
+}
+/* Celular: una tarjeta por fila (foto a la izquierda, datos a la derecha) y «Agregar» de lado a lado abajo */
+@media (max-width:699px){
+  #carta .lista{gap:10px}
+  #carta .prod{display:grid;grid-template-columns:92px minmax(0,1fr);column-gap:12px;row-gap:0;padding:12px;border-radius:14px;align-items:start}
+  #carta .prod>.ico{width:92px;height:92px;border-radius:12px;border:1px solid #f0eee8;background:#fff;overflow:hidden}
+  #carta .prod>.ico svg{width:52px;height:52px}
+  #carta .prod>.ico img{object-fit:cover;padding:0}
+  #carta .prod>.info{padding:0}
+  #carta .prod .tipo-p{display:block;font-size:10.5px!important}
+  #carta .prod .info>b{font-size:15.5px;line-height:1.25;padding-right:30px}
+  #carta .prod .precio{font-size:18px}
+  #carta .prod>.paso{grid-column:1/-1;margin-top:10px;padding:0;grid-template-columns:44px minmax(0,1fr) 44px}
+  #carta .prod>.paso.vacio{grid-template-columns:1fr}
+  #carta .prod .paso button{width:44px;height:44px}
+  #carta .prod .paso .cant{height:44px}
+  #carta .prod .paso.vacio button.mas{height:46px}
+  #carta .prod>*:not(.ico):not(.corazon):not(.info):not(.paso){grid-column:1/-1}
+  #carta .prod>.corazon{top:6px;right:6px;width:34px;height:34px}
+}
+/* Carro: «Guardar como lista» y «Vaciar carro» */
+.carro-acc{display:grid;grid-template-columns:1fr 1fr;margin:16px 0 0;border-block:1px solid var(--borde)}
+.carro-acc[hidden],.carro-lista-form[hidden]{display:none}
+.carro-acc .enlace{min-height:50px;padding:6px 8px;border:0;background:none;color:var(--campo);font-family:inherit;font-size:15px;font-weight:800;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+.carro-acc .enlace+.enlace{border-left:1px solid var(--borde)}
+.carro-acc .enlace.seguro{color:#b3261e}
+.carro-lista-form{margin:12px 0 0}
+.carro-lista-form label{display:block;margin-bottom:4px;font-size:13px;font-weight:700;color:var(--suave)}
+.carro-lista-form .fila{display:grid;grid-template-columns:1fr auto;gap:8px}
+.carro-lista-form input{min-height:46px;padding:8px 12px;border:1.5px solid var(--borde);border-radius:12px;background:#fff;font-family:inherit;font-size:16px}
+.carro-msg{min-height:1em;margin:10px 0 0;color:var(--campo);font-size:13.5px;font-weight:700}
 </style>
 </head>
 <body>
@@ -958,6 +1019,15 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
     </div>
     <div class="wrap carro-cuerpo">
       <div id="carroLista" class="lista"></div>
+      <div class="carro-acc" id="carroAcc">
+        <button type="button" class="enlace" id="cGuardarLista" aria-expanded="false" aria-controls="cListaForm">Guardar como lista</button>
+        <button type="button" class="enlace" id="cVaciar">Vaciar carro</button>
+      </div>
+      <div class="carro-lista-form" id="cListaForm" hidden>
+        <label for="cListaNom">Nombre de la lista</label>
+        <div class="fila"><input id="cListaNom" maxlength="40" placeholder="Ej.: Pedido semanal" autocomplete="off"><button type="button" class="btn prim" id="cListaOk">Guardar</button></div>
+      </div>
+      <p class="carro-msg" id="cListaMsg" role="status" aria-live="polite"></p>
       <div class="carro-vacio" id="carroVacio" hidden>
         <p><b>Tu pedido está vacío.</b></p>
         <button type="button" class="btn prim" id="volverVacio"><span aria-hidden="true">←</span> Volver al catálogo</button>
@@ -2253,6 +2323,8 @@ function pintarCarro(){
   const ps=L.productos.filter(enCarro);
   $("carroLista").innerHTML=ps.map(p=>`<div class="crow" data-crow="${p.cod}">${card(p,FAV)}<button type="button" class="quitar" data-quitar="${p.cod}" aria-label="Quitar ${p.nombre} del pedido">Quitar</button></div>`).join("");
   $("carroLista").hidden=!ps.length; $("carroVacio").hidden=!!ps.length; $("carroPie").hidden=!ps.length;
+  $("carroAcc").hidden=!ps.length; $("cListaForm").hidden=true; $("cGuardarLista").setAttribute("aria-expanded","false"); $("cListaMsg").textContent="";
+  const bv=$("cVaciar"); bv.classList.remove("seguro"); bv.textContent="Vaciar carro";
   refrescar();
 }
 document.addEventListener("change",e=>{const sel=e.target.closest("select[data-fcod]");if(!sel)return;const p=PROD[sel.dataset.fcod];if(!p)return;modo[p.cod]=sel.value;guardaPref("modos-"+KEY,JSON.stringify(modo));const enCarroLista=!!sel.closest("#carroLista");repintar(p);const nuevo=document.querySelector((enCarroLista?"#carroLista ":"")+`select[data-fcod="${p.cod}"]`);if(nuevo)nuevo.focus()});
@@ -2261,6 +2333,26 @@ const seguirComprando=()=>cerrarHoja("veloCarro");
 $("seguirCarro").onclick=seguirComprando; $("seguirCarro2").onclick=seguirComprando; $("volverVacio").onclick=seguirComprando;
 $("veloCarro").addEventListener("click",e=>{if(e.target===$("veloCarro"))seguirComprando()});
 $("irPedido").onclick=()=>{cerrarHoja("veloCarro");abrirRevision()};
+/* «Guardar como lista»: queda en Mi cuenta › Pedidos favoritos (mismo lugar que los pedidos favoritos).
+   «Vaciar carro»: pide un segundo toque para confirmar. */
+(()=>{const PF="pedidosFav-"+KEY;
+  const leer=()=>{try{const l=JSON.parse(localStorage.getItem(PF)||"[]");return Array.isArray(l)?l:[]}catch(e){return []}};
+  const msg=t=>{$("cListaMsg").textContent=t};
+  $("cGuardarLista").onclick=()=>{const f=$("cListaForm"),abre=f.hidden;f.hidden=!abre;$("cGuardarLista").setAttribute("aria-expanded",String(abre));msg("");if(abre){$("cListaNom").value="";$("cListaNom").focus()}};
+  const guardarLista=()=>{const qs=Object.fromEntries(Object.entries(cart).filter(([,q])=>q>0));
+    if(!Object.keys(qs).length){msg("Tu carro está vacío.");return}
+    const l=leer(),nombre=($("cListaNom").value.trim()||"Mi lista "+(l.length+1)).slice(0,40);
+    const nl=l.filter(x=>x.nombre.toLowerCase()!==nombre.toLowerCase());nl.unshift({nombre,t:Date.now(),cart:qs});
+    try{localStorage.setItem(PF,JSON.stringify(nl.slice(0,10)))}catch(e){}
+    $("cListaForm").hidden=true;$("cGuardarLista").setAttribute("aria-expanded","false");
+    msg(`Lista «${nombre}» guardada. La encuentras en Mi cuenta › Pedidos favoritos.`)};
+  $("cListaOk").onclick=guardarLista;
+  $("cListaNom").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();guardarLista()}});
+  let t=null;
+  $("cVaciar").onclick=()=>{const b=$("cVaciar");
+    if(!b.classList.contains("seguro")){b.classList.add("seguro");b.textContent="¿Seguro? Toca otra vez";clearTimeout(t);t=setTimeout(()=>{b.classList.remove("seguro");b.textContent="Vaciar carro"},4000);return}
+    clearTimeout(t);Object.keys(cart).forEach(k=>delete cart[k]);guardar();pintarCarro();$("volverVacio").focus()};
+})();
 $("carroLista").addEventListener("click",e=>{
   const q=e.target.closest("button[data-quitar]"); if(!q)return;
   const cod=q.dataset.quitar, fila=q.closest(".crow"), sig=fila.nextElementSibling||fila.previousElementSibling;
