@@ -869,6 +869,9 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
   #carta .prod>*:not(.ico):not(.corazon):not(.info):not(.paso){grid-column:1/-1}
   #carta .prod>.corazon{top:6px;right:6px;width:34px;height:34px}
 }
+/* Fotos con etiqueta: siempre completas, sobre el fondo crema de las fotos (la etiqueta va al costado) */
+#carta .prod>.ico .verfotos img{object-fit:contain;padding:0}
+#carta .prod>.ico:has(.verfotos){background:#fbf6ec}
 /* Carro: «Guardar como lista» y «Vaciar carro» */
 .carro-acc{display:grid;grid-template-columns:1fr 1fr;margin:16px 0 0;border-block:1px solid var(--borde)}
 .carro-acc[hidden],.carro-lista-form[hidden]{display:none}
