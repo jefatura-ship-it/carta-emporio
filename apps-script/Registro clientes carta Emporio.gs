@@ -624,13 +624,33 @@ function propsJson_(clave) {
 function guardarJson_(clave, v) { PropertiesService.getScriptProperties().setProperty(clave, JSON.stringify(v)); }
 function normCorreo_(c) { return String(c || '').trim().toLowerCase().slice(0, 80); }
 function normRut_(r) { return String(r || '').toUpperCase().replace(/[^0-9K]/g, ''); }
-function rutValido_(r) {
-  const s = normRut_(r);
-  if (!/^\d{7,8}[0-9K]$/.test(s)) return false;
+function dvRut_(cuerpo) {
   let suma = 0, m = 2;
-  for (let i = s.length - 2; i >= 0; i--) { suma += Number(s[i]) * m; m = m === 7 ? 2 : m + 1; }
+  for (let i = cuerpo.length - 1; i >= 0; i--) { suma += Number(cuerpo[i]) * m; m = m === 7 ? 2 : m + 1; }
   const dv = 11 - (suma % 11);
-  return s.slice(-1) === (dv === 11 ? '0' : dv === 10 ? 'K' : String(dv));
+  return dv === 11 ? '0' : dv === 10 ? 'K' : String(dv);
+}
+// RUT para guardar: el número sin puntos, guion ni dígito verificador ('' si no sirve).
+// Sin guion se toma tal cual (ej. 20629263); con guion se revisa el dígito (20.629.263-K).
+function cuerpoRut_(r) {
+  const txt = String(r || '').toUpperCase().trim();
+  if (txt.indexOf('-') >= 0) {
+    const p = txt.split('-'), cuerpo = normRut_(p[0]), dv = normRut_(p[1]);
+    return /^\d{7,8}$/.test(cuerpo) && dvRut_(cuerpo) === dv ? cuerpo : '';
+  }
+  const s = normRut_(txt);
+  if (/^\d{7,8}$/.test(s)) return s;
+  if (/^\d{7,8}[0-9K]$/.test(s) && dvRut_(s.slice(0, -1)) === s.slice(-1)) return s.slice(0, -1);
+  return '';
+}
+// Al entrar: las formas posibles de lo que escribió (tal cual, sin el dígito verificador, o la parte antes del guion)
+function variantesRut_(r) {
+  const txt = String(r || '').toUpperCase().trim(), s = normRut_(txt), v = [];
+  if (!s) return v;
+  v.push(s);
+  if (txt.indexOf('-') >= 0) v.push(normRut_(txt.split('-')[0]));
+  if (/^\d{7,8}[0-9K]$/.test(s) && dvRut_(s.slice(0, -1)) === s.slice(-1)) v.push(s.slice(0, -1));
+  return v;
 }
 function salSabapp_() {
   const p = PropertiesService.getScriptProperties();
@@ -653,7 +673,8 @@ function sabappIngresar_(correo, rut) {
     const fallos = propsJson_('SABAPP_FALLOS'), f = fallos[c] || { n: 0, hasta: 0 };
     if (f.hasta > Date.now()) throw new Error('Cuenta bloqueada por intentos fallidos: espere ' + Math.ceil((f.hasta - Date.now()) / 60000) + ' min.');
     const u = propsJson_('SABAPP_USUARIOS')[c];
-    if (!u || u.hash !== huellaRut_(c, rut)) {
+    const coincide = !!u && variantesRut_(rut).some(function (v) { return huellaRut_(c, v) === u.hash; });
+    if (!coincide) {
       f.n = (f.n || 0) + 1;
       if (f.n >= FALLOS_MAX) { f.hasta = Date.now() + BLOQUEO_MIN * 60000; f.n = 0; }
       fallos[c] = f;
@@ -678,25 +699,40 @@ function sabappSalir_(token) {
   try { const ses = propsJson_('SABAPP_SESIONES'); if (ses[token]) { delete ses[token]; guardarJson_('SABAPP_SESIONES', ses); } }
   finally { candado.releaseLock(); }
 }
-// Nombre del trabajador de una sesión vigente ('' si no hay)
-function usuarioSesion_(token) {
-  if (!/^[0-9a-f]{64}$/.test(String(token || ''))) return '';
+// Trabajador de una sesión vigente: { correo, nombre, admin } (null si no hay)
+function sesionUsuario_(token) {
+  if (!/^[0-9a-f]{64}$/.test(String(token || ''))) return null;
   const s = propsJson_('SABAPP_SESIONES')[token];
-  if (!s || !(s.vence > Date.now())) return '';
+  if (!s || !(s.vence > Date.now())) return null;
   const u = propsJson_('SABAPP_USUARIOS')[s.correo];
-  return u ? u.nombre : '';
+  return u ? { correo: s.correo, nombre: u.nombre, admin: !!u.admin } : null;
 }
+function usuarioSesion_(token) { const u = sesionUsuario_(token); return u ? u.nombre : ''; }
 // Todo lo que pide la página de SabAPP pasa por aquí
 function sabappApi_(d) {
   if (d.accion === 'ingresar') { const r = sabappIngresar_(d.correo, d.rut); return { ok: true, token: r.token, nombre: r.nombre }; }
   if (d.accion === 'salir') { sabappSalir_(d.token); return { ok: true }; }
-  const usuario = usuarioSesion_(d.token);
-  if (!usuario) return { ok: false, error: 'Sin acceso: su sesión terminó. Ingrese con su correo y RUT.' };
+  const yo = sesionUsuario_(d.token);
+  if (!yo) return { ok: false, error: 'Sin acceso: su sesión terminó. Ingrese con su correo y RUT.' };
   const a = Array.isArray(d.args) ? d.args : [];
-  if (d.accion === 'datos') return { ok: true, datos: panelDatos_(usuario) };
-  if (d.accion === 'cambiar') return { ok: true, datos: panelCambiar_(usuario, a[0], a[1], a[2], a[3], a[4]) };
-  if (d.accion === 'asignar') return { ok: true, datos: panelAsignar_(usuario, a[0], a[1], a[2]) };
-  if (d.accion === 'avisado') return { ok: true, datos: panelAvisado_(usuario, a[0], a[1]) };
+  const conRol = function (datos) { datos.admin = yo.admin; datos.correo = yo.correo; return { ok: true, datos: datos }; };
+  if (d.accion === 'datos') return conRol(panelDatos_(yo.nombre));
+  if (d.accion === 'cambiar') return conRol(panelCambiar_(yo.nombre, a[0], a[1], a[2], a[3], a[4]));
+  if (d.accion === 'asignar') return conRol(panelAsignar_(yo.nombre, a[0], a[1], a[2]));
+  if (d.accion === 'avisado') return conRol(panelAvisado_(yo.nombre, a[0], a[1]));
+  // Panel de administrador (solo trabajadores con rol de administrador)
+  if (['trabajadores', 'guardarTrabajador', 'quitarTrabajador', 'cerrarSesiones'].indexOf(d.accion) >= 0) {
+    if (!yo.admin) return { ok: false, error: 'Solo un administrador de SabAPP puede hacer esto.' };
+    const c = normCorreo_(a[0] && d.accion !== 'guardarTrabajador' ? a[0] : a[1]);
+    if (d.accion === 'guardarTrabajador' && c === yo.correo && !a[3]) throw new Error('No puede quitarse a sí mismo el rol de administrador.');
+    if (d.accion === 'quitarTrabajador' && c === yo.correo) throw new Error('No puede quitarse a sí mismo.');
+    let lista;
+    if (d.accion === 'trabajadores') lista = listaTrabajadores_();
+    if (d.accion === 'guardarTrabajador') lista = guardarTrabajador_(a[0], a[1], a[2], a[3]);
+    if (d.accion === 'quitarTrabajador') lista = quitarTrabajador_(a[0]);
+    if (d.accion === 'cerrarSesiones') lista = cerrarSesiones_(a[0], d.token);
+    return { ok: true, lista: lista, yo: yo.correo };
+  }
   return { ok: false, error: 'Acción no válida.' };
 }
 
@@ -710,34 +746,42 @@ function abrirTrabajadores() {
   try { exigirAdmin_(); } catch (err) { SpreadsheetApp.getUi().alert(err.message); return; }
   SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(htmlTrabajadores_()).setWidth(560).setHeight(600), 'SabAPP · Trabajadores');
 }
-function trabajadoresLista() {
-  exigirAdmin_();
+function trabajadoresLista() { exigirAdmin_(); return listaTrabajadores_(); }
+function trabajadorGuardar(nombre, correo, rut, admin) { exigirAdmin_(); return guardarTrabajador_(nombre, correo, rut, admin); }
+function trabajadorQuitar(correo) { exigirAdmin_(); return quitarTrabajador_(correo); }
+
+function listaTrabajadores_() {
   const u = propsJson_('SABAPP_USUARIOS'), ses = propsJson_('SABAPP_SESIONES'), ahora = Date.now();
   return Object.keys(u).map(function (c) {
     const abiertas = Object.keys(ses).filter(function (t) { return ses[t].correo === c && ses[t].vence > ahora; }).length;
-    return { correo: c, nombre: u[c].nombre, sesiones: abiertas };
+    return { correo: c, nombre: u[c].nombre, admin: !!u[c].admin, sesiones: abiertas };
   }).sort(function (a, b) { return a.nombre.localeCompare(b.nombre); });
 }
-function trabajadorGuardar(nombre, correo, rut) {
-  exigirAdmin_();
+// Crea o actualiza un trabajador. Al editar, el RUT puede quedar en blanco (se mantiene el que tenía).
+function guardarTrabajador_(nombre, correo, rut, admin) {
   const n = String(nombre || '').replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ .'-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
   const c = correoValido(correo);
   if (n.length < 2) throw new Error('Escriba el nombre del trabajador.');
   if (!c) throw new Error('El correo no es válido.');
-  if (!rutValido_(rut)) throw new Error('El RUT no es válido: revise los números y el dígito verificador.');
   const candado = LockService.getScriptLock();
   candado.waitLock(15000);
   try {
-    const u = propsJson_('SABAPP_USUARIOS');
-    u[c] = { nombre: n, hash: huellaRut_(c, rut), alta: Date.now() };
+    const u = propsJson_('SABAPP_USUARIOS'), antes = u[c];
+    let hash = antes ? antes.hash : '';
+    if (String(rut || '').trim()) {
+      const cuerpo = cuerpoRut_(rut);
+      if (!cuerpo) throw new Error('El RUT no es válido: escríbalo sin puntos ni guion (ej.: 12345678).');
+      hash = huellaRut_(c, cuerpo);
+    }
+    if (!hash) throw new Error('Escriba el RUT del trabajador (sin puntos ni guion).');
+    u[c] = { nombre: n, hash: hash, alta: antes && antes.alta || Date.now(), admin: admin === true };
     guardarJson_('SABAPP_USUARIOS', u);
     const fallos = propsJson_('SABAPP_FALLOS');
     if (fallos[c]) { delete fallos[c]; guardarJson_('SABAPP_FALLOS', fallos); }
   } finally { candado.releaseLock(); }
-  return trabajadoresLista();
+  return listaTrabajadores_();
 }
-function trabajadorQuitar(correo) {
-  exigirAdmin_();
+function quitarTrabajador_(correo) {
   const c = normCorreo_(correo);
   const candado = LockService.getScriptLock();
   candado.waitLock(15000);
@@ -747,7 +791,19 @@ function trabajadorQuitar(correo) {
     Object.keys(ses).forEach(function (t) { if (ses[t].correo === c) delete ses[t]; });
     guardarJson_('SABAPP_SESIONES', ses);
   } finally { candado.releaseLock(); }
-  return trabajadoresLista();
+  return listaTrabajadores_();
+}
+// Cierra las sesiones de un trabajador en todos los PC (menos la del administrador que lo pide)
+function cerrarSesiones_(correo, salvo) {
+  const c = normCorreo_(correo);
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  try {
+    const ses = propsJson_('SABAPP_SESIONES');
+    Object.keys(ses).forEach(function (t) { if (ses[t].correo === c && t !== salvo) delete ses[t]; });
+    guardarJson_('SABAPP_SESIONES', ses);
+  } finally { candado.releaseLock(); }
+  return listaTrabajadores_();
 }
 function htmlTrabajadores_() {
   return '<!DOCTYPE html><html><head><base target="_top"><meta charset="utf-8"><style>'
@@ -758,20 +814,21 @@ function htmlTrabajadores_() {
     + '#msg{min-height:1.4em;margin:8px 0;font-weight:700}#msg.mal{color:#b3261e}#msg.bien{color:#1f5f3a}'
     + 'ul{margin:6px 0 0;padding:0;list-style:none}li{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee}li div{flex:1;min-width:0}li small{display:block;color:#66645c}'
     + '</style></head><body>'
-    + '<p class="nota">Cada trabajador entra a <b>www.avicolasb.com/sabapp</b> con su correo y su RUT. El RUT no queda escrito: se guarda cifrado. Para cambiar el RUT o el nombre de alguien, vuelva a guardarlo con el mismo correo.</p>'
+    + '<p class="nota">Cada trabajador entra a <b>www.avicolasb.com/sabapp</b> con su correo y su RUT (sin puntos ni guion). El RUT no queda escrito: se guarda cifrado. Para cambiar el nombre, el RUT o el rol de alguien, vuelva a guardarlo con el mismo correo.</p>'
     + '<form id="f" autocomplete="off"><label>Nombre<input id="nom" maxlength="40" placeholder="Ej.: Sofía"></label>'
     + '<label>Correo (su usuario)<input id="cor" type="email" maxlength="80" placeholder="nombre@correo.cl"></label>'
-    + '<label>RUT (su clave)<input id="rut" maxlength="12" placeholder="12.345.678-9" autocomplete="off"></label>'
+    + '<label>RUT (su clave), sin puntos ni guion<input id="rut" maxlength="12" placeholder="Ej.: 12345678 · al editar, en blanco lo mantiene" autocomplete="off"></label>'
+    + '<label style="display:flex;align-items:center;gap:8px"><input id="adm" type="checkbox" style="min-height:0;width:18px;height:18px"> Administrador de SabAPP (ve el panel ⚙ Administrar)</label>'
     + '<button id="g">Guardar trabajador</button></form><p id="msg" role="status"></p><b>Trabajadores con acceso</b><ul id="l"><li><div><small>Cargando…</small></div></li></ul>'
     + '<script>'
     + 'var $=function(i){return document.getElementById(i)};'
     + 'var esc=function(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]})};'
     + 'function msg(t,mal){$("msg").textContent=t;$("msg").className=mal?"mal":"bien"}'
-    + 'function pintar(l){$("l").innerHTML=l.length?l.map(function(x){return "<li><div><b>"+esc(x.nombre)+"</b><small>"+esc(x.correo)+(x.sesiones?" · "+x.sesiones+" PC con sesión abierta":"")+"</small></div><button class=\"q\" data-q=\""+esc(x.correo)+"\">Quitar</button></li>"}).join(""):"<li><div><small>Aún no hay trabajadores.</small></div></li>"}'
+    + 'function pintar(l){$("l").innerHTML=l.length?l.map(function(x){return "<li><div><b>"+esc(x.nombre)+"</b><small>"+esc(x.correo)+(x.admin?" · administrador":"")+(x.sesiones?" · "+x.sesiones+" PC con sesión abierta":"")+"</small></div><button class=\"q\" data-q=\""+esc(x.correo)+"\">Quitar</button></li>"}).join(""):"<li><div><small>Aún no hay trabajadores.</small></div></li>"}'
     + 'function fallo(e){msg(String(e&&e.message||e),true);$("g").disabled=false}'
     + 'google.script.run.withSuccessHandler(pintar).withFailureHandler(fallo).trabajadoresLista();'
-    + '$("f").addEventListener("submit",function(ev){ev.preventDefault();var n=$("nom").value,c=$("cor").value,r=$("rut").value;$("g").disabled=true;msg("Guardando…");'
-    + 'google.script.run.withSuccessHandler(function(l){pintar(l);$("g").disabled=false;$("rut").value="";$("nom").value="";$("cor").value="";msg("Guardado: "+n.trim()+" ya puede entrar con su correo y su RUT.")}).withFailureHandler(fallo).trabajadorGuardar(n,c,r)});'
+    + '$("f").addEventListener("submit",function(ev){ev.preventDefault();var n=$("nom").value,c=$("cor").value,r=$("rut").value,ad=$("adm").checked;$("g").disabled=true;msg("Guardando…");'
+    + 'google.script.run.withSuccessHandler(function(l){pintar(l);$("g").disabled=false;$("rut").value="";$("nom").value="";$("cor").value="";$("adm").checked=false;msg("Guardado: "+n.trim()+(ad?" (administrador)":"")+" ya puede entrar con su correo y su RUT.")}).withFailureHandler(fallo).trabajadorGuardar(n,c,r,ad)});'
     + '$("l").addEventListener("click",function(ev){var b=ev.target.closest("[data-q]");if(!b)return;if(!b.classList.contains("s")){b.classList.add("s");b.textContent="¿Quitar? Toca otra vez";setTimeout(function(){b.classList.remove("s");b.textContent="Quitar"},4000);return}'
     + 'b.disabled=true;google.script.run.withSuccessHandler(function(l){pintar(l);msg("Listo: ya no puede entrar a SabAPP.")}).withFailureHandler(fallo).trabajadorQuitar(b.dataset.q)});'
     + '<\/script></body></html>';

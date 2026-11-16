@@ -138,6 +138,29 @@ button{font:inherit;cursor:pointer}
 .ing-caja .ver{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--suave)}
 .ing-msg{min-height:1.3em;margin:0;color:var(--rojo)!important;font-weight:700}
 .ing-caja .b{min-height:48px;font-size:16px}
+.admin{position:fixed;inset:0;z-index:25;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow:auto;background:rgba(28,28,26,.5)}
+.admin[hidden]{display:none}
+.adm-caja{width:100%;max-width:680px;padding:20px 22px 22px;border-radius:18px;background:#fff;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.adm-cab{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.adm-cab h2{margin:0;font-size:21px;color:var(--campo)}
+.adm-caja h3{margin:18px 0 8px;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--suave)}
+.adm-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px;border:1px solid var(--linea);border-radius:12px;background:var(--papel)}
+.adm-form label{display:grid;gap:3px;font-weight:700;font-size:13px;color:#4a483f}
+.adm-form input:not([type=checkbox]){min-height:40px;padding:6px 10px;border:1.5px solid var(--linea);border-radius:10px;font:inherit;font-size:15px;background:#fff}
+.adm-form .ver{display:flex;align-items:center;gap:8px;font-weight:600}
+.adm-form .ancho{grid-column:1/-1}
+.adm-bts{display:flex;gap:8px;grid-column:1/-1}
+.adm-msg{min-height:1.3em;margin:8px 0 0;font-weight:700;color:var(--campo)}
+.adm-msg.mal{color:var(--rojo)}
+.adm-lista,.adm-sis{margin:0;padding:0;list-style:none}
+.adm-lista li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:10px 0;border-bottom:1px solid var(--linea)}
+.adm-lista li>div{flex:1 1 220px;min-width:0}
+.adm-lista b{display:block}
+.adm-lista small{color:var(--suave)}
+.adm-et{display:inline-block;margin-left:6px;padding:0 8px;border-radius:999px;background:#e6f6ec;color:#14663a;font-size:11.5px;font-weight:800}
+.adm-sis li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--papel);font-size:14px}
+.adm-sis li span{color:var(--suave)}
+@media (max-width:560px){.adm-form{grid-template-columns:1fr}}
 @media (max-width:1100px){.tablero{grid-template-columns:repeat(2,minmax(240px,1fr))}}
 @media (max-width:640px){.tablero{grid-template-columns:1fr}.barra,.herr,.cuerpo{padding-left:12px;padding-right:12px}}
 </style>
@@ -148,6 +171,7 @@ button{font:inherit;cursor:pointer}
   <span class="vivo" id="vivo" role="status" aria-live="polite"><i aria-hidden="true"></i><span id="vivoTxt">Conectando…</span></span>
   <button type="button" class="sonido" id="bSonido" aria-pressed="false">🔔 Activar sonido</button>
   <span class="usuario" id="usuario"></span>
+  <button type="button" class="salir" id="bAdmin" hidden>⚙ Administrar</button>
   <button type="button" class="salir" id="bSalir" hidden>Salir</button>
 </header>
 <div class="herr" role="toolbar" aria-label="Filtros">
@@ -159,6 +183,24 @@ button{font:inherit;cursor:pointer}
 </div>
 <main class="cuerpo" id="cuerpo"><div class="cargando">Cargando pedidos…</div></main>
 <div class="aviso" id="aviso" role="alert"></div>
+<div class="admin" id="admin" hidden>
+  <section class="adm-caja" role="dialog" aria-modal="true" aria-labelledby="admTit">
+    <div class="adm-cab"><h2 id="admTit">⚙ Panel de administrador</h2><button type="button" class="b" id="admCerrar">Cerrar</button></div>
+    <h3>Trabajadores</h3>
+    <form class="adm-form" id="admForm" autocomplete="off" novalidate>
+      <label>Nombre<input id="aNom" maxlength="40" placeholder="Ej.: Sofía"></label>
+      <label>Correo (su usuario)<input id="aCor" type="email" maxlength="80" placeholder="nombre@correo.cl"></label>
+      <label class="ancho">RUT (su clave), sin puntos ni guion<input id="aRut" maxlength="12" placeholder="Ej.: 12345678 · al editar, en blanco se mantiene el que tenía"></label>
+      <label class="ver ancho"><input type="checkbox" id="aAdm"> Administrador (ve este panel)</label>
+      <div class="adm-bts"><button type="submit" class="b prim" id="aGuardar">Guardar trabajador</button><button type="button" class="b" id="aNuevo">Nuevo</button></div>
+    </form>
+    <p class="adm-msg" id="admMsg" role="status" aria-live="polite"></p>
+    <ul class="adm-lista" id="admLista"></ul>
+    <h3>Sistema</h3>
+    <ul class="adm-sis" id="admSis"></ul>
+    <p><button type="button" class="b" id="admRecargar">Recargar SabAPP</button></p>
+  </section>
+</div>
 <div class="ingreso" id="ingreso" hidden>
   <form class="ing-caja" id="fIngreso" novalidate>
     <img src="https://www.avicolasb.com/img/huevo-sabroso-isotipo.png" alt="" width="64" height="59">
@@ -213,6 +255,7 @@ function servidor(fn, args, ok, mal) {
 }
 function mostrarIngreso(msg) {
   clearTimeout(temporizador);
+  $('admin').hidden = true; $('bAdmin').hidden = true;
   $('ingreso').hidden = false; $('iMsg').textContent = msg || '';
   try { $('iCorreo').value = $('iCorreo').value || localStorage.getItem('sabapp-correo') || ''; } catch (e) {}
   ($('iCorreo').value ? $('iRut') : $('iCorreo')).focus();
@@ -232,6 +275,59 @@ $('fIngreso').addEventListener('submit', function (ev) {
     cargar(); programar();
   }).catch(function () { $('iBtn').disabled = false; $('iBtn').textContent = 'Entrar'; $('iMsg').textContent = 'Sin conexión: revisa internet e intenta de nuevo.'; });
 });
+/* ---------- Panel de administrador: trabajadores (correo + RUT + rol), sesiones abiertas y estado del sistema ---------- */
+var VERSION_SABAPP = '16/11/2026 · correo + RUT · administradores';
+var admLista = [], admYo = '', admSeguro = {};
+function admMsg(t, mal) { $('admMsg').textContent = t || ''; $('admMsg').className = 'adm-msg' + (mal ? ' mal' : ''); }
+function admPintar(l, yo) {
+  if (l) admLista = l; if (yo) admYo = yo;
+  $('admLista').innerHTML = admLista.length ? admLista.map(function (x) {
+    var soy = x.correo === admYo;
+    return '<li><div><b>' + esc(x.nombre) + (x.admin ? '<span class="adm-et">Administrador</span>' : '') + (soy ? '<span class="adm-et">Tú</span>' : '') + '</b><small>' + esc(x.correo)
+      + (x.sesiones ? ' · ' + x.sesiones + ' PC con sesión abierta' : ' · sin sesiones abiertas') + '</small></div>'
+      + '<button type="button" class="b peq" data-aeditar="' + esc(x.correo) + '">Editar</button>'
+      + (x.sesiones ? '<button type="button" class="b peq" data-acerrar="' + esc(x.correo) + '">Cerrar sesiones</button>' : '')
+      + (soy ? '' : '<button type="button" class="b peq peligro' + (admSeguro[x.correo] ? ' seguro' : '') + '" data-aquitar="' + esc(x.correo) + '">' + (admSeguro[x.correo] ? '¿Quitar? Toca otra vez' : 'Quitar') + '</button>') + '</li>';
+  }).join('') : '<li><small>Aún no hay trabajadores.</small></li>';
+  var ses = admLista.reduce(function (t, x) { return t + (x.sesiones || 0); }, 0), adm = admLista.filter(function (x) { return x.admin; }).length;
+  $('admSis').innerHTML = [['Versión de SabAPP', VERSION_SABAPP], ['Tu cuenta', (datos && datos.usuario || '') + ' · ' + admYo],
+    ['Conexión', ultimaOk ? 'En vivo · actualizado ' + horaCorta(new Date(ultimaOk)) : 'Sin datos aún'], ['Pedidos cargados', datos ? datos.pedidos.length : 0],
+    ['Trabajadores', admLista.length + ' (' + adm + ' administrador' + (adm === 1 ? '' : 'es') + ')'], ['Sesiones abiertas', ses]]
+    .map(function (f) { return '<li><span>' + f[0] + '</span><b>' + esc(f[1]) + '</b></li>'; }).join('');
+}
+function admApi(accion, args, listo) {
+  admMsg(accion === 'trabajadores' ? 'Cargando…' : 'Guardando…');
+  api({ accion: accion, token: sesion, args: args || [] }).then(function (j) {
+    if (j && j.ok) { admMsg(''); admPintar(j.lista, j.yo); if (listo) listo(); return; }
+    var e = j && j.error || 'No se pudo.';
+    if (/Sin acceso/.test(e)) { sinAcceso(e); return; }
+    admMsg(e, true);
+  }).catch(function () { admMsg('Sin conexión: revisa internet e intenta de nuevo.', true); });
+}
+function admNuevo() { $('aNom').value = ''; $('aCor').value = ''; $('aRut').value = ''; $('aAdm').checked = false; $('aCor').readOnly = false; $('aGuardar').textContent = 'Guardar trabajador'; }
+$('bAdmin').addEventListener('click', function () { $('admin').hidden = false; admNuevo(); admPintar(); admApi('trabajadores'); $('aNom').focus(); });
+$('admCerrar').addEventListener('click', function () { $('admin').hidden = true; $('bAdmin').focus(); });
+$('admin').addEventListener('click', function (e) { if (e.target === $('admin')) { $('admin').hidden = true; $('bAdmin').focus(); } });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('admin').hidden) { $('admin').hidden = true; $('bAdmin').focus(); } });
+$('aNuevo').addEventListener('click', function () { admNuevo(); admMsg(''); $('aNom').focus(); });
+$('admRecargar').addEventListener('click', function () { location.reload(); });
+$('admForm').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  var n = $('aNom').value.trim(), c = $('aCor').value.trim(), r = $('aRut').value.trim(), ad = $('aAdm').checked;
+  if (!n || !c) { admMsg('Escribe el nombre y el correo.', true); return; }
+  admApi('guardarTrabajador', [n, c, r, ad], function () { admNuevo(); admMsg('Guardado: ' + n + (ad ? ' (administrador)' : '') + '. Ya puede entrar con su correo y su RUT.'); });
+});
+$('admLista').addEventListener('click', function (e) {
+  var ed = e.target.closest('[data-aeditar]'), ce = e.target.closest('[data-acerrar]'), qu = e.target.closest('[data-aquitar]');
+  if (ed) { var x = admLista.filter(function (t) { return t.correo === ed.dataset.aeditar; })[0]; if (!x) return;
+    $('aNom').value = x.nombre; $('aCor').value = x.correo; $('aCor').readOnly = true; $('aRut').value = ''; $('aAdm').checked = !!x.admin;
+    $('aGuardar').textContent = 'Guardar cambios'; admMsg('Editando a ' + x.nombre + ': el RUT en blanco se mantiene.'); $('aNom').focus(); return; }
+  if (ce) { admApi('cerrarSesiones', [ce.dataset.acerrar], function () { admMsg('Listo: se cerraron sus sesiones en los otros PC.'); }); return; }
+  if (qu) { var k = qu.dataset.aquitar;
+    if (!admSeguro[k]) { admSeguro[k] = true; admPintar(); setTimeout(function () { delete admSeguro[k]; if (!$('admin').hidden) admPintar(); }, 4000); return; }
+    delete admSeguro[k]; admApi('quitarTrabajador', [k], function () { admMsg('Listo: ya no puede entrar a SabAPP.'); }); }
+});
+
 $('bSalir').addEventListener('click', function () {
   if (sesion) api({ accion: 'salir', token: sesion }).catch(function () {});
   sesion = ''; datos = null;
@@ -246,6 +342,7 @@ function cargar() {
 function programar() { clearTimeout(temporizador); temporizador = setTimeout(function () { cargar(); programar(); }, CADA); }
 
 function recibir(d) {
+  if (MODO_API) $('bAdmin').hidden = !d.admin;
   var primera = !datos;
   datos = d;
   $('usuario').textContent = d.usuario;
