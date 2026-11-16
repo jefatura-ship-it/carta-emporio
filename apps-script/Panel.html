@@ -125,6 +125,19 @@ button{font:inherit;cursor:pointer}
 .vend small{margin-left:auto;font-size:11.5px;font-weight:700;opacity:.85}
 .m-pie{display:flex;justify-content:flex-end;margin-top:16px}
 @media (max-width:480px){.vend small{display:none}}
+.salir{min-height:36px;padding:6px 14px;border:1.5px solid rgba(255,255,255,.7);border-radius:999px;background:transparent;color:#fff;font-weight:700;font-size:13.5px}
+.salir[hidden]{display:none}
+.ingreso{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--papel)}
+.ingreso[hidden]{display:none}
+.ing-caja{width:100%;max-width:380px;display:grid;gap:12px;padding:28px 24px 24px;border-radius:20px;background:#fff;box-shadow:0 18px 40px -20px rgba(0,0,0,.35);text-align:left}
+.ing-caja img{justify-self:center}
+.ing-caja h1{margin:0;text-align:center;font-size:28px;color:var(--campo)}
+.ing-caja p{margin:0;text-align:center;color:var(--suave);font-size:14px}
+.ing-caja label{display:grid;gap:4px;font-weight:700;font-size:13.5px;color:#4a483f}
+.ing-caja input[type=email],.ing-caja input[type=password],.ing-caja input[type=text]{min-height:46px;padding:8px 12px;border:1.5px solid var(--linea);border-radius:12px;font:inherit;font-size:16px}
+.ing-caja .ver{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--suave)}
+.ing-msg{min-height:1.3em;margin:0;color:var(--rojo)!important;font-weight:700}
+.ing-caja .b{min-height:48px;font-size:16px}
 @media (max-width:1100px){.tablero{grid-template-columns:repeat(2,minmax(240px,1fr))}}
 @media (max-width:640px){.tablero{grid-template-columns:1fr}.barra,.herr,.cuerpo{padding-left:12px;padding-right:12px}}
 </style>
@@ -135,6 +148,7 @@ button{font:inherit;cursor:pointer}
   <span class="vivo" id="vivo" role="status" aria-live="polite"><i aria-hidden="true"></i><span id="vivoTxt">Conectando…</span></span>
   <button type="button" class="sonido" id="bSonido" aria-pressed="false">🔔 Activar sonido</button>
   <span class="usuario" id="usuario"></span>
+  <button type="button" class="salir" id="bSalir" hidden>Salir</button>
 </header>
 <div class="herr" role="toolbar" aria-label="Filtros">
   <button type="button" class="chip" data-filtro="proximos" aria-pressed="true">Activos y próximos</button>
@@ -145,6 +159,18 @@ button{font:inherit;cursor:pointer}
 </div>
 <main class="cuerpo" id="cuerpo"><div class="cargando">Cargando pedidos…</div></main>
 <div class="aviso" id="aviso" role="alert"></div>
+<div class="ingreso" id="ingreso" hidden>
+  <form class="ing-caja" id="fIngreso" novalidate>
+    <img src="https://www.avicolasb.com/img/huevo-sabroso-isotipo.png" alt="" width="64" height="59">
+    <h1>SabAPP</h1>
+    <p>Pedidos del Catálogo Sabroso. Ingresa con tu correo y tu RUT.</p>
+    <label>Correo<input id="iCorreo" type="email" autocomplete="username" inputmode="email" maxlength="80"></label>
+    <label>RUT<input id="iRut" type="password" autocomplete="current-password" placeholder="12.345.678-9" maxlength="12"></label>
+    <label class="ver"><input type="checkbox" id="iVer"> Mostrar RUT</label>
+    <p class="ing-msg" id="iMsg" role="alert"></p>
+    <button type="submit" class="b prim" id="iBtn">Entrar</button>
+  </form>
+</div>
 <div class="modal" id="modal" hidden>
   <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="mTit" aria-describedby="mSub">
     <h2 id="mTit">¿Quién prepara este pedido?</h2>
@@ -167,10 +193,52 @@ var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"']/g, f
 var clp = function (n) { return '$' + Math.round(n || 0).toLocaleString('es-CL'); };
 try { vistos = JSON.parse(localStorage.getItem('panel-vistos') || 'null'); sonidoOn = localStorage.getItem('panel-sonido') === 'si'; } catch (e) { vistos = null; }
 
-function servidor(fn, args, ok, mal) {
-  var r = google.script.run.withSuccessHandler(ok).withFailureHandler(mal || function (e) { estadoConexion(false, e); });
-  r[fn].apply(r, args || []);
+/* Dos modos: dentro de Google (cuenta @avicolasb.com) usa google.script.run; en www.avicolasb.com/sabapp
+   se entra con correo + RUT y se habla con el script por su API, con la sesión de este PC (no se guarda el RUT). */
+var API_SABAPP = ''; // la pone herramientas/sabapp/construir.js en la página de avicolasb.com
+var MODO_API = !(window.google && google.script && google.script.run);
+var ACCIONES = { panelDatos: 'datos', panelCambiar: 'cambiar', panelAsignar: 'asignar', panelAvisado: 'avisado' };
+var sesion = ''; try { sesion = localStorage.getItem('sabapp-sesion') || ''; } catch (e) {}
+function api(cuerpo) {
+  return fetch(API_SABAPP, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(Object.assign({ tipo: 'sabapp' }, cuerpo)) })
+    .then(function (r) { return r.json(); });
 }
+function servidor(fn, args, ok, mal) {
+  mal = mal || function (e) { estadoConexion(false, e); };
+  if (!MODO_API) { var r = google.script.run.withSuccessHandler(ok).withFailureHandler(mal); r[fn].apply(r, args || []); return; }
+  if (!sesion) { mostrarIngreso(''); return; }
+  api({ accion: ACCIONES[fn], token: sesion, args: args || [] })
+    .then(function (j) { if (j && j.ok) ok(j.datos); else mal(new Error(j && j.error || 'Sin respuesta')); })
+    .catch(function (e) { mal(e); });
+}
+function mostrarIngreso(msg) {
+  clearTimeout(temporizador);
+  $('ingreso').hidden = false; $('iMsg').textContent = msg || '';
+  try { $('iCorreo').value = $('iCorreo').value || localStorage.getItem('sabapp-correo') || ''; } catch (e) {}
+  ($('iCorreo').value ? $('iRut') : $('iCorreo')).focus();
+}
+$('iVer').addEventListener('change', function () { $('iRut').type = this.checked ? 'text' : 'password'; });
+$('fIngreso').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  var correo = $('iCorreo').value.trim(), rut = $('iRut').value.trim();
+  if (!correo || !rut) { $('iMsg').textContent = 'Escribe tu correo y tu RUT.'; return; }
+  $('iBtn').disabled = true; $('iBtn').textContent = 'Entrando…'; $('iMsg').textContent = '';
+  api({ accion: 'ingresar', correo: correo, rut: rut }).then(function (j) {
+    $('iBtn').disabled = false; $('iBtn').textContent = 'Entrar';
+    if (!j || !j.ok) { $('iMsg').textContent = j && j.error || 'No se pudo entrar.'; $('iRut').select(); return; }
+    sesion = j.token; $('iRut').value = '';
+    try { localStorage.setItem('sabapp-sesion', sesion); localStorage.setItem('sabapp-correo', correo); } catch (e) {}
+    $('ingreso').hidden = true; $('bSalir').hidden = false;
+    cargar(); programar();
+  }).catch(function () { $('iBtn').disabled = false; $('iBtn').textContent = 'Entrar'; $('iMsg').textContent = 'Sin conexión: revisa internet e intenta de nuevo.'; });
+});
+$('bSalir').addEventListener('click', function () {
+  if (sesion) api({ accion: 'salir', token: sesion }).catch(function () {});
+  sesion = ''; datos = null;
+  try { localStorage.removeItem('sabapp-sesion'); } catch (e) {}
+  $('cuerpo').innerHTML = ''; $('usuario').textContent = ''; $('bSalir').hidden = true;
+  mostrarIngreso('Saliste de SabAPP.');
+});
 
 function cargar() {
   servidor('panelDatos', [], function (d) { recibir(d); estadoConexion(true); }, function (e) { estadoConexion(false, e); });
@@ -201,6 +269,7 @@ function estadoConexion(ok, e) {
 }
 
 function sinAcceso(msg) {
+  if (MODO_API) { sesion = ''; datos = null; try { localStorage.removeItem('sabapp-sesion'); } catch (e) {} $('cuerpo').innerHTML = ''; $('usuario').textContent = ''; $('bSalir').hidden = true; mostrarIngreso('Tu sesión terminó: vuelve a ingresar.'); return; }
   clearTimeout(temporizador);
   $('cuerpo').innerHTML = '<div class="sinacceso"><h2>No tiene acceso a los pedidos</h2><p>' + esc(msg) + '</p><p>Pida que le compartan la planilla «EM27-0802 Pedidos y clientes Catálogo Sabroso» y vuelva a abrir el panel.</p></div>';
   $('vivoTxt').textContent = 'Sin acceso';
@@ -476,6 +545,7 @@ function iniciales(n) { return n.split(/\s+/).map(function (w) { return w.charAt
 function elegirQuienPrepara(cod, modo) {
   var p = pedido(cod); if (!p) return;
   var ultimo = ''; try { ultimo = localStorage.getItem('panel-ultimo-prepara') || ''; } catch (e) {}
+  if (!ultimo && datos.vendedores.indexOf(datos.usuario) >= 0) ultimo = datos.usuario;
   modalDe = { cod: cod, modo: modo, volver: document.activeElement };
   var por = avisoAtiendePor(p);
   $('mSub').textContent = p.codigo + ' · ' + (p.cliente || '(sin nombre)') + ' · ' + (enLocal(p) ? 'está en el local' : 'retira ' + diaLargo(p.dia))
@@ -601,13 +671,15 @@ document.addEventListener('click', function (e) {
 
 /* Inicio */
 pintarSonido();
-cargar(); programar();
+if (MODO_API && !sesion) mostrarIngreso('');
+else { if (MODO_API) $('bSalir').hidden = false; cargar(); programar(); }
 setInterval(function () {
+  if (MODO_API && !sesion) return;
   if (ultimaOk && Date.now() - ultimaOk > CADA * 3) estadoConexion(false);
   else if (datos) { $('vivoTxt').textContent = 'En vivo · actualizado ' + horaCorta(new Date(ultimaOk)); pintarRelativos(); }
 }, 30000);
 function pintarRelativos() { if (datos && !document.querySelector('.b:focus') && !$('q').matches(':focus')) pintar(); }
-document.addEventListener('visibilitychange', function () { if (!document.hidden) { cargar(); programar(); } });
+document.addEventListener('visibilitychange', function () { if (!document.hidden && (!MODO_API || sesion)) { cargar(); programar(); } });
 </script>
 </body>
 </html>

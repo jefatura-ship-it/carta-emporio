@@ -69,6 +69,13 @@ const LOCALES_VALIDOS = ['emporio', 'distribuidora'];
 const COL = {}; COLUMNAS_CLIENTES.forEach(function (nombre, i) { COL[nombre] = i + 1; });
 
 function doPost(e) {
+  // SabAPP con correo + RUT (www.avicolasb.com/sabapp): su propia puerta, siempre con sesión
+  const cuerpoSab = (e && e.postData && e.postData.contents) || '';
+  if (cuerpoSab.length < 20000 && /"tipo"\s*:\s*"sabapp"/.test(cuerpoSab)) {
+    let r;
+    try { r = sabappApi_(JSON.parse(cuerpoSab)); } catch (err) { r = { ok: false, error: String(err && err.message || err) }; }
+    return ContentService.createTextOutput(JSON.stringify(r)).setMimeType(ContentService.MimeType.JSON);
+  }
   let respuesta = { ok: false };
   const candado = LockService.getScriptLock();
   try {
@@ -467,6 +474,9 @@ function onOpen() {
     .addSeparator()
     .addItem('Ordenar pedidos', 'ordenarPedidos')
     .addToUi();
+  SpreadsheetApp.getUi().createMenu('SabAPP')
+    .addItem('Trabajadores (correo y RUT)', 'abrirTrabajadores')
+    .addToUi();
   try { vencerPendientes(hojaPedidos()); } catch (err) { /* sin permiso de edición: solo se ve */ }
 }
 
@@ -600,9 +610,176 @@ function exigirVendedor() {
   return u;
 }
 
+/* ---------- SabAPP con correo + RUT (www.avicolasb.com/sabapp) ----------
+   Cada trabajador entra con su correo y su RUT. Los registra jefatura@ desde la planilla (menú «SabAPP» › «Trabajadores»).
+   Se guardan en las propiedades del script (no en la planilla ni en el código): del RUT queda solo una huella (SHA-256 con sal).
+   El PC guarda una sesión de 30 días, no el RUT. 5 intentos fallidos bloquean esa cuenta 15 minutos.
+   La página habla con el script solo por sabappApi_ (doPost), que exige la sesión en cada acción. */
+const ADMINS_SABAPP = ['jefatura@avicolasb.com'];
+const SESION_DIAS = 30, FALLOS_MAX = 5, BLOQUEO_MIN = 15, SESIONES_MAX = 80;
+
+function propsJson_(clave) {
+  try { return JSON.parse(PropertiesService.getScriptProperties().getProperty(clave) || '{}') || {}; } catch (err) { return {}; }
+}
+function guardarJson_(clave, v) { PropertiesService.getScriptProperties().setProperty(clave, JSON.stringify(v)); }
+function normCorreo_(c) { return String(c || '').trim().toLowerCase().slice(0, 80); }
+function normRut_(r) { return String(r || '').toUpperCase().replace(/[^0-9K]/g, ''); }
+function rutValido_(r) {
+  const s = normRut_(r);
+  if (!/^\d{7,8}[0-9K]$/.test(s)) return false;
+  let suma = 0, m = 2;
+  for (let i = s.length - 2; i >= 0; i--) { suma += Number(s[i]) * m; m = m === 7 ? 2 : m + 1; }
+  const dv = 11 - (suma % 11);
+  return s.slice(-1) === (dv === 11 ? '0' : dv === 10 ? 'K' : String(dv));
+}
+function salSabapp_() {
+  const p = PropertiesService.getScriptProperties();
+  let sal = p.getProperty('SABAPP_SAL');
+  if (!sal) { sal = Utilities.getUuid() + Utilities.getUuid(); p.setProperty('SABAPP_SAL', sal); }
+  return sal;
+}
+function huellaRut_(correo, rut) {
+  return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
+    salSabapp_() + ':' + normCorreo_(correo) + ':' + normRut_(rut), Utilities.Charset.UTF_8));
+}
+
+// Ingreso: correo + RUT → sesión para este PC
+function sabappIngresar_(correo, rut) {
+  const c = normCorreo_(correo);
+  if (!c || !normRut_(rut)) throw new Error('Escriba su correo y su RUT.');
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  try {
+    const fallos = propsJson_('SABAPP_FALLOS'), f = fallos[c] || { n: 0, hasta: 0 };
+    if (f.hasta > Date.now()) throw new Error('Cuenta bloqueada por intentos fallidos: espere ' + Math.ceil((f.hasta - Date.now()) / 60000) + ' min.');
+    const u = propsJson_('SABAPP_USUARIOS')[c];
+    if (!u || u.hash !== huellaRut_(c, rut)) {
+      f.n = (f.n || 0) + 1;
+      if (f.n >= FALLOS_MAX) { f.hasta = Date.now() + BLOQUEO_MIN * 60000; f.n = 0; }
+      fallos[c] = f;
+      guardarJson_('SABAPP_FALLOS', fallos);
+      Utilities.sleep(1200);
+      throw new Error(f.hasta > Date.now() ? 'Demasiados intentos: la cuenta quedó bloqueada ' + BLOQUEO_MIN + ' minutos.' : 'Correo o RUT incorrectos.');
+    }
+    if (fallos[c]) { delete fallos[c]; guardarJson_('SABAPP_FALLOS', fallos); }
+    const ahora = Date.now(), ses = propsJson_('SABAPP_SESIONES');
+    Object.keys(ses).forEach(function (t) { if (!(ses[t].vence > ahora)) delete ses[t]; });
+    const token = (Utilities.getUuid() + Utilities.getUuid()).replace(/-/g, '').toLowerCase();
+    ses[token] = { correo: c, vence: ahora + SESION_DIAS * 864e5 };
+    const orden = Object.keys(ses).sort(function (a, b) { return ses[b].vence - ses[a].vence; });
+    orden.slice(SESIONES_MAX).forEach(function (t) { delete ses[t]; });
+    guardarJson_('SABAPP_SESIONES', ses);
+    return { token: token, nombre: u.nombre };
+  } finally { candado.releaseLock(); }
+}
+function sabappSalir_(token) {
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  try { const ses = propsJson_('SABAPP_SESIONES'); if (ses[token]) { delete ses[token]; guardarJson_('SABAPP_SESIONES', ses); } }
+  finally { candado.releaseLock(); }
+}
+// Nombre del trabajador de una sesión vigente ('' si no hay)
+function usuarioSesion_(token) {
+  if (!/^[0-9a-f]{64}$/.test(String(token || ''))) return '';
+  const s = propsJson_('SABAPP_SESIONES')[token];
+  if (!s || !(s.vence > Date.now())) return '';
+  const u = propsJson_('SABAPP_USUARIOS')[s.correo];
+  return u ? u.nombre : '';
+}
+// Todo lo que pide la página de SabAPP pasa por aquí
+function sabappApi_(d) {
+  if (d.accion === 'ingresar') { const r = sabappIngresar_(d.correo, d.rut); return { ok: true, token: r.token, nombre: r.nombre }; }
+  if (d.accion === 'salir') { sabappSalir_(d.token); return { ok: true }; }
+  const usuario = usuarioSesion_(d.token);
+  if (!usuario) return { ok: false, error: 'Sin acceso: su sesión terminó. Ingrese con su correo y RUT.' };
+  const a = Array.isArray(d.args) ? d.args : [];
+  if (d.accion === 'datos') return { ok: true, datos: panelDatos_(usuario) };
+  if (d.accion === 'cambiar') return { ok: true, datos: panelCambiar_(usuario, a[0], a[1], a[2], a[3], a[4]) };
+  if (d.accion === 'asignar') return { ok: true, datos: panelAsignar_(usuario, a[0], a[1], a[2]) };
+  if (d.accion === 'avisado') return { ok: true, datos: panelAvisado_(usuario, a[0], a[1]) };
+  return { ok: false, error: 'Acción no válida.' };
+}
+
+// Administración de trabajadores (solo jefatura@, desde la planilla)
+function exigirAdmin_() {
+  const e = normCorreo_(Session.getActiveUser().getEmail());
+  if (ADMINS_SABAPP.indexOf(e) < 0) throw new Error('Solo ' + ADMINS_SABAPP.join(', ') + ' puede administrar los trabajadores de SabAPP.');
+  return e;
+}
+function abrirTrabajadores() {
+  try { exigirAdmin_(); } catch (err) { SpreadsheetApp.getUi().alert(err.message); return; }
+  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(htmlTrabajadores_()).setWidth(560).setHeight(600), 'SabAPP · Trabajadores');
+}
+function trabajadoresLista() {
+  exigirAdmin_();
+  const u = propsJson_('SABAPP_USUARIOS'), ses = propsJson_('SABAPP_SESIONES'), ahora = Date.now();
+  return Object.keys(u).map(function (c) {
+    const abiertas = Object.keys(ses).filter(function (t) { return ses[t].correo === c && ses[t].vence > ahora; }).length;
+    return { correo: c, nombre: u[c].nombre, sesiones: abiertas };
+  }).sort(function (a, b) { return a.nombre.localeCompare(b.nombre); });
+}
+function trabajadorGuardar(nombre, correo, rut) {
+  exigirAdmin_();
+  const n = String(nombre || '').replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ .'-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
+  const c = correoValido(correo);
+  if (n.length < 2) throw new Error('Escriba el nombre del trabajador.');
+  if (!c) throw new Error('El correo no es válido.');
+  if (!rutValido_(rut)) throw new Error('El RUT no es válido: revise los números y el dígito verificador.');
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  try {
+    const u = propsJson_('SABAPP_USUARIOS');
+    u[c] = { nombre: n, hash: huellaRut_(c, rut), alta: Date.now() };
+    guardarJson_('SABAPP_USUARIOS', u);
+    const fallos = propsJson_('SABAPP_FALLOS');
+    if (fallos[c]) { delete fallos[c]; guardarJson_('SABAPP_FALLOS', fallos); }
+  } finally { candado.releaseLock(); }
+  return trabajadoresLista();
+}
+function trabajadorQuitar(correo) {
+  exigirAdmin_();
+  const c = normCorreo_(correo);
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  try {
+    const u = propsJson_('SABAPP_USUARIOS'); delete u[c]; guardarJson_('SABAPP_USUARIOS', u);
+    const ses = propsJson_('SABAPP_SESIONES');
+    Object.keys(ses).forEach(function (t) { if (ses[t].correo === c) delete ses[t]; });
+    guardarJson_('SABAPP_SESIONES', ses);
+  } finally { candado.releaseLock(); }
+  return trabajadoresLista();
+}
+function htmlTrabajadores_() {
+  return '<!DOCTYPE html><html><head><base target="_top"><meta charset="utf-8"><style>'
+    + 'body{margin:0;padding:4px 2px;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#1c1c1a}'
+    + 'p.nota{margin:0 0 12px;color:#66645c}form{display:grid;gap:8px;padding:12px;border:1px solid #e2dccd;border-radius:12px;background:#f6f2e9}'
+    + 'label{display:grid;gap:3px;font-weight:700;font-size:13px;color:#4a483f}input{min-height:38px;padding:6px 10px;border:1.5px solid #d9d2c1;border-radius:8px;font:inherit;font-size:15px;background:#fff}'
+    + 'button{min-height:40px;padding:6px 14px;border:0;border-radius:8px;background:#1f5f3a;color:#fff;font:inherit;font-weight:800;cursor:pointer}button.q{min-height:32px;padding:4px 10px;background:#fff;color:#b3261e;border:1.5px solid #e9c6c2}button.q.s{background:#b3261e;color:#fff}'
+    + '#msg{min-height:1.4em;margin:8px 0;font-weight:700}#msg.mal{color:#b3261e}#msg.bien{color:#1f5f3a}'
+    + 'ul{margin:6px 0 0;padding:0;list-style:none}li{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee}li div{flex:1;min-width:0}li small{display:block;color:#66645c}'
+    + '</style></head><body>'
+    + '<p class="nota">Cada trabajador entra a <b>www.avicolasb.com/sabapp</b> con su correo y su RUT. El RUT no queda escrito: se guarda cifrado. Para cambiar el RUT o el nombre de alguien, vuelva a guardarlo con el mismo correo.</p>'
+    + '<form id="f" autocomplete="off"><label>Nombre<input id="nom" maxlength="40" placeholder="Ej.: Sofía"></label>'
+    + '<label>Correo (su usuario)<input id="cor" type="email" maxlength="80" placeholder="nombre@correo.cl"></label>'
+    + '<label>RUT (su clave)<input id="rut" maxlength="12" placeholder="12.345.678-9" autocomplete="off"></label>'
+    + '<button id="g">Guardar trabajador</button></form><p id="msg" role="status"></p><b>Trabajadores con acceso</b><ul id="l"><li><div><small>Cargando…</small></div></li></ul>'
+    + '<script>'
+    + 'var $=function(i){return document.getElementById(i)};'
+    + 'var esc=function(t){return String(t).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]})};'
+    + 'function msg(t,mal){$("msg").textContent=t;$("msg").className=mal?"mal":"bien"}'
+    + 'function pintar(l){$("l").innerHTML=l.length?l.map(function(x){return "<li><div><b>"+esc(x.nombre)+"</b><small>"+esc(x.correo)+(x.sesiones?" · "+x.sesiones+" PC con sesión abierta":"")+"</small></div><button class=\"q\" data-q=\""+esc(x.correo)+"\">Quitar</button></li>"}).join(""):"<li><div><small>Aún no hay trabajadores.</small></div></li>"}'
+    + 'function fallo(e){msg(String(e&&e.message||e),true);$("g").disabled=false}'
+    + 'google.script.run.withSuccessHandler(pintar).withFailureHandler(fallo).trabajadoresLista();'
+    + '$("f").addEventListener("submit",function(ev){ev.preventDefault();var n=$("nom").value,c=$("cor").value,r=$("rut").value;$("g").disabled=true;msg("Guardando…");'
+    + 'google.script.run.withSuccessHandler(function(l){pintar(l);$("g").disabled=false;$("rut").value="";$("nom").value="";$("cor").value="";msg("Guardado: "+n.trim()+" ya puede entrar con su correo y su RUT.")}).withFailureHandler(fallo).trabajadorGuardar(n,c,r)});'
+    + '$("l").addEventListener("click",function(ev){var b=ev.target.closest("[data-q]");if(!b)return;if(!b.classList.contains("s")){b.classList.add("s");b.textContent="¿Quitar? Toca otra vez";setTimeout(function(){b.classList.remove("s");b.textContent="Quitar"},4000);return}'
+    + 'b.disabled=true;google.script.run.withSuccessHandler(function(l){pintar(l);msg("Listo: ya no puede entrar a SabAPP.")}).withFailureHandler(fallo).trabajadorQuitar(b.dataset.q)});'
+    + '<\/script></body></html>';
+}
+
 // Pedidos para el panel: los activos y los próximos, más los cerrados de las últimas dos semanas.
-function panelDatos() {
-  const usuario = exigirVendedor();
+function panelDatos() { return panelDatos_(exigirVendedor()); }
+function panelDatos_(usuario) {
   const libro = SpreadsheetApp.getActiveSpreadsheet();
   const hoja = hojaPedidos();
   try { vencerPendientes(hoja); } catch (err) { /* cuenta solo de lectura */ }
@@ -659,9 +836,9 @@ function panelDatos() {
 // avisado: el vendedor abrió WhatsApp ('wsp') o el correo ('correo') con el aviso de «listo» en el mismo toque.
 // prepara: quién prepara el pedido (se elige al confirmarlo).
 // avisoWsp: SabAPP abrió WhatsApp con «X atenderá tu pedido» (cliente en el local sin correo).
-function panelCambiar(codigo, estado, avisado, prepara, avisoWsp) {
+function panelCambiar(codigo, estado, avisado, prepara, avisoWsp) { return panelCambiar_(exigirVendedor(), codigo, estado, avisado, prepara, avisoWsp); }
+function panelCambiar_(usuario, codigo, estado, avisado, prepara, avisoWsp) {
   let avisoAtiende = null;
-  const usuario = exigirVendedor();
   if (ESTADOS.indexOf(estado) < 0) throw new Error('Estado no válido.');
   const candado = LockService.getScriptLock();
   candado.waitLock(15000);
@@ -674,26 +851,26 @@ function panelCambiar(codigo, estado, avisado, prepara, avisoWsp) {
     if (prepara) avisoAtiende = asignarPreparacion(hoja, fila, prepara, usuario, avisoWsp);
     hoja.getRange(fila, CP['Confirmado']).setValue(CONFIRMADOS.indexOf(estado) >= 0);
   } finally { candado.releaseLock(); }
-  const d = panelDatos();
+  const d = panelDatos_(usuario);
   if (avisoAtiende) d.avisoAtiende = avisoAtiende;
   return d;
 }
 
 // El vendedor abrió WhatsApp o el correo para avisar al cliente que su pedido está listo: queda anotado (lo ven todos los PC).
-function panelAvisado(codigo, medio) {
-  const usuario = exigirVendedor();
+function panelAvisado(codigo, medio) { return panelAvisado_(exigirVendedor(), codigo, medio); }
+function panelAvisado_(usuario, codigo, medio) {
   const candado = LockService.getScriptLock();
   candado.waitLock(15000);
   try {
     const hoja = hojaPedidos();
     anotarEnEstado(hoja, filaDelPedido(hoja, codigo), (medio === 'correo' ? 'Avisado por correo por ' : 'Avisado por WhatsApp por ') + usuario);
   } finally { candado.releaseLock(); }
-  return panelDatos();
+  return panelDatos_(usuario);
 }
 
 // Cambia quién prepara un pedido ya confirmado.
-function panelAsignar(codigo, prepara, avisoWsp) {
-  const usuario = exigirVendedor();
+function panelAsignar(codigo, prepara, avisoWsp) { return panelAsignar_(exigirVendedor(), codigo, prepara, avisoWsp); }
+function panelAsignar_(usuario, codigo, prepara, avisoWsp) {
   const candado = LockService.getScriptLock();
   let avisoAtiende = null;
   candado.waitLock(15000);
@@ -701,7 +878,7 @@ function panelAsignar(codigo, prepara, avisoWsp) {
     const hoja = hojaPedidos();
     avisoAtiende = asignarPreparacion(hoja, filaDelPedido(hoja, codigo), prepara, usuario, avisoWsp);
   } finally { candado.releaseLock(); }
-  const d = panelDatos();
+  const d = panelDatos_(usuario);
   if (avisoAtiende) d.avisoAtiende = avisoAtiende;
   return d;
 }
@@ -719,7 +896,7 @@ function asignarPreparacion(hoja, fila, prepara, usuario, avisoWsp) {
   const correo = correoValido(v('Correo'));
   if (correo) {
     try {
-      enviarCorreoAtiende(correo, String(v('Cliente') || ''), String(v('Código del pedido') || ''), prepara);
+      enviarCorreoAtiende_(correo, String(v('Cliente') || ''), String(v('Código del pedido') || ''), prepara);
       anotarEnEstado(hoja, fila, 'Aviso al cliente por correo: ' + prepara + ' atiende su pedido');
       return { medio: 'correo', ok: true, prepara: prepara };
     } catch (err) {
@@ -736,7 +913,7 @@ function asignarPreparacion(hoja, fila, prepara, usuario, avisoWsp) {
 }
 
 // Correo «Sofía atenderá tu pedido…» (sale de la cuenta dueña del script, con el nombre Emporio Sabroso).
-function enviarCorreoAtiende(correo, cliente, codigo, prepara) {
+function enviarCorreoAtiende_(correo, cliente, codigo, prepara) {
   const html = function (t) { return String(t).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); };
   const nombre = /^\(/.test(cliente) ? '' : String(cliente).trim().split(/\s+/)[0] || '';
   const saludo = nombre ? '¡Hola ' + nombre.charAt(0).toUpperCase() + nombre.slice(1) + '!' : '¡Hola!';

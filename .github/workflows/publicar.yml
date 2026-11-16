@@ -29,7 +29,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html legal.html sitemap.xml CNAME _site/
-          cp -r carta web img js modelos video fonts _site/
+          cp -r carta web img js modelos video fonts sabapp _site/
           rm -f _site/js/*.map
           echo "Archivos publicados:"; find _site -maxdepth 2 -type d
       - uses: actions/upload-pages-artifact@v3
