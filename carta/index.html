@@ -1805,6 +1805,8 @@ const FAV="Ofertas y promos";
 L.productos.push({cod:"PROMO-GYMBRO",cat:"Promos",nombre:"Promo Gym Bro: bandeja de 30 huevos tercera + Monster Ultra",detalle:"Monster Ultra blanca, sin azúcar · bebida no recomendada para menores de 18 años, embarazadas ni personas sensibles a la cafeína",precio:3800,fav:true,promo:true,foto:"../img/productos/monster.webp"});
 L.productos.push({cod:"PROMO-EXTRA-RC",cat:"Promos",nombre:"Promo huevo extra + queso chanco Río Cruces ¼ kg",detalle:"Bandeja de 30 huevos extra (blanco o café) y ¼ kg de queso chanco Río Cruces · 5 % menos que por separado",precio:7450,fav:true,promo:true,foto:"../img/huevos-blancos-bandeja.jpg"});
 L.productos.push({cod:"PROMO-EXTRA-DI",cat:"Promos",nombre:"Promo huevo extra + queso chanco Don Isidro ¼ kg",detalle:"Bandeja de 30 huevos extra (blanco o café) y ¼ kg de queso chanco Don Isidro · 5 % menos que por separado",precio:7400,fav:true,promo:true,foto:"../img/huevos-blancos-bandeja.jpg"});
+/* Huevos: la misma foto para todos los calibres (bandeja de huevos blancos o café, según el color) */
+L.productos.forEach(p=>{if(p.foto||p.cat!=="Huevos")return;p.foto=/caf[eé]|color|rojo|marr[oó]n|novogen/i.test(p.nombre)?"../img/huevos-cafe-bandeja.jpg":"../img/huevos-blancos-bandeja.jpg"});
 const PROD=Object.fromEntries(L.productos.map(p=>[p.cod,p]));
 const esPieza=p=>p.cat==="Tapas"||p.cat==="Blondas"; // piezas que van incluidas en otro producto, no se venden solas
 const pieza=t=>t&&t.cat==="Blondas"?"blonda":"tapa", porQue=t=>t&&t.cat==="Blondas"?"bandeja":"envase";
