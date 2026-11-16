@@ -7,6 +7,13 @@
 <meta name="robots" content="noindex, nofollow">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https://www.avicolasb.com data:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'self'; form-action 'none'">
 <link rel="icon" href="../img/huevo-sabroso-isotipo.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icono-apple-180.png">
+<meta name="theme-color" content="#1f5f3a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="SabAPP">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>SabAPP</title>
 <style>
 :root{--campo:#1f5f3a;--campo-2:#2d7a4d;--sol:#e8761a;--sol-2:#fde3cf;--papel:#f6f2e9;--tarjeta:#fff;--tinta:#1c1c1a;--suave:#66645c;--linea:#e2dccd;--rojo:#b3261e;--azul:#2357a8}
@@ -840,6 +847,23 @@ setInterval(function () {
 }, 30000);
 function pintarRelativos() { if (datos && !document.querySelector('.b:focus') && !$('q').matches(':focus')) pintar(); }
 document.addEventListener('visibilitychange', function () { if (!document.hidden && (!MODO_API || sesion)) { cargar(); programar(); } });
+</script>
+<script>
+(function () {
+  if (!('wakeLock' in navigator) || !window.matchMedia || !matchMedia('(pointer: coarse)').matches) return;
+  var candado = null, pidiendo = false;
+  function pedir() {
+    if (candado || pidiendo || document.visibilityState !== 'visible') return;
+    pidiendo = true;
+    navigator.wakeLock.request('screen').then(function (c) {
+      candado = c; pidiendo = false;
+      c.addEventListener('release', function () { candado = null; });
+    }).catch(function () { pidiendo = false; });
+  }
+  pedir();
+  document.addEventListener('visibilitychange', pedir);
+  document.addEventListener('pointerdown', pedir, { passive: true });
+})();
 </script>
 </body>
 </html>
