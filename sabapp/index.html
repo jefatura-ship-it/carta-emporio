@@ -142,6 +142,7 @@ button{font:inherit;cursor:pointer}
 .ing-caja .ver{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--suave)}
 .ing-msg{min-height:1.3em;margin:0;color:var(--rojo)!important;font-weight:700}
 .ing-caja .b{min-height:48px;font-size:16px}
+.ing-caja label[hidden],.ing-caja .b[hidden]{display:none}
 .admin{position:fixed;inset:0;z-index:25;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow:auto;background:rgba(28,28,26,.5)}
 .admin[hidden]{display:none}
 .adm-caja{width:100%;max-width:680px;padding:20px 22px 22px;border-radius:18px;background:#fff;box-shadow:0 20px 50px rgba(0,0,0,.3)}
@@ -176,6 +177,7 @@ button{font:inherit;cursor:pointer}
   <button type="button" class="sonido" id="bSonido" aria-pressed="false">🔔 Activar sonido</button>
   <span class="usuario" id="usuario"></span>
   <button type="button" class="salir" id="bAdmin" hidden>⚙ Administrar</button>
+  <button type="button" class="salir" id="bClave" hidden>🔑 Mi clave</button>
   <button type="button" class="salir" id="bSalir" hidden>Salir</button>
 </header>
 <div class="herr" role="toolbar" aria-label="Filtros">
@@ -194,7 +196,8 @@ button{font:inherit;cursor:pointer}
     <form class="adm-form" id="admForm" autocomplete="off" novalidate>
       <label>Nombre<input id="aNom" maxlength="40" placeholder="Ej.: Sofía"></label>
       <label>Correo (su usuario)<input id="aCor" type="email" maxlength="80" placeholder="nombre@correo.cl"></label>
-      <label class="ancho">RUT (su clave), sin puntos ni guion<input id="aRut" maxlength="12" placeholder="Ej.: 12345678 · al editar, en blanco se mantiene el que tenía"></label>
+      <label class="ancho">Clave temporal (letras) o RUT<span style="display:flex;gap:8px"><input id="aRut" maxlength="40" placeholder="Al editar, en blanco se mantiene la que tenía" style="flex:1"><button type="button" class="b" id="aGen">Generar</button></span></label>
+      <label class="ver ancho"><input type="checkbox" id="aCam" checked> Pedir que cree su propia clave al entrar</label>
       <label class="ver ancho"><input type="checkbox" id="aAdm"> Administrador (ve este panel)</label>
       <div class="adm-bts"><button type="submit" class="b prim" id="aGuardar">Guardar trabajador</button><button type="button" class="b" id="aNuevo">Nuevo</button></div>
     </form>
@@ -205,14 +208,28 @@ button{font:inherit;cursor:pointer}
     <p><button type="button" class="b" id="admRecargar">Recargar SabAPP</button></p>
   </section>
 </div>
+<div class="ingreso" id="cambio" hidden>
+  <form class="ing-caja" id="fCambio" novalidate>
+    <img src="https://www.avicolasb.com/img/huevo-sabroso-isotipo.png" alt="" width="64" height="59">
+    <h1 id="cTit">Crea tu clave</h1>
+    <p id="cTxt"></p>
+    <label id="cActualL">Clave actual<input id="cActual" type="password" autocomplete="current-password" maxlength="40"></label>
+    <label>Clave nueva (mínimo 6 caracteres)<input id="cNueva" type="password" autocomplete="new-password" maxlength="40"></label>
+    <label>Repite la clave nueva<input id="cRepite" type="password" autocomplete="new-password" maxlength="40"></label>
+    <label class="ver"><input type="checkbox" id="cVer"> Mostrar claves</label>
+    <p class="ing-msg" id="cMsg" role="alert"></p>
+    <button type="submit" class="b prim" id="cBtn">Guardar mi clave</button>
+    <button type="button" class="b" id="cCancelar">Cancelar</button>
+  </form>
+</div>
 <div class="ingreso" id="ingreso" hidden>
   <form class="ing-caja" id="fIngreso" novalidate>
     <img src="https://www.avicolasb.com/img/huevo-sabroso-isotipo.png" alt="" width="64" height="59">
     <h1>SabAPP</h1>
-    <p>Pedidos del Catálogo Sabroso. Ingresa con tu correo y tu RUT.</p>
+    <p>Pedidos del Catálogo Sabroso. Ingresa con tu correo y tu clave.</p>
     <label>Correo<input id="iCorreo" type="email" autocomplete="username" inputmode="email" maxlength="80"></label>
-    <label>RUT<input id="iRut" type="password" autocomplete="current-password" placeholder="12.345.678-9" maxlength="12"></label>
-    <label class="ver"><input type="checkbox" id="iVer"> Mostrar RUT</label>
+    <label>Clave<input id="iRut" type="password" autocomplete="current-password" placeholder="Tu clave" maxlength="40"></label>
+    <label class="ver"><input type="checkbox" id="iVer"> Mostrar clave</label>
     <p class="ing-msg" id="iMsg" role="alert"></p>
     <button type="submit" class="b prim" id="iBtn">Entrar</button>
   </form>
@@ -254,12 +271,12 @@ function servidor(fn, args, ok, mal) {
   if (!MODO_API) { var r = google.script.run.withSuccessHandler(ok).withFailureHandler(mal); r[fn].apply(r, args || []); return; }
   if (!sesion) { mostrarIngreso(''); return; }
   api({ accion: ACCIONES[fn], token: sesion, args: args || [] })
-    .then(function (j) { if (j && j.ok) ok(j.datos); else mal(new Error(j && j.error || 'Sin respuesta')); })
+    .then(function (j) { if (j && j.ok) ok(j.datos); else if (j && j.cambiar) mostrarCambio(true); else mal(new Error(j && j.error || 'Sin respuesta')); })
     .catch(function (e) { mal(e); });
 }
 function mostrarIngreso(msg) {
   clearTimeout(temporizador);
-  $('admin').hidden = true; $('bAdmin').hidden = true;
+  $('admin').hidden = true; $('bAdmin').hidden = true; $('bClave').hidden = true; $('cambio').hidden = true;
   $('ingreso').hidden = false; $('iMsg').textContent = msg || '';
   try { $('iCorreo').value = $('iCorreo').value || localStorage.getItem('sabapp-correo') || ''; } catch (e) {}
   ($('iCorreo').value ? $('iRut') : $('iCorreo')).focus();
@@ -268,19 +285,20 @@ $('iVer').addEventListener('change', function () { $('iRut').type = this.checked
 $('fIngreso').addEventListener('submit', function (ev) {
   ev.preventDefault();
   var correo = $('iCorreo').value.trim(), rut = $('iRut').value.trim();
-  if (!correo || !rut) { $('iMsg').textContent = 'Escribe tu correo y tu RUT.'; return; }
+  if (!correo || !rut) { $('iMsg').textContent = 'Escribe tu correo y tu clave.'; return; }
   $('iBtn').disabled = true; $('iBtn').textContent = 'Entrando…'; $('iMsg').textContent = '';
-  api({ accion: 'ingresar', correo: correo, rut: rut }).then(function (j) {
+  api({ accion: 'ingresar', correo: correo, clave: rut }).then(function (j) {
     $('iBtn').disabled = false; $('iBtn').textContent = 'Entrar';
     if (!j || !j.ok) { $('iMsg').textContent = j && j.error || 'No se pudo entrar.'; $('iRut').select(); return; }
     sesion = j.token; $('iRut').value = '';
     try { localStorage.setItem('sabapp-sesion', sesion); localStorage.setItem('sabapp-correo', correo); } catch (e) {}
     $('ingreso').hidden = true; $('bSalir').hidden = false;
+    if (j.cambiar) { claveTemp = rut; mostrarCambio(true); return; }
     cargar(); programar();
   }).catch(function () { $('iBtn').disabled = false; $('iBtn').textContent = 'Entrar'; $('iMsg').textContent = 'Sin conexión: revisa internet e intenta de nuevo.'; });
 });
 /* ---------- Panel de administrador: trabajadores (correo + RUT + rol), sesiones abiertas y estado del sistema ---------- */
-var VERSION_SABAPP = '16/11/2026 · correo + RUT · administradores';
+var VERSION_SABAPP = '16/11/2026 · correo + clave · administradores';
 var admLista = [], admYo = '', admSeguro = {};
 function admMsg(t, mal) { $('admMsg').textContent = t || ''; $('admMsg').className = 'adm-msg' + (mal ? ' mal' : ''); }
 function admPintar(l, yo) {
@@ -288,8 +306,9 @@ function admPintar(l, yo) {
   $('admLista').innerHTML = admLista.length ? admLista.map(function (x) {
     var soy = x.correo === admYo;
     return '<li><div><b>' + esc(x.nombre) + (x.admin ? '<span class="adm-et">Administrador</span>' : '') + (soy ? '<span class="adm-et">Tú</span>' : '') + '</b><small>' + esc(x.correo)
-      + (x.sesiones ? ' · ' + x.sesiones + ' PC con sesión abierta' : ' · sin sesiones abiertas') + '</small></div>'
+      + (x.sesiones ? ' · ' + x.sesiones + ' PC con sesión abierta' : ' · sin sesiones abiertas') + (x.cambiar ? ' · aún no crea su clave' : '') + '</small></div>'
       + '<button type="button" class="b peq" data-aeditar="' + esc(x.correo) + '">Editar</button>'
+      + (soy ? '' : '<button type="button" class="b peq' + (admSeguro['r:' + x.correo] ? ' seguro' : '') + '" data-areiniciar="' + esc(x.correo) + '">' + (admSeguro['r:' + x.correo] ? '¿Reiniciar? Toca otra vez' : 'Reiniciar clave') + '</button>')
       + (x.sesiones ? '<button type="button" class="b peq" data-acerrar="' + esc(x.correo) + '">Cerrar sesiones</button>' : '')
       + (soy ? '' : '<button type="button" class="b peq peligro' + (admSeguro[x.correo] ? ' seguro' : '') + '" data-aquitar="' + esc(x.correo) + '">' + (admSeguro[x.correo] ? '¿Quitar? Toca otra vez' : 'Quitar') + '</button>') + '</li>';
   }).join('') : '<li><small>Aún no hay trabajadores.</small></li>';
@@ -308,7 +327,10 @@ function admApi(accion, args, listo) {
     admMsg(e, true);
   }).catch(function () { admMsg('Sin conexión: revisa internet e intenta de nuevo.', true); });
 }
-function admNuevo() { $('aNom').value = ''; $('aCor').value = ''; $('aRut').value = ''; $('aAdm').checked = false; $('aCor').readOnly = false; $('aGuardar').textContent = 'Guardar trabajador'; }
+function admNuevo() { $('aNom').value = ''; $('aCor').value = ''; $('aRut').value = claveTemporal(); $('aCam').checked = true; $('aAdm').checked = false; $('aCor').readOnly = false; $('aGuardar').textContent = 'Guardar trabajador'; }
+// Clave temporal fácil de dictar: 10 letras (consonante + vocal)
+function claveTemporal() { var co = 'bcdfghjklmnprstv', vo = 'aeiou', a = new Uint32Array(10), r = ''; crypto.getRandomValues(a); for (var i = 0; i < 5; i++) r += co[a[2 * i] % co.length] + vo[a[2 * i + 1] % vo.length]; return r; }
+$('aGen').addEventListener('click', function () { $('aRut').value = claveTemporal(); $('aCam').checked = true; });
 $('bAdmin').addEventListener('click', function () { $('admin').hidden = false; admNuevo(); admPintar(); admApi('trabajadores'); $('aNom').focus(); });
 $('admCerrar').addEventListener('click', function () { $('admin').hidden = true; $('bAdmin').focus(); });
 $('admin').addEventListener('click', function (e) { if (e.target === $('admin')) { $('admin').hidden = true; $('bAdmin').focus(); } });
@@ -317,19 +339,56 @@ $('aNuevo').addEventListener('click', function () { admNuevo(); admMsg(''); $('a
 $('admRecargar').addEventListener('click', function () { location.reload(); });
 $('admForm').addEventListener('submit', function (ev) {
   ev.preventDefault();
-  var n = $('aNom').value.trim(), c = $('aCor').value.trim(), r = $('aRut').value.trim(), ad = $('aAdm').checked;
+  var n = $('aNom').value.trim(), c = $('aCor').value.trim(), r = $('aRut').value.trim(), ad = $('aAdm').checked, ca = $('aCam').checked;
   if (!n || !c) { admMsg('Escribe el nombre y el correo.', true); return; }
-  admApi('guardarTrabajador', [n, c, r, ad], function () { admNuevo(); admMsg('Guardado: ' + n + (ad ? ' (administrador)' : '') + '. Ya puede entrar con su correo y su RUT.'); });
+  admApi('guardarTrabajador', [n, c, r, ad, ca], function () { admNuevo(); admMsg('Guardado: ' + n + (ad ? ' (administrador)' : '') + (r ? '. Clave' + (ca ? ' temporal' : '') + ' para entrar: ' + r + (ca ? ' (al entrar creará la suya)' : '') : '') + '.'); });
 });
 $('admLista').addEventListener('click', function (e) {
   var ed = e.target.closest('[data-aeditar]'), ce = e.target.closest('[data-acerrar]'), qu = e.target.closest('[data-aquitar]');
   if (ed) { var x = admLista.filter(function (t) { return t.correo === ed.dataset.aeditar; })[0]; if (!x) return;
     $('aNom').value = x.nombre; $('aCor').value = x.correo; $('aCor').readOnly = true; $('aRut').value = ''; $('aAdm').checked = !!x.admin;
-    $('aGuardar').textContent = 'Guardar cambios'; admMsg('Editando a ' + x.nombre + ': el RUT en blanco se mantiene.'); $('aNom').focus(); return; }
+    $('aGuardar').textContent = 'Guardar cambios'; admMsg('Editando a ' + x.nombre + ': la clave en blanco se mantiene.'); $('aNom').focus(); return; }
+  var re = e.target.closest('[data-areiniciar]');
+  if (re) { var y = admLista.filter(function (t) { return t.correo === re.dataset.areiniciar; })[0]; if (!y) return;
+    if (!admSeguro['r:' + y.correo]) { admSeguro['r:' + y.correo] = true; admPintar(); setTimeout(function () { delete admSeguro['r:' + y.correo]; if (!$('admin').hidden) admPintar(); }, 4000); return; }
+    delete admSeguro['r:' + y.correo];
+    var tmp = claveTemporal();
+    admApi('guardarTrabajador', [y.nombre, y.correo, tmp, !!y.admin, true], function () { admMsg('Nueva clave temporal de ' + y.nombre + ': ' + tmp + ' (al entrar creará la suya; sus sesiones se cerraron).'); }); return; }
   if (ce) { admApi('cerrarSesiones', [ce.dataset.acerrar], function () { admMsg('Listo: se cerraron sus sesiones en los otros PC.'); }); return; }
   if (qu) { var k = qu.dataset.aquitar;
     if (!admSeguro[k]) { admSeguro[k] = true; admPintar(); setTimeout(function () { delete admSeguro[k]; if (!$('admin').hidden) admPintar(); }, 4000); return; }
     delete admSeguro[k]; admApi('quitarTrabajador', [k], function () { admMsg('Listo: ya no puede entrar a SabAPP.'); }); }
+});
+
+/* ---------- «Crea tu clave» (primer ingreso con clave temporal) y «🔑 Mi clave» ---------- */
+var claveTemp = '', cambioObligado = false;
+function mostrarCambio(obligado) {
+  cambioObligado = obligado;
+  if (obligado) clearTimeout(temporizador);
+  $('cTit').textContent = obligado ? 'Crea tu clave' : 'Cambia tu clave';
+  $('cTxt').textContent = obligado ? 'Es tu primer ingreso: crea tu propia clave. La clave temporal dejará de servir.' : 'Escribe tu clave actual y la nueva.';
+  $('cActualL').hidden = obligado && !!claveTemp; $('cCancelar').hidden = obligado;
+  ['cActual', 'cNueva', 'cRepite'].forEach(function (i) { $(i).value = ''; });
+  $('cMsg').textContent = ''; $('cambio').hidden = false;
+  ($('cActualL').hidden ? $('cNueva') : $('cActual')).focus();
+}
+$('cVer').addEventListener('change', function () { var t = this.checked ? 'text' : 'password'; ['cActual', 'cNueva', 'cRepite'].forEach(function (i) { $(i).type = t; }); });
+$('cCancelar').addEventListener('click', function () { $('cambio').hidden = true; });
+$('bClave').addEventListener('click', function () { mostrarCambio(false); });
+$('fCambio').addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  var actual = $('cActualL').hidden ? claveTemp : $('cActual').value.trim(), nueva = $('cNueva').value.trim();
+  if (!actual) { $('cMsg').textContent = 'Escribe tu clave actual.'; return; }
+  if (nueva.length < 6) { $('cMsg').textContent = 'La clave nueva debe tener al menos 6 caracteres.'; return; }
+  if (nueva !== $('cRepite').value.trim()) { $('cMsg').textContent = 'Las dos claves nuevas no son iguales.'; return; }
+  $('cBtn').disabled = true; $('cMsg').textContent = '';
+  api({ accion: 'cambiarClave', token: sesion, actual: actual, nueva: nueva }).then(function (j) {
+    $('cBtn').disabled = false;
+    if (!j || !j.ok) { var e = j && j.error || 'No se pudo.'; if (/Sin acceso/.test(e)) { sinAcceso(e); return; } $('cMsg').textContent = e; return; }
+    claveTemp = ''; $('cambio').hidden = true;
+    avisar('Listo: tu clave quedó guardada.');
+    if (cambioObligado) { cambioObligado = false; cargar(); programar(); }
+  }).catch(function () { $('cBtn').disabled = false; $('cMsg').textContent = 'Sin conexión: revisa internet e intenta de nuevo.'; });
 });
 
 $('bSalir').addEventListener('click', function () {
@@ -346,7 +405,7 @@ function cargar() {
 function programar() { clearTimeout(temporizador); temporizador = setTimeout(function () { cargar(); programar(); }, CADA); }
 
 function recibir(d) {
-  if (MODO_API) $('bAdmin').hidden = !d.admin;
+  if (MODO_API) { $('bAdmin').hidden = !d.admin; $('bClave').hidden = false; }
   var primera = !datos;
   datos = d;
   $('usuario').textContent = d.usuario;

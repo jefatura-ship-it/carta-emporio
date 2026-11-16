@@ -658,29 +658,37 @@ function salSabapp_() {
   if (!sal) { sal = Utilities.getUuid() + Utilities.getUuid(); p.setProperty('SABAPP_SAL', sal); }
   return sal;
 }
+// Clave para guardar: si parece RUT, el número (sin puntos, guion ni dígito); si no, el texto en minúsculas
+function claveNormal_(clave) { return cuerpoRut_(clave) || String(clave || '').trim().toLowerCase(); }
+// Al entrar: todas las formas posibles de lo que escribió (como RUT y como texto)
+function variantesClave_(clave) {
+  const v = variantesRut_(clave), t = String(clave || '').trim().toLowerCase();
+  if (t && v.indexOf(t) < 0) v.push(t);
+  return v;
+}
 function huellaRut_(correo, rut) {
   return Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
-    salSabapp_() + ':' + normCorreo_(correo) + ':' + normRut_(rut), Utilities.Charset.UTF_8));
+    salSabapp_() + ':' + normCorreo_(correo) + ':' + String(rut == null ? '' : rut), Utilities.Charset.UTF_8)); // el valor ya viene normalizado (claveNormal_ / variantesClave_)
 }
 
 // Ingreso: correo + RUT → sesión para este PC
 function sabappIngresar_(correo, rut) {
   const c = normCorreo_(correo);
-  if (!c || !normRut_(rut)) throw new Error('Escriba su correo y su RUT.');
+  if (!c || !String(rut || '').trim()) throw new Error('Escriba su correo y su clave.');
   const candado = LockService.getScriptLock();
   candado.waitLock(15000);
   try {
     const fallos = propsJson_('SABAPP_FALLOS'), f = fallos[c] || { n: 0, hasta: 0 };
     if (f.hasta > Date.now()) throw new Error('Cuenta bloqueada por intentos fallidos: espere ' + Math.ceil((f.hasta - Date.now()) / 60000) + ' min.');
     const u = propsJson_('SABAPP_USUARIOS')[c];
-    const coincide = !!u && variantesRut_(rut).some(function (v) { return huellaRut_(c, v) === u.hash; });
+    const coincide = !!u && variantesClave_(rut).some(function (v) { return huellaRut_(c, v) === u.hash; });
     if (!coincide) {
       f.n = (f.n || 0) + 1;
       if (f.n >= FALLOS_MAX) { f.hasta = Date.now() + BLOQUEO_MIN * 60000; f.n = 0; }
       fallos[c] = f;
       guardarJson_('SABAPP_FALLOS', fallos);
       Utilities.sleep(1200);
-      throw new Error(f.hasta > Date.now() ? 'Demasiados intentos: la cuenta quedó bloqueada ' + BLOQUEO_MIN + ' minutos.' : 'Correo o RUT incorrectos.');
+      throw new Error(f.hasta > Date.now() ? 'Demasiados intentos: la cuenta quedó bloqueada ' + BLOQUEO_MIN + ' minutos.' : 'Correo o clave incorrectos.');
     }
     if (fallos[c]) { delete fallos[c]; guardarJson_('SABAPP_FALLOS', fallos); }
     const ahora = Date.now(), ses = propsJson_('SABAPP_SESIONES');
@@ -690,7 +698,7 @@ function sabappIngresar_(correo, rut) {
     const orden = Object.keys(ses).sort(function (a, b) { return ses[b].vence - ses[a].vence; });
     orden.slice(SESIONES_MAX).forEach(function (t) { delete ses[t]; });
     guardarJson_('SABAPP_SESIONES', ses);
-    return { token: token, nombre: u.nombre };
+    return { token: token, nombre: u.nombre, cambiar: !!u.cambiar };
   } finally { candado.releaseLock(); }
 }
 function sabappSalir_(token) {
@@ -705,15 +713,17 @@ function sesionUsuario_(token) {
   const s = propsJson_('SABAPP_SESIONES')[token];
   if (!s || !(s.vence > Date.now())) return null;
   const u = propsJson_('SABAPP_USUARIOS')[s.correo];
-  return u ? { correo: s.correo, nombre: u.nombre, admin: !!u.admin } : null;
+  return u ? { correo: s.correo, nombre: u.nombre, admin: !!u.admin, cambiar: !!u.cambiar } : null;
 }
 function usuarioSesion_(token) { const u = sesionUsuario_(token); return u ? u.nombre : ''; }
 // Todo lo que pide la página de SabAPP pasa por aquí
 function sabappApi_(d) {
-  if (d.accion === 'ingresar') { const r = sabappIngresar_(d.correo, d.rut); return { ok: true, token: r.token, nombre: r.nombre }; }
+  if (d.accion === 'ingresar') { const r = sabappIngresar_(d.correo, d.clave || d.rut); return { ok: true, token: r.token, nombre: r.nombre, cambiar: r.cambiar }; }
   if (d.accion === 'salir') { sabappSalir_(d.token); return { ok: true }; }
   const yo = sesionUsuario_(d.token);
-  if (!yo) return { ok: false, error: 'Sin acceso: su sesión terminó. Ingrese con su correo y RUT.' };
+  if (!yo) return { ok: false, error: 'Sin acceso: su sesión terminó. Ingrese con su correo y su clave.' };
+  if (d.accion === 'cambiarClave') { cambiarClave_(yo.correo, d.actual, d.nueva); return { ok: true }; }
+  if (yo.cambiar) return { ok: false, cambiar: true, error: 'Antes de seguir, cree su clave nueva.' };
   const a = Array.isArray(d.args) ? d.args : [];
   const conRol = function (datos) { datos.admin = yo.admin; datos.correo = yo.correo; return { ok: true, datos: datos }; };
   if (d.accion === 'datos') return conRol(panelDatos_(yo.nombre));
@@ -728,7 +738,7 @@ function sabappApi_(d) {
     if (d.accion === 'quitarTrabajador' && c === yo.correo) throw new Error('No puede quitarse a sí mismo.');
     let lista;
     if (d.accion === 'trabajadores') lista = listaTrabajadores_();
-    if (d.accion === 'guardarTrabajador') lista = guardarTrabajador_(a[0], a[1], a[2], a[3]);
+    if (d.accion === 'guardarTrabajador') lista = guardarTrabajador_(a[0], a[1], a[2], a[3], a[4]);
     if (d.accion === 'quitarTrabajador') lista = quitarTrabajador_(a[0]);
     if (d.accion === 'cerrarSesiones') lista = cerrarSesiones_(a[0], d.token);
     return { ok: true, lista: lista, yo: yo.correo };
@@ -747,18 +757,19 @@ function abrirTrabajadores() {
   SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(htmlTrabajadores_()).setWidth(560).setHeight(600), 'SabAPP · Trabajadores');
 }
 function trabajadoresLista() { exigirAdmin_(); return listaTrabajadores_(); }
-function trabajadorGuardar(nombre, correo, rut, admin) { exigirAdmin_(); return guardarTrabajador_(nombre, correo, rut, admin); }
+function trabajadorGuardar(nombre, correo, clave, admin, cambiar) { exigirAdmin_(); return guardarTrabajador_(nombre, correo, clave, admin, cambiar); }
 function trabajadorQuitar(correo) { exigirAdmin_(); return quitarTrabajador_(correo); }
 
 function listaTrabajadores_() {
   const u = propsJson_('SABAPP_USUARIOS'), ses = propsJson_('SABAPP_SESIONES'), ahora = Date.now();
   return Object.keys(u).map(function (c) {
     const abiertas = Object.keys(ses).filter(function (t) { return ses[t].correo === c && ses[t].vence > ahora; }).length;
-    return { correo: c, nombre: u[c].nombre, admin: !!u[c].admin, sesiones: abiertas };
+    return { correo: c, nombre: u[c].nombre, admin: !!u[c].admin, cambiar: !!u[c].cambiar, sesiones: abiertas };
   }).sort(function (a, b) { return a.nombre.localeCompare(b.nombre); });
 }
-// Crea o actualiza un trabajador. Al editar, el RUT puede quedar en blanco (se mantiene el que tenía).
-function guardarTrabajador_(nombre, correo, rut, admin) {
+// Crea o actualiza un trabajador. Al editar, la clave puede quedar en blanco (se mantiene la que tenía).
+// clave: temporal de letras (o un RUT); cambiar: true = al entrar debe crear su propia clave.
+function guardarTrabajador_(nombre, correo, clave, admin, cambiar) {
   const n = String(nombre || '').replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ .'-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 40);
   const c = correoValido(correo);
   if (n.length < 2) throw new Error('Escriba el nombre del trabajador.');
@@ -767,15 +778,20 @@ function guardarTrabajador_(nombre, correo, rut, admin) {
   candado.waitLock(15000);
   try {
     const u = propsJson_('SABAPP_USUARIOS'), antes = u[c];
-    let hash = antes ? antes.hash : '';
-    if (String(rut || '').trim()) {
-      const cuerpo = cuerpoRut_(rut);
-      if (!cuerpo) throw new Error('El RUT no es válido: escríbalo sin puntos ni guion (ej.: 12345678).');
-      hash = huellaRut_(c, cuerpo);
+    let hash = antes ? antes.hash : '', debeCambiar = !!(antes && antes.cambiar), nueva = false;
+    if (String(clave || '').trim()) {
+      const cn = claveNormal_(clave);
+      if (cn.length < 6) throw new Error('La clave debe tener al menos 6 letras (o ser un RUT).');
+      hash = huellaRut_(c, cn); debeCambiar = cambiar === true; nueva = true;
     }
-    if (!hash) throw new Error('Escriba el RUT del trabajador (sin puntos ni guion).');
-    u[c] = { nombre: n, hash: hash, alta: antes && antes.alta || Date.now(), admin: admin === true };
+    if (!hash) throw new Error('Escriba una clave temporal para el trabajador.');
+    u[c] = { nombre: n, hash: hash, alta: antes && antes.alta || Date.now(), admin: admin === true, cambiar: debeCambiar };
     guardarJson_('SABAPP_USUARIOS', u);
+    if (nueva && antes) { // clave reiniciada: se cierran sus sesiones abiertas
+      const ses = propsJson_('SABAPP_SESIONES');
+      Object.keys(ses).forEach(function (t) { if (ses[t].correo === c) delete ses[t]; });
+      guardarJson_('SABAPP_SESIONES', ses);
+    }
     const fallos = propsJson_('SABAPP_FALLOS');
     if (fallos[c]) { delete fallos[c]; guardarJson_('SABAPP_FALLOS', fallos); }
   } finally { candado.releaseLock(); }
@@ -792,6 +808,22 @@ function quitarTrabajador_(correo) {
     guardarJson_('SABAPP_SESIONES', ses);
   } finally { candado.releaseLock(); }
   return listaTrabajadores_();
+}
+// El trabajador cambia su clave (con la actual). Mínimo 6 caracteres y distinta de la actual.
+function cambiarClave_(correo, actual, nueva) {
+  const n = String(nueva || '').trim();
+  if (n.length < 6) throw new Error('La clave nueva debe tener al menos 6 caracteres.');
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  try {
+    const u = propsJson_('SABAPP_USUARIOS'), x = u[correo];
+    if (!x) throw new Error('Sin acceso: su sesión terminó. Ingrese con su correo y su clave.');
+    if (!variantesClave_(actual).some(function (v) { return huellaRut_(correo, v) === x.hash; })) throw new Error('La clave actual no coincide.');
+    const h = huellaRut_(correo, claveNormal_(n));
+    if (h === x.hash) throw new Error('La clave nueva debe ser distinta de la actual.');
+    x.hash = h; x.cambiar = false;
+    guardarJson_('SABAPP_USUARIOS', u);
+  } finally { candado.releaseLock(); }
 }
 // Cierra las sesiones de un trabajador en todos los PC (menos la del administrador que lo pide)
 function cerrarSesiones_(correo, salvo) {
@@ -814,10 +846,11 @@ function htmlTrabajadores_() {
     + '#msg{min-height:1.4em;margin:8px 0;font-weight:700}#msg.mal{color:#b3261e}#msg.bien{color:#1f5f3a}'
     + 'ul{margin:6px 0 0;padding:0;list-style:none}li{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eee}li div{flex:1;min-width:0}li small{display:block;color:#66645c}'
     + '</style></head><body>'
-    + '<p class="nota">Cada trabajador entra a <b>www.avicolasb.com/sabapp</b> con su correo y su RUT (sin puntos ni guion). El RUT no queda escrito: se guarda cifrado. Para cambiar el nombre, el RUT o el rol de alguien, vuelva a guardarlo con el mismo correo.</p>'
+    + '<p class="nota">Cada trabajador entra a <b>www.avicolasb.com/sabapp</b> con su correo y una clave temporal; al entrar la primera vez crea la suya. La clave no queda escrita: se guarda cifrada. Para cambiar el nombre, la clave o el rol de alguien, vuelva a guardarlo con el mismo correo.</p>'
     + '<form id="f" autocomplete="off"><label>Nombre<input id="nom" maxlength="40" placeholder="Ej.: Sofía"></label>'
     + '<label>Correo (su usuario)<input id="cor" type="email" maxlength="80" placeholder="nombre@correo.cl"></label>'
-    + '<label>RUT (su clave), sin puntos ni guion<input id="rut" maxlength="12" placeholder="Ej.: 12345678 · al editar, en blanco lo mantiene" autocomplete="off"></label>'
+    + '<label>Clave temporal (letras) o RUT<span style="display:flex;gap:6px"><input id="rut" maxlength="40" placeholder="Al editar, en blanco se mantiene" autocomplete="off" style="flex:1"><button type="button" id="gen" style="min-height:38px">Generar</button></span></label>'
+    + '<label style="display:flex;align-items:center;gap:8px"><input id="cam" type="checkbox" checked style="min-height:0;width:18px;height:18px"> Pedir que cree su propia clave al entrar</label>'
     + '<label style="display:flex;align-items:center;gap:8px"><input id="adm" type="checkbox" style="min-height:0;width:18px;height:18px"> Administrador de SabAPP (ve el panel ⚙ Administrar)</label>'
     + '<button id="g">Guardar trabajador</button></form><p id="msg" role="status"></p><b>Trabajadores con acceso</b><ul id="l"><li><div><small>Cargando…</small></div></li></ul>'
     + '<script>'
@@ -826,9 +859,11 @@ function htmlTrabajadores_() {
     + 'function msg(t,mal){$("msg").textContent=t;$("msg").className=mal?"mal":"bien"}'
     + 'function pintar(l){$("l").innerHTML=l.length?l.map(function(x){return "<li><div><b>"+esc(x.nombre)+"</b><small>"+esc(x.correo)+(x.admin?" · administrador":"")+(x.sesiones?" · "+x.sesiones+" PC con sesión abierta":"")+"</small></div><button class=\"q\" data-q=\""+esc(x.correo)+"\">Quitar</button></li>"}).join(""):"<li><div><small>Aún no hay trabajadores.</small></div></li>"}'
     + 'function fallo(e){msg(String(e&&e.message||e),true);$("g").disabled=false}'
+    + 'function temporal(){var c="bcdfghjklmnprstv",v="aeiou",a=new Uint32Array(10);crypto.getRandomValues(a);var s="";for(var i=0;i<5;i++)s+=c[a[2*i]%c.length]+v[a[2*i+1]%v.length];return s}'
+    + '$("gen").addEventListener("click",function(){$("rut").value=temporal()});'
     + 'google.script.run.withSuccessHandler(pintar).withFailureHandler(fallo).trabajadoresLista();'
-    + '$("f").addEventListener("submit",function(ev){ev.preventDefault();var n=$("nom").value,c=$("cor").value,r=$("rut").value,ad=$("adm").checked;$("g").disabled=true;msg("Guardando…");'
-    + 'google.script.run.withSuccessHandler(function(l){pintar(l);$("g").disabled=false;$("rut").value="";$("nom").value="";$("cor").value="";$("adm").checked=false;msg("Guardado: "+n.trim()+(ad?" (administrador)":"")+" ya puede entrar con su correo y su RUT.")}).withFailureHandler(fallo).trabajadorGuardar(n,c,r,ad)});'
+    + '$("f").addEventListener("submit",function(ev){ev.preventDefault();var n=$("nom").value,c=$("cor").value,r=$("rut").value,ad=$("adm").checked,ca=$("cam").checked;$("g").disabled=true;msg("Guardando…");'
+    + 'google.script.run.withSuccessHandler(function(l){pintar(l);$("g").disabled=false;$("rut").value="";$("nom").value="";$("cor").value="";$("adm").checked=false;msg("Guardado: "+n.trim()+(ad?" (administrador)":"")+(r?". Su clave"+(ca?" temporal":"")+": "+r:""))}).withFailureHandler(fallo).trabajadorGuardar(n,c,r,ad,ca)});'
     + '$("l").addEventListener("click",function(ev){var b=ev.target.closest("[data-q]");if(!b)return;if(!b.classList.contains("s")){b.classList.add("s");b.textContent="¿Quitar? Toca otra vez";setTimeout(function(){b.classList.remove("s");b.textContent="Quitar"},4000);return}'
     + 'b.disabled=true;google.script.run.withSuccessHandler(function(l){pintar(l);msg("Listo: ya no puede entrar a SabAPP.")}).withFailureHandler(fallo).trabajadorQuitar(b.dataset.q)});'
     + '<\/script></body></html>';
