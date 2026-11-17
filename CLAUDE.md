@@ -193,6 +193,7 @@ David no quiere que la dirección diga «jefatura»; eligió **avicolasb.com**, 
 - Cada tamaño sigue siendo su propio producto (código MyPyme, precio y línea en el pedido, en el carro y en SabAPP). La tarjeta del grupo usa un producto virtual `VAR-saco-kraft` (solo en `PROD`, nunca en el carro) con la foto `img/productos/fotos/saco-kraft.webp` y la galería de todos los tamaños. `cardsDe()` deja una sola tarjeta por grupo en secciones y búsqueda; `nProd()` cuenta el grupo como 1 producto.
 - Fotos nuevas del saco kraft (sin manillas): foto Pixabay 2478556 (licencia de Pixabay, uso comercial libre), recortada sin fondo y sin el clip, con la etiqueta de siempre (N° 0, 1, 2, 4, 5, 6, 7 y «N° 0 a 7»). El N° 3 (BOL052) conserva su foto de saco con diseño.
 - Para agrupar otro producto por tamaños basta agregar una entrada a `VARIANTES` con su expresión de nombre.
+- Fotos que David y yo quedamos de reemplazar (revisión del 17/11/2026, buscando en Pexels/Pixabay): bolsa camiseta (5 tamaños, rectángulo con fondo), bolsa de baja densidad (5), bolsa de celofán (2), CT bio (la misma foto en CT 3 cuadrado, CT 5 y CT 6 con y sin división) y la 2ª foto del C-30. Hecho: saco kraft.
 
 ## Editor del catálogo (solo para David) — creado el 14/11/2026
 - Carpeta `herramientas/editor/` (no se publica: el despliegue solo copia index.html, legal.html, carta, web, img, js, modelos, video y fonts).
