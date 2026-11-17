@@ -18,6 +18,10 @@ if (!archivo) {
 }
 const paquete = JSON.parse(fs.readFileSync(archivo, 'utf8'));
 if (paquete.tipo !== 'cambios-catalogo-sabroso' || !paquete.cambios) { console.error('El archivo no es de cambios del editor del catálogo.'); process.exit(1); }
+// El 16/11/2026 la carta pasó a los códigos nuevos de MyPyme: un archivo de cambios anterior usa los códigos
+// provisorios y caería en productos equivocados (ej.: ALU002 era la pavera y ahora es el C 15 con tapa).
+const CODIGOS_NUEVOS_DESDE = '2026-11-17T00:25:00Z'; // 16/11/2026 21:25, hora de Chile
+if (!(String(paquete.fecha || '') >= CODIGOS_NUEVOS_DESDE)) { console.error('Este archivo de cambios es de antes del cambio a los códigos nuevos de MyPyme (16/11/2026): sus códigos ya no corresponden. Vuelve a abrir el editor, rehaz los cambios y descárgalos de nuevo.'); process.exit(1); }
 
 const ruta = path.join(__dirname, '..', '..', 'carta', 'index.html');
 const html = fs.readFileSync(ruta, 'utf8');
