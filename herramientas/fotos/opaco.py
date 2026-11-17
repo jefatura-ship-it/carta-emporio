@@ -3,6 +3,7 @@
 # y le quita al borde el reflejo azul de la pared.
 # Si la config trae «linea», «base» y «razon», bajo la línea donde empieza la tela el contorno se dibuja:
 # rectas ajustadas a los lados (medidos contra la pared) y media elipse en la base (la tela clara confunde a GrabCut).
+#   soloPoligono: true usa el polígono tal cual, sin GrabCut.
 #   soloDentro: true recorta además al polígono (paquetes de bordes rectos).
 #   filas: cuántas filas sobre la línea se usan para ajustar los lados; desde: y donde empieza el contorno dibujado (por omisión, la línea).
 #   linea: y donde la tela empieza a quedar detrás de los lados; base: y del punto más bajo; razon: alto/ancho de la elipse de la base.
@@ -63,7 +64,11 @@ def guarda(im, f, salida):
 
 def recorta(c):
     im = np.array(Image.open(c['foto']).convert('RGB'))
-    f = mascara(im, c['poli'], c.get('nucleo', 61), c.get('margen', 45)); info = ''
+    if c.get('soloPoligono'):   # contorno medido a mano: sin GrabCut (producto blanco sobre la tela clara)
+        k = 4; g = np.zeros((im.shape[0] * k, im.shape[1] * k), np.uint8)
+        cv2.fillPoly(g, [np.round(np.array(c['poli']) * k).astype(np.int32)], 1)
+        f = (cv2.resize(g.astype(np.float32), (im.shape[1], im.shape[0]), interpolation=cv2.INTER_AREA) > 0.5).astype(np.uint8); info = ''
+    else: f = mascara(im, c['poli'], c.get('nucleo', 61), c.get('margen', 45)); info = ''
     if c.get('soloDentro'):   # no sale del polígono (bordes rectos de un paquete sobre la tela)
         d = np.zeros_like(f); cv2.fillPoly(d, [np.array(c['poli'], np.int32)], 1); f = f & d
     if 'linea' in c: f, info = baseDibujada(f, c['linea'], c['base'], c['razon'], c.get('filas', 150), c.get('desde'))
