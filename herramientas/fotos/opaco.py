@@ -1,12 +1,16 @@
 # Recorte de productos opacos (vasos de papel, con color) desde una foto real sobre pared azul y tela.
 # Conserva el color original. GrabCut con máscara desde un polígono, limpia la máscara, suaviza el borde
-# y le quita al borde el reflejo azul de la pared.   Uso: python -I -X utf8 opaco.py config.json
+# y le quita al borde el reflejo azul de la pared.
+# Si la config trae «linea», «base» y «razon», bajo la línea donde empieza la tela el contorno se dibuja:
+# rectas ajustadas a los lados (medidos contra la pared) y media elipse en la base (la tela clara confunde a GrabCut).
+#   filas: cuántas filas sobre la línea se usan para ajustar los lados; desde: y donde empieza el contorno dibujado (por omisión, la línea).
+#   linea: y donde la tela empieza a quedar detrás de los lados; base: y del punto más bajo; razon: alto/ancho de la elipse de la base.
+# Uso: python -I -X utf8 opaco.py config.json
 import sys, json
 import numpy as np, cv2
 from PIL import Image
 
-def recorta(ruta, poli, salida, nucleo=61, margen=45):
-    im = np.array(Image.open(ruta).convert('RGB'))
+def mascara(im, poli, nucleo=61, margen=45):
     h, w = im.shape[:2]
     dentro = np.zeros((h, w), np.uint8); cv2.fillPoly(dentro, [np.array(poli, np.int32)], 1)
     m = np.full((h, w), cv2.GC_BGD, np.uint8)
@@ -20,9 +24,32 @@ def recorta(ruta, poli, salida, nucleo=61, margen=45):
     f = cv2.morphologyEx(f, cv2.MORPH_CLOSE, np.ones((9, 9), np.uint8))
     n, et, st, _ = cv2.connectedComponentsWithStats(f)
     if n > 1: f = (et == 1 + np.argmax(st[1:, cv2.CC_STAT_AREA])).astype(np.uint8)
-    # rellena agujeros (con 1 px de borde para que el relleno parta desde afuera)
     p = np.pad(f, 1); r = p.copy() * 255; cv2.floodFill(r, None, (0, 0), 128)
-    f = np.maximum(f, (r[1:-1, 1:-1] == 0).astype(np.uint8))
+    return np.maximum(f, (r[1:-1, 1:-1] == 0).astype(np.uint8))
+
+def recta(pts):
+    y, x = np.array(pts, np.float64).T
+    c = np.polyfit(y, x, 1)
+    ok = np.abs(np.polyval(c, y) - x) < 6
+    return np.polyfit(y[ok], x[ok], 1) if ok.sum() > 5 else c
+
+def baseDibujada(f, linea, base, razon, filas=150, desde=None):
+    izq, der = [], []
+    for y in range(linea - filas, linea - 8, 3):
+        xs = np.where(f[y])[0]
+        if len(xs): izq.append((y, xs.min())); der.append((y, xs.max()))
+    ci, cd = recta(izq), recta(der)
+    I = lambda y: np.polyval(ci, y); D = lambda y: np.polyval(cd, y)
+    yc = base - 40.0
+    for _ in range(10): yc = base - razon * (D(yc) - I(yc)) / 2
+    a, cx, b = (D(yc) - I(yc)) / 2, (D(yc) + I(yc)) / 2, base - yc
+    y0 = desde or linea - 8
+    pts = [(I(y0), y0), (D(y0), y0), (D(yc), yc)] + [(cx + a * np.cos(t), yc + b * np.sin(t)) for t in np.linspace(0, np.pi, 120)] + [(I(yc), yc)]
+    g = np.zeros_like(f); cv2.fillPoly(g, [np.round(np.array(pts)).astype(np.int32)], 1)
+    f = f.copy(); f[y0:] = 0
+    return np.maximum(f, g), (round(I(y0)), round(D(y0)), round(yc), round(a), round(b))
+
+def guarda(im, f, salida):
     a = cv2.GaussianBlur(f.astype(np.float32) * 255, (0, 0), 1.3)
     rgb = im.astype(np.float32)
     borde = (a < 250) & (a > 0)
@@ -33,6 +60,12 @@ def recorta(ruta, poli, salida, nucleo=61, margen=45):
     Image.fromarray(out[ys.min():ys.max() + 1, xs.min():xs.max() + 1], 'RGBA').save(salida)
     return xs.min(), ys.min(), xs.max(), ys.max()
 
+def recorta(c):
+    im = np.array(Image.open(c['foto']).convert('RGB'))
+    f = mascara(im, c['poli'], c.get('nucleo', 61), c.get('margen', 45)); info = ''
+    if 'linea' in c: f, info = baseDibujada(f, c['linea'], c['base'], c['razon'], c.get('filas', 150), c.get('desde'))
+    return guarda(im, f, c['salida']), info
+
 if __name__ == '__main__':
     for k, c in json.load(open(sys.argv[1], encoding='utf-8')).items():
-        print(k, recorta(c['foto'], c['poli'], c['salida'], c.get('nucleo', 61), c.get('margen', 45)))
+        print(k, *recorta(c))
