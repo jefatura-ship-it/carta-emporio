@@ -6,7 +6,7 @@
 import sys, json, numpy as np, cv2
 from PIL import Image
 HUESO = np.array([251, 246, 236], np.float32)
-def recorta(ruta, poli, salida, margen=35, brillo=1.5):
+def recorta(ruta, poli, salida, margen=35, brillo=1.5, suave=25, q=8):
     im = np.asarray(Image.open(ruta).convert('RGB')); H, W = im.shape[:2]; f = im.astype(np.float32)
     P = np.array(poli, np.int32)
     dentro = np.zeros((H, W), np.uint8); cv2.fillPoly(dentro, [P], 1)
@@ -24,15 +24,19 @@ def recorta(ruta, poli, salida, margen=35, brillo=1.5):
     L = f.mean(axis=2)
     yy, xx = np.mgrid[0:H, 0:W].astype(np.float32); yy /= H; xx /= W
     # luz del fondo detrás del producto: se rellena la zona del producto con lo que la rodea (inpaint en chico) y se suaviza
-    q = 8; Lc = cv2.resize(L, (W // q, H // q), interpolation=cv2.INTER_AREA)
+    Lc = cv2.resize(L, (W // q, H // q), interpolation=cv2.INTER_AREA)
     hueco = cv2.resize(((cerca == 1) | tela).astype(np.uint8), (W // q, H // q), interpolation=cv2.INTER_NEAREST)
     Lr = cv2.inpaint(np.clip(Lc, 0, 255).astype(np.uint8), hueco, 25, cv2.INPAINT_TELEA).astype(np.float32)
-    Lbg = np.maximum(cv2.GaussianBlur(cv2.resize(Lr, (W, H), interpolation=cv2.INTER_CUBIC), (0, 0), 25), 40)
+    Lbg = np.maximum(cv2.GaussianBlur(cv2.resize(Lr, (W, H), interpolation=cv2.INTER_CUBIC), (0, 0), suave), 40)
     r = L / Lbg
     # más claro que el fondo solo en los brillos del plástico (zonas con detalle), no en zonas lisas de la pared
     det = cv2.GaussianBlur(np.abs(L - cv2.GaussianBlur(L, (0, 0), 3)), (0, 0), 4)
     det = np.clip((det - 2) / 6, 0, 1)
     r = np.minimum(r, 1) + np.clip(r - 1.1, 0, 0.3) * det * brillo
+    # sobre fondo oscuro (borde del monitor) el plástico se ve por sus reflejos: se dibuja en gris según cuánto difiere del fondo
+    r_osc = 1 - np.clip(np.abs(L - Lbg) / 110, 0, 0.6)
+    w = np.clip((Lbg - 55) / 50, 0, 1)
+    r = w * r + (1 - w) * r_osc
     rgb = np.clip(HUESO * r[..., None], 0, 255)
     a = cv2.GaussianBlur(k.astype(np.float32), (0, 0), 1.5)
     x, y, w, h = cv2.boundingRect(k)
@@ -40,4 +44,4 @@ def recorta(ruta, poli, salida, margen=35, brillo=1.5):
     return w, h
 if __name__ == '__main__':
     cfg = json.load(open(sys.argv[1], encoding='utf-8'))
-    for nombre, c in cfg.items(): print(nombre, recorta(c['foto'], c['poli'], c['salida'], brillo=c.get('brillo', 1.5)))
+    for nombre, c in cfg.items(): print(nombre, recorta(c['foto'], c['poli'], c['salida'], brillo=c.get('brillo', 1.5), suave=c.get('suave', 25), q=c.get('q', 8)))
