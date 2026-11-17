@@ -202,8 +202,10 @@ body.vermayor .mayor{display:block}
 .szchip:focus-visible{outline:3px solid var(--sol);outline-offset:2px}
 .szchip .szn{position:absolute;top:-8px;right:-8px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--sol-t);color:#fff;font-size:11px;font-weight:800;line-height:19px;text-align:center;box-shadow:0 0 0 2px #fff}
 .info small.varped{color:var(--campo);font-weight:700;font-size:12px;line-height:1.35}
+.szchip.ancho{width:auto;min-width:42px;padding:0 7px}
+.info .szchip small.szd{font-size:8.5px;margin:1px 0 0;white-space:nowrap}
 .paso.pista-var{display:flex}
-.paso.pista-var span{flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border:1.5px dashed var(--borde);border-radius:12px;color:var(--suave);font-size:15px;font-weight:700;white-space:nowrap}
+.paso.pista-var .elige,#carta .prod .paso.pista-var .elige{flex:1;width:100%;height:auto;min-height:46px;padding:0 18px;border:1.5px dashed var(--borde);border-radius:12px;background:#fff;color:var(--suave);font-family:inherit;font-size:15px;font-weight:700;white-space:nowrap;opacity:1;cursor:default;display:flex;align-items:center;justify-content:center}
 .tapa{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
 .tapa .tn{min-width:0;color:var(--campo);font-weight:600;line-height:1.3}
 .tapa .tn small{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:var(--masa);color:var(--campo);border-radius:5px;padding:1px 6px;margin-right:5px}
@@ -1373,17 +1375,17 @@ const LOCALES = {
       {cod:"BOL030",cat:"Bolsas, sacos y papeles",nombre:"Malla curanto amarilla",detalle:"Precio por unidad",precio:null,stock:1220,foto:"../img/productos/fotos/BOL030.webp"},
       {cod:"BOL025",cat:"Bolsas, sacos y papeles",nombre:"Etiquetas regalo unidad",detalle:"Precio por unidad",precio:30,stock:0,sinStock:true},
       {cod:"BOL035",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft con diseño N° 3",detalle:"Precio por unidad",precio:null,stock:276,foto:"../img/productos/fotos/BOL035.webp"},
-      {cod:"BOL039",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 5",detalle:"Precio por unidad",precio:null,stock:500},
-      {cod:"BOL038",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 4",detalle:"Precio por unidad",precio:null,stock:950},
+      {cod:"BOL039",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 5",detalle:"Precio por unidad",precio:null,stock:500,foto:"../img/productos/fotos/BOL039.webp"},
+      {cod:"BOL038",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 4",detalle:"Precio por unidad",precio:null,stock:950,foto:"../img/productos/fotos/BOL038.webp"},
       {cod:"BOL023",cat:"Bolsas, sacos y papeles",nombre:"Cartucho extra corto kraft",detalle:"Precio por unidad",precio:null,stock:1250},
-      {cod:"BOL042",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft sin diseño N° 3",detalle:"Precio por unidad",precio:null,stock:1850},
+      {cod:"BOL042",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft sin diseño N° 3",detalle:"Precio por unidad",precio:null,stock:1850,foto:"../img/productos/fotos/BOL042.webp"},
       {cod:"BOL022",cat:"Bolsas, sacos y papeles",nombre:"Cartucho corto kraft medida 00",detalle:"Precio por unidad",precio:null,stock:150},
-      {cod:"BOL040",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 6",detalle:"Precio por unidad",precio:null,stock:1800},
-      {cod:"BOL041",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 7",detalle:"Precio por unidad",precio:null,stock:750},
+      {cod:"BOL040",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 6",detalle:"Precio por unidad",precio:null,stock:1800,foto:"../img/productos/fotos/BOL040.webp"},
+      {cod:"BOL041",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 7",detalle:"Precio por unidad",precio:null,stock:750,foto:"../img/productos/fotos/BOL041.webp"},
       {cod:"BOL002",cat:"Bolsas, sacos y papeles",nombre:"Bolsa camiseta 28 × 35",detalle:"Precio por unidad",precio:9,stock:1800,foto:"../img/productos/fotos/BOL002.webp"},
       {cod:"BOL003",cat:"Bolsas, sacos y papeles",nombre:"Bolsa camiseta 32 × 40",detalle:"Precio por unidad",precio:10,stock:1400,foto:"../img/productos/fotos/BOL003.webp"},
       {cod:"BOL004",cat:"Bolsas, sacos y papeles",nombre:"Bolsa camiseta 40 × 50",detalle:"Precio por unidad",precio:18,stock:1100,foto:"../img/productos/fotos/BOL004.webp"},
-      {cod:"BOL036",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 1",detalle:"Precio por unidad",precio:null,stock:687},
+      {cod:"BOL036",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 1",detalle:"Precio por unidad",precio:null,stock:687,foto:"../img/productos/fotos/BOL036.webp"},
       {cod:"BOL026",cat:"Bolsas, sacos y papeles",nombre:"Film 30 m",detalle:"Precio por unidad",precio:750,stock:30,foto:"../img/productos/fotos/BOL026.webp"},
       {cod:"BOL031",cat:"Bolsas, sacos y papeles",nombre:"Papel antigrasa",detalle:"Precio por unidad",precio:150,stock:686},
       {cod:"BOL046",cat:"Bolsas, sacos y papeles",nombre:"Saco blanco 1/8",detalle:"Precio por unidad",precio:850,foto:"../img/productos/fotos/BOL046.webp"},
@@ -1395,7 +1397,7 @@ const LOCALES = {
       {cod:"BOL016",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 14 × 25",detalle:"Precio por kilo",precio:null,stock:5.35,foto:"../img/productos/fotos/BOL016.webp"},
       {cod:"BOL008",cat:"Bolsas, sacos y papeles",nombre:"Bolsa pan de pascua 1 kg con diseño",detalle:"Precio por unidad",precio:null,stock:1273,foto:"../img/productos/fotos/BOL008.webp"},
       {cod:"BOL005",cat:"Bolsas, sacos y papeles",nombre:"Bolsa camiseta 45 × 55",detalle:"Precio por unidad · paquete de 100 u",precio:22,upp:100,stock:100,foto:"../img/productos/fotos/BOL005.webp"},
-      {cod:"BOL037",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 2",detalle:"Precio por unidad",precio:null,stock:445},
+      {cod:"BOL037",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 2",detalle:"Precio por unidad",precio:null,stock:445,foto:"../img/productos/fotos/BOL037.webp"},
       {cod:"BOL021",cat:"Bolsas, sacos y papeles",nombre:"Cartucho blanco papel kraft 3 1/4 × 9 pulg",detalle:"Precio por unidad",precio:null,stock:1985},
       {cod:"BOL020",cat:"Bolsas, sacos y papeles",nombre:"Cartucho blanco papel kraft 3 1/4 × 9 1/2 pulg",detalle:"Precio por unidad",precio:null,stock:1400},
       {cod:"BOL019",cat:"Bolsas, sacos y papeles",nombre:"Cartucho blanco papel kraft 3 1/4 × 7 pulg",detalle:"Precio por unidad",precio:null,stock:716},
@@ -1436,7 +1438,7 @@ const LOCALES = {
       {cod:"VAS002",cat:"Vasos",nombre:"Vaso 300 cc Good Food",detalle:"Precio por unidad · paquete de 50 u",precio:38,upp:50,stock:2700},
       {cod:"VAS008",cat:"Vasos",nombre:"Vaso café liso",detalle:"Precio por unidad",precio:null,stock:246},
       {cod:"VAS009",cat:"Vasos",nombre:"Vaso café corrugado marrón 8 oz",detalle:"Precio por unidad · paquete de 25 u",precio:null,upp:25,stock:500,nuevo:true},
-      {cod:"DES025",cat:"Platos, cubiertos y desechables",nombre:"Guante polietileno",detalle:"Precio por unidad · paquete de 100 u",precio:23,upp:100,stock:19100},
+      {cod:"DES025",cat:"Platos, cubiertos y desechables",nombre:"Guante polietileno",detalle:"Precio por unidad · paquete de 100 u",precio:23,upp:100,stock:19100,foto:"../img/productos/fotos/DES025.webp"},
       {cod:"DES005",cat:"Platos, cubiertos y desechables",nombre:"Brocheta 15 cm",detalle:"Precio por unidad · paquete de 100 u",precio:8,upp:100,stock:1700},
       {cod:"DES042",cat:"Platos, cubiertos y desechables",nombre:"Revolvedor corto madera",detalle:"Precio por unidad",precio:590,stock:2700},
       {cod:"DES034",cat:"Platos, cubiertos y desechables",nombre:"Plato cartón N° 1",detalle:"Precio por unidad",precio:60,stock:121,foto:"../img/productos/fotos/DES034.webp"},
@@ -1455,7 +1457,7 @@ const LOCALES = {
       {cod:"DES038",cat:"Platos, cubiertos y desechables",nombre:"Plato plástico 17 cm desechable",detalle:"Precio por unidad · paquete de 20 u",precio:50,upp:20,stock:940,foto:"../img/productos/fotos/DES038.webp"},
       {cod:"DES037",cat:"Platos, cubiertos y desechables",nombre:"Plato blanco N° 2 plástico",detalle:"Precio por unidad",precio:50,stock:0,sinStock:true},
       {cod:"DES023",cat:"Platos, cubiertos y desechables",nombre:"Cuchillo plástico blanco",detalle:"Precio por paquete",precio:990,stock:0,sinStock:true},
-      {cod:"DES011",cat:"Platos, cubiertos y desechables",nombre:"Cofia negra",detalle:"Precio por unidad",precio:16,stock:1117},
+      {cod:"DES011",cat:"Platos, cubiertos y desechables",nombre:"Cofia negra",detalle:"Precio por unidad",precio:16,stock:1117,foto:"../img/productos/fotos/DES011.webp",fotos:["../img/productos/fotos/DES011.webp", "../img/productos/fotos/DES011-2.webp"]},
       {cod:"DES017",cat:"Platos, cubiertos y desechables",nombre:"Cuchara plástica",detalle:"Precio por unidad · paquete de 50 u",precio:30,upp:50},
       {cod:"DES022",cat:"Platos, cubiertos y desechables",nombre:"Cuchillo madera Bio Ely",detalle:"Precio por paquete de 100 u",precio:990,stock:1700},
       {cod:"DES049",cat:"Platos, cubiertos y desechables",nombre:"Tenedor plástico",detalle:"Precio por unidad",precio:20},
@@ -1481,7 +1483,7 @@ const LOCALES = {
       {cod:"DES014",cat:"Platos, cubiertos y desechables",nombre:"Cuchara de madera Bio Ely",detalle:"Precio por unidad · paquete de 100 u",precio:null,stock:1400,upp:100},
       {cod:"DES032",cat:"Platos, cubiertos y desechables",nombre:"Palito coctel madera bambú 6,5 cm",detalle:"Precio por unidad · paquete de 100 u",precio:null,stock:100,upp:100},
       {cod:"DES033",cat:"Platos, cubiertos y desechables",nombre:"Plato blanco N° 2 cartón 195 ml",detalle:"Precio por unidad · paquete de 250 u",precio:63,upp:250,stock:500,foto:"../img/productos/fotos/DES033.webp"},
-      {cod:"DES010",cat:"Platos, cubiertos y desechables",nombre:"Cofia blanca",detalle:"Precio por unidad",precio:15,stock:1256},
+      {cod:"DES010",cat:"Platos, cubiertos y desechables",nombre:"Cofia blanca",detalle:"Precio por unidad",precio:15,stock:1256,foto:"../img/productos/fotos/DES010.webp"},
       {cod:"DES048",cat:"Platos, cubiertos y desechables",nombre:"Tenedor desechable Good Food",detalle:"Precio por unidad · paquete de 100 u",precio:20,upp:100,stock:3900},
       {cod:"DES031",cat:"Platos, cubiertos y desechables",nombre:"Pack cubiertos con servilleta",detalle:"Precio por unidad",precio:null,stock:208,nuevo:true},
       {cod:"POT013",cat:"Potes y salseros",nombre:"Pote transparente con tapa 24 oz",detalle:"Precio por unidad",precio:171},
@@ -1593,13 +1595,13 @@ const LOCALES = {
       {cod:"ASE014",cat:"Aseo",nombre:"Trapero húmedo olor naranja Virginia",detalle:"Precio por unidad · paquete de 10 u",precio:100,upp:10,stock:90},
       {cod:"ASE011",cat:"Aseo",nombre:"Trapero algodón Virutex",detalle:"Precio por unidad",precio:1500},
       {cod:"ASE010",cat:"Aseo",nombre:"Prestobarba Venus suave aloe vera Gillette",detalle:"Precio por unidad",precio:774,stock:75},
-      {cod:"ASE006",cat:"Aseo",nombre:"Bolsa basura 110 × 120 Doña Gaby",detalle:"Precio por unidad · paquete de 10 u",precio:null,stock:260,upp:10},
-      {cod:"ASE007",cat:"Aseo",nombre:"Bolsa basura con asas 50 × 65 Superior",detalle:"Precio por unidad · paquete de 10 u",precio:260,upp:10,stock:130},
-      {cod:"ASE002",cat:"Aseo",nombre:"Bolsa basura 70 × 90 Clean",detalle:"Precio por unidad · paquete de 10 u",precio:500,upp:10,stock:23},
+      {cod:"ASE006",cat:"Aseo",nombre:"Bolsa basura 110 × 120 Doña Gaby",detalle:"Precio por unidad · paquete de 10 u",precio:null,stock:260,upp:10,foto:"../img/productos/fotos/ASE006.webp"},
+      {cod:"ASE007",cat:"Aseo",nombre:"Bolsa basura con asas 50 × 65 Superior",detalle:"Precio por unidad · paquete de 10 u",precio:260,upp:10,stock:130,foto:"../img/productos/fotos/ASE007.webp"},
+      {cod:"ASE002",cat:"Aseo",nombre:"Bolsa basura 70 × 90 Clean",detalle:"Precio por unidad · paquete de 10 u",precio:500,upp:10,stock:23,foto:"../img/productos/fotos/ASE002.webp"},
       {cod:"ASE003",cat:"Aseo",nombre:"Bolsa basura 80 × 110 Impeque",detalle:"Precio por unidad · paquete de 10 u",precio:595,upp:10,stock:55},
-      {cod:"ASE001",cat:"Aseo",nombre:"Bolsa basura 50 × 70 Superior",detalle:"Precio por unidad · paquete de 10 u",precio:395,upp:10,stock:150},
-      {cod:"ASE004",cat:"Aseo",nombre:"Bolsa basura 80 × 110 Virutex",detalle:"Precio por unidad · paquete de 10 u",precio:825,upp:10,stock:39},
-      {cod:"ASE005",cat:"Aseo",nombre:"Bolsa basura 80 × 120 Superior",detalle:"Precio por unidad · paquete de 10 u",precio:595,upp:10,stock:30},
+      {cod:"ASE001",cat:"Aseo",nombre:"Bolsa basura 50 × 70 Superior",detalle:"Precio por unidad · paquete de 10 u",precio:395,upp:10,stock:150,foto:"../img/productos/fotos/ASE001.webp"},
+      {cod:"ASE004",cat:"Aseo",nombre:"Bolsa basura 80 × 110 Virutex",detalle:"Precio por unidad · paquete de 10 u",precio:825,upp:10,stock:39,foto:"../img/productos/fotos/ASE004.webp"},
+      {cod:"ASE005",cat:"Aseo",nombre:"Bolsa basura 80 × 120 Superior",detalle:"Precio por unidad · paquete de 10 u",precio:595,upp:10,stock:30,foto:"../img/productos/fotos/ASE005.webp"},
       {cod:"ASE013",cat:"Aseo",nombre:"Trapero húmedo olor lavanda Virginia",detalle:"Precio por unidad · paquete de 10 u",precio:100,upp:10,stock:140},
       {cod:"OTR012",cat:"Lácteos",nombre:"Quesillo 230 g Los Tilos",detalle:"Precio por unidad",precio:1900},
       {cod:"OTR001",cat:"Golosinas",nombre:"Bon o bon dulce de leche",detalle:"Precio por unidad",precio:118},
@@ -1998,16 +2000,18 @@ const fotoHTML=p=>{const n=fotosDe(p).length;return `<button type="button" class
 /* Productos que se venden en varios tamaños (pedido de David, 17/11/2026): en la carta van en UNA tarjeta con cuadritos para
    elegir el tamaño. Cada tamaño sigue siendo su propio producto (su código de MyPyme, precio, foto y línea en el pedido).
    Al agregar un tamaño la tarjeta vuelve a quedar sin elegir, por si el cliente quiere llevar otro tamaño. */
-const VARIANTES=[{id:"saco-kraft",nombre:"Saco kraft",re:/^saco kraft (n° ?(\d+))$/i,foto:"../img/productos/fotos/saco-kraft.webp"}];
+const VARIANTES=[
+  {id:"saco-kraft",nombre:"Saco kraft",re:/^saco kraft n° ?(?<n>\d+)$/i,foto:"../img/productos/fotos/saco-kraft.webp"},
+  {id:"papel-kraft",nombre:"Papel kraft",re:/^papel kraft (?:(?<d>sin|con) diseño )?n° ?(?<n>\d+)$/i,foto:"../img/productos/fotos/papel-kraft.webp"}];
 const VARG={}, varSel={};
 VARIANTES.forEach(v=>{const ms=L.productos.filter(p=>!p.retirado&&!esPieza(p)&&v.re.test(p.nombre));if(ms.length<2)return;
-  ms.sort((a,b)=>+a.nombre.match(v.re)[2]- +b.nombre.match(v.re)[2]);
-  ms.forEach(p=>{p.var=v.id;p.talla=p.nombre.match(v.re)[1]});
+  ms.forEach(p=>{const m=p.nombre.match(v.re).groups;p.var=v.id;p.num=+m.n;p.dis=(m.d||"").toLowerCase();p.talla="N° "+m.n+(p.dis?` ${p.dis} diseño`:"")});
+  ms.sort((a,b)=>a.num-b.num||(a.dis==="con")-(b.dis==="con"));
   const prs=ms.map(precioDe).filter(x=>x!=null);
   const vp={cod:"VAR-"+v.id,nombre:v.nombre,cat:ms[0].cat,catBase:ms[0].catBase,detalle:"Precio por unidad",precio:prs.length?Math.min(...prs):null,virtual:true,var:v.id,foto:v.foto,fotos:[v.foto,...ms.map(p=>p.foto).filter(Boolean)]};
   PROD[vp.cod]=vp;VARG[v.id]={nombre:v.nombre,ms,vp}});
 const tallasHTML=g=>{const v=VARG[g],s=varSel[g];
-  return `<div class="tallas"><span class="tl">Elige el tamaño</span><div class="tsz" role="group" aria-label="Tamaño de ${v.nombre}">${v.ms.map(p=>`<button type="button" class="szchip${agotado(p)?" sin":""}" data-vg="${g}" data-varsel="${p.cod}" aria-pressed="${p.cod===s}" aria-label="${p.talla}"><span aria-hidden="true"><small>N°</small>${p.talla.replace(/^n° ?/i,"")}</span><span class="szn" aria-hidden="true" hidden></span></button>`).join("")}</div><small class="varped" aria-live="polite" hidden></small></div>`};
+  return `<div class="tallas"><span class="tl">Elige el tamaño</span><div class="tsz" role="group" aria-label="Tamaño de ${v.nombre}">${v.ms.map(p=>`<button type="button" class="szchip${agotado(p)?" sin":""}${p.dis?" ancho":""}" data-vg="${g}" data-varsel="${p.cod}" aria-pressed="${p.cod===s}" aria-label="${p.talla}"><span aria-hidden="true"><small>N°</small>${p.num}${p.dis?`<small class="szd">${p.dis} diseño</small>`:""}</span><span class="szn" aria-hidden="true" hidden></span></button>`).join("")}</div><small class="varped" aria-live="polite" hidden></small></div>`};
 const cardVar=g=>card((varSel[g]&&PROD[varSel[g]])||VARG[g].vp,null,g);
 // tarjetas de una lista: los tamaños de un mismo producto salen una sola vez, en una tarjeta con cuadritos
 const cardsDe=(lista,c,ya=new Set())=>lista.map(p=>{if(!p.var||!VARG[p.var])return card(p,c);if(ya.has(p.var))return "";ya.add(p.var);return cardVar(p.var)}).join("");
@@ -2024,7 +2028,7 @@ const card=(p,c,vg)=>`
       <article class="prod${vg?" var":""}${agotado(p)?" agotado":""}${p.oferta!=null||p.ofertaFmt||p.promo?" oferta":""}" data-prod="${p.cod}"${vg?` data-var="${vg}"`:c===FAV?"":` id="p-${p.cod}"`}>${p.virtual?"":`<button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>`}
         <div class="ico">${p.foto?fotoHTML(p):((ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}</div>
         <div class="info"><small class="tipo-p">${p.cat}</small><b>${vg?VARG[vg].nombre:p.nombre}</b>${vg?tallasHTML(vg):""}${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.sinStock?"Stock 0 en el conteo":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
-        ${p.virtual?`<div class="paso vacio pista-var"><span>Elige un tamaño</span></div>`:`<div class="paso vacio">
+        ${p.virtual?`<div class="paso vacio pista-var"><button type="button" class="elige" disabled>Elige un tamaño</button></div>`:`<div class="paso vacio">
           <button class="menos" data-cod="${p.cod}" data-d="-1" aria-label="Quitar ${p.nombre}">−</button>
           <input class="cant" type="number" inputmode="numeric" min="0" step="1" data-q="${p.cod}" value="0" aria-label="Cantidad de ${p.nombre}${tienePaq(p)?" (en la modalidad elegida)":""}">
           <button class="mas" data-cod="${p.cod}" data-d="1" aria-label="Agregar ${p.nombre}">+</button>
@@ -2160,6 +2164,11 @@ verSeccion(leePref("seccion-"+KEY)||SECC[0].id,{desplazar:false});
     // productos parecidos: otros de las mismas secciones que lo encontrado
     const vistos=new Set(lista.map(p=>p.cod)),secs=[...new Set(lista.map(p=>p.cat))];
     const tambien=exactos.length?visibles.filter(p=>secs.slice(0,2).includes(p.cat)&&!vistos.has(p.cod)).slice(0,6):[];
+    // «saco kraft 4» o «papel kraft n° 5»: la tarjeta de tamaños aparece con ese tamaño ya elegido (el N° 3 del papel kraft necesita «sin» o «diseño»)
+    const nums=(txt.match(/\d+/g)||[]).map(Number),tp=nPlano(txt);
+    if(nums.length)Object.keys(VARG).forEach(g=>{if(!lista.some(p=>p.var===g))return;let c=VARG[g].ms.filter(p=>nums.includes(p.num));
+      if(c.length>1){const sin=/\bsin\b/.test(tp),con=!sin&&/disen/.test(tp);c=sin?c.filter(p=>p.dis==="sin"):con?c.filter(p=>p.dis==="con"):[]}
+      varSel[g]=c.length===1?c[0].cod:null});
     const t=txt.replace(/[<>&"]/g,""),ya=new Set(),htmlL=cardsDe(lista,FAV,ya),htmlT=cardsDe(tambien,FAV,ya),nl=nProd(lista);
     res.innerHTML=`<h2 id="resTit">${lista.length?(exactos.length?`Resultados para «${t}»`:`No encontramos «${t}» tal cual; quizás buscabas:`):`No encontramos «${t}»`}</h2>`
       +(lista.length?`<p class="res-n">${nl} producto${nl===1?"":"s"}${secs.length?" en: ":""}${secs.slice(0,6).map(cn=>`<button type="button" class="res-sec" data-sec="g-${slug(cn)}">${cn}</button>`).join("")}</p>`:`<p class="res-n">Prueba con otra palabra, por ejemplo «vaso», «huevo» o «aluminio»; también puedes revisar todas las secciones en el menú.</p>`)
