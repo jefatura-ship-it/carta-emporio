@@ -3,6 +3,7 @@
 # y le quita al borde el reflejo azul de la pared.
 # Si la config trae «linea», «base» y «razon», bajo la línea donde empieza la tela el contorno se dibuja:
 # rectas ajustadas a los lados (medidos contra la pared) y media elipse en la base (la tela clara confunde a GrabCut).
+#   soloDentro: true recorta además al polígono (paquetes de bordes rectos).
 #   filas: cuántas filas sobre la línea se usan para ajustar los lados; desde: y donde empieza el contorno dibujado (por omisión, la línea).
 #   linea: y donde la tela empieza a quedar detrás de los lados; base: y del punto más bajo; razon: alto/ancho de la elipse de la base.
 # Uso: python -I -X utf8 opaco.py config.json
@@ -63,6 +64,8 @@ def guarda(im, f, salida):
 def recorta(c):
     im = np.array(Image.open(c['foto']).convert('RGB'))
     f = mascara(im, c['poli'], c.get('nucleo', 61), c.get('margen', 45)); info = ''
+    if c.get('soloDentro'):   # no sale del polígono (bordes rectos de un paquete sobre la tela)
+        d = np.zeros_like(f); cv2.fillPoly(d, [np.array(c['poli'], np.int32)], 1); f = f & d
     if 'linea' in c: f, info = baseDibujada(f, c['linea'], c['base'], c['razon'], c.get('filas', 150), c.get('desde'))
     return guarda(im, f, c['salida']), info
 
