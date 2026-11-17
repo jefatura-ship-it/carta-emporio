@@ -191,6 +191,19 @@ body.vermayor .mayor{display:block}
 .tuna{font-size:13px;font-weight:700;color:var(--campo)}
 .info small.tope{color:#b3261e;font-weight:700;font-size:12px;margin-top:3px}
 .tapas{grid-column:1/-1;display:flex;flex-direction:column;gap:6px;border-top:1px dashed var(--borde);padding-top:8px}
+/* Un producto en varios tamaños (saco kraft): una tarjeta con cuadritos para elegir el tamaño; al agregar uno se vuelve a elegir */
+.tallas{display:flex;flex-direction:column;gap:6px;margin:8px 0 4px}
+.tsz{display:flex;flex-wrap:wrap;gap:7px}
+.szchip{position:relative;width:42px;height:42px;padding:0;border:1.5px solid var(--campo);border-radius:9px;background:#fff;color:var(--campo);font-family:inherit;font-size:15px;font-weight:800;line-height:1;cursor:pointer;display:grid;place-items:center}
+.info .szchip small{display:block;font-size:9.5px;font-weight:700;letter-spacing:.02em;margin:0 0 1px;color:inherit}
+.szchip[aria-pressed="true"]{background:var(--campo);color:#fff}
+.szchip.sin{border-color:#b3261e;color:#b3261e}
+.szchip.sin[aria-pressed="true"]{background:#b3261e;color:#fff}
+.szchip:focus-visible{outline:3px solid var(--sol);outline-offset:2px}
+.szchip .szn{position:absolute;top:-8px;right:-8px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--sol-t);color:#fff;font-size:11px;font-weight:800;line-height:19px;text-align:center;box-shadow:0 0 0 2px #fff}
+.info small.varped{color:var(--campo);font-weight:700;font-size:12px;line-height:1.35}
+.paso.pista-var{display:flex}
+.paso.pista-var span{flex:1;display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 18px;border:1.5px dashed var(--borde);border-radius:12px;color:var(--suave);font-size:15px;font-weight:700;white-space:nowrap}
 .tapa{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
 .tapa .tn{min-width:0;color:var(--campo);font-weight:600;line-height:1.3}
 .tapa .tn small{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;background:var(--masa);color:var(--campo);border-radius:5px;padding:1px 6px;margin-right:5px}
@@ -1957,6 +1970,7 @@ function escalones(p){ // por mayor de lo que no viene en paquete: desde 12 y 50
 function precioQ(p,q){let pr=precioBase(p),m=false;for(const e of escalones(p))if(q>=e.desde){pr=e.precio;m=true}return {pr,m}}
 const unidad=p=>/por kilo/i.test(p.detalle||"")?"kg":porUnidad(p)?"c/u":"";
 function precioHTML(p){
+  if(p.virtual)return p.precio==null?`<span class="precio pc">Precio por confirmar</span>`:`<span class="precio"><small class="u">Desde</small> ${clp(p.precio)} <small class="u">c/u</small></span>`;
   if(p.oferta!=null)return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(p.oferta)}${p.precio!=null?` <s>${clp(p.precio)}</s>`:""}</span>`;
   const base=precioBase(p);
   if(fmtDe(p)&&precioFmt(p,modoDe(p))!=null){const f=fmtInfo(p,modoDe(p)),po=precioFmt(p,f[0]);return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(po)} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">Sale a ${clp(Math.round(po/f[2]))} c/u</small>`}
@@ -1981,22 +1995,47 @@ const esFavCli=cod=>favCli.includes(cod);
 /* Foto del producto: al tocarla se abre la galería; «1/3» avisa cuántas fotos tiene */
 const fotosDe=p=>p.fotos&&p.fotos.length?p.fotos:(p.foto?[p.foto]:[]);
 const fotoHTML=p=>{const n=fotosDe(p).length;return `<button type="button" class="verfotos" data-galeria="${p.cod}" aria-label="Ver ${n>1?"las "+n+" fotos":"la foto"} de ${p.nombre}"><img src="${p.foto}" alt="" loading="lazy">${n>1?`<span class="nfotos" aria-hidden="true">1/${n}</span>`:""}</button>`};
-const card=(p,c)=>`
-      <article class="prod${agotado(p)?" agotado":""}${p.oferta!=null||p.ofertaFmt||p.promo?" oferta":""}" data-prod="${p.cod}"${c===FAV?"":` id="p-${p.cod}"`}><button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>
+/* Productos que se venden en varios tamaños (pedido de David, 17/11/2026): en la carta van en UNA tarjeta con cuadritos para
+   elegir el tamaño. Cada tamaño sigue siendo su propio producto (su código de MyPyme, precio, foto y línea en el pedido).
+   Al agregar un tamaño la tarjeta vuelve a quedar sin elegir, por si el cliente quiere llevar otro tamaño. */
+const VARIANTES=[{id:"saco-kraft",nombre:"Saco kraft",re:/^saco kraft (n° ?(\d+))$/i,foto:"../img/productos/fotos/saco-kraft.webp"}];
+const VARG={}, varSel={};
+VARIANTES.forEach(v=>{const ms=L.productos.filter(p=>!p.retirado&&!esPieza(p)&&v.re.test(p.nombre));if(ms.length<2)return;
+  ms.sort((a,b)=>+a.nombre.match(v.re)[2]- +b.nombre.match(v.re)[2]);
+  ms.forEach(p=>{p.var=v.id;p.talla=p.nombre.match(v.re)[1]});
+  const prs=ms.map(precioDe).filter(x=>x!=null);
+  const vp={cod:"VAR-"+v.id,nombre:v.nombre,cat:ms[0].cat,catBase:ms[0].catBase,detalle:"Precio por unidad",precio:prs.length?Math.min(...prs):null,virtual:true,var:v.id,foto:v.foto,fotos:[v.foto,...ms.map(p=>p.foto).filter(Boolean)]};
+  PROD[vp.cod]=vp;VARG[v.id]={nombre:v.nombre,ms,vp}});
+const tallasHTML=g=>{const v=VARG[g],s=varSel[g];
+  return `<div class="tallas"><span class="tl">Elige el tamaño</span><div class="tsz" role="group" aria-label="Tamaño de ${v.nombre}">${v.ms.map(p=>`<button type="button" class="szchip${agotado(p)?" sin":""}" data-vg="${g}" data-varsel="${p.cod}" aria-pressed="${p.cod===s}" aria-label="${p.talla}"><span aria-hidden="true"><small>N°</small>${p.talla.replace(/^n° ?/i,"")}</span><span class="szn" aria-hidden="true" hidden></span></button>`).join("")}</div><small class="varped" aria-live="polite" hidden></small></div>`};
+const cardVar=g=>card((varSel[g]&&PROD[varSel[g]])||VARG[g].vp,null,g);
+// tarjetas de una lista: los tamaños de un mismo producto salen una sola vez, en una tarjeta con cuadritos
+const cardsDe=(lista,c,ya=new Set())=>lista.map(p=>{if(!p.var||!VARG[p.var])return card(p,c);if(ya.has(p.var))return "";ya.add(p.var);return cardVar(p.var)}).join("");
+const nProd=l=>new Set(l.map(p=>p.var&&VARG[p.var]?"VAR-"+p.var:p.cod)).size;
+// cuadritos: cuántos lleva de cada tamaño, y el resumen «En tu pedido»
+function pintaVar(a){const v=VARG[a.dataset.var];if(!v)return;const lle=[];
+  v.ms.forEach(p=>{const q=unidadesEn(p),b=a.querySelector(`button[data-varsel="${p.cod}"]`);
+    if(b){const n=b.querySelector(".szn");n.hidden=!q;n.textContent=q>99?"99+":q;b.setAttribute("aria-label",p.talla+(q?`, ${q} en tu pedido`:""))}
+    if(q)lle.push(`${p.talla} × ${q}`)});
+  const t=a.querySelector(".varped");if(t){t.hidden=!lle.length;t.textContent=lle.length?"En tu pedido: "+lle.join(" · "):""}
+  a.classList.toggle("on",lle.length>0)}
+const repintarVar=g=>{document.querySelectorAll(`article[data-var="${g}"]`).forEach(a=>{a.outerHTML=cardVar(g)});refrescar()};
+const card=(p,c,vg)=>`
+      <article class="prod${vg?" var":""}${agotado(p)?" agotado":""}${p.oferta!=null||p.ofertaFmt||p.promo?" oferta":""}" data-prod="${p.cod}"${vg?` data-var="${vg}"`:c===FAV?"":` id="p-${p.cod}"`}>${p.virtual?"":`<button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>`}
         <div class="ico">${p.foto?fotoHTML(p):((ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}</div>
-        <div class="info"><small class="tipo-p">${p.cat}</small><b>${p.nombre}</b>${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.sinStock?"Stock 0 en el conteo":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
-        <div class="paso vacio">
+        <div class="info"><small class="tipo-p">${p.cat}</small><b>${vg?VARG[vg].nombre:p.nombre}</b>${vg?tallasHTML(vg):""}${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.sinStock?"Stock 0 en el conteo":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
+        ${p.virtual?`<div class="paso vacio pista-var"><span>Elige un tamaño</span></div>`:`<div class="paso vacio">
           <button class="menos" data-cod="${p.cod}" data-d="-1" aria-label="Quitar ${p.nombre}">−</button>
           <input class="cant" type="number" inputmode="numeric" min="0" step="1" data-q="${p.cod}" value="0" aria-label="Cantidad de ${p.nombre}${tienePaq(p)?" (en la modalidad elegida)":""}">
           <button class="mas" data-cod="${p.cod}" data-d="1" aria-label="Agregar ${p.nombre}">+</button>
-        </div>${tapasHTML(p)}
+        </div>`}${tapasHTML(p)}
       </article>`;
 $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}" data-fam="${FAV}" aria-current="true">★ ${FAV}</button>`:"")+FAMS.map(([f,l])=>`<button class="chip" data-ir="${slug(l[0])}" data-fam="${f}" aria-current="false">${f}</button>`).join("");
 /* Menú «Ver todo»: todas las secciones, pedidos a la avícola, la página web y los Instagram */
 (()=>{const bt=$("catMenu"),mn=$("menuCats");
   const ig=[["emporio.sabroso","Emporio Sabroso"],["pollitasoroverde","Pollitas Oro Verde"]];
   mn.innerHTML=`<section class="mbloque mcuenta" aria-label="Mi cuenta"><h3>Mi cuenta</h3><div class="mcuenta-in"></div></section>`
-    +`<section class="mbloque" aria-label="Productos"><h3>Productos</h3><button type="button" class="mofertas"${favs.length?` data-ir="${slug(FAV)}"`:""}><span class="mo-et" aria-hidden="true">%</span><span><b>Ofertas y promos</b><small>${favs.length?`${favs.length} producto${favs.length===1?"":"s"} con precio especial`:"Pronto tendremos ofertas"}</small></span></button><div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${(n=>n===1?"1 producto":n+" productos")(l.reduce((t,x)=>t+deCat(x).length,0))}</small></button>`).join("")}</div></section>`
+    +`<section class="mbloque" aria-label="Productos"><h3>Productos</h3><button type="button" class="mofertas"${favs.length?` data-ir="${slug(FAV)}"`:""}><span class="mo-et" aria-hidden="true">%</span><span><b>Ofertas y promos</b><small>${favs.length?`${favs.length} producto${favs.length===1?"":"s"} con precio especial`:"Pronto tendremos ofertas"}</small></span></button><div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${(n=>n===1?"1 producto":n+" productos")(l.reduce((t,x)=>t+nProd(deCat(x)),0))}</small></button>`).join("")}</div></section>`
     +`<section class="mbloque" aria-label="Tu pedido"><h3>Tu pedido</h3><button type="button" class="mpedido"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg>Ver y editar mi pedido</button></section>`
     +`<section class="mbloque" aria-label="Pedidos a la avícola"><h3>Pedidos a la avícola</h3><div class="mgrid uno"><button type="button" class="dest" data-ir="avicola">Pollitas de 14 semanas y alimento para aves</button></div></section>`
     +`<section class="mbloque" aria-label="Conócenos"><h3>Conócenos</h3><div class="mgrid"><a href="../">Nuestra página web</a>${ig.map(([u,n])=>`<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">Instagram ${n}</a>`).join("")}</div></section>`;
@@ -2008,7 +2047,7 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
   mn.addEventListener("click",e=>{
     const fb=e.target.closest(".famBtn");
     if(fb){const [f,l]=FAMS[+fb.dataset.fam];famAbierta=fb.dataset.fam;
-      n2.innerHTML=`<button type="button" class="nivVolver"><span aria-hidden="true">←</span> Volver al menú</button><h3>${f}</h3><div class="mgrid">${l.map(x=>`<button type="button" data-ir="${slug(x)}"><span>${x}</span><small>${deCat(x).length} producto${deCat(x).length===1?"":"s"}</small></button>`).join("")}</div>`;
+      n2.innerHTML=`<button type="button" class="nivVolver"><span aria-hidden="true">←</span> Volver al menú</button><h3>${f}</h3><div class="mgrid">${l.map(x=>`<button type="button" data-ir="${slug(x)}"><span>${x}</span><small>${nProd(deCat(x))} producto${nProd(deCat(x))===1?"":"s"}</small></button>`).join("")}</div>`;
       n1.hidden=true;n2.hidden=false;tit.textContent=f;$("menuScroll").scrollTop=0;n2.querySelector(".nivVolver").focus({preventScroll:true});return}
     if(e.target.closest(".nivVolver")){nivel1(true);const b=n1.querySelector(`.famBtn[data-fam="${famAbierta}"]`);if(b)b.focus({preventScroll:true})}
   });
@@ -2063,7 +2102,7 @@ $("carta").innerHTML=cats.map(c=>`
   <section class="grupo${FOTOS[c]?" foto":""}" id="g-${slug(c)}"${FOTOS[c]?` style="--foto:url(../img/${FOTOS[c]})"`:""}>
     ${c!==FAV&&famDe(c)?`<p class="fam-et">${famDe(c)}</p>`:""}<h2>${c===FAV?ICONOS._fav:(ICONOS[BASEDE[c]||c]||(c==="Hueveras"?ICONOS.Huevos:ICONOS._))}${c}</h2>
     ${(()=>{const l=c===FAV?null:(FAMS.find(([,x])=>x.includes(c))||[])[1];return l&&l.length>1?`<div class="subfam" role="group" aria-label="Páginas de ${famDe(c)}">${l.map(x=>`<button type="button" data-sec="g-${slug(x)}"${x===c?' aria-current="true"':""}>${x}</button>`).join("")}</div>`:""})()}
-    <div class="lista">${deCat(c).map(p=>card(p,c)).join("")}</div>
+    <div class="lista">${cardsDe(deCat(c),c)}</div>
   </section>`).join("");
 /* La carta va sección por sección: se ve una a la vez y al final de cada una hay botones para pasar a la anterior o a la siguiente */
 const SECC=[...document.querySelectorAll("#carta .grupo")];
@@ -2121,13 +2160,13 @@ verSeccion(leePref("seccion-"+KEY)||SECC[0].id,{desplazar:false});
     // productos parecidos: otros de las mismas secciones que lo encontrado
     const vistos=new Set(lista.map(p=>p.cod)),secs=[...new Set(lista.map(p=>p.cat))];
     const tambien=exactos.length?visibles.filter(p=>secs.slice(0,2).includes(p.cat)&&!vistos.has(p.cod)).slice(0,6):[];
-    const t=txt.replace(/[<>&"]/g,"");
+    const t=txt.replace(/[<>&"]/g,""),ya=new Set(),htmlL=cardsDe(lista,FAV,ya),htmlT=cardsDe(tambien,FAV,ya),nl=nProd(lista);
     res.innerHTML=`<h2 id="resTit">${lista.length?(exactos.length?`Resultados para «${t}»`:`No encontramos «${t}» tal cual; quizás buscabas:`):`No encontramos «${t}»`}</h2>`
-      +(lista.length?`<p class="res-n">${lista.length} producto${lista.length===1?"":"s"}${secs.length?" en: ":""}${secs.slice(0,6).map(cn=>`<button type="button" class="res-sec" data-sec="g-${slug(cn)}">${cn}</button>`).join("")}</p>`:`<p class="res-n">Prueba con otra palabra, por ejemplo «vaso», «huevo» o «aluminio»; también puedes revisar todas las secciones en el menú.</p>`)
-      +`<div class="lista">${lista.map(p=>card(p,FAV)).join("")}</div>`
-      +(tambien.length?`<h3 class="res-tb">También te puede servir</h3><div class="lista">${tambien.map(p=>card(p,FAV)).join("")}</div>`:"");
+      +(lista.length?`<p class="res-n">${nl} producto${nl===1?"":"s"}${secs.length?" en: ":""}${secs.slice(0,6).map(cn=>`<button type="button" class="res-sec" data-sec="g-${slug(cn)}">${cn}</button>`).join("")}</p>`:`<p class="res-n">Prueba con otra palabra, por ejemplo «vaso», «huevo» o «aluminio»; también puedes revisar todas las secciones en el menú.</p>`)
+      +`<div class="lista">${htmlL}</div>`
+      +(htmlT?`<h3 class="res-tb">También te puede servir</h3><div class="lista">${htmlT}</div>`:"");
     refrescar();
-    estado.textContent=lista.length?`${lista.length} producto${lista.length===1?"":"s"} encontrado${lista.length===1?"":"s"}`:"Sin resultados";
+    estado.textContent=lista.length?`${nl} producto${nl===1?"":"s"} encontrado${nl===1?"":"s"}`:"Sin resultados";
   };
   let espera=0;q.addEventListener("input",()=>{clearTimeout(espera);espera=setTimeout(busca,140)});
   q.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();busca();q.blur()}if(e.key==="Escape"){q.value="";busca()}});
@@ -2136,7 +2175,7 @@ verSeccion(leePref("seccion-"+KEY)||SECC[0].id,{desplazar:false});
   res.addEventListener("click",e=>{if(e.target.closest("button[data-sec]")){q.value="";borrar.hidden=true;res.hidden=true;res.innerHTML="";estado.textContent=""}});
   window.limpiarBusqueda=()=>{if(q.value||!res.hidden){q.value="";borrar.hidden=true;res.hidden=true;res.innerHTML="";estado.textContent=""}};
 })();
-const repintar=p=>{document.querySelectorAll(`article[data-prod="${p.cod}"]`).forEach(a=>{a.outerHTML=card(p,a.id?null:FAV)});refrescar()};
+const repintar=p=>{document.querySelectorAll(`article[data-prod="${p.cod}"]`).forEach(a=>{a.outerHTML=a.dataset.var?cardVar(a.dataset.var):card(p,a.id?null:FAV)});refrescar()};
 function ajustarTope(p){const tp=topeDe(p);if(tp==null)return;const kp=clave(p.cod,"P");
   while(unidadesEn(p)>tp){if(cart[p.cod]){if(!--cart[p.cod])delete cart[p.cod]}else if(cart[kp]){if(!--cart[kp])delete cart[kp]}else break}guardar()}
 /* tras repintar una tarjeta, el foco vuelve al mismo botón (en la carta o en el carro) */
@@ -2158,6 +2197,9 @@ function clickTarjeta(e){
   const cont=e.currentTarget;
   const mo=e.target.closest("button[data-modo]");
   if(mo){const p=PROD[mo.dataset.mcod];modo[p.cod]=mo.dataset.modo;guardaPref("modos-"+KEY,JSON.stringify(modo));repintar(p);reenfocar(cont,`button[data-mcod="${p.cod}"][data-modo="${mo.dataset.modo}"]`);return}
+  const vs=e.target.closest("button[data-varsel]");
+  if(vs){const g=vs.dataset.vg,c=vs.dataset.varsel;varSel[g]=varSel[g]===c?null:c;repintarVar(g);
+    const ch=document.querySelector(`#carta .grupo:not([hidden]) button[data-vg="${g}"][data-varsel="${c}"]`);if(ch)ch.focus({preventScroll:true});return}
   const s=e.target.closest("button[data-seltapa]");
   if(s){const p=PROD[s.dataset.selenv];tapaSel[p.cod]=s.dataset.seltapa;guardaPref("tapas-"+KEY,JSON.stringify(tapaSel));ajustarTope(p);repintar(p);reenfocar(cont,`button[data-selenv="${p.cod}"][data-seltapa="${s.dataset.seltapa}"]`);return}
   const b=e.target.closest("button[data-cod]"); if(!b)return;
@@ -2165,6 +2207,10 @@ function clickTarjeta(e){
   if(d>0&&tp!=null&&unidadesEn(p)+porDe(p,m)>tp){avisaCarro(`No queda más stock de ${p.nombre}`,false);return}   // no alcanza el stock (envase con tapa: manda el menor)
   const n=Math.max(0,(cart[k]||0)+d); if(n)cart[k]=n; else delete cart[k];
   guardar(); refrescar();
+  /* tarjeta de varios tamaños: al agregar un tamaño nuevo se vuelve a elegir (el cuadrito queda marcado con lo que lleva) */
+  const av=b.closest("article[data-var]");
+  if(av&&d>0&&n===1&&cont.id==="carta"){const g=av.dataset.var;varSel[g]=null;repintarVar(g);celebraAgregado(VARG[g].vp,k,b);
+    const ch=document.querySelector(`#carta .grupo:not([hidden]) button[data-vg="${g}"][data-varsel="${p.cod}"]`);if(ch)ch.focus({preventScroll:true});return}
   if(d>0&&cont.id==="carta")celebraAgregado(p,k,b);
 }
 /* La cantidad también se puede escribir: al salir del campo (o con Enter) se ajusta al stock disponible */
@@ -2291,7 +2337,7 @@ function mostrarLista(titulo,prods,vacio){const res=$("resBusca");if(!res)return
     const nom=esRes?(g.querySelector("h2")||{}).textContent||"Resultados":nomSec(g),fam=esRes?"":(nom===FAV?"":famDe(nom)||"");
     $("flFam").textContent=fam;$("flTit").textContent=nom;
     const l=fam?(FAMS.find(([f])=>f===fam)||[])[1]:null;$("flPags").hidden=!(l&&l.length>1);
-    if(l)$("flPagsIn").innerHTML=l.map(x=>`<button type="button" data-sec="g-${slug(x)}"${x===nom?' aria-current="true"':""}>${x}<small>${deCat(x).length}</small></button>`).join("");
+    if(l)$("flPagsIn").innerHTML=l.map(x=>`<button type="button" data-sec="g-${slug(x)}"${x===nom?' aria-current="true"':""}>${x}<small>${nProd(deCat(x))}</small></button>`).join("");
     // formas de venta presentes en la página
     const fs=new Map();[...g.querySelectorAll(".lista>article.prod")].forEach(a=>{const p=PROD[a.dataset.prod];if(p){const f=forma(p);fs.set(f,(fs.get(f)||0)+1)}});
     est.formas.forEach(f=>{if(!fs.has(f))est.formas.delete(f)});
@@ -2360,6 +2406,7 @@ function refrescar(){
       const ep=a.querySelector(".enped"); if(ep){ep.hidden=!otra;ep.textContent=!otra?"":fmtDe(p)?`Además llevas ${otra}`:m==="P"?`Además llevas ${otra} u sueltas`:`Además llevas ${otra} paquete${otra>1?"s":""}`}
     });
   });
+  document.querySelectorAll("article[data-var]").forEach(pintaVar);
   const n=items().reduce((a,x)=>a+x.q,0);
   $("cuenta").textContent=n?`${n} producto${n>1?"s":""}`:"Tu pedido está vacío";
   $("totalBarra").textContent=clp(totalFinal());
