@@ -6,10 +6,10 @@
 import sys, json, numpy as np, cv2
 from PIL import Image
 HUESO = np.array([251, 246, 236], np.float32)
-def recorta(ruta, poli, salida, margen=35, brillo=1.5, suave=25, q=8):
+def recorta(ruta, poli, salida, margen=35, brillo=1.5, suave=25, q=8, soloPoligono=False):
     im = np.asarray(Image.open(ruta).convert('RGB')); H, W = im.shape[:2]; f = im.astype(np.float32)
-    P = np.array(poli, np.int32)
-    dentro = np.zeros((H, W), np.uint8); cv2.fillPoly(dentro, [P], 1)
+    polis = poli if isinstance(poli[0][0], list) else [poli]
+    dentro = np.zeros((H, W), np.uint8); [cv2.fillPoly(dentro, [np.array(x, np.int32)], 1) for x in polis]
     cerca = cv2.dilate(dentro, np.ones((2 * margen + 1, 2 * margen + 1), np.uint8))
     tela = (np.minimum(f[..., 0], f[..., 1]) - f[..., 2] > 18) & (f.mean(axis=2) > 90)
     m = np.full((H, W), cv2.GC_BGD, np.uint8); m[cerca == 1] = cv2.GC_PR_BGD; m[dentro == 1] = cv2.GC_PR_FGD
@@ -21,6 +21,8 @@ def recorta(ruta, poli, salida, margen=35, brillo=1.5, suave=25, q=8):
     n, lab, st, _ = cv2.connectedComponentsWithStats(k); k = (lab == 1 + np.argmax(st[1:, cv2.CC_STAT_AREA])).astype(np.uint8)
     # huecos: lo que no toca el borde de la foto (con un marco de 1 px, así la tela bajo la base no queda «encerrada»)
     inv = np.pad(1 - k, 1, constant_values=1); ff = np.zeros((H + 4, W + 4), np.uint8); cv2.floodFill(inv, ff, (0, 0), 2); k = np.where(inv[1:-1, 1:-1] == 2, 0, 1).astype(np.uint8)
+    # fotos borrosas: el corte automático deja bultos; se usa el polígono mismo, con las esquinas redondeadas
+    if soloPoligono: k = (cv2.GaussianBlur(dentro.astype(np.float32), (0, 0), 6) > 0.5).astype(np.uint8)
     L = f.mean(axis=2)
     yy, xx = np.mgrid[0:H, 0:W].astype(np.float32); yy /= H; xx /= W
     # luz del fondo detrás del producto: se rellena la zona del producto con lo que la rodea (inpaint en chico) y se suaviza
@@ -44,4 +46,4 @@ def recorta(ruta, poli, salida, margen=35, brillo=1.5, suave=25, q=8):
     return w, h
 if __name__ == '__main__':
     cfg = json.load(open(sys.argv[1], encoding='utf-8'))
-    for nombre, c in cfg.items(): print(nombre, recorta(c['foto'], c['poli'], c['salida'], brillo=c.get('brillo', 1.5), suave=c.get('suave', 25), q=c.get('q', 8)))
+    for nombre, c in cfg.items(): print(nombre, recorta(c['foto'], c['poli'], c['salida'], brillo=c.get('brillo', 1.5), suave=c.get('suave', 25), q=c.get('q', 8), soloPoligono=c.get('soloPoligono', False)))
