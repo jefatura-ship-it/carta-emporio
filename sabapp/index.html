@@ -173,6 +173,21 @@ button{font:inherit;cursor:pointer}
 .adm-sis li{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--papel);font-size:14px}
 .adm-sis li span{color:var(--suave)}
 @media (max-width:560px){.adm-form{grid-template-columns:1fr}}
+/* Stock bajo (18/11/2026) */
+.stock{margin:0 0 14px;padding:12px 14px;border:2px solid var(--rojo);border-radius:14px;background:#fff7f6}
+.stock h2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 8px;font-size:16px;color:var(--rojo)}
+.stock h2 small{font-size:12.5px;font-weight:600;color:var(--suave)}
+.st-lista{display:grid;gap:8px;margin:0;padding:0;list-style:none}
+.st-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:9px 10px;border-radius:10px;background:#fff;border:1px solid #f1cfcb}
+.st-item.cerrado{border-color:var(--linea);background:#f4f2ec}
+.st-nom b{font-size:15px}.st-nom small{display:block;color:var(--suave);font-size:12.5px}
+.st-q{font-weight:800;color:var(--rojo)}.st-q.cero{background:var(--rojo);color:#fff;border-radius:6px;padding:0 6px}
+.st-bts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.st-et{display:inline-block;padding:2px 8px;border-radius:999px;background:#e6f6ec;color:#14663a;font-size:12px;font-weight:800}
+.st-et.gris{background:#e8e6df;color:#3d3b35}
+.st-oc{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:#e6f6ec;font-size:13.5px}
+.st-oc a{font-weight:800;color:#14663a}
+@media (max-width:640px){.st-item{grid-template-columns:1fr}.st-bts{justify-content:flex-start}}
 @media (max-width:1100px){.tablero{grid-template-columns:repeat(2,minmax(240px,1fr))}}
 @media (max-width:640px){.tablero{grid-template-columns:1fr}.barra,.herr,.cuerpo{padding-left:12px;padding-right:12px}}
 </style>
@@ -267,7 +282,7 @@ try { vistos = JSON.parse(localStorage.getItem('panel-vistos') || 'null'); sonid
    se entra con correo + RUT y se habla con el script por su API, con la sesión de este PC (no se guarda el RUT). */
 var API_SABAPP = 'https://script.google.com/macros/s/AKfycbzezlxDUrWOtHP-LQWa_2iiL8sBrNz6UsqvweuQri5XO_lKC6MipFCfm8eNyZfslMmi/exec'; // la pone herramientas/sabapp/construir.js en la página de avicolasb.com
 var MODO_API = !(window.google && google.script && google.script.run);
-var ACCIONES = { panelDatos: 'datos', panelCambiar: 'cambiar', panelAsignar: 'asignar', panelAvisado: 'avisado' };
+var ACCIONES = { panelDatos: 'datos', panelCambiar: 'cambiar', panelAsignar: 'asignar', panelAvisado: 'avisado', panelStock: 'stock' };
 var sesion = ''; try { sesion = localStorage.getItem('sabapp-sesion') || ''; } catch (e) {}
 function api(cuerpo) {
   return fetch(API_SABAPP, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(Object.assign({ tipo: 'sabapp' }, cuerpo)) })
@@ -561,7 +576,7 @@ function pintar() {
   var lista = datos.pedidos.filter(pasaFiltro);
   var foco = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.foco : null;
   var cols = COLUMNAS.map(function (c) { return plegadas[c.id] ? '56px' : 'minmax(240px,1fr)'; }).join(' ');
-  var html = '<section class="tablero" aria-label="Pedidos por estado" style="--cols:' + cols + '">' + COLUMNAS.map(function (c) {
+  var html = stockHTML() + '<section class="tablero" aria-label="Pedidos por estado" style="--cols:' + cols + '">' + COLUMNAS.map(function (c) {
     var ps = lista.filter(function (p) { return c.estados.indexOf(p.estado) >= 0; }).sort(orden);
     if (c.id === 'c-ce') ps = ps.reverse();
     var pl = !!plegadas[c.id], nuevo = ps.some(function (p) { return nuevos[p.codigo]; });
@@ -573,14 +588,71 @@ function pintar() {
   document.title = (activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length ? '(' + activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length + ') ' : '') + 'SabAPP';
 }
 
+// Stock bajo: productos que llegaron al 30 % de su stock ideal (o que se cerraron en la página).
+// Solo un administrador decide: «Cerrar en la página» (se puede reabrir) o «Pedir de inmediato» (orden de compra + correo a compras).
+var ultimaOC = null;
+function stockHTML() {
+  var st = datos && datos.stock;
+  if (!st || !st.items || !st.items.length) return ultimaOC ? '<section class="stock">' + ocHTML() + '</section>' : '';
+  var adm = !!datos.admin, bajos = st.items.filter(function (x) { return !x.cerrado; }).length;
+  return '<section class="stock" aria-labelledby="stTit"><h2 id="stTit">⚠ Stock bajo' + (bajos ? ' (' + bajos + ')' : '')
+    + '<small>Aviso al 30 % del stock ideal' + (st.cargado ? ' · stock de MyPyme cargado el ' + esc(st.cargado) : '') + '</small></h2><ul class="st-lista">'
+    + st.items.map(function (x) {
+      var pct = x.ideal ? Math.round(x.disp / x.ideal * 100) : 0, ocu = ocupado['st-' + x.cod];
+      var bts = !adm ? '<small class="st-et gris">Lo decide un administrador</small>'
+        : x.cerrado ? '<button type="button" class="b" data-stock="reabrir" data-cod="' + esc(x.cod) + '"' + (ocu ? ' disabled' : '') + '>Reabrir en la página</button>'
+        : '<button type="button" class="b" data-stock="cerrar" data-cod="' + esc(x.cod) + '"' + (ocu ? ' disabled' : '') + '>Cerrar en la página</button>'
+          + (x.oc ? '<span class="st-et">Pedido · ' + esc(x.oc) + '</span>'
+            : '<button type="button" class="b' + (seguro['st-' + x.cod] ? ' seguro' : ' prim') + '" data-stock="pedir" data-cod="' + esc(x.cod) + '"' + (ocu ? ' disabled' : '') + '>'
+              + (seguro['st-' + x.cod] ? '¿Seguro? Toca otra vez' : 'Pedir de inmediato') + '</button>');
+      var est = x.cerrado ? '<span class="st-et gris">Cerrado en la página' + (x.decidio ? ' por ' + esc(x.decidio) : '') + (x.decididoEl ? ' el ' + esc(x.decididoEl) : '') + '</span>'
+        + (x.oc ? ' <span class="st-et">Pedido · ' + esc(x.oc) + '</span>' : '') : '';
+      return '<li class="st-item' + (x.cerrado ? ' cerrado' : '') + '"><div class="st-nom"><b>' + esc(x.nombre || x.cod) + '</b>'
+        + '<small>' + esc(x.cod) + ' · quedan <span class="st-q' + (x.disp <= 0 ? ' cero' : '') + '">' + x.disp + '</span> de ' + x.ideal + ' (' + pct + ' %)'
+        + (x.proveedor ? ' · proveedor ' + esc(x.proveedor) : '') + '</small>' + est + '</div><div class="st-bts">' + bts + '</div></li>';
+    }).join('') + '</ul>' + ocHTML() + '</section>';
+}
+function ocHTML() {
+  if (!ultimaOC) return '';
+  var o = ultimaOC;
+  return '<p class="st-oc" role="status">Orden <b>' + esc(o.numero) + '</b> creada' + (o.errorCorreo ? ' (no se pudo enviar el correo)' : ' y enviada a ' + esc(o.correo || 'compras')) + '. '
+    + (o.enlace ? '<a href="' + esc(o.enlace) + '" target="_blank" rel="noopener">Enviar por WhatsApp al proveedor</a>'
+      : 'Falta el WhatsApp del proveedor en la hoja «Proveedores»: el mensaje quedó en «Órdenes de compra».') + '</p>';
+}
+function decidirStock(b) {
+  var cod = b.dataset.cod, dec = b.dataset.stock, k = 'st-' + cod;
+  if (dec === 'pedir' && !seguro[k]) { seguro[k] = true; pintar(); setTimeout(function () { if (seguro[k]) { delete seguro[k]; pintar(); } }, 4000); return; }
+  delete seguro[k]; ocupado[k] = true; pintar();
+  servidor('panelStock', [cod, dec], function (d) {
+    delete ocupado[k];
+    if (d.oc) ultimaOC = d.oc;
+    recibir(d); estadoConexion(true);
+    avisar(dec === 'cerrar' ? cod + ' quedó cerrado en la página' : dec === 'reabrir' ? cod + ' vuelve a estar en la página' : 'Orden ' + (d.oc ? d.oc.numero : '') + ' creada');
+  }, function (e) { delete ocupado[k]; pintar(); avisar('No se pudo: ' + (e && e.message || e)); });
+}
+
 // Título que minimiza o abre su columna (o recuadro)
 function titulo(id, texto, pl) {
   return '<button type="button" class="plegar" data-plegar="' + id + '" data-foco="pl-' + id + '" aria-expanded="' + !pl + '" title="' + (pl ? 'Mostrar' : 'Minimizar') + '"><span class="flecha" aria-hidden="true">▾</span>' + texto + '</button>';
 }
 
 // Mensajes para el cliente: «confirmado» (al recibir el pedido) y «listo» (para retirar)
+var esDespacho = function (p) { return /^Despacho/i.test(p.hora || ''); };
+var pagaTransf = function (p) { return /PAGO: TRANSFERENCIA/.test(p.comentario || ''); };
+var TRANSFERENCIA = 'Banco Santander, cuenta corriente 00002785369-2, Distribuidora Santa Bárbara SpA, RUT 77.586.055-3. Envíenos el comprobante por este chat o a distribuidora@avicolasb.com';
 function mensaje(p, tipo) {
   var nom = (p.cliente || '').split(' ')[0] || 'cliente';
+  if (esDespacho(p) || pagaTransf(p)) {
+    var fr = String(p.hora || '').replace(/^Despacho\s*/i, '').replace(/^0/, '').replace(/-0?/, ' a ');
+    var dir = (String(p.comentario || '').match(/DESPACHO .*? a (.+?)\. (PAGO|$)/) || [])[1] || '';
+    if (tipo === 'listo') return esDespacho(p)
+      ? 'Hola ' + nom + ', su pedido ' + p.codigo + ' de Emporio Sabroso ya va en camino' + (dir ? ' a ' + dir : '') + '. ¡Gracias por su compra!'
+      : 'Hola ' + nom + ', su pedido ' + p.codigo + ' ya está listo para retirar en Emporio Sabroso (Arturo Prat 720, Chillán, lunes a sábado de 8:30 a 17:00). ¡Lo esperamos!';
+    return 'Hola ' + nom + ', recibimos su pedido ' + p.codigo + ' en Emporio Sabroso. '
+      + (esDespacho(p) ? 'Se lo llevamos el ' + diaLargo(p.dia) + (fr ? ' entre ' + fr.replace(' a ', ' y ') : '') + (dir ? ' a ' + dir : '') + '. ' : 'Queda confirmado para retirar el ' + diaLargo(p.dia) + (/^\d/.test(p.hora || '') ? ' a las ' + p.hora : '') + '. ')
+      + 'El total a pagar es $' + Number(p.total || 0).toLocaleString('es-CL') + (esDespacho(p) ? ' (con el despacho incluido)' : '') + '. '
+      + 'Puede transferir a: ' + TRANSFERENCIA + '. ¡Gracias!';
+  }
   var cuando = diaLargo(p.dia) + (/^\d/.test(p.hora || '') ? ' a las ' + p.hora : '');
   if (tipo !== 'listo' && enLocal(p)) return 'Hola ' + nom + ', recibimos su pedido ' + p.codigo + ' en Emporio Sabroso y ya lo estamos preparando. ¡Gracias!';
   return tipo === 'listo'
@@ -605,6 +677,7 @@ function avisoAtiendePor(p) {
   return wspEnlace(p, 'listo') ? 'wsp' : '';
 }
 function asunto(p, tipo) {
+  if (tipo === 'listo' && esDespacho(p)) return 'Su pedido ' + p.codigo + ' va en camino · Emporio Sabroso';
   return tipo === 'listo' ? 'Su pedido ' + p.codigo + ' está listo para retirar · Emporio Sabroso' : 'Pedido ' + p.codigo + ' confirmado · Emporio Sabroso';
 }
 function correoEnlace(p, tipo) {
@@ -668,6 +741,7 @@ function tarjeta(p) {
     + '<div class="p-cli">' + esc(p.cliente || '(sin nombre)') + '</div>'
     + (p.celular || p.correo || p.codigoCliente ? '<div class="p-cel">' + esc([p.celular, p.correo, p.codigoCliente].filter(Boolean).join(' · ')) + '</div>' : '')
     + (enLocal(p) ? '<div class="p-ret local">🛍️ Está en el local · ' + esc(diaLargo(p.dia)) + ' ' + etiquetaDia(p.dia) + '</div>'
+      : esDespacho(p) ? '<div class="p-ret">🚚 Despacho ' + esc(diaLargo(p.dia)) + ' · ' + esc(String(p.hora).replace(/^Despacho\s*/i, '').replace(/-/, ' a ')) + ' ' + etiquetaDia(p.dia) + '</div>'
       : '<div class="p-ret">Retira ' + esc(diaLargo(p.dia)) + ' · ' + esc(p.hora || 'lo antes posible') + ' ' + etiquetaDia(p.dia) + '</div>')
     + chipPrepara(p, cerrado)
     + (p.avisoAtiende && p.prepara && !cerrado ? '<div class="p-avisado">✓ Le avisamos por ' + (p.avisoAtiende === 'correo' ? 'correo' : 'WhatsApp') + ' que ' + esc(p.avisoAtiendeQuien || p.prepara) + ' lo atiende</div>' : '')
@@ -789,6 +863,8 @@ document.addEventListener('click', function (e) {
     if (e.target.closest('[data-cerrar]') || e.target === $('modal')) cerrarModal();
     return;
   }
+  var stb = e.target.closest('button[data-stock]');
+  if (stb) { if (!stb.disabled) decidirStock(stb); return; }
   var asg = e.target.closest('button[data-asignar]');
   if (asg) { elegirQuienPrepara(asg.dataset.asignar, 'asignar'); return; }
   var pg = e.target.closest('[data-plegar]');

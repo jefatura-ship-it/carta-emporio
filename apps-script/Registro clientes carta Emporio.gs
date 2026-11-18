@@ -55,6 +55,9 @@
  * propiedades del script, así que un código de un cliente eliminado no se vuelve a dar.
  * Si alguien anota un cliente a mano, el menú "Asignar códigos faltantes" le pone el suyo.
  *
+ * STOCK DEL EMPORIO (desde el 18/11/2026): ver el bloque «Stock del Emporio y aviso de stock bajo» al final.
+ *  GET ?stock=emporio → {ok, cerrados:[códigos]}: la carta muestra esos productos «Agotado por ahora».
+ *
  * Esta planilla guarda datos personales: compartirla solo con quien la necesita.
  */
 
@@ -88,6 +91,7 @@ function doPost(e) {
     if (d.tipo === 'pedido') {
       limitar(tel || 'pedido-' + local);
       anotarPedido(d, tel, local);
+      if (local === LOCAL_STOCK) { try { recalcularStock_({ correo: true }); } catch (err) { /* el pedido ya quedó anotado */ } }
       respuesta = { ok: true };
       return ContentService.createTextOutput(JSON.stringify(respuesta)).setMimeType(ContentService.MimeType.JSON);
     }
@@ -109,7 +113,13 @@ function doPost(e) {
 }
 
 // Vendedores con acceso a la planilla: el Panel de pedidos. Cualquier otra persona: solo el aviso de que responde (sin datos).
-function doGet() {
+function doGet(e) {
+  // La carta pregunta qué productos están cerrados en la página por stock bajo (solo códigos, sin datos de nadie)
+  if (e && e.parameter && e.parameter.stock) {
+    let r;
+    try { r = { ok: true, cerrados: stockCerrados_() }; } catch (err) { r = { ok: false }; }
+    return ContentService.createTextOutput(JSON.stringify(r)).setMimeType(ContentService.MimeType.JSON);
+  }
   if (!vendedor()) return ContentService.createTextOutput('Registro de clientes de la carta: activo.');
   return HtmlService.createHtmlOutputFromFile('Panel')
     .setTitle('SabAPP')
@@ -249,7 +259,8 @@ function anotarPedido(d, tel, local) {
   const codCli = /^[ED]-(P)?\d{4,}$/.test(String(d.codigoCliente || '')) ? String(d.codigoCliente) : '';
   const its = (Array.isArray(d.items) ? d.items : []).slice(0, 100).map(function (x) {
     return { cod: texto(x.cod).slice(0, 20), nombre: textoLargo(x.nombre, 140), q: entero(x.q, 100000), uds: entero(x.uds, 1000000),
-      precio: x.precio == null || x.precio === '' ? '' : entero(x.precio, 10000000) };
+      precio: x.precio == null || x.precio === '' ? '' : entero(x.precio, 10000000),
+      tapa: texto(x.tapa).slice(0, 20), tapaNombre: textoLargo(x.tapaNombre, 100) };
   }).filter(function (x) { return x.q > 0; });
   if (!its.length) throw new Error('pedido vacío');
   const unidades = its.reduce(function (a, x) { return a + (x.uds || x.q); }, 0);
@@ -266,9 +277,12 @@ function anotarPedido(d, tel, local) {
   hoja.appendRow([false, fecha, hora, alta ? 'Alta' : 'Normal', cliente, tel ? texto(tel) : '', codCli, frecuente, veces, unidades, total || '',
     textoLargo(its.map(function (x) { return x.q + ' × ' + x.nombre; }).join(' · '), 2000), textoLargo(d.nota, 300), codigo, new Date(), 'Por confirmar', local, correoValido(d.correo), '']);
   hoja.getRange(hoja.getLastRow(), CP['Confirmado']).setDataValidation(casilla());
-  hojaDetalle().getRange(hojaDetalle().getLastRow() + 1, 1, its.length, COLUMNAS_DETALLE.length).setValues(its.map(function (x) {
-    return [fecha, hora, codigo, cliente, x.nombre, x.cod, x.q, x.uds || x.q, x.precio];
-  }));
+  const lineas = [];
+  its.forEach(function (x) {
+    lineas.push([fecha, hora, codigo, cliente, x.nombre, x.cod, x.q, x.uds || x.q, x.precio]);
+    if (x.tapa) lineas.push([fecha, hora, codigo, cliente, '↳ ' + (x.tapaNombre || 'Tapa') + ' (va con el envase)', x.tapa, x.uds || x.q, x.uds || x.q, '']);
+  });
+  hojaDetalle().getRange(hojaDetalle().getLastRow() + 1, 1, lineas.length, COLUMNAS_DETALLE.length).setValues(lineas);
   // Si ahora es frecuente, sus pedidos pendientes también pasan a prioridad alta
   if (frecuente === 'Sí' && filas.length) filas.forEach(function (f, i) {
     const mismo = tel ? celular(f[CP['Celular'] - 1]) === tel : String(f[CP['Cliente'] - 1]).toLowerCase() === cliente.toLowerCase();
@@ -407,6 +421,10 @@ function onEdit(e) {
   const r = e && e.range;
   if (!r || r.getNumRows() !== 1 || r.getNumColumns() !== 1 || r.getRow() < 2) return;
   const hoja = r.getSheet();
+  if (hoja.getName() === HOJA_STOCK && [CS['Stock ideal'], CS['Stock MyPyme']].indexOf(r.getColumn()) >= 0) {
+    try { recalcularStock_({ correo: false }); } catch (err) { /* se recalcula en el próximo pedido */ }
+    return;
+  }
   if (hoja.getName() !== HOJA_PEDIDOS || String(hoja.getRange(1, 1).getValue()) !== 'Confirmado') return;
   const fila = r.getRow();
   if (r.getColumn() === CP['Confirmado']) {
@@ -477,10 +495,20 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('SabAPP')
     .addItem('Trabajadores (correo y RUT)', 'abrirTrabajadores')
     .addToUi();
+  SpreadsheetApp.getUi().createMenu('Stock del Emporio')
+    .addItem('Cargar stock de MyPyme (pegado en «Carga MyPyme»)', 'cargarStockMyPyme')
+    .addItem('Recalcular ahora', 'recalcularStockMenu')
+    .addSeparator()
+    .addItem('Cerrar en la página el producto elegido', 'stockCerrarElegido')
+    .addItem('Pedir de inmediato el producto elegido', 'stockPedirElegido')
+    .addItem('Reabrir en la página el producto elegido', 'stockReabrirElegido')
+    .addSeparator()
+    .addItem('Preparar hojas de stock', 'prepararHojasStock')
+    .addToUi();
   try { vencerPendientes(hojaPedidos()); } catch (err) { /* sin permiso de edición: solo se ve */ }
 }
 
-function prepararHojas() { hojaClientes(); hojaSolicitudes(); hojaPedidos(); hojaDetalle(); hojaPorPreparar(); }
+function prepararHojas() { hojaClientes(); hojaSolicitudes(); hojaPedidos(); hojaDetalle(); hojaPorPreparar(); prepararHojasStock(); }
 
 // Borra las filas de "Clientes" que tienen SI en "Eliminar (verificado)" y cierra sus solicitudes.
 function eliminarVerificados() {
@@ -730,6 +758,12 @@ function sabappApi_(d) {
   if (d.accion === 'cambiar') return conRol(panelCambiar_(yo.nombre, a[0], a[1], a[2], a[3], a[4]));
   if (d.accion === 'asignar') return conRol(panelAsignar_(yo.nombre, a[0], a[1], a[2]));
   if (d.accion === 'avisado') return conRol(panelAvisado_(yo.nombre, a[0], a[1]));
+  if (d.accion === 'stock') {
+    if (!yo.admin) return { ok: false, error: 'Solo un administrador de SabAPP decide sobre el stock.' };
+    const oc = stockDecidir_(yo.nombre, a[0], a[1]), datos = panelDatos_(yo.nombre);
+    if (oc) datos.oc = oc;
+    return conRol(datos);
+  }
   // Panel de administrador (solo trabajadores con rol de administrador)
   if (['trabajadores', 'guardarTrabajador', 'quitarTrabajador', 'cerrarSesiones'].indexOf(d.accion) >= 0) {
     if (!yo.admin) return { ok: false, error: 'Solo un administrador de SabAPP puede hacer esto.' };
@@ -870,11 +904,11 @@ function htmlTrabajadores_() {
 }
 
 // Pedidos para el panel: los activos y los próximos, más los cerrados de las últimas dos semanas.
-function panelDatos() { return panelDatos_(exigirVendedor()); }
+function panelDatos() { const u = exigirVendedor(), d = panelDatos_(u); d.admin = ADMINS_SABAPP.indexOf(normCorreo_(u)) >= 0; return d; }
 function panelDatos_(usuario) {
   const libro = SpreadsheetApp.getActiveSpreadsheet();
   const hoja = hojaPedidos();
-  try { vencerPendientes(hoja); } catch (err) { /* cuenta solo de lectura */ }
+  try { if (vencerPendientes(hoja)) recalcularStock_({ correo: true }); } catch (err) { /* cuenta solo de lectura */ }
   const zona = libro.getSpreadsheetTimeZone();
   const hoy = Utilities.formatDate(new Date(), zona, 'yyyy-MM-dd');
   const n = hoja.getLastRow();
@@ -921,7 +955,9 @@ function panelDatos_(usuario) {
   }).filter(function (p) {
     return p.codigo && (['Por confirmar', 'Confirmado', 'Preparado'].indexOf(p.estado) >= 0 || p.dia >= hoy || p.recibido >= hace);
   });
-  return { usuario: usuario, hoy: hoy, ahora: Date.now(), vendedores: VENDEDORES, pedidos: pedidos };
+  let stock = { cargado: '', items: [] };
+  try { stock = stockPanel_(); } catch (err) { /* sin hoja de stock todavía */ }
+  return { usuario: usuario, hoy: hoy, ahora: Date.now(), vendedores: VENDEDORES, pedidos: pedidos, stock: stock };
 }
 
 // Cambia el estado de un pedido desde el panel (con la casilla al día y una nota de quién lo hizo y cuándo).
@@ -942,6 +978,7 @@ function panelCambiar_(usuario, codigo, estado, avisado, prepara, avisoWsp) {
     if (avisado === 'correo') anotarEnEstado(hoja, fila, 'Avisado por correo por ' + usuario);
     if (prepara) avisoAtiende = asignarPreparacion(hoja, fila, prepara, usuario, avisoWsp);
     hoja.getRange(fila, CP['Confirmado']).setValue(CONFIRMADOS.indexOf(estado) >= 0);
+    try { recalcularStock_({ correo: true }); } catch (err) { /* el cambio de estado ya quedó */ }
   } finally { candado.releaseLock(); }
   const d = panelDatos_(usuario);
   if (avisoAtiende) d.avisoAtiende = avisoAtiende;
@@ -1037,4 +1074,364 @@ function anotarEnEstado(hoja, fila, texto) {
   const celda = hoja.getRange(fila, CP['Estado']);
   const linea = texto + ' el ' + Utilities.formatDate(new Date(), SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'dd/MM/yyyy HH:mm');
   celda.setNote([linea, celda.getNote()].filter(String).join('\n').slice(0, 1000));
+}
+
+/* ---------- Stock del Emporio y aviso de stock bajo (18/11/2026, pedido de David) ----------
+   1. Cada mañana se pega en la hoja «Carga MyPyme» la exportación de inventario de MyPyme del Emporio (la tabla completa,
+      con sus encabezados) y se usa el menú «Stock del Emporio › Cargar stock de MyPyme». Se repite 1 o 2 veces en el día
+      para corregir con lo vendido en el mesón (boletas de MyPyme).
+   2. Disponible = stock de MyPyme − unidades de los pedidos del catálogo que MyPyme todavía no descontó: los que estaban
+      pendientes al cargar y los que llegaron después (sin «Anulado» ni «No llegó»). Las tapas que van con su envase también.
+   3. Solo los productos con «Stock ideal» (columna que llena David) tienen aviso: cuando el disponible llega al 30 % del
+      ideal queda en STOCK BAJO (o AGOTADO): recuadro en SabAPP, correo a CORREO_STOCK y la fila en rojo.
+   4. Decisiones (SabAPP, administradores, o el menú de la planilla con la fila elegida):
+      · Cerrar en la página → la carta lo muestra «Agotado por ahora» y no deja agregarlo.
+      · Pedir de inmediato → orden de compra en «Órdenes de compra» y correo a CORREO_COMPRAS con el mensaje de WhatsApp
+        listo para el proveedor (proveedor de la columna «Proveedor»; su WhatsApp, en la hoja «Proveedores»).
+      Si una carga nueva deja el producto sobre el 30 %, se reabre solo y el aviso queda listo para la próxima vez. */
+const HOJA_STOCK = 'Stock del día', HOJA_CARGA = 'Carga MyPyme', HOJA_PROVEEDORES = 'Proveedores', HOJA_OC = 'Órdenes de compra';
+const UMBRAL_STOCK = 0.30;
+const CORREO_STOCK = 'jefatura@avicolasb.com';   // recibe el aviso de stock bajo
+const CORREO_COMPRAS = 'jefatura@avicolasb.com'; // recibe las órdenes de compra (cambiar por el correo de quien compra)
+const LOCAL_STOCK = 'emporio';
+const SABAPP_URL = 'https://www.avicolasb.com/sabapp/';
+const COLUMNAS_STOCK = ['Código', 'Producto', 'Proveedor', 'Stock ideal', 'Stock MyPyme', 'Cargado el', 'Pedidos del catálogo', 'Disponible',
+  '% del ideal', 'Estado', 'Cerrado en la página', 'Orden de compra', 'Decidió', 'Decidido el', 'Avisado el'];
+const COLUMNAS_CARGA_AYUDA = ['Pegue aquí la exportación de inventario de MyPyme (desde la celda A1, con sus encabezados) y use el menú Stock del Emporio › Cargar stock de MyPyme.'];
+const COLUMNAS_PROVEEDORES = ['Proveedor', 'Contacto', 'WhatsApp', 'Correo'];
+const COLUMNAS_OC = ['N.º OC', 'Fecha', 'Proveedor', 'Código', 'Producto', 'Cantidad a pedir', 'Disponible al pedir', 'Stock ideal', 'Pidió',
+  'Estado', 'WhatsApp del proveedor', 'Mensaje para WhatsApp', 'Enlace de WhatsApp'];
+const CS = {}; COLUMNAS_STOCK.forEach(function (n, i) { CS[n] = i + 1; });
+const ESTADO_OK = 'OK', ESTADO_BAJO = 'STOCK BAJO', ESTADO_AGOTADO = 'AGOTADO', ESTADO_SIN_IDEAL = 'Sin stock ideal (sin aviso)', ESTADO_SIN_DATOS = 'No vino en la última carga';
+
+function hojaStock_() {
+  const nueva = !SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_STOCK);
+  const hoja = hojaCon(HOJA_STOCK, COLUMNAS_STOCK);
+  if (nueva) formatoStock_(hoja);
+  return hoja;
+}
+function hojaProveedores_() { return hojaCon(HOJA_PROVEEDORES, COLUMNAS_PROVEEDORES); }
+function hojaOC_() { return hojaCon(HOJA_OC, COLUMNAS_OC); }
+function hojaCarga_() {
+  const libro = SpreadsheetApp.getActiveSpreadsheet();
+  let hoja = libro.getSheetByName(HOJA_CARGA);
+  if (!hoja) { hoja = libro.insertSheet(HOJA_CARGA); hoja.getRange(1, 1).setValue(COLUMNAS_CARGA_AYUDA[0]).setFontWeight('bold'); }
+  return hoja;
+}
+function prepararHojasStock() { hojaStock_(); hojaCarga_(); hojaProveedores_(); hojaOC_(); formatoStock_(hojaStock_()); }
+
+// Formato de «Stock del día»: porcentaje, fechas, colores por estado y la columna de stock ideal destacada para llenarla.
+function formatoStock_(hoja) {
+  const filas = Math.max(hoja.getMaxRows() - 1, 1);
+  hoja.getRange(2, CS['% del ideal'], filas, 1).setNumberFormat('0%');
+  [CS['Cargado el'], CS['Decidido el'], CS['Avisado el']].forEach(function (c) { hoja.getRange(2, c, filas, 1).setNumberFormat('dd/MM HH:mm'); });
+  hoja.getRange(1, CS['Stock ideal']).setBackground('#fff2cc').setNote('Lo llena David: la cantidad normal que debe haber de este producto. El aviso salta al llegar al 30 %.');
+  hoja.getRange(1, CS['Proveedor']).setBackground('#fff2cc').setNote('Nombre del proveedor igual que en la hoja «Proveedores» (ahí va su WhatsApp).');
+  const col = function (n) { return hoja.getRange(2, CS[n], filas, 1); };
+  const regla = function () { return SpreadsheetApp.newConditionalFormatRule(); };
+  hoja.setConditionalFormatRules([
+    regla().whenTextEqualTo(ESTADO_AGOTADO).setBackground('#b3261e').setFontColor('#ffffff').setBold(true).setRanges([col('Estado')]).build(),
+    regla().whenTextEqualTo(ESTADO_BAJO).setBackground('#fbe1de').setFontColor('#b3261e').setBold(true).setRanges([col('Estado')]).build(),
+    regla().whenTextEqualTo(ESTADO_OK).setFontColor('#1f5f3a').setRanges([col('Estado')]).build(),
+    regla().whenTextEqualTo('Sí').setBackground('#e8e6df').setBold(true).setRanges([col('Cerrado en la página')]).build()
+  ]);
+  hoja.setColumnWidth(CS['Producto'], 260);
+  hoja.setColumnWidth(CS['Estado'], 170);
+}
+
+function numeroCarga_(v) {
+  if (typeof v === 'number') return v;
+  const s = String(v == null ? '' : v).trim().replace(/\s/g, '');
+  if (!s) return NaN;
+  return Number(/,\d{1,3}$/.test(s) ? s.replace(/\./g, '').replace(',', '.') : s.replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
+}
+
+// Lee la exportación pegada en «Carga MyPyme»: busca las columnas de código, nombre y stock (en ese orden de preferencia:
+// «Total todas las bodegas», «Stock», «Existencia», «Saldo», «Cantidad»). Si viene una fila por bodega, suma por código.
+function leerCarga_() {
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_CARGA);
+  if (!hoja || hoja.getLastRow() < 2) throw new Error('Pegue primero la exportación de inventario de MyPyme en la hoja «' + HOJA_CARGA + '».');
+  const datos = hoja.getDataRange().getValues();
+  const prefer = [/total todas las bodegas/, /^stock\b/, /existencia/, /^saldo/, /^cantidad/];
+  for (let i = 0; i < Math.min(15, datos.length); i++) {
+    const enc = datos[i].map(function (v) { return String(v).trim().toLowerCase(); });
+    const cCod = enc.findIndex(function (v) { return /^c[oó]d(igo|\.)?(\s|$)/.test(v) && !/barra/.test(v); });
+    if (cCod < 0) continue;
+    const cNom = enc.findIndex(function (v, j) { return j !== cCod && /^(nombre|descripci|art[ií]culo|producto)/.test(v); });
+    let cSt = -1;
+    for (let k = 0; k < prefer.length && cSt < 0; k++) cSt = enc.findIndex(function (v) { return prefer[k].test(v); });
+    if (cSt < 0) throw new Error('No encontré la columna de stock (por ejemplo «Total todas las bodegas») en «' + HOJA_CARGA + '».');
+    const out = {}, orden = [];
+    datos.slice(i + 1).forEach(function (f) {
+      const cod = String(f[cCod] == null ? '' : f[cCod]).trim().toUpperCase();
+      const n = numeroCarga_(f[cSt]);
+      if (!cod || isNaN(n)) return;
+      if (!out[cod]) { out[cod] = { cod: cod, nombre: cNom >= 0 ? textoLargo(f[cNom], 140) : '', stock: 0 }; orden.push(cod); }
+      out[cod].stock += n;
+    });
+    if (!orden.length) throw new Error('La hoja «' + HOJA_CARGA + '» no trae productos con código y stock.');
+    return orden.map(function (c) { return out[c]; });
+  }
+  throw new Error('No encontré la columna «Código» en «' + HOJA_CARGA + '». Pegue la exportación con sus encabezados.');
+}
+
+// Pedidos del Emporio que están abiertos ahora (MyPyme aún no los descontó si no se entregaron).
+function pedidosAbiertos_() {
+  const hp = hojaPedidos(), np = hp.getLastRow();
+  if (np < 2) return [];
+  return hp.getRange(2, 1, np - 1, COLUMNAS_PEDIDOS.length).getValues().filter(function (f) {
+    return String(f[CP['Local'] - 1] || LOCAL_STOCK) === LOCAL_STOCK && ['Por confirmar', 'Confirmado', 'Preparado'].indexOf(String(f[CP['Estado'] - 1])) >= 0;
+  }).map(function (f) { return String(f[CP['Código del pedido'] - 1]); }).filter(String);
+}
+
+function cargarStockMyPyme() {
+  try {
+    const r = cargarStock_();
+    SpreadsheetApp.getUi().alert('Stock cargado: ' + r.productos + ' productos (' + r.nuevos + ' nuevos en «' + HOJA_STOCK + '»).\n'
+      + 'Con aviso de stock bajo: ' + r.bajos + '.' + (r.sinIdeal ? '\nSin stock ideal (no avisan): ' + r.sinIdeal + '.' : ''));
+  } catch (err) { SpreadsheetApp.getUi().alert(err.message); }
+}
+function cargarStock_() {
+  const carga = leerCarga_();
+  const candado = LockService.getScriptLock();
+  candado.waitLock(20000);
+  try {
+    const hoja = hojaStock_(), n = hoja.getLastRow();
+    const filas = n > 1 ? hoja.getRange(2, 1, n - 1, COLUMNAS_STOCK.length).getValues() : [];
+    const idx = {}; filas.forEach(function (f, i) { idx[String(f[0]).trim().toUpperCase()] = i; });
+    const ahora = new Date();
+    let nuevos = 0;
+    carga.forEach(function (x) {
+      if (idx[x.cod] != null) {
+        const f = filas[idx[x.cod]];
+        if (x.nombre) f[CS['Producto'] - 1] = x.nombre;
+        f[CS['Stock MyPyme'] - 1] = x.stock; f[CS['Cargado el'] - 1] = ahora;
+      } else {
+        const f = COLUMNAS_STOCK.map(function () { return ''; });
+        f[0] = x.cod; f[CS['Producto'] - 1] = x.nombre; f[CS['Stock MyPyme'] - 1] = x.stock; f[CS['Cargado el'] - 1] = ahora;
+        idx[x.cod] = filas.length; filas.push(f); nuevos++;
+      }
+    });
+    if (filas.length) hoja.getRange(2, 1, filas.length, COLUMNAS_STOCK.length).setValues(filas);
+    guardarJson_('STOCK_CARGA', { t: ahora.getTime(), pendientes: pedidosAbiertos_().slice(-600) });
+    const r = recalcularStock_({ correo: true, carga: true });
+    r.productos = carga.length; r.nuevos = nuevos;
+    return r;
+  } finally { candado.releaseLock(); }
+}
+
+function recalcularStockMenu() { const r = recalcularStock_({ correo: true }); SpreadsheetApp.getUi().alert('Stock recalculado. Con aviso de stock bajo: ' + r.bajos + '.'); }
+
+// Recalcula «Stock del día». opc.correo: avisar por correo los productos que recién llegaron al 30 %.
+// opc.carga: viene de una carga nueva (reabre y deja listo el aviso de los que volvieron sobre el 30 %).
+function recalcularStock_(opc) {
+  opc = opc || {};
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_STOCK);
+  const r = { bajos: 0, sinIdeal: 0, nuevos: [] };
+  if (!hoja || hoja.getLastRow() < 2) return r;
+  const carga = propsJson_('STOCK_CARGA'), tCarga = Number(carga.t) || 0, pend = {};
+  (carga.pendientes || []).forEach(function (c) { pend[c] = true; });
+  // Pedidos del catálogo que todavía no están en el stock de MyPyme
+  const cuentan = {}, hp = hojaPedidos(), np = hp.getLastRow();
+  if (np > 1) hp.getRange(2, 1, np - 1, COLUMNAS_PEDIDOS.length).getValues().forEach(function (f) {
+    const cod = String(f[CP['Código del pedido'] - 1] || ''), est = String(f[CP['Estado'] - 1] || ''), rec = f[CP['Recibido'] - 1];
+    if (!cod || String(f[CP['Local'] - 1] || LOCAL_STOCK) !== LOCAL_STOCK || est === 'Anulado' || est === 'No llegó') return;
+    if (pend[cod] || (rec instanceof Date ? rec.getTime() : 0) > tCarga) cuentan[cod] = true;
+  });
+  const reservado = {}, det = hojaDetalle(), nd = det.getLastRow();
+  if (nd > 1) det.getRange(2, 1, nd - 1, COLUMNAS_DETALLE.length).getValues().forEach(function (f) {
+    const pc = String(f[5] || '').trim().toUpperCase();
+    if (!cuentan[String(f[2])] || !pc) return;
+    reservado[pc] = (reservado[pc] || 0) + (Number(f[7]) || Number(f[6]) || 0);
+  });
+  const n = hoja.getLastRow(), filas = hoja.getRange(2, 1, n - 1, COLUMNAS_STOCK.length).getValues(), ahora = new Date();
+  const salida = filas.map(function (f) {
+    const cod = String(f[0]).trim().toUpperCase();
+    const ideal = Number(f[CS['Stock ideal'] - 1]) || 0, base = Number(f[CS['Stock MyPyme'] - 1]) || 0;
+    const cargado = f[CS['Cargado el'] - 1], res = reservado[cod] || 0, disp = Math.max(0, base - res);
+    let cerrado = String(f[CS['Cerrado en la página'] - 1] || ''), oc = String(f[CS['Orden de compra'] - 1] || '');
+    let quien = f[CS['Decidió'] - 1], cuando = f[CS['Decidido el'] - 1], avisado = f[CS['Avisado el'] - 1];
+    const sinDatos = tCarga && cargado instanceof Date && cargado.getTime() < tCarga - 60000;
+    let estado;
+    if (!cod) estado = '';
+    else if (sinDatos) estado = ESTADO_SIN_DATOS;
+    else if (!ideal) estado = ESTADO_SIN_IDEAL;
+    else estado = disp <= 0 ? ESTADO_AGOTADO : disp / ideal <= UMBRAL_STOCK ? ESTADO_BAJO : ESTADO_OK;
+    const alerta = estado === ESTADO_BAJO || estado === ESTADO_AGOTADO;
+    if (estado === ESTADO_SIN_IDEAL) r.sinIdeal++;
+    if (alerta) r.bajos++;
+    if (opc.carga && estado === ESTADO_OK) {
+      // Volvió sobre el 30 % con una carga nueva: se reabre en la página y el aviso queda listo para la próxima vez
+      if (cerrado === 'Sí') { cerrado = ''; quien = 'Reabierto solo (stock repuesto)'; cuando = ahora; }
+      oc = ''; avisado = '';
+    }
+    if (alerta && !avisado && cerrado !== 'Sí' && !oc && opc.correo !== false) {
+      avisado = ahora;
+      r.nuevos.push({ cod: cod, nombre: String(f[CS['Producto'] - 1]), disp: disp, ideal: ideal, estado: estado, proveedor: String(f[CS['Proveedor'] - 1] || '') });
+    }
+    return [res, disp, ideal ? disp / ideal : '', estado, cerrado, oc, quien, cuando, avisado];
+  });
+  hoja.getRange(2, CS['Pedidos del catálogo'], salida.length, salida[0].length).setValues(salida);
+  if (r.nuevos.length && opc.correo !== false) {
+    try { enviarAvisoStock_(r.nuevos); }
+    catch (err) { // sin permiso de correo (por ejemplo, desde una edición a mano): se reintenta en el próximo cálculo
+      const av = hoja.getRange(2, CS['Avisado el'], salida.length, 1).getValues();
+      const cods = {}; r.nuevos.forEach(function (x) { cods[x.cod] = true; });
+      filas.forEach(function (f, i) { if (cods[String(f[0]).trim().toUpperCase()]) av[i][0] = ''; });
+      hoja.getRange(2, CS['Avisado el'], salida.length, 1).setValues(av);
+    }
+  }
+  return r;
+}
+
+function htmlEsc_(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
+
+function enviarAvisoStock_(lista) {
+  const url = SpreadsheetApp.getActiveSpreadsheet().getUrl();
+  const linea = function (x) { return x.cod + ' · ' + x.nombre + ': quedan ' + x.disp + ' de ' + x.ideal + ' (' + Math.round(x.disp / x.ideal * 100) + ' %)' + (x.proveedor ? ' · proveedor ' + x.proveedor : ''); };
+  MailApp.sendEmail({
+    to: CORREO_STOCK,
+    name: 'SabAPP · Stock del Emporio',
+    subject: (lista.length > 1 ? lista.length + ' productos con' : lista[0].cod + ' con') + ' stock bajo · Emporio Sabroso',
+    body: 'Llegaron al 30 % de su stock ideal:\n\n' + lista.map(linea).join('\n')
+      + '\n\nDecide en SabAPP (' + SABAPP_URL + '): «Cerrar en la página» o «Pedir de inmediato».\nPlanilla: ' + url,
+    htmlBody: '<div style="font:15px/1.5 Arial,Helvetica,sans-serif;color:#1c1c1a"><p style="margin:0 0 10px"><b>Llegaron al 30 % de su stock ideal:</b></p><ul style="margin:0 0 14px;padding-left:20px">'
+      + lista.map(function (x) { return '<li><b>' + htmlEsc_(x.cod) + '</b> · ' + htmlEsc_(x.nombre) + ': quedan <b style="color:#b3261e">' + x.disp + '</b> de ' + x.ideal
+        + ' (' + Math.round(x.disp / x.ideal * 100) + ' %)' + (x.proveedor ? ' · proveedor ' + htmlEsc_(x.proveedor) : '') + '</li>'; }).join('')
+      + '</ul><p style="margin:0 0 6px">Hay dos decisiones: <b>Cerrar en la página</b> o <b>Pedir de inmediato</b>.</p>'
+      + '<p style="margin:0"><a href="' + SABAPP_URL + '" style="display:inline-block;padding:10px 16px;border-radius:10px;background:#1f5f3a;color:#fff;text-decoration:none;font-weight:bold">Decidir en SabAPP</a>'
+      + ' &nbsp; <a href="' + htmlEsc_(url) + '">Abrir la planilla</a></p></div>'
+  });
+}
+
+// Productos con aviso o cerrados, para SabAPP (los más urgentes primero)
+function stockPanel_() {
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_STOCK);
+  const carga = propsJson_('STOCK_CARGA');
+  const zona = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+  const out = { cargado: carga.t ? Utilities.formatDate(new Date(Number(carga.t)), zona, 'dd/MM HH:mm') : '', items: [] };
+  if (!hoja || hoja.getLastRow() < 2) return out;
+  hoja.getRange(2, 1, hoja.getLastRow() - 1, COLUMNAS_STOCK.length).getValues().forEach(function (f) {
+    const estado = String(f[CS['Estado'] - 1] || ''), cerrado = f[CS['Cerrado en la página'] - 1] === 'Sí';
+    if (!cerrado && estado !== ESTADO_BAJO && estado !== ESTADO_AGOTADO) return;
+    const cuando = f[CS['Decidido el'] - 1];
+    out.items.push({ cod: String(f[0]), nombre: String(f[CS['Producto'] - 1] || ''), proveedor: String(f[CS['Proveedor'] - 1] || ''),
+      ideal: Number(f[CS['Stock ideal'] - 1]) || 0, disp: Number(f[CS['Disponible'] - 1]) || 0, estado: estado, cerrado: cerrado,
+      oc: String(f[CS['Orden de compra'] - 1] || ''), decidio: String(f[CS['Decidió'] - 1] || ''),
+      decididoEl: cuando instanceof Date ? Utilities.formatDate(cuando, zona, 'dd/MM HH:mm') : '' });
+  });
+  out.items.sort(function (a, b) { return (a.cerrado - b.cerrado) || (a.ideal ? a.disp / a.ideal : 0) - (b.ideal ? b.disp / b.ideal : 0); });
+  return out;
+}
+
+// Códigos cerrados en la página (los lee la carta, sin datos de nadie)
+function stockCerrados_() {
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_STOCK);
+  if (!hoja || hoja.getLastRow() < 2) return [];
+  return hoja.getRange(2, 1, hoja.getLastRow() - 1, CS['Cerrado en la página']).getValues()
+    .filter(function (f) { return f[CS['Cerrado en la página'] - 1] === 'Sí' && f[0]; })
+    .map(function (f) { return String(f[0]).trim().toUpperCase(); });
+}
+
+function filaStock_(hoja, codigo) {
+  const c = String(codigo || '').trim().toUpperCase(), n = hoja ? hoja.getLastRow() : 0;
+  const cods = n > 1 ? hoja.getRange(2, 1, n - 1, 1).getValues() : [];
+  for (let i = 0; i < cods.length; i++) if (String(cods[i][0]).trim().toUpperCase() === c) return i + 2;
+  throw new Error('El producto ' + codigo + ' no está en «' + HOJA_STOCK + '».');
+}
+
+// Decisión sobre un producto con stock bajo: 'cerrar', 'reabrir' o 'pedir'. Devuelve la orden de compra si se pidió.
+function stockDecidir_(usuario, codigo, decision) {
+  if (['cerrar', 'reabrir', 'pedir'].indexOf(decision) < 0) throw new Error('Decisión no válida.');
+  let oc = null;
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  try {
+    const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_STOCK), fila = filaStock_(hoja, codigo);
+    const f = hoja.getRange(fila, 1, 1, COLUMNAS_STOCK.length).getValues()[0];
+    if (decision === 'cerrar') hoja.getRange(fila, CS['Cerrado en la página']).setValue('Sí');
+    if (decision === 'reabrir') hoja.getRange(fila, CS['Cerrado en la página']).setValue('');
+    if (decision === 'pedir') {
+      if (f[CS['Orden de compra'] - 1]) throw new Error('Ya se pidió: ' + f[CS['Orden de compra'] - 1] + '.');
+      oc = crearOrdenCompra_(f, usuario);
+      hoja.getRange(fila, CS['Orden de compra']).setValue(oc.numero);
+    }
+    hoja.getRange(fila, CS['Decidió'], 1, 2).setValues([[usuario, new Date()]]);
+  } finally { candado.releaseLock(); }
+  if (oc) { try { enviarOrdenCompra_(oc); oc.correo = CORREO_COMPRAS; } catch (err) { oc.errorCorreo = String(err && err.message || err); } }
+  return oc;
+}
+
+function crearOrdenCompra_(f, usuario) {
+  const zona = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), ahora = new Date();
+  const hoja = hojaOC_(), n = hoja.getLastRow(), pref = 'OC-' + Utilities.formatDate(ahora, zona, 'yyyyMMdd') + '-';
+  const hoy = n > 1 ? hoja.getRange(2, 1, n - 1, 1).getValues().filter(function (x) { return String(x[0]).indexOf(pref) === 0; }).length : 0;
+  const numero = pref + ('0' + (hoy + 1)).slice(-2);
+  const cod = String(f[0]), producto = String(f[CS['Producto'] - 1] || ''), proveedor = String(f[CS['Proveedor'] - 1] || '');
+  const ideal = Number(f[CS['Stock ideal'] - 1]) || 0, disp = Number(f[CS['Disponible'] - 1]) || 0;
+  const cantidad = ideal ? Math.max(ideal - disp, 0) : '';
+  const prov = proveedorDatos_(proveedor);
+  const saludo = prov.contacto || proveedor;
+  const mensaje = 'Hola' + (saludo ? ' ' + saludo : '') + ', le escribimos de Emporio Sabroso (Distribuidora Avícola Santa Bárbara SpA, RUT 77.586.055-3). '
+    + 'Queremos hacer este pedido (' + numero + '):\n- ' + (cantidad !== '' ? cantidad + ' u de ' : '') + producto + ' (código ' + cod + ')\n'
+    + '¿Nos confirma el precio y la fecha de entrega en Arturo Prat 720, Chillán? Gracias.';
+  const num = String(prov.whatsapp || '').replace(/\D/g, '').replace(/^(9\d{8})$/, '56$1');
+  const enlace = /^569\d{8}$/.test(num) ? 'https://wa.me/' + num + '?text=' + encodeURIComponent(mensaje) : '';
+  hoja.appendRow([numero, ahora, proveedor || '(falta el proveedor)', cod, producto, cantidad, disp, ideal || '', usuario, 'Por enviar al proveedor',
+    num ? '+' + num : '(falta en «' + HOJA_PROVEEDORES + '»)', mensaje, enlace]);
+  return { numero: numero, cod: cod, producto: producto, proveedor: proveedor, cantidad: cantidad, disp: disp, ideal: ideal, mensaje: mensaje, enlace: enlace, usuario: usuario };
+}
+
+function proveedorDatos_(nombre) {
+  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_PROVEEDORES);
+  if (!nombre || !hoja || hoja.getLastRow() < 2) return {};
+  const fila = hoja.getRange(2, 1, hoja.getLastRow() - 1, COLUMNAS_PROVEEDORES.length).getValues()
+    .filter(function (f) { return String(f[0]).trim().toLowerCase() === String(nombre).trim().toLowerCase(); })[0];
+  return fila ? { contacto: String(fila[1] || ''), whatsapp: String(fila[2] || ''), correo: String(fila[3] || '') } : {};
+}
+
+function enviarOrdenCompra_(oc) {
+  MailApp.sendEmail({
+    to: CORREO_COMPRAS,
+    name: 'SabAPP · Compras del Emporio',
+    subject: 'Orden de compra ' + oc.numero + ' · ' + oc.producto + (oc.proveedor ? ' · ' + oc.proveedor : ''),
+    body: oc.usuario + ' pidió reponer de inmediato:\n\n' + (oc.cantidad !== '' ? oc.cantidad + ' u de ' : '') + oc.producto + ' (' + oc.cod + ')\n'
+      + 'Quedan ' + oc.disp + (oc.ideal ? ' de ' + oc.ideal : '') + '. Proveedor: ' + (oc.proveedor || 'falta anotarlo en «Stock del día»') + '.\n\n'
+      + (oc.enlace ? 'Enviar por WhatsApp: ' + oc.enlace : 'Falta el WhatsApp del proveedor en la hoja «Proveedores». Mensaje listo para copiar:') + '\n\n' + oc.mensaje,
+    htmlBody: '<div style="font:15px/1.5 Arial,Helvetica,sans-serif;color:#1c1c1a"><p style="margin:0 0 10px"><b>' + htmlEsc_(oc.usuario) + '</b> pidió reponer de inmediato (<b>' + htmlEsc_(oc.numero) + '</b>):</p>'
+      + '<p style="margin:0 0 10px;font-size:17px"><b>' + (oc.cantidad !== '' ? oc.cantidad + ' u de ' : '') + htmlEsc_(oc.producto) + '</b> (' + htmlEsc_(oc.cod) + ')</p>'
+      + '<p style="margin:0 0 12px;color:#66645c">Quedan ' + oc.disp + (oc.ideal ? ' de ' + oc.ideal : '') + ' · Proveedor: ' + htmlEsc_(oc.proveedor || 'falta anotarlo en «Stock del día»') + '</p>'
+      + (oc.enlace ? '<p style="margin:0 0 12px"><a href="' + htmlEsc_(oc.enlace) + '" style="display:inline-block;padding:10px 16px;border-radius:10px;background:#157a3e;color:#fff;text-decoration:none;font-weight:bold">Enviar la orden por WhatsApp</a></p>'
+        : '<p style="margin:0 0 8px;color:#b3261e">Falta el WhatsApp del proveedor en la hoja «Proveedores». Mensaje listo para copiar:</p>')
+      + '<pre style="margin:0;padding:12px;border-radius:10px;background:#f6f2e9;white-space:pre-wrap;font:14px/1.45 Arial,Helvetica,sans-serif">' + htmlEsc_(oc.mensaje) + '</pre></div>'
+  });
+}
+
+// Menú de la planilla: decidir sobre la fila elegida en «Stock del día»
+function stockFilaElegida_() {
+  const hoja = SpreadsheetApp.getActiveSheet();
+  if (hoja.getName() !== HOJA_STOCK) throw new Error('Elija una fila en la hoja «' + HOJA_STOCK + '».');
+  const fila = hoja.getActiveRange().getRow();
+  if (fila < 2) throw new Error('Elija la fila del producto.');
+  return String(hoja.getRange(fila, 1).getValue());
+}
+function stockMenu_(decision) {
+  const ui = SpreadsheetApp.getUi();
+  try {
+    const cod = stockFilaElegida_(), quien = Session.getActiveUser().getEmail() || 'Planilla';
+    const oc = stockDecidir_(quien, cod, decision);
+    ui.alert(decision === 'cerrar' ? cod + ' quedó cerrado en la página.' : decision === 'reabrir' ? cod + ' vuelve a estar en la página.'
+      : 'Orden ' + oc.numero + ' creada' + (oc.errorCorreo ? ' (no se pudo enviar el correo: ' + oc.errorCorreo + ')' : ' y enviada a ' + CORREO_COMPRAS) + '.');
+  } catch (err) { ui.alert(err.message); }
+}
+function stockCerrarElegido() { stockMenu_('cerrar'); }
+function stockReabrirElegido() { stockMenu_('reabrir'); }
+function stockPedirElegido() { stockMenu_('pedir'); }
+
+// SabAPP con cuenta de Google: solo los administradores deciden
+function panelStock(codigo, decision) {
+  const u = exigirVendedor(); exigirAdmin_();
+  const oc = stockDecidir_(u, codigo, decision);
+  const d = panelDatos_(u); d.admin = true; if (oc) d.oc = oc;
+  return d;
 }

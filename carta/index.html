@@ -1831,7 +1831,7 @@ function notaPedido(){
   return (p+n).slice(0,300);
 }
 function datosPedido(){
-  const its=items().map(x=>({cod:x.cod,nombre:x.nombre,q:x.q,uds:x.uds||x.q,precio:x.precio}));
+  const its=items().map(x=>({cod:x.cod,nombre:x.nombre,q:x.q,uds:x.uds||x.q,precio:x.precio,...(x.tapa?{tapa:x.tapa.cod,tapaNombre:x.tapa.nombre}:{})}));
   return {tipo:"pedido",local:KEY,codigo,nombre:$("nombre").value.trim().slice(0,80),tel:cliente&&cliente.tel||celPedido(),correo:correoPedido(),codigoCliente:cliente&&cliente.codigo||"",
     fechaRetiro:fechaPedido(),hora:horaPedido()||"Lo antes posible",items:its,total:totalFinal()+costoDespacho(),nota:notaPedido(),
     entrega:entregaPago().entrega,pago:entregaPago().pago,direccion:modoRetiro()==="despacho"?dirDespachoCompleta():"",costoDespacho:costoDespacho(),referencia:modoRetiro()==="despacho"?refDespacho():""};
@@ -2129,7 +2129,7 @@ const repintarVar=g=>{document.querySelectorAll(`article[data-var="${g}"]`).forE
 const card=(p,c,vg)=>`
       <article class="prod${vg?" var":""}${agotado(p)?" agotado":""}${p.oferta!=null||p.ofertaFmt||p.promo?" oferta":""}" data-prod="${p.cod}"${vg?` data-var="${vg}"`:c===FAV?"":` id="p-${p.cod}"`}>${p.virtual?"":`<button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>`}
         <div class="ico">${p.foto?fotoHTML(p):((ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}</div>
-        <div class="info"><small class="tipo-p">${p.cat}</small><b>${vg?VARG[vg].nombre:p.nombre}</b>${vg?tallasHTML(vg):""}${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.sinStock?"Stock 0 en el conteo":p.stock===0?"Sin stock":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
+        <div class="info"><small class="tipo-p">${p.cat}</small><b>${vg?VARG[vg].nombre:p.nombre}</b>${vg?tallasHTML(vg):""}${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.cerrado?"Agotado por ahora":p.sinStock?"Stock 0 en el conteo":p.stock===0?"Sin stock":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
         ${p.virtual?`<div class="paso vacio pista-var"><button type="button" class="elige" disabled>Elige un tamaño</button></div>`:`<div class="paso vacio">
           <button class="menos" data-cod="${p.cod}" data-d="-1" aria-label="Quitar ${p.nombre}">−</button>
           <input class="cant" type="number" inputmode="numeric" min="0" step="1" data-q="${p.cod}" value="0" aria-label="Cantidad de ${p.nombre}${tienePaq(p)?" (en la modalidad elegida)":""}">
@@ -2204,6 +2204,9 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
 })();
 /* Páginas con foto de fondo arriba (fotos propias de la avícola) */
 const FOTOS={"Huevos blancos":"huevos-blancos-bandeja.jpg","Huevos de color":"huevos-cafe-bandeja.jpg","Huevos de quinta":"huevos-editorial.jpg","Huevos":"huevos-editorial.jpg","Hueveras":"huevos-editorial.jpg"};
+/* Productos cerrados en la página por stock bajo (decisión en SabAPP o en la planilla): primero lo último que se supo */
+Object.values(PROD).forEach(p=>{p.sinStock0=!!p.sinStock});
+try{(JSON.parse(localStorage.getItem("cerrados-"+KEY)||"[]")||[]).forEach(c=>{const p=PROD[c];if(p){p.cerrado=true;p.sinStock=true}})}catch(e){}
 $("carta").innerHTML=cats.map(c=>`
   <section class="grupo${FOTOS[c]?" foto":""}" id="g-${slug(c)}"${FOTOS[c]?` style="--foto:url(../img/${FOTOS[c]})"`:""}>
     ${c!==FAV&&famDe(c)?`<p class="fam-et">${famDe(c)}</p>`:""}<h2>${c===FAV?ICONOS._fav:(ICONOS[BASEDE[c]||c]||(c==="Hueveras"?ICONOS.Huevos:ICONOS._))}${c}</h2>
@@ -2315,6 +2318,7 @@ function clickTarjeta(e){
   if(s){const p=PROD[s.dataset.selenv];tapaSel[p.cod]=s.dataset.seltapa;guardaPref("tapas-"+KEY,JSON.stringify(tapaSel));ajustarTope(p);repintar(p);reenfocar(cont,`button[data-selenv="${p.cod}"][data-seltapa="${s.dataset.seltapa}"]`);return}
   const b=e.target.closest("button[data-cod]"); if(!b)return;
   const p=PROD[b.dataset.cod], m=modoDe(p), k=clave(p.cod,m), d=Number(b.dataset.d), tp=topeDe(p);
+  if(d>0&&p.cerrado){avisaCarro(`${p.nombre} está agotado por ahora`,false);return}
   if(d>0&&tp!=null&&unidadesEn(p)+porDe(p,m)>tp){avisaCarro(`No queda más stock de ${p.nombre}`,false);return}   // no alcanza el stock (envase con tapa: manda el menor)
   const n=Math.max(0,(cart[k]||0)+d); if(n)cart[k]=n; else delete cart[k];
   guardar(); refrescar();
@@ -2756,6 +2760,23 @@ function despOk(marcar){
   $("despHomeChips").innerHTML=chips.join("");
   $("despHomeZona").textContent=(D.comunas||[]).length?"en "+D.comunas.join(" y "):"";
   $("despHome").hidden=false;
+})();
+
+/* Pregunta a la planilla qué productos están cerrados ahora y actualiza las tarjetas (y el carro) */
+(async function cerradosDeLaPlanilla(){
+  if(!REGISTRO_URL)return;
+  try{
+    const r=await fetch(REGISTRO_URL+"?stock="+encodeURIComponent(KEY),{cache:"no-store"}),j=await r.json();
+    if(!j||!j.ok||!Array.isArray(j.cerrados))return;
+    const ya=new Set(j.cerrados.map(c=>String(c).toUpperCase()));
+    try{localStorage.setItem("cerrados-"+KEY,JSON.stringify([...ya]))}catch(e){}
+    let cambio=false;
+    Object.values(PROD).forEach(p=>{const c=ya.has(String(p.cod).toUpperCase());if(!!p.cerrado===c)return;cambio=true;
+      p.cerrado=c;p.sinStock=c||p.sinStock0;
+      if(c)Object.keys(cart).forEach(k=>{if(k.replace(/@.*$/,"")===p.cod)delete cart[k]});
+      repintar(p)});
+    if(cambio){grabar();refrescar()}
+  }catch(e){/* sin conexión con la planilla: queda lo último que se supo */}
 })();
 
 /* ---------- Forma de pago ---------- */
