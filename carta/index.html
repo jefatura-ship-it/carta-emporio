@@ -822,6 +822,50 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 .campo .donde input:disabled{cursor:not-allowed}
 .donde input:disabled+span{opacity:.55}
 .campo.err .donde span{border-color:#c0392b}
+/* Inicio: dirección destacada y despacho (18/11/2026, pedido de David) */
+.ubica{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;width:min(100%,560px);margin-top:4px;padding:12px 14px 12px 12px;border-radius:20px;background:#fff;color:var(--campo);text-decoration:none;text-align:left;box-shadow:0 12px 26px -10px rgba(0,0,0,.45)}
+.ubica-pin{display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:var(--sol);color:#fff;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12)}
+.ubica-txt{min-width:0}
+.ubica-txt small{display:block;font-size:11.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--sol-t)}
+.ubica-txt b{display:block;font-family:var(--display);font-size:clamp(25px,7.4vw,34px);line-height:1.02;font-weight:800;color:var(--campo);letter-spacing:-.01em}
+.ubica-txt span{display:block;margin-top:2px;font-size:13.5px;color:var(--tinta)}
+.ubica-ir{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:800;color:var(--campo);background:#eef6f0;border-radius:99px;padding:9px 13px;white-space:nowrap}
+.ubica:hover .ubica-ir{background:var(--campo);color:#fff}
+.ubica:focus-visible{outline:3px solid var(--trigo);outline-offset:3px}
+.horario{margin:0;display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:#ffd76a}
+@media (max-width:480px){.ubica{grid-template-columns:auto 1fr}.ubica-ir{grid-column:1/-1;justify-content:center}}
+.desp-home{position:relative;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center;margin:16px 0 2px;padding:16px 16px 20px;border-radius:20px;background:linear-gradient(125deg,#fff6e6 0%,#ffe8c4 100%);border:1.5px solid #f3c37a;overflow:hidden}
+.desp-home[hidden]{display:none}
+.desp-home::after{content:"";position:absolute;left:0;right:0;bottom:7px;height:3px;background:repeating-linear-gradient(90deg,var(--campo) 0 16px,transparent 16px 28px);opacity:.28}
+.desp-ico{display:grid;place-items:center;width:52px;height:52px;border-radius:18px;background:var(--campo);color:#fff;box-shadow:0 8px 16px -8px rgba(29,92,54,.8)}
+.desp-home h2{margin:0;font-family:var(--display);font-size:clamp(20px,5.4vw,26px);line-height:1.12;color:var(--campo);text-wrap:balance}
+.desp-home h2 em{font-style:normal;color:var(--sol-t)}
+.desp-home p{margin:0;font-size:13.5px;line-height:1.35;color:var(--tinta)}
+.desp-home p{grid-column:1/-1;margin-top:6px}
+.desp-chips{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0;padding:0;list-style:none}
+.desp-chips li{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:99px;background:#fff;border:1px solid #efcf9c;font-size:12.5px;font-weight:700;color:var(--tinta)}
+.desp-chips li svg{flex:none;color:var(--campo)}
+.desp-chips li.gratis{background:var(--campo);border-color:var(--campo);color:#fff}
+.desp-chips li.gratis svg{color:#ffd76a}
+@media (min-width:900px){
+  .como{grid-template-areas:"desp desp" "intro mayor" "aviso aviso"}
+  .como .desp-home{grid-area:desp;grid-template-columns:auto minmax(0,1fr) auto;padding:18px 22px 22px}
+  .como .desp-home .desp-ico{grid-row:span 2;width:58px;height:58px}
+  .como .desp-home p{grid-column:2;margin-top:0}
+  .como .desp-home .desp-chips{grid-column:3;grid-row:1/span 2;justify-content:flex-end;max-width:520px;margin:0}
+}
+/* Despacho a domicilio y pago por transferencia */
+.dondes .ancho{grid-column:1/-1}
+.despacho{display:grid;gap:10px}
+.despacho .comunas{margin:8px 0 0}
+.total small{display:block;font-size:12.5px;font-weight:600;color:#6b6b66}
+.despacho .campo-sub label{display:block;margin-bottom:4px}
+.despacho .campo-sub small{font-size:12.5px;color:#6b6b66;font-weight:600}
+.transf{margin-top:2px;padding:12px 14px;border-radius:12px;background:#fff7ec;border:1.5px dashed #f0a24a;font-size:14px;line-height:1.4;color:var(--tinta)}
+.transf p{margin:4px 0}
+.transf dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:8px 0}
+.transf dt{color:#6b6b66}.transf dd{margin:0;font-weight:700}
+.transf .btn{margin-top:4px}
 #pasoDatos{display:grid;gap:12px}
 #pasoDatos[hidden]{display:none}
 .btn.enviar{background:var(--campo);color:#fff;font-size:16px;padding:15px 18px}
@@ -915,7 +959,9 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
   <div class="wrap marca-in">
     <div class="marca-centro"><p class="lema" id="lema"></p>
     <h1 class="h1logo"><img class="logo" id="logo" alt="" width="270" height="83"></h1>
-    <p class="datos" id="datos"></p></div>
+    <p class="datos" id="datos"></p>
+    <a class="ubica" id="ubica" target="_blank" rel="noopener" hidden><span class="ubica-pin" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.1-7-11.5a7 7 0 0 1 14 0C19 14.9 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.6"/></svg></span><span class="ubica-txt"><small id="ubicaEt">Estamos en</small><b id="ubicaCalle"></b><span id="ubicaRef"></span></span><span class="ubica-ir">Cómo llegar <span aria-hidden="true">→</span></span></a>
+    <p class="horario" id="horarioTop" hidden><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="horarioTxt"></span></p></div>
     <nav class="marca-lado" aria-label="Conócenos"><a class="aweb" href="../">Conoce nuestra página web <span aria-hidden="true">→</span></a>
     <p class="redes"><a class="aweb" href="https://www.instagram.com/emporio.sabroso/" target="_blank" rel="noopener" aria-label="Instagram de Emporio Sabroso, @emporio.sabroso"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@emporio.sabroso</a><a class="aweb" href="https://www.instagram.com/pollitasoroverde/" target="_blank" rel="noopener" aria-label="Instagram de Pollitas Oro Verde, @pollitasoroverde"><svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>@pollitasoroverde</a></p></nav>
   </div>
@@ -927,6 +973,12 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 </header>
 
 <section class="wrap como" aria-label="Opciones de compra">
+  <section class="desp-home" id="despHome" aria-labelledby="despHomeTit" hidden>
+    <span class="desp-ico" aria-hidden="true"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h11v10H2zM13 9h4.5L21 12.5V16h-8"/><circle cx="6.5" cy="17.5" r="1.9" fill="var(--campo)"/><circle cx="16.5" cy="17.5" r="1.9" fill="var(--campo)"/></svg></span>
+    <h2 id="despHomeTit">Despachamos a domicilio <em id="despHomeZona"></em></h2>
+    <p>Arma tu pedido aquí, elige «Despacho a domicilio» al confirmarlo y págalo por transferencia.</p>
+    <ul class="desp-chips" id="despHomeChips"></ul>
+  </section>
   <button type="button" class="mayorBtn" id="bMayor" aria-pressed="false"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13v10H3z"/><path d="M16 10h3l2 3v4h-5"/><circle cx="7" cy="18" r="1.6"/><circle cx="17.5" cy="18" r="1.6"/></svg><span>Ver precios por mayor</span></button>
   <p class="aviso" id="aviso" hidden>Carta en revisión: los precios son provisorios, algunos están por confirmar y los productos en rojo quedaron con stock 0 en el conteo.</p>
   <div class="reg" id="reg" hidden>
@@ -985,7 +1037,7 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
     <details class="pie-mas"><summary>Información legal y privacidad</summary>
     <h2 id="pieNombre"></h2>
     <p id="pieDatos"></p>
-    <p>Los precios están en pesos chilenos. Usar el Catálogo Sabroso y armar el pedido no tiene costo: pagas en el local al retirar y no se agregan cargos al total.</p>
+    <p>Los precios están en pesos chilenos. Usar el Catálogo Sabroso y armar el pedido no tiene costo: pagas en el local al retirar o por transferencia, y no se agregan cargos al total, salvo el despacho a domicilio cuando lo eliges (su valor aparece antes de enviar el pedido).</p>
     <p><a href="../">Visita nuestra página web: Del campo a tu mesa</a></p>
     <p>Instagram: <a href="https://www.instagram.com/emporio.sabroso/" target="_blank" rel="noopener">@emporio.sabroso</a> · <a href="https://www.instagram.com/pollitasoroverde/" target="_blank" rel="noopener">@pollitasoroverde</a></p>
     <nav aria-label="Información legal"><ul>
@@ -1130,8 +1182,9 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
       <div class="ticket" id="ticket"></div>
       <div class="total"><span>Total aprox.</span><span id="totalHoja"></span></div>
       <ul class="garantias">
-        <li>Pagas en el local al retirar</li>
-        <li>Sin cargos por armar ni enviar el pedido</li>
+        <li id="garPago">Pagas en el local al retirar</li>
+        <li id="garDesp" hidden></li>
+        <li id="garCargo">Sin cargos por armar ni enviar el pedido</li>
         <li>Si un precio cambia, te avisamos antes y puedes desistir sin costo</li>
       </ul>
       <div class="alerta" id="alertaTapas" role="status" aria-live="polite" hidden></div>
@@ -1140,6 +1193,7 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
         <div class="dondes" role="radiogroup" aria-labelledby="modoTit">
           <label class="donde"><input type="radio" name="modoRetiro" value="local"><span><b>Estoy en el local</b><small id="modoLocalNota">Te lo preparamos ahora</small></span></label>
           <label class="donde"><input type="radio" name="modoRetiro" value="retiro"><span><b>Retiro más tarde</b><small>Eliges el día y la hora</small></span></label>
+          <label class="donde ancho" id="opDespacho" hidden><input type="radio" name="modoRetiro" value="despacho"><span><b>Despacho a domicilio</b><small id="despNota"></small></span></label>
         </div>
         <div class="msg" id="msgModo" hidden>Elige una opción para seguir.</div>
       </div>
@@ -1182,6 +1236,33 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
         <div class="msg" id="msgFecha" hidden></div>
         <small class="ret-nota" id="retNota"></small>
       </div>
+      <div class="campo despacho" id="campoDespacho" hidden>
+        <span class="lbl">¿Cuándo y dónde te lo llevamos?</span>
+        <div class="retiro">
+          <label class="ret-f"><small>Día de despacho</small><select id="diaDesp"></select></label>
+          <label class="ret-h"><small>Horario</small><select id="franjaDesp"></select></label>
+        </div>
+        <div class="campo-sub" id="campoDir">
+          <label for="dirDesp"><small>Dirección de entrega</small></label>
+          <input id="dirDesp" autocomplete="address-line1" maxlength="120" placeholder="Calle, número, depto o villa" aria-describedby="msgDir">
+          <div class="medios comunas" id="comunaDesp" role="radiogroup" aria-label="Comuna de entrega"></div>
+          <div class="msg" id="msgDir" hidden>Escribe la dirección de entrega (calle y número).</div>
+        </div>
+        <div class="campo-sub">
+          <label for="refDesp"><small>Referencia <span class="opc">(opcional)</span></small></label>
+          <input id="refDesp" maxlength="100" placeholder="Ej.: casa de la esquina, portón verde">
+        </div>
+        <small class="ret-nota" id="despResumen"></small>
+        <p class="ayuda" id="despAyuda"></p>
+      </div>
+      <div class="campo" id="campoPago" hidden>
+        <span class="lbl" id="pagoTit">¿Cómo pagas?</span>
+        <div class="medios" role="radiogroup" aria-labelledby="pagoTit">
+          <label class="medio" id="opPagoLocal"><input type="radio" name="pago" value="local" checked><span>En el local</span></label>
+          <label class="medio"><input type="radio" name="pago" value="transferencia"><span>Transferencia</span></label>
+        </div>
+        <div class="transf" id="datosTransf" hidden></div>
+      </div>
       <div class="campo">
         <label for="nota">Comentario (opcional)</label>
         <textarea id="nota" rows="2" placeholder="Ej.: huevos blancos; si no hay, que sean café"></textarea>
@@ -1218,6 +1299,14 @@ const LOCALES = {
     whatsapp:"56933903395", instagram:"emporio.sabroso",
     legal:{razon:"Distribuidora Avícola Santa Bárbara SpA", rut:"77.586.055-3", direccion:"Arturo Prat 720, Chillán, Región de Ñuble", nota:"Emporio Sabroso es un local de Distribuidora Avícola Santa Bárbara SpA."},
     horario:{desde:"08:30",hasta:"17:00"},
+    // Dirección destacada en el inicio (18/11/2026). mapa: abre Google Maps con la dirección.
+    ubicacion:{calle:"Arturo Prat 720",ref:"Chillán · frente al Mercado Techado",horario:"Lunes a sábado · 8:30 a 17:00",mapa:"https://www.google.com/maps/search/?api=1&query=Arturo%20Prat%20720%2C%20Chill%C3%A1n"},
+    // Despacho a domicilio (18/11/2026, David): jueves y viernes no, porque don Leo sale con los despachos de la Distribuidora.
+    // dias: 1 = lunes … 6 = sábado, con sus franjas. anticipacion = minutos mínimos antes de que termine la franja para ofrecerla hoy.
+    // costo: valor del despacho; gratisDesde: desde ese total (productos, con descuento) el despacho es gratis. comunas: donde se despacha (David, 18/11/2026).
+    despacho:{dias:{1:[["09:00","12:00"],["12:00","16:00"]],2:[["09:00","12:00"],["12:00","16:00"]],3:[["09:00","12:00"],["12:00","16:00"]],6:[["09:00","12:00"]]},anticipacion:120,diasVista:14,costo:1490,gratisDesde:100000,comunas:["Chillán","Chillán Viejo"]},
+    // Pago por transferencia: los mismos datos del cartel de la caja (si "numero" queda vacío, la carta dice que se envían al confirmar el pedido).
+    transferencia:{banco:"Santander",tipo:"Cuenta corriente",numero:"00002785369-2",titular:"Distribuidora Santa Bárbara SpA",rut:"77.586.055-3",correo:"distribuidora@avicolasb.com"},
     descuentoRegistro:5, // % de bienvenida para clientes registrados (0 = sin registro)
     promo:{inicio:"2026-11-23", fin:"2026-12-04"},
     mayor:{dctos:[5,10], sinPaquete:[12,50]}, // precio por mayor: −5% desde 1 paquete (o 12 u) y −10% desde 3 paquetes (o 50 u). Provisorio // 10 días hábiles (lun 23 nov – vie 4 dic, ambos incluidos); se usa 1 sola vez por cliente
@@ -1695,6 +1784,10 @@ const tc=document.querySelector('meta[name="theme-color"]'); if(tc)tc.content=L.
 addEventListener("hashchange",()=>location.reload());
 $("lema").textContent=L.lema;
 $("datos").textContent=L.datos;
+if(L.ubicacion){const U=L.ubicacion;$("datos").hidden=true;$("ubica").hidden=false;
+  $("ubicaCalle").textContent=U.calle;$("ubicaRef").textContent=U.ref||"";
+  if(U.mapa){$("ubica").href=U.mapa;$("ubica").setAttribute("aria-label",`Estamos en ${U.calle}, ${U.ref||""}. Cómo llegar (abre Google Maps)`)}else $("ubica").removeAttribute("href");
+  if(U.horario){$("horarioTop").hidden=false;$("horarioTxt").textContent=U.horario}}
 $("logo").src=L.logo; $("logo").alt=L.nombre;
 if(L.logoBadge)$("logo").classList.add("badge");
 $("aviso").hidden=true; // ya no se muestra el aviso de carta en revisión
@@ -1730,10 +1823,18 @@ function anotarPedido(){
   if(!REGISTRO_URL||!codigo||pedidosAnotados.has(codigo))return;pedidosAnotados.add(codigo);
   try{fetch(REGISTRO_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain"},body:JSON.stringify(datosPedido())})}catch(e){}
 }
+/* El comentario que ve SabAPP lleva primero el despacho y la forma de pago (el script guarda hasta 300 caracteres) */
+function notaPedido(){
+  const ep=entregaPago(),n=($("nota").value||"").trim();let p="";
+  if(ep.entrega==="despacho"){const cd=costoDespacho();p+=`DESPACHO ${cd?clp(cd)+" (incluido en el total)":"gratis"} a ${dirDespachoCompleta()}${refDespacho()?" (Ref.: "+refDespacho()+")":""}. `}
+  if(ep.pago==="transferencia")p+="PAGO: TRANSFERENCIA. ";
+  return (p+n).slice(0,300);
+}
 function datosPedido(){
   const its=items().map(x=>({cod:x.cod,nombre:x.nombre,q:x.q,uds:x.uds||x.q,precio:x.precio}));
   return {tipo:"pedido",local:KEY,codigo,nombre:$("nombre").value.trim().slice(0,80),tel:cliente&&cliente.tel||celPedido(),correo:correoPedido(),codigoCliente:cliente&&cliente.codigo||"",
-    fechaRetiro:fechaPedido(),hora:horaPedido()||"Lo antes posible",items:its,total:totalFinal(),nota:($("nota").value||"").trim().slice(0,300)};
+    fechaRetiro:fechaPedido(),hora:horaPedido()||"Lo antes posible",items:its,total:totalFinal()+costoDespacho(),nota:notaPedido(),
+    entrega:entregaPago().entrega,pago:entregaPago().pago,direccion:modoRetiro()==="despacho"?dirDespachoCompleta():"",costoDespacho:costoDespacho(),referencia:modoRetiro()==="despacho"?refDespacho():""};
 }
 const marcarEnviado=()=>{anotarPedido();try{const qs=Object.fromEntries(Object.entries(cart).filter(([,q])=>q>0));if(Object.keys(qs).length)localStorage.setItem("anterior-"+KEY,JSON.stringify({t:Date.now(),cart:qs}))}catch(e){};if(typeof usarDescuento==="function")usarDescuento();enviado=true;grabar();const bo=$("bOtra");if(bo)bo.hidden=false};
 
@@ -2530,20 +2631,29 @@ function horasPara(iso){
 }
 /* ¿Dónde estás? «Estoy en el local» (solo con el local abierto) se envía directo a SabAPP; «Retiro más tarde» pide día y hora */
 const puedeLocal=()=>!!(L.horario&&REGISTRO_URL);
-const modoRetiro=()=>{if(!puedeLocal())return "retiro";const r=document.querySelector('input[name="modoRetiro"]:checked');return r?r.value:""};
+const hayDespacho=()=>!!L.despacho;
+const hayTransf=()=>!!L.transferencia;
+const modoRetiro=()=>{if(!puedeLocal()&&!hayDespacho())return "retiro";const r=document.querySelector('input[name="modoRetiro"]:checked');return r?r.value:""};
 const enLocal=()=>modoRetiro()==="local";
-const fechaPedido=()=>enLocal()?isoDia(new Date()):$("fechaRet").value;
-const horaPedido=()=>enLocal()?EN_LOCAL:$("hora").value;
+const fechaPedido=()=>enLocal()?isoDia(new Date()):modoRetiro()==="despacho"?$("diaDesp").value:$("fechaRet").value;
+const horaPedido=()=>enLocal()?EN_LOCAL:modoRetiro()==="despacho"?("Despacho "+$("franjaDesp").value).trim():$("hora").value;
 function pintarModo(){
   const pl=puedeLocal(),ab=pl&&abiertoAhora(),rl=document.querySelector('input[name="modoRetiro"][value="local"]'),rr=document.querySelector('input[name="modoRetiro"][value="retiro"]');
-  $("campoModo").hidden=!pl;
+  const hd=hayDespacho();
+  $("campoModo").hidden=!(pl||hd);
+  $("opDespacho").hidden=!hd;
+  rl.closest("label").hidden=!pl;
+  $("modoTit").textContent=hd?"¿Cómo recibes tu pedido?":"¿Dónde estás?";
   rl.disabled=!ab;
   if(!ab&&rl.checked)rl.checked=false;
-  if(pl&&!ab&&!rr.checked)rr.checked=true; // cerrado: solo queda retirar más tarde
+  if(pl&&!ab&&!document.querySelector('input[name="modoRetiro"]:checked'))rr.checked=true; // cerrado: retirar más tarde (o despacho)
   $("modoLocalNota").textContent=ab?"Te lo preparamos ahora":pl?`Cerrado ahora (lun a sáb, ${L.horario.desde} a ${L.horario.hasta})`:"";
   const m=modoRetiro();
   $("pasoDatos").hidden=!m;
   $("campoHora").hidden=m!=="retiro";
+  $("campoDespacho").hidden=m!=="despacho";
+  if(m==="despacho"&&!$("diaDesp").options.length)prepararDespacho();
+  pintarPago();
   $("bEnviar").hidden=m!=="local";
   $("bWsp").hidden=$("dosBtns").hidden=m==="local";
   if(m==="local"){$("bIg").hidden=true;$("notaIg").hidden=true}
@@ -2577,6 +2687,109 @@ function fechaOk(){const f=$("fechaRet"),m=$("msgFecha"),v=f.value;let err="";
   s.innerHTML=o.join("");
 })();
 
+/* ---------- Despacho a domicilio ---------- */
+const minDe=t=>{const[a,b]=t.split(":").map(Number);return a*60+b};
+const hDe=t=>t.replace(/^0/,"");
+const franjaTxt=v=>{const[a,b]=(v||"").split("-");return a&&b?`${hDe(a)} a ${hDe(b)}`:""};
+function franjasDe(iso){
+  if(!L.despacho||!iso)return [];
+  const [y,m,d]=iso.split("-").map(Number),dia=new Date(y,m-1,d).getDay(),fr=L.despacho.dias[dia]||[];
+  const ahora=new Date(),hoy=isoDia(ahora),mins=ahora.getHours()*60+ahora.getMinutes();
+  return fr.filter(([,b])=>iso!==hoy||mins+(L.despacho.anticipacion||0)<=minDe(b)).map(([a,b])=>a+"-"+b);
+}
+function textoDiasDespacho(){
+  const D=L.despacho.dias,N=["dom","lun","mar","mié","jue","vie","sáb"],grupos={};
+  Object.keys(D).forEach(k=>{const r=D[k].length?hDe(D[k][0][0])+" a "+hDe(D[k][D[k].length-1][1]):"";(grupos[r]=grupos[r]||[]).push(+k)});
+  return Object.entries(grupos).map(([r,ds])=>{ds.sort();const seguidos=ds.every((x,i)=>!i||x===ds[i-1]+1);
+    return (ds.length>2&&seguidos?N[ds[0]]+" a "+N[ds[ds.length-1]]:ds.map(x=>N[x]).join(", "))+" "+r}).join(" · ");
+}
+function prepararDespacho(){
+  if(!L.despacho)return;
+  {const cs=$("comunaDesp");if(!cs.children.length)cs.innerHTML=(L.despacho.comunas||[]).map((c,i)=>`<label class="medio"><input type="radio" name="comunaDesp" value="${escHTML(c)}"${i?"":" checked"}><span>${escHTML(c)}</span></label>`).join("")}
+  const s=$("diaDesp"),prev=s.value,hoy=new Date(),o=[];
+  for(let i=0;i<(L.despacho.diasVista||14);i++){const f=new Date(hoy);f.setDate(hoy.getDate()+i);const iso=isoDia(f);
+    if(!franjasDe(iso).length)continue;
+    const fl=fechaRetLarga(iso).replace(/\/\d{4}$/,"");
+    o.push(`<option value="${iso}">${i===0?"Hoy, ":i===1?"Mañana, ":""}${fl}</option>`)}
+  s.innerHTML=o.join("")||'<option value="">Sin días disponibles</option>';
+  if([...s.options].some(x=>x.value===prev))s.value=prev;
+  franjasDespacho();
+}
+function franjasDespacho(){
+  const s=$("franjaDesp"),prev=s.value,fr=franjasDe($("diaDesp").value);
+  s.innerHTML=fr.map(v=>`<option value="${v}">${franjaTxt(v)}</option>`).join("");
+  if(fr.includes(prev))s.value=prev;
+  resumenDespacho();
+}
+function resumenDespacho(){
+  const d=$("diaDesp").value,f=$("franjaDesp").value;
+  $("despResumen").textContent=d&&f?`Te lo llevamos el ${fechaRetLarga(d)}, de ${franjaTxt(f)}.`:"";
+}
+const costoDespacho=()=>{if(modoRetiro()!=="despacho"||!L.despacho)return 0;const c=L.despacho.costo,g=L.despacho.gratisDesde;
+  return typeof c!=="number"?0:(typeof g==="number"&&totalFinal()>=g)?0:c};
+const faltaGratis=()=>{const g=L.despacho&&L.despacho.gratisDesde;return typeof g==="number"?Math.max(0,g-totalFinal()):0};
+const comunaDespacho=()=>{const r=document.querySelector('input[name="comunaDesp"]:checked');return r?r.value:""};
+const dirDespachoCompleta=()=>dirDespacho()+(comunaDespacho()?", "+comunaDespacho():"");
+function pintarTotal(){
+  const cd=costoDespacho(),desp=modoRetiro()==="despacho";
+  $("totalHoja").innerHTML=clp(totalFinal()+cd)+(desp?`<small>${cd?"incluye despacho "+clp(cd):"despacho gratis"}</small>`:"");
+}
+const dirDespacho=()=>($("dirDesp").value||"").trim().replace(/\s+/g," ").slice(0,120);
+const refDespacho=()=>($("refDesp").value||"").trim().replace(/\s+/g," ").slice(0,100);
+function despOk(marcar){
+  if(modoRetiro()!=="despacho")return true;
+  const okDia=!!($("diaDesp").value&&$("franjaDesp").value),okDir=dirDespacho().length>=5;
+  if(marcar){$("campoDir").classList.toggle("err",!okDir);$("msgDir").hidden=okDir;
+    if(!okDia)$("diaDesp").focus();else if(!okDir)$("dirDesp").focus()}
+  return okDia&&okDir;
+}
+/* Banda de despacho del inicio (antes de las ofertas), armada con la misma configuración del despacho */
+(function pintarInicioDespacho(){
+  const D=L.despacho;if(!D)return;
+  const ic={cal:'<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+    pesos:'<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.5-.8-1.5-1.2-2.5-1.2-1.4 0-2.5.8-2.5 2s1.1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1.1 0-2.1-.5-2.6-1.3M12 6.5V8M12 16v1.5"/></svg>',
+    estrella:'<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>'};
+  const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
+  const chips=textoDiasDespacho().split(" · ").map(t=>`<li>${ic.cal}${escHTML(cap(t))}</li>`);
+  if(typeof D.costo==="number")chips.push(`<li>${ic.pesos}Envío ${clp(D.costo)}</li>`);
+  if(typeof D.gratisDesde==="number")chips.push(`<li class="gratis">${ic.estrella}Gratis desde ${clp(D.gratisDesde)}</li>`);
+  $("despHomeChips").innerHTML=chips.join("");
+  $("despHomeZona").textContent=(D.comunas||[]).length?"en "+D.comunas.join(" y "):"";
+  $("despHome").hidden=false;
+})();
+
+/* ---------- Forma de pago ---------- */
+const formaPago=()=>{const m=modoRetiro();if(m==="local"||!hayTransf())return "local";if(m==="despacho")return "transferencia";
+  const r=document.querySelector('input[name="pago"]:checked');return r?r.value:"local"};
+function pintarPago(){
+  const m=modoRetiro(),ht=hayTransf(),desp=m==="despacho";
+  $("campoPago").hidden=!ht||!(m==="retiro"||desp);
+  $("opPagoLocal").hidden=desp;
+  if(desp){const r=document.querySelector('input[name="pago"][value="transferencia"]');if(r)r.checked=true}
+  const fp=formaPago(),T=L.transferencia||{};
+  $("garPago").textContent=fp==="transferencia"?"Transfieres solo cuando te confirmemos el stock y el total":"Pagas en el local al retirar";
+  const c=L.despacho&&L.despacho.costo;
+  $("garDesp").hidden=!desp;
+  $("garCargo").textContent=desp?"Sin cargos por armar el pedido":"Sin cargos por armar ni enviar el pedido";
+  const g=L.despacho&&L.despacho.gratisDesde,fg=faltaGratis();
+  $("garDesp").textContent=typeof c!=="number"?"El valor del despacho te lo confirmamos antes de que pagues"
+    :costoDespacho()?`Despacho ${clp(c)}${typeof g==="number"?` · gratis desde ${clp(g)} (te faltan ${clp(fg)})`:""}`:`Despacho gratis por compras desde ${clp(g)}`;
+  pintarTotal();
+  if(L.despacho){const D=L.despacho,com=(D.comunas||[]).join(" y ");
+    $("despNota").textContent=(com?com+" · ":"")+textoDiasDespacho()+(typeof D.costo==="number"?` · ${clp(D.costo)}${typeof D.gratisDesde==="number"?`, gratis desde ${clp(D.gratisDesde)}`:""}`:"")+" · pagas por transferencia";
+    $("despAyuda").textContent="Despachamos "+textoDiasDespacho()+(com?" en "+com:"")+"."}
+  const box=$("datosTransf");box.hidden=fp!=="transferencia";
+  if(fp==="transferencia"){
+    const filas=[["Banco",T.banco],["Tipo de cuenta",T.tipo],["N° de cuenta",T.numero],["Titular",T.titular],["RUT",T.rut],["Correo",T.correo]].filter(([,v])=>v);
+    box.innerHTML=`<b>Cómo pagar por transferencia</b><p>Envía tu pedido y espera nuestra confirmación del stock y del total exacto${desp?", con el despacho incluido":""}. Recién ahí transfiere y mándanos el comprobante por el mismo chat${T.correo?" o a "+escHTML(T.correo):""}.</p>`
+      +(T.numero?`<dl>${filas.map(([k,v])=>`<dt>${k}</dt><dd>${escHTML(v)}</dd>`).join("")}</dl><button type="button" class="btn sec" id="bCopiarCta">Copiar datos de la cuenta</button>`
+               :`<p>Los datos de la cuenta te los enviamos junto con la confirmación.</p>`);
+    const bc=$("bCopiarCta");if(bc)bc.onclick=()=>{try{navigator.clipboard.writeText(filas.map(([k,v])=>k+": "+v).join("\n")).then(()=>{bc.textContent="✓ Datos copiados"}).catch(()=>{})}catch(e){}};
+  }
+}
+const entregaPago=()=>{const m=modoRetiro(),fp=formaPago();
+  return {entrega:m==="despacho"?"despacho":m==="local"?"en el local":"retiro",pago:fp==="transferencia"?"transferencia":"en el local"}};
+
 /* ---------- Hoja de pedido ---------- */
 let codigo="";
 function nuevoCodigo(){
@@ -2602,10 +2815,17 @@ function textoPedido(){
   if(cliente)t+=`Cliente registrado${cliente.codigo?" "+cliente.codigo+(cliente.codigoOk?"":" (provisorio)"):""}: ${nombreCompleto(cliente)} · ${cliente.tel}${cliente.acepta?" · acepta ofertas":""}\n`;
   if(!cliente&&celPedido())t+=`Celular: ${celPedido()} (avisar por WhatsApp cuando esté listo)\n`;
   if(correoPedido())t+=`Correo: ${correoPedido()} (avisar por correo cuando esté listo)\n`;
-  t+=`Retira: ${hora}\n\n`;
+  if(modoRetiro()==="despacho"){
+    const cd=costoDespacho();
+    t+=`Entrega: DESPACHO A DOMICILIO · ${fechaRetLarga($("diaDesp").value)} de ${franjaTxt($("franjaDesp").value)}\n`;
+    t+=`Dirección: ${dirDespachoCompleta()}${refDespacho()?" (Ref.: "+refDespacho()+")":""}\n`;
+  }else t+=`Retira: ${hora}\n`;
+  t+=`Pago: ${formaPago()==="transferencia"?"TRANSFERENCIA (transfiere cuando le confirmemos el stock y el total)":"en el local"}\n\n`;
   t+=items().map(x=>`${x.q} x ${x.nombre}${x.detalle?" ("+x.detalle+")":""}${x.mayor?" [precio por mayor "+clp(x.precio)+(x.paq?" c/paquete]":" c/u]"):""} = ${sub(x)}`).join("\n");
-  if(dcto())t+=`\n\nSUBTOTAL: ${clp(total())}\nDESCUENTO BIENVENIDA ${DCTO}% (1 sola vez, precio normal): -${clp(dcto())}\nTOTAL APROX.: ${clp(totalFinal())}`;
-  else t+=`\n\nTOTAL APROX.: ${clp(total())}`;
+  const tp=modoRetiro()==="despacho"?"TOTAL PRODUCTOS APROX.":"TOTAL APROX.";
+  if(dcto())t+=`\n\nSUBTOTAL: ${clp(total())}\nDESCUENTO BIENVENIDA ${DCTO}% (1 sola vez, precio normal): -${clp(dcto())}\n${tp}: ${clp(totalFinal())}`;
+  else t+=`\n\n${tp}: ${clp(total())}`;
+  if(modoRetiro()==="despacho"){const cd=costoDespacho();t+=`\nDESPACHO: ${cd?clp(cd):"gratis"}\nTOTAL A PAGAR APROX.: ${clp(totalFinal()+cd)}`}
   const n=$("nota").value.trim(); if(n)t+=`\nComentario: ${n}`;
   t+=`\n\nMYPYME ${lineasMyPyme()}`;
   return t;
@@ -2617,6 +2837,7 @@ function nombreOk(){
   const m=modoRetiro();
   if(!m){$("campoModo").classList.add("err");$("msgModo").hidden=false;const r=document.querySelector('input[name="modoRetiro"]:not(:disabled)');if(r)r.focus();return false}
   if(m==="retiro"&&!fechaOk()){$("fechaRet").focus();return false}
+  if(m==="despacho"&&!despOk(true))return false;
   return contactoOk(true);
 }
 /* Celular (o el de la cuenta) si se avisa por WhatsApp; correo si se avisa por correo. Sin uno válido no se envía. */
@@ -2636,7 +2857,7 @@ function contactoOk(marcar){
   return ok;
 }
 /* Los botones de envío se ven apagados mientras falte el celular o el correo (al tocarlos se explica qué falta) */
-const pintarBloqueo=()=>{const ok=contactoOk(false);["bEnviar","bWsp","bCopiar","bArchivo"].forEach(id=>$(id).classList.toggle("bloq",!ok))};
+const pintarBloqueo=()=>{const ok=contactoOk(false)&&despOk(false);["bEnviar","bWsp","bCopiar","bArchivo"].forEach(id=>$(id).classList.toggle("bloq",!ok))};
 
 function abrirRevision(){
   if(!items().length)return;
@@ -2660,6 +2881,8 @@ function abrirRevision(){
   $("celPedido").value||($("celPedido").value=formatoCel(leePref("celular-cliente")||""));
   const be=$("bEnviar");be.disabled=false;be.textContent="Enviar pedido";
   ofrecerOfertas();
+  if(L.despacho){prepararDespacho();$("dirDesp").value||($("dirDesp").value=leePref("direccion-despacho")||"");
+    {const cg=leePref("comuna-despacho"),r=cg&&[...document.querySelectorAll('input[name="comunaDesp"]')].find(x=>x.value===cg);if(r)r.checked=true}}
   pintarModo(); pintarBloqueo();
   actualizarEnlaces();
 };
@@ -2669,7 +2892,7 @@ const tapasSueltas=()=>items().filter(x=>x.envase&&!x.envase.some(c=>cart[c]));
 function pintarHoja(){
   $("ticket").innerHTML=items().map(x=>`<div class="linea"><span>${x.q} × ${x.nombre}${x.mayor?`<em class="pm">por mayor ${clp(x.precio)} ${x.paq?"c/paquete":"c/u"}</em>`:""}</span><span>${sub(x)}</span></div>`).join("");
   if(dcto())$("ticket").insertAdjacentHTML("beforeend",`<div class="linea dcto"><span>Descuento de bienvenida ${DCTO}% (1 vez, precio normal)</span><span>−${clp(dcto())}</span></div>`);
-  $("totalHoja").textContent=clp(totalFinal());
+  pintarTotal();
   if(cliente&&!$("nombre").value.trim())$("nombre").value=cliente.n1+" "+cliente.a1;
   const s=tapasSueltas(), al=$("alertaTapas");
   al.hidden=!s.length;
@@ -2698,6 +2921,12 @@ document.querySelectorAll('input[name="modoRetiro"]').forEach(r=>r.addEventListe
   pintarBloqueo();
   actualizarEnlaces();
 }));
+$("diaDesp").addEventListener("change",()=>{franjasDespacho();pintarBloqueo();actualizarEnlaces()});
+$("franjaDesp").addEventListener("change",()=>{resumenDespacho();actualizarEnlaces()});
+$("comunaDesp").addEventListener("change",()=>{guardaPref("comuna-despacho",comunaDespacho());actualizarEnlaces()});
+["dirDesp","refDesp"].forEach(id=>$(id).addEventListener("input",()=>{if(id==="dirDesp"&&dirDespacho().length>=5){$("campoDir").classList.remove("err");$("msgDir").hidden=true}pintarBloqueo();actualizarEnlaces()}));
+$("dirDesp").addEventListener("change",()=>guardaPref("direccion-despacho",dirDespacho()));
+document.querySelectorAll('input[name="pago"]').forEach(r=>r.addEventListener("change",()=>{pintarPago();actualizarEnlaces()}));
 const recordarNombre=()=>{guardaPref("nombre-cliente",$("nombre").value.trim());if(celPedido())guardaPref("celular-cliente",celPedido().replace(/^\+56/,""));if(correoPedido())guardaPref("correo-cliente",correoPedido())};
 const listo=(msg,mal)=>{$("ok").textContent=msg;$("ok").classList.toggle("mal",!!mal);$("ok").hidden=false};
 
@@ -2751,7 +2980,7 @@ $("bEnviar").addEventListener("click",async()=>{
 $("bWsp").addEventListener("click",e=>{
   if(!nombreOk()){e.preventDefault();return}
   actualizarEnlaces(); recordarNombre(); marcarEnviado();
-  listo("Se abrió WhatsApp con tu pedido. Solo falta tocar Enviar.");
+  listo("Se abrió WhatsApp con tu pedido. Solo falta tocar Enviar."+(formaPago()==="transferencia"?" Te confirmamos el total antes de que transfieras.":""));
 });
 /* «Pegar en Instagram»: aparece tras copiar; al tocarlo vuelve a copiar el pedido (por si acaso) y abre el chat */
 function mostrarIg(){if(!L.instagram)return;const b=$("bIg");b.hidden=false;b.classList.remove("aparece");void b.offsetWidth;b.classList.add("aparece");b.focus({preventScroll:true})}
