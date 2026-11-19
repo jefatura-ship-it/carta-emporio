@@ -39,6 +39,20 @@ button{font:inherit;cursor:pointer}
 .col.plegada>.ped,.col.plegada>.vacio,.caja.plegada>:not(h3){display:none}
 .caja h3{display:flex}
 .col h2>span.hay-nuevo{background:var(--sol);color:#fff;animation:pulso 1.6s infinite}
+/* Una página por estado (19/11/2026): pestañas arriba y las tarjetas en grilla a todo el ancho */
+.pestanas{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 8px;scrollbar-width:thin}
+.pest{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 16px;border:1.5px solid var(--linea);border-radius:14px;background:#fff;color:var(--tinta);font:inherit;font-weight:800;font-size:15px;cursor:pointer}
+.pest>span{min-width:28px;height:24px;padding:0 8px;border-radius:999px;background:#ece6d8;font-size:13px;line-height:24px;text-align:center}
+.pest[aria-selected="true"]{background:var(--tinta);border-color:var(--tinta);color:#fff}
+.pest[aria-selected="true"]>span{background:#fff;color:var(--tinta)}
+.pest.p-pc>span{background:var(--sol);color:#fff}
+.pest>span.hay-nuevo{background:var(--sol);color:#fff;animation:pulso 1.6s infinite}
+.principal{min-width:0}
+.tablero.una{display:block;overflow:visible}
+.col.una h2{justify-content:flex-start;gap:10px;flex-wrap:wrap}
+.col.una h2 small{font-weight:600;font-size:12.5px;color:var(--suave)}
+.col.una .lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:start}
+.col.una .lista .ped{margin-bottom:0}
 @media (min-width:1101px){
   .tablero{grid-template-columns:var(--cols,repeat(4,minmax(240px,1fr)))}
   .col.plegada h2{flex-direction:column;gap:10px;margin:4px 0}
@@ -262,6 +276,8 @@ var CADA = 12000;
 var datos = null, filtro = 'proximos', busqueda = '', vistos = null, nuevos = {}, abiertos = {}, ocupado = {}, seguro = {};
 var audio = null, sonidoOn = false, ultimaOk = 0, temporizador = null, plegadas = {};
 try { plegadas = JSON.parse(localStorage.getItem('panel-plegadas') || '{}') || {}; } catch (e) { plegadas = {}; }
+var pestana = 'c-pc';
+try { pestana = localStorage.getItem('panel-pestana') || 'c-pc'; } catch (e) { pestana = 'c-pc'; }
 var DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 var $ = function (id) { return document.getElementById(id); };
 var esc = function (t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
@@ -552,6 +568,10 @@ var COLUMNAS = [
 ];
 var EN_LOCAL = 'Estoy en el local';
 var enLocal = function (p) { return p.hora === EN_LOCAL; };
+// Por preparar: del más difícil al más fácil (más unidades; a igualdad, más productos distintos; luego el orden de siempre)
+function ordenDificil(a, b) {
+  return (Number(b.unidades) || 0) - (Number(a.unidades) || 0) || (b.items || []).length - (a.items || []).length || orden(a, b);
+}
 function orden(a, b) {
   return (a.dia || '9999').localeCompare(b.dia || '9999') || (enLocal(b) ? 1 : 0) - (enLocal(a) ? 1 : 0) || (a.prioridad === 'Alta' ? -1 : 0) - (b.prioridad === 'Alta' ? -1 : 0)
     || String(a.hora).localeCompare(String(b.hora)) || a.recibido - b.recibido;
@@ -565,14 +585,22 @@ function pintar() {
   $('nMan').textContent = activos.filter(function (p) { return p.dia === man; }).length || '';
   var lista = datos.pedidos.filter(pasaFiltro);
   var foco = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.foco : null;
-  var cols = COLUMNAS.map(function (c) { return plegadas[c.id] ? '56px' : 'minmax(240px,1fr)'; }).join(' ');
-  var html = stockHTML() + '<section class="tablero" aria-label="Pedidos por estado" style="--cols:' + cols + '">' + COLUMNAS.map(function (c) {
-    var ps = lista.filter(function (p) { return c.estados.indexOf(p.estado) >= 0; }).sort(orden);
-    if (c.id === 'c-ce') ps = ps.reverse();
-    var pl = !!plegadas[c.id], nuevo = ps.some(function (p) { return nuevos[p.codigo]; });
-    return '<div class="col ' + c.id + (pl ? ' plegada' : '') + '"><h2>' + titulo(c.id, c.titulo, pl) + '<span' + (nuevo && pl ? ' class="hay-nuevo"' : '') + '>' + ps.length + '</span></h2>'
-      + (ps.length ? ps.map(tarjeta).join('') : '<p class="vacio">' + c.vacio + '</p>') + '</div>';
-  }).join('') + '</section>' + ladoHTML();
+  if (!COLUMNAS.some(function (c) { return c.id === pestana; })) pestana = 'c-pc';
+  var deCol = function (c) {
+    var ps = lista.filter(function (p) { return c.estados.indexOf(p.estado) >= 0; }).sort(c.id === 'c-co' ? ordenDificil : orden);
+    return c.id === 'c-ce' ? ps.reverse() : ps;
+  };
+  var tabs = '<nav class="pestanas" role="tablist" aria-label="Pedidos por estado">' + COLUMNAS.map(function (c) {
+    var ps = deCol(c), nuevo = c.id !== pestana && ps.some(function (p) { return nuevos[p.codigo]; });
+    return '<button type="button" class="pest p-' + c.id.slice(2) + '" role="tab" data-pestana="' + c.id + '" data-foco="pest-' + c.id + '" aria-selected="' + (c.id === pestana) + '">'
+      + esc(c.titulo) + '<span' + (nuevo ? ' class="hay-nuevo"' : '') + '>' + ps.length + '</span></button>';
+  }).join('') + '</nav>';
+  var html = '<div class="principal">' + stockHTML() + tabs + '<section class="tablero una" role="tabpanel" aria-label="Pedidos por estado">' + COLUMNAS.filter(function (c) { return c.id === pestana; }).map(function (c) {
+    var ps = deCol(c);
+    return '<div class="col una ' + c.id + '"><h2>' + esc(c.titulo) + '<span>' + ps.length + '</span>'
+      + (c.id === 'c-co' && ps.length > 1 ? '<small>Del más difícil al más fácil: más productos primero</small>' : '') + '</h2>'
+      + (ps.length ? '<div class="lista">' + ps.map(tarjeta).join('') + '</div>' : '<p class="vacio">' + c.vacio + '</p>') + '</div>';
+  }).join('') + '</section></div>' + ladoHTML();
   $('cuerpo').innerHTML = html;
   if (foco) { var f = document.querySelector('[data-foco="' + foco + '"]'); if (f) f.focus(); }
   document.title = (activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length ? '(' + activos.filter(function (p) { return p.estado === 'Por confirmar'; }).length + ') ' : '') + 'SabAPP';
@@ -870,6 +898,12 @@ document.addEventListener('click', function (e) {
   if (stb) { if (!stb.disabled) decidirStock(stb); return; }
   var asg = e.target.closest('button[data-asignar]');
   if (asg) { elegirQuienPrepara(asg.dataset.asignar, 'asignar'); return; }
+  var pt = e.target.closest('[data-pestana]');
+  if (pt) {
+    pestana = pt.dataset.pestana;
+    try { localStorage.setItem('panel-pestana', pestana); } catch (err) {}
+    pintar(); return;
+  }
   var pg = e.target.closest('[data-plegar]');
   if (pg) {
     plegadas[pg.dataset.plegar] = !plegadas[pg.dataset.plegar];
