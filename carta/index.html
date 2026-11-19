@@ -508,6 +508,9 @@ html{scrollbar-gutter:stable}
 body.con-fondo::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(180deg,rgba(18,40,24,.58),rgba(18,40,24,.48) 45%,rgba(18,40,24,.62)),var(--fondo-pag) center/cover no-repeat;animation:fondoAparece .5s ease-out}
 @keyframes fondoAparece{from{opacity:0}to{opacity:1}}
+body.con-fondo[data-fondo="mosaico"]::before{background:linear-gradient(180deg,rgba(18,40,24,.58),rgba(18,40,24,.48) 45%,rgba(18,40,24,.62)),var(--fondo-pag) 0 0/340px repeat}
+body.con-fondo[data-fondo="metal"]::before{background:linear-gradient(180deg,rgba(14,20,26,.5),rgba(14,20,26,.22) 45%,rgba(14,20,26,.5)),var(--fondo-pag) center/cover no-repeat}
+.grupo.foto[data-fondo="mosaico"]::before{background:linear-gradient(180deg,rgba(18,40,24,.62) 0%,rgba(18,40,24,.38) 38%,rgba(248,246,238,.15) 62%,var(--masa) 96%),var(--foto) 0 0/300px repeat}
 body.con-fondo .grupo.foto::before{display:none}
 body.con-fondo .grupo.foto{padding-top:28px}
 body.con-fondo .herram{background:transparent}
@@ -2028,7 +2031,7 @@ L.productos.push({cod:"PROMO-EXTRA-DI",cat:"Promos",nombre:"Promo huevo extra + 
 /* Huevos: la misma foto para todos los calibres (bandeja de huevos blancos o café, según el color) */
 L.productos.forEach(p=>{if(p.foto||p.cat!=="Huevos")return;p.foto=/caf[eé]|color|rojo|marr[oó]n|novogen/i.test(p.nombre)?"../img/huevos-cafe-bandeja.jpg":"../img/huevos-blancos-bandeja.jpg"});
 /* Foto por caja (vista «por caja» de las páginas de huevos; David, 19/11/2026): huevos de color, todos los tamaños con la misma foto */
-L.productos.forEach(p=>{if(p.cat==="Huevos"&&/caf[eé]|color/i.test(p.nombre)&&!/quinta/i.test(p.nombre))p.fotoCaja="../img/productos/fotos/huevos-color-caja.webp"});
+L.productos.forEach(p=>{if(p.cat==="Huevos"&&!/quinta/i.test(p.nombre))p.fotoCaja=/caf[eé]|color/i.test(p.nombre)?"../img/productos/fotos/huevos-color-caja.webp":"../img/productos/fotos/huevos-blancos-caja.webp"});
 const PROD=Object.fromEntries(L.productos.map(p=>[p.cod,p]));
 const esPieza=p=>p.cat==="Tapas"||p.cat==="Blondas"; // piezas que van incluidas en otro producto, no se venden solas
 const pieza=t=>t&&t.cat==="Blondas"?"blonda":"tapa", porQue=t=>t&&t.cat==="Blondas"?"bandeja":"envase";
@@ -2302,6 +2305,10 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
 })();
 /* Páginas con foto de fondo arriba (fotos propias de la avícola) */
 const FOTOS={"Huevos blancos":"huevos-blancos-bandeja.jpg","Huevos de color":"huevos-cafe-bandeja.jpg","Huevos de quinta":"huevos-editorial.jpg","Huevos":"huevos-editorial.jpg","Hueveras":"huevos-editorial.jpg"};
+/* Fondos de secciones (David, 19/11/2026): plásticos (dibujo en mosaico, también en bolsas y papeles y en vasos, platos y cubiertos) y aluminio */
+["Envases","Contenedores","Cúpulas","Potes","Salseros","Bolsas","Sacos y mallas","Papeles y film","Vasos","Platos","Cubiertos y servilletas","Bombillas, brochetas y palitos"].forEach(c=>{FOTOS[c]="fondo-plasticos.webp"});
+["Envases de aluminio","Foil y moldes de aluminio"].forEach(c=>{FOTOS[c]="fondo-aluminio.webp"});
+const TIPOFONDO={"fondo-plasticos.webp":"mosaico","fondo-aluminio.webp":"metal"}; // mosaico: se repite en vez de estirarse; metal: velo más suave y neutro para que se vea el metal
 /* Productos cerrados en la página por stock bajo (decisión en SabAPP o en la planilla): primero lo último que se supo */
 Object.values(PROD).forEach(p=>{p.sinStock0=!!p.sinStock});
 try{(JSON.parse(localStorage.getItem("cerrados-"+KEY)||"[]")||[]).forEach(c=>{const p=PROD[c];if(p){p.cerrado=true;p.sinStock=true}})}catch(e){}
@@ -2311,7 +2318,7 @@ const botonPag=(x,c)=>{const b=`<button type="button" data-sec="g-${slug(x)}"${x
   return conCaja(x)?`<span class="sf-par">${b}<button type="button" class="sf-caja${x===c?" esta":""}" data-sec="g-${slug(x)}" data-vista="caja" aria-label="${x} por caja">por caja</button></span>`:b};
 cats.forEach(c=>{const ps=deCat(c).filter(p=>fmtDe(p));if(ps.length&&ps.every(p=>/^F1[08]0$/.test(modoDe(p))))vistaCaja.add(c)});
 $("carta").innerHTML=cats.map(c=>`
-  <section class="grupo${FOTOS[c]?" foto":""}" id="g-${slug(c)}"${FOTOS[c]?` style="--foto:url(../img/${FOTOS[c]})"`:""}>
+  <section class="grupo${FOTOS[c]?" foto":""}" id="g-${slug(c)}"${FOTOS[c]?` style="--foto:url(../img/${FOTOS[c]})"`:""}${TIPOFONDO[FOTOS[c]]?` data-fondo="${TIPOFONDO[FOTOS[c]]}"`:""}>
     ${c!==FAV&&famDe(c)?`<p class="fam-et">${famDe(c)}</p>`:""}<h2>${c===FAV?ICONOS._fav:(ICONOS[BASEDE[c]||c]||(c==="Hueveras"?ICONOS.Huevos:ICONOS._))}${c}</h2>
     ${(()=>{const l=c===FAV?null:(FAMS.find(([,x])=>x.includes(c))||[])[1];return l&&l.length>1?`<div class="subfam" role="group" aria-label="Páginas de ${famDe(c)}">${l.map(x=>botonPag(x,c)).join("")}</div>`:""})()}
     <div class="lista">${cardsDe(deCat(c),c)}</div>
@@ -2332,7 +2339,7 @@ function verSeccion(id,{enfocar=false,desplazar=true}={}){
   const antes=SECC.findIndex(x=>!x.hidden),ahora=SECC.indexOf(g);
   SECC.forEach(x=>{x.hidden=x!==g});
   /* si la página tiene foto, inunda todo el fondo de la pantalla */
-  const fo=g.style.getPropertyValue("--foto");document.body.classList.toggle("con-fondo",!!fo);if(fo)document.body.style.setProperty("--fondo-pag",fo);
+  const fo=g.style.getPropertyValue("--foto");document.body.classList.toggle("con-fondo",!!fo);document.body.dataset.fondo=g.dataset.fondo||"";if(fo)document.body.style.setProperty("--fondo-pag",fo);
   if(antes>=0&&antes!==ahora&&!matchMedia("(prefers-reduced-motion:reduce)").matches){g.classList.remove("pag-der","pag-izq");void g.offsetWidth;g.classList.add(ahora>antes?"pag-der":"pag-izq")}
   const fg=nomSec(g)===FAV?FAV:famDe(nomSec(g));
   document.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-current",x.dataset.fam===fg));
