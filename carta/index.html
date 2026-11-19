@@ -1782,6 +1782,12 @@ const LOCALES = {
       {cod:"ABA050",cat:"Harinas y repostería",nombre:"Gelatina sin sabor",detalle:"Precio por kilo",precio:990,bolsas:[[500, 520], [1000, 990]],nuevo:true},
       {cod:"ABA052",cat:"Harinas y repostería",nombre:"Harina de avena",detalle:"Precio por kilo",precio:2000,bolsas:[[500, 1000], [1000, 2000]],nuevo:true},
       {cod:"ABA055",cat:"Harinas y repostería",nombre:"Harina tostada",detalle:"Precio por kilo",precio:1290,bolsas:[[1000, 1290]],nuevo:true},
+      {cod:"ABA024",cat:"Semillas y cereales",nombre:"Amapola",detalle:"Precio por kilo",precio:9990,bolsas:[[50, 520]],nuevo:true},
+      {cod:"ABA025",cat:"Semillas y cereales",nombre:"Amaranto",detalle:"Precio por kilo",precio:4590,bolsas:[[500, 2380]],nuevo:true},
+      {cod:"ABA028",cat:"Semillas y cereales",nombre:"Avena pelada entera",detalle:"Precio por kilo",precio:640,bolsas:[[1000, 640], [25000, 15990]],nuevo:true},
+      {cod:"ABA039",cat:"Semillas y cereales",nombre:"Chuchoca entera",detalle:"Precio por kilo",precio:2890,bolsas:[[500, 1500]],nuevo:true},
+      {cod:"ABA037",cat:"Semillas y cereales",nombre:"Chía",detalle:"Precio por kilo",precio:5590,bolsas:[[100, 580], [500, 2870], [1000, 5590]],nuevo:true},
+      {cod:"ABA058",cat:"Semillas y cereales",nombre:"Linaza entera",detalle:"Precio por kilo",precio:3490,bolsas:[[500, 1810]],nuevo:true},
       {cod:"ABA060",cat:"Semillas y cereales",nombre:"Maíz para palomitas",detalle:"Precio por kilo",precio:2390,bolsas:[[500, 1240], [1000, 2390]],nuevo:true},
       {cod:"ABA070",cat:"Semillas y cereales",nombre:"Mote de trigo",detalle:"Precio por kilo",precio:1790,bolsas:[[1000, 1790]],nuevo:true},
       {cod:"ABA078",cat:"Semillas y cereales",nombre:"Quinoa",detalle:"Precio por kilo",precio:4590,bolsas:[[500, 2380], [1000, 4590]],nuevo:true},
@@ -2095,7 +2101,7 @@ const FORMATOS={huevo:[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",
 /* Súper y jumbo: bandeja de 20 y caja de 100 (no van en bandeja de 30 ni en caja de 180) */
 /* Granel por bolsa (19/11/2026): cada producto con «bolsas» [[gramos, precio]] tiene sus formatos «Bolsa de 100 g»… con precio fijo */
 L.productos.forEach(p=>{if(!Array.isArray(p.bolsas)||!p.bolsas.length)return;p.formatos="b-"+p.cod;
-  FORMATOS[p.formatos]=p.bolsas.map(([g])=>["Fb"+g,g>=1000?(g===1000?"Bolsa de 1 kg":`Bolsa de ${String(g/1000).replace(".",",")} kg`):`Bolsa de ${g} g`,g])});
+  FORMATOS[p.formatos]=p.bolsas.map(([g])=>["Fb"+g,g>=20000?`Saco de ${g/1000} kg`:g>=1000?(g===1000?"Bolsa de 1 kg":`Bolsa de ${String(g/1000).replace(".",",")} kg`):`Bolsa de ${g} g`,g])});
 FORMATOS.huevoGrande=[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F20","Bandeja de 20",20],["F100","Caja de 100",100]];
 Object.keys(cart).forEach(k=>{const p=PROD[k.replace(/@.*$/,"")];const f=(k.match(/@(F\d+)$/)||[])[1];if(!p||p.retirado||esPieza(p)||(k.endsWith("@P")&&!(p.upp>1))||(f&&!(FORMATOS[p.formatos]||[]).some(x=>x[0]===f)))delete cart[k]});
 let tapaSel={};try{tapaSel=JSON.parse(leePref("tapas-"+KEY)||"{}")||{}}catch(e){tapaSel={}}
