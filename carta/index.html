@@ -1293,6 +1293,7 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
       </div>
       <div class="campo despacho" id="campoDespacho" hidden>
         <span class="lbl">¿Cuándo y dónde te lo llevamos?</span>
+        <div class="msg" id="msgMinDesp" role="alert" hidden></div>
         <div class="retiro">
           <label class="ret-f"><small>Día de despacho</small><select id="diaDesp"></select></label>
           <label class="ret-h"><small>Horario</small><select id="franjaDesp"></select></label>
@@ -1360,7 +1361,8 @@ const LOCALES = {
     // Despacho a domicilio (18/11/2026, David): jueves y viernes no, porque don Leo sale con los despachos de la Distribuidora.
     // dias: 1 = lunes … 6 = sábado, con sus franjas. anticipacion = minutos mínimos antes de que termine la franja para ofrecerla hoy.
     // costo: valor del despacho; gratisDesde: desde ese total (productos, con descuento) el despacho es gratis. comunas: donde se despacha (David, 18/11/2026).
-    despacho:{dias:{1:[["09:00","12:00"],["12:00","16:00"]],2:[["09:00","12:00"],["12:00","16:00"]],3:[["09:00","12:00"],["12:00","16:00"]],6:[["09:00","12:00"]]},anticipacion:120,diasVista:14,costo:1490,gratisDesde:100000,comunas:["Chillán","Chillán Viejo"]},
+    // minimo: no hay despacho en compras bajo ese total de productos (David, 19/11/2026: «no hay envíos por menos de 10.000 pesos»).
+    despacho:{dias:{1:[["09:00","12:00"],["12:00","16:00"]],2:[["09:00","12:00"],["12:00","16:00"]],3:[["09:00","12:00"],["12:00","16:00"]],6:[["09:00","12:00"]]},anticipacion:120,diasVista:14,costo:1490,gratisDesde:100000,minimo:10000,comunas:["Chillán","Chillán Viejo"]},
     // Pago por transferencia: los mismos datos del cartel de la caja (si "numero" queda vacío, la carta dice que se envían al confirmar el pedido).
     transferencia:{banco:"Santander",tipo:"Cuenta corriente",numero:"00002785369-2",titular:"Distribuidora Santa Bárbara SpA",rut:"77.586.055-3",correo:"distribuidora@avicolasb.com"},
     envioDirecto:true, // «Enviar pedido» lo manda el catálogo a la planilla y SabAPP; nosotros confirmamos por WhatsApp o llamada (18/11/2026, David)
@@ -2866,6 +2868,7 @@ function resumenDespacho(){
 }
 const costoDespacho=()=>{if(modoRetiro()!=="despacho"||!L.despacho)return 0;const c=L.despacho.costo,g=L.despacho.gratisDesde;
   return typeof c!=="number"?0:(typeof g==="number"&&totalFinal()>=g)?0:c};
+const faltaMinimo=()=>{const mi=L.despacho&&L.despacho.minimo;return modoRetiro()==="despacho"&&typeof mi==="number"?Math.max(0,mi-totalFinal()):0};
 const faltaGratis=()=>{const g=L.despacho&&L.despacho.gratisDesde;return typeof g==="number"?Math.max(0,g-totalFinal()):0};
 const comunaDespacho=()=>{const r=document.querySelector('input[name="comunaDesp"]:checked');return r?r.value:""};
 const dirDespachoCompleta=()=>dirDespacho()+(comunaDespacho()?", "+comunaDespacho():"");
@@ -2877,10 +2880,11 @@ const dirDespacho=()=>($("dirDesp").value||"").trim().replace(/\s+/g," ").slice(
 const refDespacho=()=>($("refDesp").value||"").trim().replace(/\s+/g," ").slice(0,100);
 function despOk(marcar){
   if(modoRetiro()!=="despacho")return true;
-  const okDia=!!($("diaDesp").value&&$("franjaDesp").value),okDir=dirDespacho().length>=5;
+  const okDia=!!($("diaDesp").value&&$("franjaDesp").value),okDir=dirDespacho().length>=5,fm=faltaMinimo(),okMin=fm===0;
+  const mm=$("msgMinDesp");if(mm){mm.hidden=okMin;mm.textContent=okMin?"":`El despacho es para compras desde ${clp(L.despacho.minimo)}. Te faltan ${clp(fm)}: agrega productos o elige retirar en el local.`}
   if(marcar){$("campoDir").classList.toggle("err",!okDir);$("msgDir").hidden=okDir;
-    if(!okDia)$("diaDesp").focus();else if(!okDir)$("dirDesp").focus()}
-  return okDia&&okDir;
+    if(!okMin){if(mm)mm.scrollIntoView({block:"center",behavior:"smooth"})}else if(!okDia)$("diaDesp").focus();else if(!okDir)$("dirDesp").focus()}
+  return okDia&&okDir&&okMin;
 }
 /* Banda de despacho del inicio (antes de las ofertas), armada con la misma configuración del despacho */
 (function pintarInicioDespacho(){
@@ -2890,6 +2894,7 @@ function despOk(marcar){
     estrella:'<svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>'};
   const cap=t=>t.charAt(0).toUpperCase()+t.slice(1);
   const chips=textoDiasDespacho().split(" · ").map(t=>`<li>${ic.cal}${escHTML(cap(t))}</li>`);
+  if(typeof D.minimo==="number")chips.push(`<li class="minimo">${ic.pesos}Compra mínima ${clp(D.minimo)}</li>`);
   if(typeof D.costo==="number")chips.push(`<li>${ic.pesos}Envío ${clp(D.costo)}</li>`);
   if(typeof D.gratisDesde==="number")chips.push(`<li class="gratis">${ic.estrella}Gratis desde ${clp(D.gratisDesde)}</li>`);
   $("despHomeChips").innerHTML=chips.join("");
@@ -2932,8 +2937,8 @@ function pintarPago(){
     :costoDespacho()?`Despacho ${clp(c)}${typeof g==="number"?` · gratis desde ${clp(g)} (te faltan ${clp(fg)})`:""}`:`Despacho gratis por compras desde ${clp(g)}`;
   pintarTotal();
   if(L.despacho){const D=L.despacho,com=(D.comunas||[]).join(" y ");
-    $("despNota").textContent=(com?com+" · ":"")+textoDiasDespacho()+(typeof D.costo==="number"?` · ${clp(D.costo)}${typeof D.gratisDesde==="number"?`, gratis desde ${clp(D.gratisDesde)}`:""}`:"")+" · pagas por transferencia";
-    $("despAyuda").textContent="Despachamos "+textoDiasDespacho()+(com?" en "+com:"")+"."}
+    $("despNota").textContent=(com?com+" · ":"")+textoDiasDespacho()+(typeof D.minimo==="number"?` · compra mínima ${clp(D.minimo)}`:"")+(typeof D.costo==="number"?` · ${clp(D.costo)}${typeof D.gratisDesde==="number"?`, gratis desde ${clp(D.gratisDesde)}`:""}`:"")+" · pagas por transferencia";
+    $("despAyuda").textContent="Despachamos "+textoDiasDespacho()+(com?" en "+com:"")+(typeof D.minimo==="number"?`, en compras desde ${clp(D.minimo)}`:"")+"."}
   const box=$("datosTransf");box.hidden=fp!=="transferencia";
   if(fp==="transferencia"){
     const filas=[["Banco",T.banco],["Tipo de cuenta",T.tipo],["N° de cuenta",T.numero],["Titular",T.titular],["RUT",T.rut],["Correo",T.correo]].filter(([,v])=>v);
