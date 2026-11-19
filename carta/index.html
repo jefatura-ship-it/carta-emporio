@@ -867,6 +867,27 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 .transf dt{color:#6b6b66}.transf dd{margin:0;font-weight:700}
 .transf .btn{margin-top:4px}
 #pasoDatos{display:grid;gap:12px}
+/* Carro y hoja del pedido en PC: usan el ancho de la ventana (18/11/2026, pedido de David) */
+.hoja-izq,.hoja-der{display:grid;gap:12px;min-width:0}
+.garantias[hidden]{display:none}
+@media (min-width:900px){
+  #veloCarro .hoja-carro>.wrap,#velo .hoja>.wrap{max-width:min(1240px,100%)}
+  #carroLista{grid-template-columns:repeat(auto-fill,minmax(440px,1fr));align-items:start}
+  #velo .hoja>.wrap{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);column-gap:40px;align-items:start}
+  #velo .hoja>.wrap>h3{grid-column:1/-1}
+  #velo .hoja-izq{grid-column:1;position:sticky;top:0;padding-bottom:12px}
+  #velo .hoja-der{grid-column:2}
+}
+/* Ventana «pedido enviado»: espera nuestra confirmación */
+.velo-enviado{z-index:30;align-items:center;justify-content:center;padding:16px}
+.enviado{width:min(460px,100%);border-radius:22px;text-align:center;padding-bottom:22px}
+.enviado .wrap{justify-items:center;padding-block:26px 0}
+.env-ico{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--campo);color:#fff;font-size:34px;font-weight:800}
+.enviado h3{justify-content:center;font-size:26px}
+.enviado p{margin:0;font-size:16px;line-height:1.45;color:var(--tinta)}
+.enviado .env-cod{font-size:14px;color:#6b6b66}
+.enviado .env-txt{font-size:18px;font-weight:700;color:var(--campo)}
+.enviado .btn{width:100%;margin-top:6px}
 #pasoDatos[hidden]{display:none}
 .btn.enviar{background:var(--campo);color:#fff;font-size:16px;padding:15px 18px}
 .btn.enviar:disabled{opacity:.7;cursor:default}
@@ -1175,19 +1196,34 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
   </section>
 </div>
 
+<div class="velo velo-enviado" id="veloEnviado" hidden>
+  <section class="hoja enviado" role="dialog" aria-modal="true" aria-labelledby="tituloEnviado" aria-describedby="envTxt">
+    <div class="wrap">
+      <span class="env-ico" aria-hidden="true">✓</span>
+      <h3 id="tituloEnviado">¡Pedido enviado!</h3>
+      <p class="env-cod" id="envCod"></p>
+      <p class="env-txt" id="envTxt">Espera nuestra confirmación: te hablaremos por WhatsApp o te llamaremos.</p>
+      <p id="envMas"></p>
+      <button type="button" class="btn prim" id="envOk">Entendido</button>
+    </div>
+  </section>
+</div>
 <div class="velo" id="velo" hidden>
   <section class="hoja" role="dialog" aria-modal="true" aria-labelledby="tituloHoja">
     <div class="wrap">
       <h3 id="tituloHoja">Confirmar pedido <button type="button" class="cerrar" id="cerrar">Seguir eligiendo</button></h3>
+      <div class="hoja-izq">
       <div class="ticket" id="ticket"></div>
       <div class="total"><span>Total aprox.</span><span id="totalHoja"></span></div>
-      <ul class="garantias">
+      <ul class="garantias" hidden>
         <li id="garPago">Pagas en el local al retirar</li>
         <li id="garDesp" hidden></li>
         <li id="garCargo">Sin cargos por armar ni enviar el pedido</li>
         <li>Si un precio cambia, te avisamos antes y puedes desistir sin costo</li>
       </ul>
       <div class="alerta" id="alertaTapas" role="status" aria-live="polite" hidden></div>
+      </div>
+      <div class="hoja-der">
       <div class="campo" id="campoModo" hidden>
         <span class="lbl" id="modoTit">¿Dónde estás?</span>
         <div class="dondes" role="radiogroup" aria-labelledby="modoTit">
@@ -1281,6 +1317,7 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
         <p class="legalnota">Al enviar el pedido aceptas los <a href="../legal.html#terminos" target="_blank" rel="noopener">términos</a> y la <a href="../legal.html#privacidad" target="_blank" rel="noopener">política de privacidad</a>.</p>
       </div>
       </div>
+      </div>
     </div>
   </section>
 </div>
@@ -1307,6 +1344,7 @@ const LOCALES = {
     despacho:{dias:{1:[["09:00","12:00"],["12:00","16:00"]],2:[["09:00","12:00"],["12:00","16:00"]],3:[["09:00","12:00"],["12:00","16:00"]],6:[["09:00","12:00"]]},anticipacion:120,diasVista:14,costo:1490,gratisDesde:100000,comunas:["Chillán","Chillán Viejo"]},
     // Pago por transferencia: los mismos datos del cartel de la caja (si "numero" queda vacío, la carta dice que se envían al confirmar el pedido).
     transferencia:{banco:"Santander",tipo:"Cuenta corriente",numero:"00002785369-2",titular:"Distribuidora Santa Bárbara SpA",rut:"77.586.055-3",correo:"distribuidora@avicolasb.com"},
+    envioDirecto:true, // «Enviar pedido» lo manda el catálogo a la planilla y SabAPP; nosotros confirmamos por WhatsApp o llamada (18/11/2026, David)
     descuentoRegistro:5, // % de bienvenida para clientes registrados (0 = sin registro)
     promo:{inicio:"2026-11-23", fin:"2026-12-04"},
     mayor:{dctos:[5,10], sinPaquete:[12,50]}, // precio por mayor: −5% desde 1 paquete (o 12 u) y −10% desde 3 paquetes (o 50 u). Provisorio // 10 días hábiles (lun 23 nov – vie 4 dic, ambos incluidos); se usa 1 sola vez por cliente
@@ -2636,6 +2674,7 @@ function horasPara(iso){
 /* ¿Dónde estás? «Estoy en el local» (solo con el local abierto) se envía directo a SabAPP; «Retiro más tarde» pide día y hora */
 const puedeLocal=()=>!!(L.horario&&REGISTRO_URL);
 const hayDespacho=()=>!!L.despacho;
+const envioDirecto=()=>!!(L.envioDirecto&&REGISTRO_URL);
 const hayTransf=()=>!!L.transferencia;
 const modoRetiro=()=>{if(!puedeLocal()&&!hayDespacho())return "retiro";const r=document.querySelector('input[name="modoRetiro"]:checked');return r?r.value:""};
 const enLocal=()=>modoRetiro()==="local";
@@ -2658,9 +2697,10 @@ function pintarModo(){
   $("campoDespacho").hidden=m!=="despacho";
   if(m==="despacho"&&!$("diaDesp").options.length)prepararDespacho();
   pintarPago();
-  $("bEnviar").hidden=m!=="local";
-  $("bWsp").hidden=$("dosBtns").hidden=m==="local";
-  if(m==="local"){$("bIg").hidden=true;$("notaIg").hidden=true}
+  const dir=m==="local"||envioDirecto();
+  $("bEnviar").hidden=!dir;
+  $("bWsp").hidden=$("dosBtns").hidden=dir;
+  if(dir){$("bIg").hidden=true;$("notaIg").hidden=true}
   if(m){$("campoModo").classList.remove("err");$("msgModo").hidden=true}
 }
 function fechaOk(){const f=$("fechaRet"),m=$("msgFecha"),v=f.value;let err="";
@@ -2980,7 +3020,7 @@ $("bOtra").addEventListener("click",()=>{
 $("bEnviar").addEventListener("click",async()=>{
   const b=$("bEnviar");if(b.disabled)return;
   if(!nombreOk())return;
-  if(!abiertoAhora()){pintarModo();pintarBloqueo();actualizarEnlaces();listo("El local ya cerró: elige el día y la hora de retiro.",true);return}
+  if(modoRetiro()==="local"&&!abiertoAhora()){pintarModo();pintarBloqueo();actualizarEnlaces();listo("El local ya cerró: elige el día y la hora de retiro.",true);return}
   recordarNombre();
   b.disabled=true;b.textContent="Enviando…";$("ok").hidden=true;
   const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),25000);
@@ -2990,7 +3030,8 @@ $("bEnviar").addEventListener("click",async()=>{
     if(!j||!j.ok)throw new Error(j&&j.error||"sin respuesta");
     pedidosAnotados.add(codigo);marcarEnviado();
     b.textContent="✓ Pedido enviado";
-    listo(`¡Listo! Tu pedido ${codigo} llegó al mesón y ya lo estamos preparando. Lo pagas al retirarlo.`);
+    listo(modoRetiro()==="local"?`¡Listo! Tu pedido ${codigo} llegó al mesón y ya lo estamos preparando. Lo pagas al retirarlo.`:`¡Listo! Recibimos tu pedido ${codigo}. Espera nuestra confirmación.`);
+    mostrarEnviado(true);
   }catch(e){
     b.disabled=false;b.textContent="Reintentar envío";
     actualizarEnlaces();$("bWsp").hidden=false;
@@ -3002,7 +3043,26 @@ $("bWsp").addEventListener("click",e=>{
   if(!nombreOk()){e.preventDefault();return}
   actualizarEnlaces(); recordarNombre(); marcarEnviado();
   listo("Se abrió WhatsApp con tu pedido. Solo falta tocar Enviar."+(formaPago()==="transferencia"?" Te confirmamos el total antes de que transfieras.":""));
+  mostrarEnviado(false);
 });
+/* Ventana «¡Pedido enviado!»: espera nuestra confirmación (WhatsApp o llamada; correo si eligió correo) */
+function mostrarEnviado(directo){
+  const m=modoRetiro(),cel=celPedido(),cor=correoPedido(),r=document.querySelector('input[name="medioAviso"]:checked'),porCorreo=!!(r&&r.value==="correo");
+  $("envCod").textContent=`Pedido ${codigo}`;
+  $("tituloEnviado").textContent=directo?"¡Pedido enviado!":"¡Ya casi!";
+  $("envTxt").textContent=m==="local"?"Ya lo estamos preparando en el mesón. Lo pagas al retirarlo."
+    :porCorreo&&cor?`Espera nuestra confirmación: te escribiremos a ${cor}.`:"Espera nuestra confirmación: te hablaremos por WhatsApp o te llamaremos.";
+  const mas=(directo?"":"Recuerda tocar Enviar en WhatsApp. ")
+    +(m!=="local"&&formaPago()==="transferencia"?"Transfiere solo cuando te confirmemos el stock y el total"+(m==="despacho"?"; ahí sale tu despacho.":"."):"")
+    +(m!=="local"&&!porCorreo&&cel?` Te contactaremos al +56 ${formatoCel(cel.replace(/^\+56/,""))}.`:"");
+  const mt=mas.replace(/\s+/g," ").trim();$("envMas").textContent=mt;$("envMas").hidden=!mt;
+  const v=$("veloEnviado");v.dataset.directo=directo?"1":"";v.hidden=false;$("envOk").focus({preventScroll:true});
+}
+$("envOk").addEventListener("click",()=>{
+  const v=$("veloEnviado");v.hidden=true;
+  if(v.dataset.directo){Object.keys(cart).forEach(k=>delete cart[k]);guardar();refrescar();$("ok").hidden=true;$("bOtra").hidden=true;cerrar();window.scrollTo({top:0,behavior:"auto"})}
+});
+$("veloEnviado").addEventListener("keydown",e=>{if(e.key==="Escape"){e.stopPropagation();$("envOk").click()}});
 /* «Pegar en Instagram»: aparece tras copiar; al tocarlo vuelve a copiar el pedido (por si acaso) y abre el chat */
 function mostrarIg(){if(!L.instagram)return;const b=$("bIg");b.hidden=false;b.classList.remove("aparece");void b.offsetWidth;b.classList.add("aparece");b.focus({preventScroll:true})}
 $("bIg").addEventListener("click",()=>{try{navigator.clipboard.writeText(textoPedido()).catch(()=>{})}catch(e){}});
