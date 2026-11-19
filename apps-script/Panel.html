@@ -186,6 +186,7 @@ button{font:inherit;cursor:pointer}
   <div class="marca"><img src="https://www.avicolasb.com/img/logo-emporio.webp" alt="Emporio Sabroso" width="150" height="44"><b>SabAPP</b></div>
   <span class="vivo" id="vivo" role="status" aria-live="polite"><i aria-hidden="true"></i><span id="vivoTxt">Conectando…</span></span>
   <button type="button" class="sonido" id="bSonido" aria-pressed="false">🔔 Activar sonido</button>
+  <button type="button" class="sonido" id="bTransf" data-transf="" title="Copia los datos de la cuenta para pegarlos en el chat del cliente">🏦 Copiar datos de transferencia</button>
   <span class="usuario" id="usuario"></span>
   <button type="button" class="salir" id="bAdmin" hidden>⚙ Administrar</button>
   <button type="button" class="salir" id="bClave" hidden>🔑 Mi clave</button>
@@ -629,6 +630,12 @@ function titulo(id, texto, pl) {
 var esDespacho = function (p) { return /^Despacho/i.test(p.hora || ''); };
 var pagaTransf = function (p) { return /PAGO: TRANSFERENCIA/.test(p.comentario || ''); };
 var TRANSFERENCIA = 'Banco Santander, cuenta corriente 00002785369-2, Distribuidora Santa Bárbara SpA, RUT 77.586.055-3. Envíenos el comprobante por este chat o a distribuidora@avicolasb.com';
+// Datos de la cuenta en líneas, para copiarlos y pegarlos en el chat del cliente (con el pedido y su total si se copian desde un pedido)
+var DATOS_TRANSF = 'Banco Santander\nCuenta corriente 00002785369-2\nDistribuidora Santa Bárbara SpA\nRUT 77.586.055-3\nComprobante: por este chat o a distribuidora@avicolasb.com';
+function textoTransf(p) {
+  return (p ? 'Pedido ' + p.codigo + (p.total ? ' · total a pagar ' + clp(p.total) + (esDespacho(p) ? ' (con despacho)' : '') : '') + '\n' : '')
+    + 'Datos para transferir:\n' + DATOS_TRANSF;
+}
 function mensaje(p, tipo) {
   var nom = (p.cliente || '').split(' ')[0] || 'cliente';
   if (esDespacho(p) || pagaTransf(p)) {
@@ -721,6 +728,8 @@ function tarjeta(p) {
   } else {
     acc = '<span class="p-cel">' + esc(p.estado) + '</span>' + boton(p, p.estado === 'Entregado' ? 'Preparado' : 'Por confirmar', '↩ Reabrir', 'peq');
   }
+  if ((esDespacho(p) || pagaTransf(p)) && ['Por confirmar', 'Confirmado', 'Preparado'].indexOf(p.estado) >= 0)
+    acc += '<button type="button" class="b peq" data-transf="' + esc(p.codigo) + '">🏦 Copiar datos de transferencia</button>';
   return '<article class="ped' + (p.prioridad === 'Alta' ? ' alta' : '') + (nuevos[p.codigo] ? ' nuevo' : '') + (cerrado ? ' cerrado' : '') + '" data-ped="' + esc(p.codigo) + '">'
     + '<div class="p-cab"><span class="p-cod">' + esc(p.codigo) + '</span>'
     + (nuevos[p.codigo] ? '<span class="tag t-nuevo">Nuevo</span>' : '')
@@ -873,6 +882,13 @@ document.addEventListener('click', function (e) {
     if (pa) { pa.avisado = true; pa.avisadoPor = medioA === 'correo' ? 'correo' : 'WhatsApp'; pa.avisadoEl = horaCorta(new Date()); }
     servidor('panelAvisado', [av.dataset.avisado, medioA], function (d) { recibir(d); }, function () {});
     setTimeout(pintar, 50);
+    return;
+  }
+  // Datos de transferencia: desde la barra (solo la cuenta) o desde un pedido (con su código y total)
+  var tf = e.target.closest('[data-transf]');
+  if (tf) {
+    var pt = tf.dataset.transf ? pedido(tf.dataset.transf) : null;
+    avisar(copiar(textoTransf(pt)) ? 'Datos de transferencia copiados: péguelos en el chat del cliente.' : 'No se pudo copiar.');
     return;
   }
   // Cliente sin celular: se copia el aviso para pegarlo en su chat (WhatsApp o Instagram)
