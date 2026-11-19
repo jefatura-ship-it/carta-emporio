@@ -172,6 +172,10 @@ html.bloqueo,html.bloqueo body{overflow:hidden}
 .mayor{display:none;margin-top:4px;font-size:12px;color:var(--campo);font-weight:600;line-height:1.5}
 .mayor.siempre{display:block} /* vista «por caja» de los huevos: los precios por cantidad se ven siempre */
 .mayor.siempre span.ok{background:var(--campo);color:#fff}
+/* Huevos: etiqueta lateral sobre la foto con calibre, color y formato (como el costado de una caja) */
+.ico.con-et{position:relative}
+.et-lat{position:absolute;left:0;bottom:10px;display:flex;flex-direction:column;align-items:flex-start;gap:1px;max-width:72%;padding:5px 10px 6px 9px;border-radius:0 10px 10px 0;background:var(--campo);color:#fff;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1.15;white-space:nowrap;pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.et-lat small{font-size:11px;font-weight:700;letter-spacing:.02em;text-transform:none;opacity:.92}
 .mayor span{display:inline-block;margin:2px 6px 0 0;background:#eef6f0;border-radius:6px;padding:1px 7px;font-weight:600}
 body.vermayor .mayor{display:block}
 .mayorBtn{display:inline-flex;align-items:center;gap:7px;margin:10px 0 0;border:1.5px solid var(--campo);background:#fff;color:var(--campo);border-radius:99px;padding:8px 14px;font-size:13.5px;font-weight:700;cursor:pointer;min-height:40px}
@@ -2023,6 +2027,8 @@ L.productos.push({cod:"PROMO-EXTRA-RC",cat:"Promos",nombre:"Promo huevo extra + 
 L.productos.push({cod:"PROMO-EXTRA-DI",cat:"Promos",nombre:"Promo huevo extra + queso chanco Don Isidro ¼ kg",detalle:"Bandeja de 30 huevos extra (blanco o café) y ¼ kg de queso chanco Don Isidro · 5 % menos que por separado",precio:7400,fav:true,promo:true,foto:"../img/huevos-blancos-bandeja.jpg"});
 /* Huevos: la misma foto para todos los calibres (bandeja de huevos blancos o café, según el color) */
 L.productos.forEach(p=>{if(p.foto||p.cat!=="Huevos")return;p.foto=/caf[eé]|color|rojo|marr[oó]n|novogen/i.test(p.nombre)?"../img/huevos-cafe-bandeja.jpg":"../img/huevos-blancos-bandeja.jpg"});
+/* Foto por caja (vista «por caja» de las páginas de huevos; David, 19/11/2026): huevos de color, todos los tamaños con la misma foto */
+L.productos.forEach(p=>{if(p.cat==="Huevos"&&/caf[eé]|color/i.test(p.nombre)&&!/quinta/i.test(p.nombre))p.fotoCaja="../img/productos/fotos/huevos-color-caja.webp"});
 const PROD=Object.fromEntries(L.productos.map(p=>[p.cod,p]));
 const esPieza=p=>p.cat==="Tapas"||p.cat==="Blondas"; // piezas que van incluidas en otro producto, no se venden solas
 const pieza=t=>t&&t.cat==="Blondas"?"blonda":"tapa", porQue=t=>t&&t.cat==="Blondas"?"bandeja":"envase";
@@ -2096,6 +2102,11 @@ function cajaPrecioHTML(p){const f=fmtInfo(p,modoDe(p)),q=cajasEn(p),pr=precioLi
   return `<span class="precio">${clp(pr)} <small class="u">la ${f[1].toLowerCase()}</small></span>`
     +(q?`<small class="cu">${q} caja${q>1?"s":""}: ${clp(pr*q)}</small>`:`<small class="cu">Sale a ${clp(Math.round(pr/f[2]))} c/u</small>`)
     +(ts.length?`<span class="mayor siempre">Más cajas, mejor precio: ${ts.map(e=>`<span${q>=e.desde?' class="ok"':""}>${e.desde} o más: ${clp(e.precio)}</span>`).join("")}</span>`:"")}
+// etiqueta lateral de los huevos: «Extra color» y el formato elegido («Caja de 180», «Bandeja de 30»…)
+function etLatHTML(p){const n=nPlano(p.nombre),m=n.match(/super jumbo|quinta jumbo|jumbo|super|extra|primera|segunda|tercera|cuarta|quinta/);if(!m)return "";
+  const cal={"super jumbo":"Súper jumbo","super":"Súper","quinta jumbo":"Quinta jumbo"}[m[0]]||m[0][0].toUpperCase()+m[0].slice(1);
+  const col=/(cafe|color)/.test(n)?" color":/blanco/.test(n)?" blanco":"",f=fmtInfo(p,modoDe(p));
+  return `<span class="et-lat" aria-hidden="true">${cal}${col}${f?`<small>${f[1]}</small>`:""}</span>`}
 function tramosLista(p,fid){const c=LISTA_HUEVOS[CAL_HUEVO[p.cod]],v=c&&c[fid];if(!Array.isArray(v))return [];return TRAMOS_CAJA.map((d,i)=>({desde:d,precio:v[i]})).filter((e,i)=>i>0&&e.precio!=null&&e.precio<v[0])}
 L.productos.forEach(p=>{const r=SUBCATS[p.cat];if(!r||esPieza(p))return;p.catBase=p.cat;p.cat=(r.find(([,re])=>re.test(nPlano(p.nombre)))||r[r.length-1])[0]});
 // las páginas de una misma sección van juntas y en el orden de la lista
@@ -2184,8 +2195,8 @@ const tapasHTML=p=>{const ts=tapasDe[p.cod];if(!ts)return "";const sel=tapaDe(p)
 let favCli=[];try{favCli=JSON.parse(localStorage.getItem("favoritos-"+KEY)||"[]")}catch(e){favCli=[]}
 const esFavCli=cod=>favCli.includes(cod);
 /* Foto del producto: al tocarla se abre la galería; «1/3» avisa cuántas fotos tiene */
-const fotosDe=p=>p.fotos&&p.fotos.length?p.fotos:(p.foto?[p.foto]:[]);
-const fotoHTML=p=>{const n=fotosDe(p).length;return `<button type="button" class="verfotos" data-galeria="${p.cod}" aria-label="Ver ${n>1?"las "+n+" fotos":"la foto"} de ${p.nombre}"><img src="${p.foto}" alt="" loading="lazy">${n>1?`<span class="nfotos" aria-hidden="true">1/${n}</span>`:""}</button>`};
+const fotosDe=p=>enCaja(p)&&p.fotoCaja?[p.fotoCaja]:p.fotos&&p.fotos.length?p.fotos:(p.foto?[p.foto]:[]);
+const fotoHTML=p=>{const n=fotosDe(p).length;return `<button type="button" class="verfotos" data-galeria="${p.cod}" aria-label="Ver ${n>1?"las "+n+" fotos":"la foto"} de ${p.nombre}"><img src="${fotosDe(p)[0]||p.foto}" alt="" loading="lazy">${n>1?`<span class="nfotos" aria-hidden="true">1/${n}</span>`:""}</button>`};
 /* Productos que se venden en varios tamaños (pedido de David, 17/11/2026): en la carta van en UNA tarjeta con cuadritos para
    elegir el tamaño. Cada tamaño sigue siendo su propio producto (su código de MyPyme, precio, foto y línea en el pedido).
    Al agregar un tamaño la tarjeta vuelve a quedar sin elegir, por si el cliente quiere llevar otro tamaño. */
@@ -2215,7 +2226,7 @@ function pintaVar(a){const v=VARG[a.dataset.var];if(!v)return;const lle=[];
 const repintarVar=g=>{document.querySelectorAll(`article[data-var="${g}"]`).forEach(a=>{a.outerHTML=cardVar(g)});refrescar()};
 const card=(p,c,vg)=>`
       <article class="prod${vg?" var":""}${agotado(p)?" agotado":""}${p.oferta!=null||p.ofertaFmt||p.promo?" oferta":""}" data-prod="${p.cod}"${vg?` data-var="${vg}"`:c===FAV?"":` id="p-${p.cod}"`}>${p.virtual?"":`<button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>`}
-        <div class="ico">${p.foto?fotoHTML(p):((ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}</div>
+        <div class="ico${fmtDe(p)&&p.foto?" con-et":""}">${p.foto?fotoHTML(p):((ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}${fmtDe(p)&&p.foto?etLatHTML(p):""}</div>
         <div class="info"><small class="tipo-p">${p.cat}</small><b>${vg?VARG[vg].nombre:p.nombre}</b>${vg?tallasHTML(vg):""}${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.cerrado?"Agotado por ahora":p.sinStock?"Stock 0 en el conteo":p.stock===0?"Sin stock":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
         ${p.virtual?`<div class="paso vacio pista-var"><button type="button" class="elige" disabled>Elige un tamaño</button></div>`:`<div class="paso vacio">
           <button class="menos" data-cod="${p.cod}" data-d="-1" aria-label="Quitar ${p.nombre}">−</button>
