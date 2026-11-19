@@ -172,6 +172,7 @@ html.bloqueo,html.bloqueo body{overflow:hidden}
 .mayor{display:none;margin-top:4px;font-size:12px;color:var(--campo);font-weight:600;line-height:1.5}
 .mayor.siempre{display:block} /* vista «por caja» de los huevos: los precios por cantidad se ven siempre */
 .mayor.siempre span.ok{background:var(--campo);color:#fff}
+.regla-mayor{display:block;margin-top:4px;font-size:11.5px;font-weight:700;color:#9a3412}
 /* Huevos: etiqueta lateral sobre la foto con calibre, color y formato (como el costado de una caja) */
 .ico.con-et{position:relative}
 .ico.con-et img{object-position:18% 50%}
@@ -1135,7 +1136,7 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
       <section class="mbloque" aria-label="Mis favoritos"><h3>Mis favoritos</h3><button type="button" class="cu-btn" id="cuFavs"><span class="cu-ico" aria-hidden="true">♥</span><span><b>Ver mis favoritos</b><small id="cuFavsN">Aún no guardas productos</small></span></button><p class="cu-nota">Toca el corazón de cualquier producto para guardarlo aquí.</p></section>
       <section class="mbloque" aria-label="Pedidos favoritos"><h3>Pedidos favoritos</h3>
         <p class="cu-nota">Guarda el pedido que tienes en el carro para repetirlo cuando quieras.</p>
-        <div class="cu-guardar"><label class="sr" for="cuPfNom">Nombre del pedido favorito</label><input id="cuPfNom" maxlength="40" placeholder="Ej.: Pedido semanal" autocomplete="off"><button type="button" class="cu-btn prim" id="cuPfGuardar">Guardar</button></div>
+        <div class="cu-guardar"><label class="sr" for="cuPfNom">Nombre del pedido favorito</label><input id="cuPfNom" maxlength="40" placeholder="Ej.: Compra semanal emporio" autocomplete="off"><button type="button" class="cu-btn prim" id="cuPfGuardar">Guardar</button></div>
         <p class="cu-nota cu-pf-msg" id="cuPfMsg" role="status" aria-live="polite"></p>
         <div class="cu-pf-lista" id="cuPfLista"></div>
       </section>
@@ -1157,7 +1158,7 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
       </div>
       <div class="carro-lista-form" id="cListaForm" hidden>
         <label for="cListaNom">Nombre de la lista</label>
-        <div class="fila"><input id="cListaNom" maxlength="40" placeholder="Ej.: Pedido semanal" autocomplete="off"><button type="button" class="btn prim" id="cListaOk">Guardar</button></div>
+        <div class="fila"><input id="cListaNom" maxlength="40" placeholder="Ej.: Compra semanal emporio" autocomplete="off"><button type="button" class="btn prim" id="cListaOk">Guardar</button></div>
       </div>
       <p class="carro-msg" id="cListaMsg" role="status" aria-live="polite"></p>
       <div class="carro-vacio" id="carroVacio" hidden>
@@ -1884,7 +1885,7 @@ function anotarPedido(){
 }
 /* El comentario que ve SabAPP lleva primero el despacho y la forma de pago (el script guarda hasta 300 caracteres) */
 function notaPedido(){
-  const ep=entregaPago(),n=($("nota").value||"").trim();let p="";
+  const ep=entregaPago(),n=($("nota").value||"").trim();let p=huevosPorMayor()?"POR MAYOR DE HUEVOS. ":"";
   if(ep.entrega==="despacho"){const cd=costoDespacho();p+=`DESPACHO ${cd?clp(cd)+" (incluido en el total)":"gratis"} a ${dirDespachoCompleta()}${refDespacho()?" (Ref.: "+refDespacho()+")":""}. `}
   if(ep.pago==="transferencia")p+="PAGO: TRANSFERENCIA. ";
   return (p+n).slice(0,300);
@@ -1895,7 +1896,20 @@ function datosPedido(){
     fechaRetiro:fechaPedido(),hora:horaPedido()||"Lo antes posible",items:its,total:totalFinal()+costoDespacho(),nota:notaPedido(),
     entrega:entregaPago().entrega,pago:entregaPago().pago,direccion:modoRetiro()==="despacho"?dirDespachoCompleta():"",costoDespacho:costoDespacho(),referencia:modoRetiro()==="despacho"?refDespacho():""};
 }
-const marcarEnviado=()=>{anotarPedido();try{const qs=Object.fromEntries(Object.entries(cart).filter(([,q])=>q>0));if(Object.keys(qs).length)localStorage.setItem("anterior-"+KEY,JSON.stringify({t:Date.now(),cart:qs}))}catch(e){};if(typeof usarDescuento==="function")usarDescuento();enviado=true;grabar();const bo=$("bOtra");if(bo)bo.hidden=false};
+/* Huevos por mayor (cajas a precio rebajado): 1 compra por semana por cliente (David, 19/11/2026).
+   Se anota en el equipo (con el celular) al enviar; SabAPP además avisa si el mismo celular ya compró por mayor esa semana. */
+const SEMANA=7*864e5;
+const huevosPorMayor=()=>items().some(x=>x.fmt&&x.mayor);
+function comprasMayor(){try{return (JSON.parse(localStorage.getItem("mayor-huevos-"+KEY)||"[]")||[]).filter(r=>r&&Date.now()-r.t<SEMANA)}catch(e){return []}}
+function anotarCompraMayor(){if(!huevosPorMayor())return;try{const l=comprasMayor().filter(r=>r.codigo!==codigo);l.push({t:Date.now(),tel:(cliente&&cliente.tel)||celPedido()||"",codigo});localStorage.setItem("mayor-huevos-"+KEY,JSON.stringify(l.slice(-10)))}catch(e){}}
+function mayorSemanaOk(marcar){
+  if(!huevosPorMayor())return true;
+  const prev=comprasMayor().filter(r=>r.codigo!==codigo).sort((a,b)=>b.t-a.t)[0];if(!prev)return true;
+  if(marcar){const d=t=>new Date(t).toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long"});
+    listo(`La compra de huevos a precio por mayor es 1 vez por semana por cliente. Tu última fue el ${d(prev.t)} (pedido ${prev.codigo}); podrás volver a comprar por mayor desde el ${d(prev.t+SEMANA)}. Mientras, puedes llevar hasta 4 cajas de cada huevo a precio normal.`,true)}
+  return false;
+}
+const marcarEnviado=()=>{anotarPedido();anotarCompraMayor();try{const qs=Object.fromEntries(Object.entries(cart).filter(([,q])=>q>0));if(Object.keys(qs).length)localStorage.setItem("anterior-"+KEY,JSON.stringify({t:Date.now(),cart:qs}))}catch(e){};if(typeof usarDescuento==="function")usarDescuento();enviado=true;grabar();const bo=$("bOtra");if(bo)bo.hidden=false};
 
 /* ---------- Registro de clientes: nombres, apellidos y celular → descuento ---------- */
 // Dirección del servicio de registro de clientes. Vacía: el registro queda solo en el celular del cliente.
@@ -2118,7 +2132,8 @@ function selCajasHTML(p){const f=fmtInfo(p,modoDe(p)),q=cajasEn(p),rs=rangosList
 function cajaPrecioHTML(p){const f=fmtInfo(p,modoDe(p)),q=cajasEn(p),pr=precioLista(p,f[0],Math.max(1,q)),rs=rangosLista(p,f[0]),n=Math.max(1,q);
   return `<span class="precio">${clp(pr)} <small class="u">la ${f[1].toLowerCase()}</small></span>`
     +(q?`<small class="cu">${q} caja${q>1?"s":""}: ${clp(pr*q)}</small>`:`<small class="cu">Sale a ${clp(Math.round(pr/f[2]))} c/u</small>`)
-    +(rs.length>1?`<span class="mayor siempre">Precio por caja según cuántas lleves: ${rs.map(r=>`<span${n>=r.desde&&(r.hasta==null||n<=r.hasta)?' class="ok"':""}>${textoRango(r)}: ${clp(r.precio)}</span>`).join("")}</span>`:"")}
+    +(rs.length>1?`<span class="mayor siempre">Precio por caja según cuántas lleves: ${rs.map(r=>`<span${n>=r.desde&&(r.hasta==null||n<=r.hasta)?' class="ok"':""}>${textoRango(r)}: ${clp(r.precio)}</span>`).join("")}</span>`
+      +`<small class="regla-mayor">Precio por mayor (desde ${rs[1].desde} cajas): 1 compra por semana por cliente.</small>`:"")}
 // etiqueta lateral de los huevos: «Extra color» y el formato elegido («Caja de 180», «Bandeja de 30»…)
 function etLatHTML(p){const n=nPlano(p.nombre),m=n.match(/super jumbo|quinta jumbo|jumbo|super|extra|primera|segunda|tercera|cuarta|quinta/);if(!m)return "";
   const cal={"super jumbo":"Súper jumbo","super":"Súper","quinta jumbo":"Quinta jumbo"}[m[0]]||m[0][0].toUpperCase()+m[0].slice(1);
@@ -3001,6 +3016,7 @@ function nombreOk(){
   if(!m){$("campoModo").classList.add("err");$("msgModo").hidden=false;const r=document.querySelector('input[name="modoRetiro"]:not(:disabled)');if(r)r.focus();return false}
   if(m==="retiro"&&!fechaOk()){$("fechaRet").focus();return false}
   if(m==="despacho"&&!despOk(true))return false;
+  if(!mayorSemanaOk(true))return false;
   return contactoOk(true);
 }
 /* Celular (o el de la cuenta) si se avisa por WhatsApp; correo si se avisa por correo. Sin uno válido no se envía. */
@@ -3020,7 +3036,7 @@ function contactoOk(marcar){
   return ok;
 }
 /* Los botones de envío se ven apagados mientras falte el celular o el correo (al tocarlos se explica qué falta) */
-const pintarBloqueo=()=>{const ok=contactoOk(false)&&despOk(false);["bEnviar","bWsp","bCopiar","bArchivo"].forEach(id=>$(id).classList.toggle("bloq",!ok))};
+const pintarBloqueo=()=>{const ok=contactoOk(false)&&despOk(false)&&mayorSemanaOk(false);["bEnviar","bWsp","bCopiar","bArchivo"].forEach(id=>$(id).classList.toggle("bloq",!ok))};
 
 function abrirRevision(){
   if(!items().length)return;

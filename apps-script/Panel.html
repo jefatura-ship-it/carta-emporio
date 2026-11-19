@@ -88,6 +88,8 @@ button{font:inherit;cursor:pointer}
 .p-items li:last-child{border-bottom:0}
 .p-items b{min-width:28px;text-align:right}
 .p-sku{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:var(--papel);color:var(--suave);font-size:11.5px;font-weight:800;letter-spacing:.03em;white-space:nowrap;vertical-align:1px}
+.p-mayor{margin-top:8px;padding:6px 10px;border-radius:8px;background:#fff4e5;color:#9a3412;font-size:13px;font-weight:700}
+.p-mayor.repite{background:#fdecea;color:#9b1c1c;border:1.5px solid #f0b8b2}
 .p-avisado{display:flex;align-items:center;gap:6px;margin-top:8px;padding:6px 10px;border-radius:8px;background:#e6f6ec;color:#14663a;font-size:13px;font-weight:700}
 .caja li small{display:block;color:var(--suave);font-size:11.5px;font-weight:700;letter-spacing:.03em}
 .p-mas{border:0;background:none;color:var(--azul);font-weight:700;font-size:13px;padding:2px 0}
@@ -657,6 +659,18 @@ function titulo(id, texto, pl) {
 // Mensajes para el cliente: «confirmado» (al recibir el pedido) y «listo» (para retirar)
 var esDespacho = function (p) { return /^Despacho/i.test(p.hora || ''); };
 var pagaTransf = function (p) { return /PAGO: TRANSFERENCIA/.test(p.comentario || ''); };
+// Huevos por mayor: 1 compra por semana por cliente (David, 19/11/2026); la carta marca el pedido con «POR MAYOR DE HUEVOS»
+var esMayorHuevos = function (p) { return /POR MAYOR DE HUEVOS/.test(p.comentario || ''); };
+var celCorto = function (c) { return String(c || '').replace(/\D/g, '').slice(-8); };
+function otraMayorSemana(p) {
+  if (!esMayorHuevos(p) || !datos) return null;
+  var c = celCorto(p.celular), cc = p.codigoCliente;
+  return datos.pedidos.filter(function (o) {
+    return o.codigo !== p.codigo && esMayorHuevos(o) && ['Anulado', 'No llegó'].indexOf(o.estado) < 0
+      && ((c.length === 8 && celCorto(o.celular) === c) || (cc && o.codigoCliente === cc))
+      && Math.abs((o.recibido || 0) - (p.recibido || 0)) < 7 * 864e5;
+  }).sort(function (a, b) { return (b.recibido || 0) - (a.recibido || 0); })[0] || null;
+}
 var despachoOtroDia = function (p) { return esDespacho(p) && !!(datos && datos.hoy && p.dia && p.dia > datos.hoy); };
 var TRANSFERENCIA = 'Banco Santander, cuenta corriente 00002785369-2, Distribuidora Santa Bárbara SpA, RUT 77.586.055-3. Envíenos el comprobante por este chat o a distribuidora@avicolasb.com';
 // Datos de la cuenta en líneas, para copiarlos y pegarlos en el chat del cliente (con el pedido y su total si se copian desde un pedido)
@@ -775,6 +789,9 @@ function tarjeta(p) {
       : esDespacho(p) ? '<div class="p-ret">🚚 Despacho ' + esc(diaLargo(p.dia)) + ' · ' + esc(String(p.hora).replace(/^Despacho\s*/i, '').replace(/-/, ' a ')) + ' ' + etiquetaDia(p.dia) + '</div>'
       : '<div class="p-ret">Retira ' + esc(diaLargo(p.dia)) + ' · ' + esc(p.hora || 'lo antes posible') + ' ' + etiquetaDia(p.dia) + '</div>')
     + chipPrepara(p, cerrado)
+    + (esMayorHuevos(p) ? (function () { var o = otraMayorSemana(p), f = o && o.recibido ? new Date(o.recibido) : null;
+        return o ? '<div class="p-mayor repite">⚠ Huevos por mayor: este cliente ya compró por mayor el ' + (f ? ('0' + f.getDate()).slice(-2) + '/' + ('0' + (f.getMonth() + 1)).slice(-2) : 'esta semana') + ' (pedido ' + esc(o.codigo) + '). La regla es 1 vez por semana.</div>'
+          : '<div class="p-mayor">🥚 Huevos por mayor (1 vez por semana por cliente)</div>'; })() : '')
     + (p.avisoAtiende && p.prepara && !cerrado ? '<div class="p-avisado">✓ Le avisamos por ' + (p.avisoAtiende === 'correo' ? 'correo' : 'WhatsApp') + ' que ' + esc(p.avisoAtiendeQuien || p.prepara) + ' lo atiende</div>' : '')
     + '<ul class="p-items">' + verItems.map(function (x) { return '<li><b>' + x.q + ' ×</b><span>' + esc(x.nombre) + (x.cod ? ' <small class="p-sku">' + esc(x.cod) + '</small>' : '') + '</span></li>'; }).join('') + '</ul>'
     + (largo ? '<button type="button" class="p-mas" data-abrir="' + esc(p.codigo) + '">Ver los ' + items.length + ' productos</button>' : '')
