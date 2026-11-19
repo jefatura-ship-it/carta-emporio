@@ -640,7 +640,7 @@ function mensaje(p, tipo) {
     return 'Hola ' + nom + ', recibimos su pedido ' + p.codigo + ' en Emporio Sabroso. '
       + (esDespacho(p) ? 'Se lo llevamos el ' + diaLargo(p.dia) + (fr ? ' entre ' + fr.replace(' a ', ' y ') : '') + (dir ? ' a ' + dir : '') + '. ' : 'Queda confirmado para retirar el ' + diaLargo(p.dia) + (/^\d/.test(p.hora || '') ? ' a las ' + p.hora : '') + '. ')
       + 'El total a pagar es $' + Number(p.total || 0).toLocaleString('es-CL') + (esDespacho(p) ? ' (con el despacho incluido)' : '') + '. '
-      + 'Puede transferir a: ' + TRANSFERENCIA + '. ¡Gracias!';
+      + 'Puede transferir a: ' + TRANSFERENCIA + '.' + (esDespacho(p) ? ' Apenas recibamos la transferencia, su pedido sale a despacho.' : '') + ' ¡Gracias!';
   }
   var cuando = diaLargo(p.dia) + (/^\d/.test(p.hora || '') ? ' a las ' + p.hora : '');
   if (tipo !== 'listo' && enLocal(p)) return 'Hola ' + nom + ', recibimos su pedido ' + p.codigo + ' en Emporio Sabroso y ya lo estamos preparando. ¡Gracias!';

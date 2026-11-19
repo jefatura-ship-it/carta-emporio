@@ -2788,7 +2788,7 @@ function pintarPago(){
   $("opPagoLocal").hidden=desp;
   if(desp){const r=document.querySelector('input[name="pago"][value="transferencia"]');if(r)r.checked=true}
   const fp=formaPago(),T=L.transferencia||{};
-  $("garPago").textContent=fp==="transferencia"?"Transfieres solo cuando te confirmemos el stock y el total":"Pagas en el local al retirar";
+  $("garPago").textContent=fp==="transferencia"?(desp?"Transfieres cuando te confirmemos el total y ahí sale tu despacho":"Transfieres solo cuando te confirmemos el stock y el total"):"Pagas en el local al retirar";
   const c=L.despacho&&L.despacho.costo;
   $("garDesp").hidden=!desp;
   $("garCargo").textContent=desp?"Sin cargos por armar el pedido":"Sin cargos por armar ni enviar el pedido";
@@ -2802,7 +2802,7 @@ function pintarPago(){
   const box=$("datosTransf");box.hidden=fp!=="transferencia";
   if(fp==="transferencia"){
     const filas=[["Banco",T.banco],["Tipo de cuenta",T.tipo],["N° de cuenta",T.numero],["Titular",T.titular],["RUT",T.rut],["Correo",T.correo]].filter(([,v])=>v);
-    box.innerHTML=`<b>Cómo pagar por transferencia</b><p>Envía tu pedido y espera nuestra confirmación del stock y del total exacto${desp?", con el despacho incluido":""}. Recién ahí transfiere y mándanos el comprobante por el mismo chat${T.correo?" o a "+escHTML(T.correo):""}.</p>`
+    box.innerHTML=`<b>Cómo pagar por transferencia</b><p>Envía tu pedido y espera nuestra confirmación del stock y del total exacto${desp?", con el despacho incluido":""}. Recién ahí transfiere y mándanos el comprobante por el mismo chat${T.correo?" o a "+escHTML(T.correo):""}.${desp?" Tu pedido sale a despacho cuando recibimos la transferencia del total (productos y despacho).":""}</p>`
       +(T.numero?`<dl>${filas.map(([k,v])=>`<dt>${k}</dt><dd>${escHTML(v)}</dd>`).join("")}</dl><button type="button" class="btn sec" id="bCopiarCta">Copiar datos de la cuenta</button>`
                :`<p>Los datos de la cuenta te los enviamos junto con la confirmación.</p>`);
     const bc=$("bCopiarCta");if(bc)bc.onclick=()=>{try{navigator.clipboard.writeText(filas.map(([k,v])=>k+": "+v).join("\n")).then(()=>{bc.textContent="✓ Datos copiados"}).catch(()=>{})}catch(e){}};
