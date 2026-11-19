@@ -629,6 +629,7 @@ function titulo(id, texto, pl) {
 // Mensajes para el cliente: «confirmado» (al recibir el pedido) y «listo» (para retirar)
 var esDespacho = function (p) { return /^Despacho/i.test(p.hora || ''); };
 var pagaTransf = function (p) { return /PAGO: TRANSFERENCIA/.test(p.comentario || ''); };
+var despachoOtroDia = function (p) { return esDespacho(p) && !!(datos && datos.hoy && p.dia && p.dia > datos.hoy); };
 var TRANSFERENCIA = 'Banco Santander, cuenta corriente 00002785369-2, Distribuidora Santa Bárbara SpA, RUT 77.586.055-3. Envíenos el comprobante por este chat o a distribuidora@avicolasb.com';
 // Datos de la cuenta en líneas, para copiarlos y pegarlos en el chat del cliente (con el pedido y su total si se copian desde un pedido)
 var DATOS_TRANSF = 'Banco Santander\nCuenta corriente 00002785369-2\nDistribuidora Santa Bárbara SpA\nRUT 77.586.055-3\nComprobante: por este chat o a distribuidora@avicolasb.com';
@@ -641,6 +642,9 @@ function mensaje(p, tipo) {
   if (esDespacho(p) || pagaTransf(p)) {
     var fr = String(p.hora || '').replace(/^Despacho\s*/i, '').replace(/^0/, '').replace(/-0?/, ' a ');
     var dir = (String(p.comentario || '').match(/DESPACHO .*? a (.+?)\. (PAGO|$)/) || [])[1] || '';
+    // Despacho agendado para otro día: «será enviado el día acordado» (David, 19/11/2026); el mismo día: «ya va en camino»
+    if (tipo === 'listo' && despachoOtroDia(p)) return 'Hola ' + nom + ', su pedido ' + p.codigo + ' de Emporio Sabroso está listo y será enviado el día acordado: el '
+      + diaLargo(p.dia) + (fr ? ' entre ' + fr.replace(' a ', ' y ') : '') + (dir ? ' a ' + dir : '') + '. ¡Gracias por su compra!';
     if (tipo === 'listo') return esDespacho(p)
       ? 'Hola ' + nom + ', su pedido ' + p.codigo + ' de Emporio Sabroso ya va en camino' + (dir ? ' a ' + dir : '') + '. ¡Gracias por su compra!'
       : 'Hola ' + nom + ', su pedido ' + p.codigo + ' ya está listo para retirar en Emporio Sabroso (Arturo Prat 720, Chillán, lunes a sábado de 8:30 a 17:00). ¡Lo esperamos!';
@@ -673,6 +677,7 @@ function avisoAtiendePor(p) {
   return wspEnlace(p, 'listo') ? 'wsp' : '';
 }
 function asunto(p, tipo) {
+  if (tipo === 'listo' && despachoOtroDia(p)) return 'Su pedido ' + p.codigo + ' está listo y será enviado el día acordado · Emporio Sabroso';
   if (tipo === 'listo' && esDespacho(p)) return 'Su pedido ' + p.codigo + ' va en camino · Emporio Sabroso';
   return tipo === 'listo' ? 'Su pedido ' + p.codigo + ' está listo para retirar · Emporio Sabroso' : 'Pedido ' + p.codigo + ' confirmado · Emporio Sabroso';
 }
