@@ -388,6 +388,12 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 .subfam{display:flex;gap:7px;overflow-x:auto;margin:0 0 12px;padding-bottom:4px;scrollbar-width:thin}
 .subfam button{flex:none;min-height:40px;padding:7px 13px;border:1.5px solid var(--campo);border-radius:999px;background:#fff;color:var(--campo);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
 .subfam button[aria-current="true"]{background:var(--campo);color:#fff}
+/* Huevos: «por caja» debajo del botón de cada página (el botón de la página es por bandeja) */
+.subfam{align-items:flex-start}
+.sf-par{flex:none;display:inline-flex;flex-direction:column;align-items:center;gap:5px}
+.subfam .sf-caja{min-height:30px;padding:3px 12px;font-size:12.5px;font-weight:700}
+.grupo[data-vista="caja"] .subfam button[aria-current="true"][data-vista]{background:#fff;color:var(--campo);border-color:var(--campo)}
+.grupo[data-vista="caja"] .subfam .sf-caja.esta{background:var(--campo);color:#fff;border-color:var(--campo)}
 /* Menú lateral: nace desde el costado izquierdo (donde está la perilla) y abre un segundo panel por familia */
 .velo-menu{background:rgba(20,30,20,.45);align-items:stretch;justify-content:flex-start}
 .velo-menu .panel-menu{width:min(88vw,400px);height:100%;box-shadow:14px 0 34px rgba(0,0,0,.28);animation:menuEntra .32s cubic-bezier(.2,.8,.2,1)}
@@ -2274,10 +2280,14 @@ const FOTOS={"Huevos blancos":"huevos-blancos-bandeja.jpg","Huevos de color":"hu
 /* Productos cerrados en la página por stock bajo (decisión en SabAPP o en la planilla): primero lo último que se supo */
 Object.values(PROD).forEach(p=>{p.sinStock0=!!p.sinStock});
 try{(JSON.parse(localStorage.getItem("cerrados-"+KEY)||"[]")||[]).forEach(c=>{const p=PROD[c];if(p){p.cerrado=true;p.sinStock=true}})}catch(e){}
+/* Páginas de huevos: el botón de la página los muestra por bandeja y el «por caja» de abajo, por caja (David, 19/11/2026) */
+const conCaja=x=>deCat(x).some(p=>fmtDe(p));
+const botonPag=(x,c)=>{const b=`<button type="button" data-sec="g-${slug(x)}"${x===c?' aria-current="true"':""}${conCaja(x)?' data-vista="bandeja"':""}>${x}</button>`;
+  return conCaja(x)?`<span class="sf-par">${b}<button type="button" class="sf-caja${x===c?" esta":""}" data-sec="g-${slug(x)}" data-vista="caja" aria-label="${x} por caja">por caja</button></span>`:b};
 $("carta").innerHTML=cats.map(c=>`
   <section class="grupo${FOTOS[c]?" foto":""}" id="g-${slug(c)}"${FOTOS[c]?` style="--foto:url(../img/${FOTOS[c]})"`:""}>
     ${c!==FAV&&famDe(c)?`<p class="fam-et">${famDe(c)}</p>`:""}<h2>${c===FAV?ICONOS._fav:(ICONOS[BASEDE[c]||c]||(c==="Hueveras"?ICONOS.Huevos:ICONOS._))}${c}</h2>
-    ${(()=>{const l=c===FAV?null:(FAMS.find(([,x])=>x.includes(c))||[])[1];return l&&l.length>1?`<div class="subfam" role="group" aria-label="Páginas de ${famDe(c)}">${l.map(x=>`<button type="button" data-sec="g-${slug(x)}"${x===c?' aria-current="true"':""}>${x}</button>`).join("")}</div>`:""})()}
+    ${(()=>{const l=c===FAV?null:(FAMS.find(([,x])=>x.includes(c))||[])[1];return l&&l.length>1?`<div class="subfam" role="group" aria-label="Páginas de ${famDe(c)}">${l.map(x=>botonPag(x,c)).join("")}</div>`:""})()}
     <div class="lista">${cardsDe(deCat(c),c)}</div>
   </section>`).join("");
 /* La carta va sección por sección: se ve una a la vez y al final de cada una hay botones para pasar a la anterior o a la siguiente */
@@ -2308,7 +2318,12 @@ function verSeccion(id,{enfocar=false,desplazar=true}={}){
 const esSeccion=id=>SECC.some(x=>x.id===id);
 /* antes de ir a un producto (desde el carro o un aviso) se muestra su sección */
 const asegura=el=>{const g=el&&el.closest(".grupo");if(g&&g.hidden)verSeccion(g.id,{desplazar:false});return el};
-$("carta").addEventListener("click",e=>{const b=e.target.closest("button[data-sec]");if(b)verSeccion(b.dataset.sec,{enfocar:true})});
+/* Vista de una página de huevos: todos sus huevos por bandeja (20 o 30) o por caja (100 o 180) */
+function vistaHuevos(id,vista){const g=SECC.find(x=>x.id===id);if(!g)return;
+  deCat(nomSec(g)).filter(p=>fmtDe(p)).forEach(p=>{const gr=p.formatos==="huevoGrande";modo[p.cod]=vista==="caja"?(gr?"F100":"F180"):(gr?"F20":"F30");repintar(p)});
+  guardaPref("modos-"+KEY,JSON.stringify(modo));g.dataset.vista=vista}
+SECC.forEach(g=>{const ps=deCat(nomSec(g)).filter(p=>fmtDe(p));if(ps.length&&ps.every(p=>/^F1[08]0$/.test(modoDe(p))))g.dataset.vista="caja"});
+$("carta").addEventListener("click",e=>{const b=e.target.closest("button[data-sec]");if(!b)return;verSeccion(b.dataset.sec,{enfocar:true});if(b.dataset.vista)vistaHuevos(b.dataset.sec,b.dataset.vista)});
 verSeccion(leePref("seccion-"+KEY)||SECC[0].id,{desplazar:false});
 /* Búsqueda: encuentra aunque falten tildes, se escriba en singular o plural, a medias o con alguna letra cambiada */
 (()=>{const q=$("q"),borrar=$("qBorrar"),estado=$("qEstado");
