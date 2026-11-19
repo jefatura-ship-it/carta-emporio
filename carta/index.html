@@ -1772,6 +1772,32 @@ const LOCALES = {
       {cod:"OTR010",cat:"Otros",nombre:"Pita de color (rollo chico)",detalle:"Precio por unidad",precio:null,stock:8,foto:"../img/productos/fotos/OTR010.webp"},
       {cod:"OTR011",cat:"Otros",nombre:"Pita (rollo grande)",detalle:"Precio por unidad",precio:null,stock:19,foto:"../img/productos/fotos/OTR011.webp"},
       {cod:"OTR005",cat:"Otros",nombre:"Hilo (rollo grande)",detalle:"Precio por unidad",precio:null,stock:18},
+      // Granel por bolsa (David, 19/11/2026): precio por kilo de la planilla (7) y precio de cada bolsa (columna «Precio por bolsa»)
+      {cod:"ABA080",cat:"Especias y sales",nombre:"Sal Himalaya fina",detalle:"Precio por kilo",precio:3200,bolsas:[[250, 830]],nuevo:true},
+      {cod:"ABA081",cat:"Especias y sales",nombre:"Sal Himalaya gruesa",detalle:"Precio por kilo",precio:3200,bolsas:[[250, 830]],nuevo:true},
+      {cod:"ABA031",cat:"Frutos secos y deshidratados",nombre:"Banana chip",detalle:"Precio por kilo",precio:8000,bolsas:[[100, 800]],nuevo:true},
+      {cod:"ABA049",cat:"Frutos secos y deshidratados",nombre:"Fruta confitada",detalle:"Precio por kilo",precio:3590,bolsas:[[500, 1860], [1000, 3590]],nuevo:true},
+      {cod:"ABA029",cat:"Harinas y repostería",nombre:"Azúcar de coco",detalle:"Precio por kilo",precio:5790,bolsas:[[250, 1500]],nuevo:true},
+      {cod:"ABA030",cat:"Harinas y repostería",nombre:"Azúcar rubia",detalle:"Precio por kilo",precio:2090,bolsas:[[500, 1090]],nuevo:true},
+      {cod:"ABA050",cat:"Harinas y repostería",nombre:"Gelatina sin sabor",detalle:"Precio por kilo",precio:990,bolsas:[[500, 520], [1000, 990]],nuevo:true},
+      {cod:"ABA052",cat:"Harinas y repostería",nombre:"Harina de avena",detalle:"Precio por kilo",precio:2000,bolsas:[[500, 1000], [1000, 2000]],nuevo:true},
+      {cod:"ABA055",cat:"Harinas y repostería",nombre:"Harina tostada",detalle:"Precio por kilo",precio:1290,bolsas:[[1000, 1290]],nuevo:true},
+      {cod:"ABA060",cat:"Semillas y cereales",nombre:"Maíz para palomitas",detalle:"Precio por kilo",precio:2390,bolsas:[[500, 1240], [1000, 2390]],nuevo:true},
+      {cod:"ABA070",cat:"Semillas y cereales",nombre:"Mote de trigo",detalle:"Precio por kilo",precio:1790,bolsas:[[1000, 1790]],nuevo:true},
+      {cod:"ABA078",cat:"Semillas y cereales",nombre:"Quinoa",detalle:"Precio por kilo",precio:4590,bolsas:[[500, 2380], [1000, 4590]],nuevo:true},
+      {cod:"ABA079",cat:"Semillas y cereales",nombre:"Quinoa pipoca",detalle:"Precio por kilo",precio:9990,bolsas:[[250, 2560], [500, 5120]],nuevo:true},
+      {cod:"ABA083",cat:"Semillas y cereales",nombre:"Semilla de calabaza",detalle:"Precio por kilo",precio:8990,bolsas:[[100, 940], [1000, 8990]],nuevo:true},
+      {cod:"ABA084",cat:"Semillas y cereales",nombre:"Semilla de maravilla",detalle:"Precio por kilo",precio:3590,bolsas:[[250, 920], [500, 1840]],nuevo:true},
+      {cod:"ABA085",cat:"Semillas y cereales",nombre:"Sésamo blanco",detalle:"Precio por kilo",precio:5990,bolsas:[[100, 620]],nuevo:true},
+      {cod:"ABA086",cat:"Semillas y cereales",nombre:"Sésamo negro",detalle:"Precio por kilo",precio:5990,bolsas:[[100, 620]],nuevo:true},
+      {cod:"ABA087",cat:"Semillas y cereales",nombre:"Sésamo tostado",detalle:"Precio por kilo",precio:5990,bolsas:[[100, 620]],nuevo:true},
+      {cod:"ABA048",cat:"Té e infusiones",nombre:"Flor de Jamaica",detalle:"Precio por kilo",precio:4990,bolsas:[[50, 260]],nuevo:true},
+      {cod:"ABA088",cat:"Té e infusiones",nombre:"Té azul",detalle:"Precio por kilo",precio:15990,bolsas:[[50, 830]],nuevo:true},
+      {cod:"ABA089",cat:"Té e infusiones",nombre:"Té negro",detalle:"Precio por kilo",precio:7990,bolsas:[[250, 2070]],nuevo:true},
+      {cod:"ABA090",cat:"Té e infusiones",nombre:"Té negro Ceylán",detalle:"Precio por kilo",precio:7990,bolsas:[[50, 420]],nuevo:true},
+      {cod:"ABA091",cat:"Té e infusiones",nombre:"Té rojo",detalle:"Precio por kilo",precio:7990,bolsas:[[50, 420]],nuevo:true},
+      {cod:"ABA092",cat:"Té e infusiones",nombre:"Té verde",detalle:"Precio por kilo",precio:7990,bolsas:[[100, 830]],nuevo:true},
+      {cod:"ABA093",cat:"Té e infusiones",nombre:"Té verde jazmín",detalle:"Precio por kilo",precio:7990,bolsas:[[50, 420]],nuevo:true},
     ]
   },
   distribuidora:{
@@ -2067,6 +2093,9 @@ Object.values(tapasDe).forEach(ts=>ts.sort((a,b)=>((a.stock===0)-(b.stock===0))|
 /* Formatos de venta de los huevos: se definen antes de revisar el pedido guardado */
 const FORMATOS={huevo:[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F30","Bandeja de 30",30],["F180","Caja de 180",180]]};
 /* Súper y jumbo: bandeja de 20 y caja de 100 (no van en bandeja de 30 ni en caja de 180) */
+/* Granel por bolsa (19/11/2026): cada producto con «bolsas» [[gramos, precio]] tiene sus formatos «Bolsa de 100 g»… con precio fijo */
+L.productos.forEach(p=>{if(!Array.isArray(p.bolsas)||!p.bolsas.length)return;p.formatos="b-"+p.cod;
+  FORMATOS[p.formatos]=p.bolsas.map(([g])=>["Fb"+g,g>=1000?(g===1000?"Bolsa de 1 kg":`Bolsa de ${String(g/1000).replace(".",",")} kg`):`Bolsa de ${g} g`,g])});
 FORMATOS.huevoGrande=[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F20","Bandeja de 20",20],["F100","Caja de 100",100]];
 Object.keys(cart).forEach(k=>{const p=PROD[k.replace(/@.*$/,"")];const f=(k.match(/@(F\d+)$/)||[])[1];if(!p||p.retirado||esPieza(p)||(k.endsWith("@P")&&!(p.upp>1))||(f&&!(FORMATOS[p.formatos]||[]).some(x=>x[0]===f)))delete cart[k]});
 let tapaSel={};try{tapaSel=JSON.parse(leePref("tapas-"+KEY)||"{}")||{}}catch(e){tapaSel={}}
@@ -2119,7 +2148,7 @@ const LISTA_HUEVOS={
 const TRAMOS_CAJA=[1,5,25,35];
 const CAL_HUEVO={HUE004:"superJumbo",HUE005:"jumbo",HUE006:"jumbo",HUE007:"super",HUE009:"super",HUE012:"extra",HUE013:"extra",HUE014:"primera",HUE015:"primera",HUE017:"segunda",HUE018:"segunda",HUE020:"tercera",HUE021:"tercera",HUE022:"quintaJumbo"};
 // precio de lista de un formato de huevo para n bandejas o cajas (la caja baja por tramos); null si no hay
-function precioLista(p,fid,n){const c=LISTA_HUEVOS[CAL_HUEVO[p.cod]],v=c&&c[fid];if(v==null)return null;if(!Array.isArray(v))return v;let pr=v[0];TRAMOS_CAJA.forEach((d,i)=>{if(n>=d&&v[i]!=null)pr=v[i]});return pr}
+function precioLista(p,fid,n){if(p.bolsas){const b=p.bolsas.find(([g])=>"Fb"+g===fid);return b?b[1]:null}const c=LISTA_HUEVOS[CAL_HUEVO[p.cod]],v=c&&c[fid];if(v==null)return null;if(!Array.isArray(v))return v;let pr=v[0];TRAMOS_CAJA.forEach((d,i)=>{if(n>=d&&v[i]!=null)pr=v[i]});return pr}
 // páginas de huevos en vista «por caja»: ahí la caja es la única forma de venta (sin selector de formato)
 const vistaCaja=new Set();
 const enCaja=p=>!!fmtDe(p)&&vistaCaja.has(p.cat)&&/^F1[08]0$/.test(modoDe(p));
@@ -2161,6 +2190,7 @@ const FAMILIAS=[
   ["Vasos, platos y cubiertos",["Vasos","Platos","Cubiertos y servilletas","Bombillas, brochetas y palitos"]],
   ["Repostería",["Moldes","Esencias y colorantes"]],
   ["Despensa",["Abarrotes","Frutas en conserva","Mariscos y atún","Lácteos","Golosinas"]],
+  ["Granel",["Frutos secos y deshidratados","Semillas y cereales","Harinas y repostería","Té e infusiones","Especias y sales"]],
   ["Aseo",["Bolsas de basura","Traperos","Papel higiénico y afeitado","Guantes y cofias"]],
   ["Otros",["Hilos y pitas","Otros"]]
 ];
@@ -2185,7 +2215,7 @@ let modo={};try{modo=JSON.parse(leePref("modos-"+KEY)||"{}")||{}}catch(e){modo={
 /* Formatos de venta de los huevos (id, nombre, unidades). Los super y jumbo además van en bandeja de 20 y caja de 100. */
 const fmtDe=p=>FORMATOS[p.formatos]||null;
 const fmtInfo=(p,m)=>(fmtDe(p)||[]).find(f=>f[0]===m);
-const modoDe=p=>fmtDe(p)?(fmtInfo(p,modo[p.cod])?modo[p.cod]:(p.formatos==="huevoGrande"?"F20":"F30")):tienePaq(p)?(modo[p.cod]||"P"):"U";
+const modoDe=p=>fmtDe(p)?(fmtInfo(p,modo[p.cod])?modo[p.cod]:(p.formatos==="huevoGrande"?"F20":p.bolsas?"Fb"+p.bolsas[0][0]:"F30")):tienePaq(p)?(modo[p.cod]||"P"):"U";
 const clave=(cod,m)=>m==="P"?cod+"@P":m&&m[0]==="F"?cod+"@"+m:cod;
 // unidades que trae una unidad de venta en el modo m (paquete, formato de huevos o unidad)
 const porDe=(p,m)=>m==="P"?(p.upp||1):(fmtInfo(p,m)||[0,0,1])[2];
@@ -2213,7 +2243,7 @@ function precioHTML(p){
   if(fmtDe(p)&&precioFmt(p,modoDe(p))!=null){const f=fmtInfo(p,modoDe(p)),po=precioFmt(p,f[0]),pl=precioLista(p,f[0],1);return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(po)}${pl!=null&&pl>po?` <s>${clp(pl)}</s>`:""} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">Sale a ${clp(Math.round(po/f[2]))} c/u</small>`}
   if(enCaja(p)&&precioLista(p,modoDe(p),1)!=null)return `<span class="pcaja" data-pcaja="${p.cod}">${cajaPrecioHTML(p)}</span>`;
   if(fmtDe(p)){const f=fmtInfo(p,modoDe(p)),pl=precioLista(p,f[0],1);if(pl!=null){const ts=tramosLista(p,f[0]);
-    return `<span class="precio">${clp(pl)} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">Sale a ${clp(Math.round(pl/f[2]))} c/u</small>`+(ts.length?`<span class="mayor${enCaja(p)?" siempre":""}">${enCaja(p)?"Más cajas, mejor precio:":"Por mayor:"} ${rangosLista(p,f[0]).map(r=>`<span>${textoRango(r)}: ${clp(r.precio)} c/caja</span>`).join("")}</span>`:"")}}
+    return `<span class="precio">${clp(pl)} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">${p.bolsas?`Sale a ${clp(Math.round(pl/f[2]*1000))} el kilo`:`Sale a ${clp(Math.round(pl/f[2]))} c/u`}</small>`+(ts.length?`<span class="mayor${enCaja(p)?" siempre":""}">${enCaja(p)?"Más cajas, mejor precio:":"Por mayor:"} ${rangosLista(p,f[0]).map(r=>`<span>${textoRango(r)}: ${clp(r.precio)} c/caja</span>`).join("")}</span>`:"")}}
   if(base==null)return `<span class="precio pc">Precio por confirmar</span>`;
   if(fmtDe(p)){const f=fmtInfo(p,modoDe(p));return `<span class="precio">${clp(redondear(base*f[2]))} <small class="u">${f[1].toLowerCase()}</small></span>`+(f[2]>1?`<small class="cu">Sale a ${clp(base)} c/u</small>`:"")}
   if(tienePaq(p)){
@@ -2225,7 +2255,7 @@ function precioHTML(p){
   return `<span class="precio">${clp(base)}${u?` <small class="u">${u}</small>`:""}</span>`+(es.length?`<span class="mayor">Por mayor: ${es.map(e=>soloPaq(p)?`<span>${e.desde} paquetes o más: ${clp(e.precio)} c/paquete</span>`:`<span>${e.desde} u o más: ${clp(e.precio)} c/u</span>`).join("")}</span>`:"");
 }
 const formaVenta=p=>{const d=p.detalle||"";const m=d.match(/por (unidad|paquete(?: de \d+ u)?|kilo|bandeja)/i);return m?"Se vende por "+m[1].toLowerCase():""};
-const modosHTML=p=>enCaja(p)?selCajasHTML(p):fmtDe(p)?`<label class="fmt">Formato <select data-fcod="${p.cod}" aria-label="Formato de ${p.nombre}">${fmtDe(p).map(f=>`<option value="${f[0]}"${modoDe(p)===f[0]?" selected":""}>${f[1]}${f[2]>1?` (${f[2]} u)`:""}</option>`).join("")}</select></label>`:tienePaq(p)?`<div class="modos" role="group" aria-label="Llevar ${p.nombre} por paquete o por unidad">${[["P","Paquete de "+p.upp+" u"],["U","Unidad"]].map(([m,x])=>`<button type="button" class="mchip" data-mcod="${p.cod}" data-modo="${m}" aria-pressed="${modoDe(p)===m}">${x}</button>`).join("")}</div>`:(formaVenta(p)?`<span class="venta">${formaVenta(p)}</span>`:"");
+const modosHTML=p=>enCaja(p)?selCajasHTML(p):fmtDe(p)?`<label class="fmt">Formato <select data-fcod="${p.cod}" aria-label="Formato de ${p.nombre}">${fmtDe(p).map(f=>`<option value="${f[0]}"${modoDe(p)===f[0]?" selected":""}>${f[1]}${p.bolsas?` · ${clp(precioLista(p,f[0],1))}`:f[2]>1?` (${f[2]} u)`:""}</option>`).join("")}</select></label>`:tienePaq(p)?`<div class="modos" role="group" aria-label="Llevar ${p.nombre} por paquete o por unidad">${[["P","Paquete de "+p.upp+" u"],["U","Unidad"]].map(([m,x])=>`<button type="button" class="mchip" data-mcod="${p.cod}" data-modo="${m}" aria-pressed="${modoDe(p)===m}">${x}</button>`).join("")}</div>`:(formaVenta(p)?`<span class="venta">${formaVenta(p)}</span>`:"");
 const sinTapa=n=>{const s=n.replace(/^(tapas?|blondas?)\s+(para\s+)?/i,"");return s?s[0].toUpperCase()+s.slice(1):n};
 const tapasHTML=p=>{const ts=tapasDe[p.cod];if(!ts)return "";const sel=tapaDe(p);
   return `<div class="tapas"><span class="tl">${ts.length>1?`Elige la ${pieza(sel)} (va incluida, 1 por ${porQue(sel)})`:`Incluye ${pieza(sel)} (1 por ${porQue(sel)})`}</span>${ts.length>1?`<div class="tsel" role="group" aria-label="${pieza(sel)==="blonda"?"Blonda":"Tapa"} para ${p.nombre}">${ts.map(t=>`<button type="button" class="tchip${t.stock===0?" sin":""}" data-selenv="${p.cod}" data-seltapa="${t.cod}" aria-pressed="${t===sel}">${sinTapa(t.nombre)}</button>`).join("")}</div>`:`<span class="tuna">${sinTapa(sel.nombre)}</span>`}</div>`};
@@ -2374,10 +2404,11 @@ const TIPOFONDO={"fondo-plasticos.webp":"mosaico","fondo-aseo.webp":"mosaico","f
 Object.values(PROD).forEach(p=>{p.sinStock0=!!p.sinStock});
 try{(JSON.parse(localStorage.getItem("cerrados-"+KEY)||"[]")||[]).forEach(c=>{const p=PROD[c];if(p){p.cerrado=true;p.sinStock=true}})}catch(e){}
 /* Páginas de huevos: el botón de la página los muestra por bandeja y el «por caja» de abajo, por caja (David, 19/11/2026) */
-const conCaja=x=>deCat(x).some(p=>fmtDe(p));
+function esHuevoFmt(p){return p.formatos==="huevo"||p.formatos==="huevoGrande"} // solo huevos (no el granel por bolsa)
+const conCaja=x=>deCat(x).some(esHuevoFmt);
 const botonPag=(x,c)=>{const b=`<button type="button" data-sec="g-${slug(x)}"${x===c?' aria-current="true"':""}${conCaja(x)?' data-vista="bandeja"':""}>${x}</button>`;
   return conCaja(x)?`<span class="sf-par">${b}<button type="button" class="sf-caja${x===c?" esta":""}" data-sec="g-${slug(x)}" data-vista="caja" aria-label="${x} por caja">por caja</button></span>`:b};
-cats.forEach(c=>{const ps=deCat(c).filter(p=>fmtDe(p));if(ps.length&&ps.every(p=>/^F1[08]0$/.test(modoDe(p))))vistaCaja.add(c)});
+cats.forEach(c=>{const ps=deCat(c).filter(esHuevoFmt);if(ps.length&&ps.every(p=>/^F1[08]0$/.test(modoDe(p))))vistaCaja.add(c)});
 $("carta").innerHTML=cats.map(c=>`
   <section class="grupo${FOTOS[c]?" foto":""}" id="g-${slug(c)}"${FOTOS[c]?` style="--foto:url(../img/${FOTOS[c]})"`:""}${TIPOFONDO[FOTOS[c]]?` data-fondo="${TIPOFONDO[FOTOS[c]]}"`:""}>
     ${c!==FAV&&famDe(c)?`<p class="fam-et">${famDe(c)}</p>`:""}<h2>${c===FAV?ICONOS._fav:(ICONOS[BASEDE[c]||c]||(c==="Hueveras"?ICONOS.Huevos:ICONOS._))}${c}</h2>
@@ -2415,7 +2446,7 @@ const asegura=el=>{const g=el&&el.closest(".grupo");if(g&&g.hidden)verSeccion(g.
 /* Vista de una página de huevos: todos sus huevos por bandeja (20 o 30) o por caja (100 o 180) */
 function vistaHuevos(id,vista){const g=SECC.find(x=>x.id===id);if(!g)return;const c=nomSec(g);
   if(vista==="caja")vistaCaja.add(c);else vistaCaja.delete(c);
-  deCat(c).filter(p=>fmtDe(p)).forEach(p=>{const gr=p.formatos==="huevoGrande";modo[p.cod]=vista==="caja"?(gr?"F100":"F180"):(gr?"F20":"F30");repintar(p)});
+  deCat(c).filter(esHuevoFmt).forEach(p=>{const gr=p.formatos==="huevoGrande";modo[p.cod]=vista==="caja"?(gr?"F100":"F180"):(gr?"F20":"F30");repintar(p)});
   guardaPref("modos-"+KEY,JSON.stringify(modo));g.dataset.vista=vista}
 SECC.forEach(g=>{if(vistaCaja.has(nomSec(g)))g.dataset.vista="caja"});
 $("carta").addEventListener("click",e=>{const b=e.target.closest("button[data-sec]");if(!b)return;verSeccion(b.dataset.sec,{enfocar:true});if(b.dataset.vista)vistaHuevos(b.dataset.sec,b.dataset.vista)});
@@ -2678,10 +2709,10 @@ const items=()=>{const out=[];L.productos.forEach(p=>{if(esPieza(p))return;const
   const nom=tp?(new RegExp("con "+pieza(tp),"i").test(p.nombre)?`${p.nombre} (${sinTapa(tp.nombre).toLowerCase()})`:`${p.nombre} con ${pieza(tp)} (${sinTapa(tp.nombre).toLowerCase()})`):p.nombre;
   const qp=cart[clave(p.cod,"P")]||0, qu=cart[p.cod]||0;
   if(qp&&tienePaq(p)){const pr=precioPaq(p,qp);out.push({...p,q:qp,precio:pr,mayor:pr!=null&&qp>=MIN_PAQ_MAYOR&&pr<precioPaq(p,1),tapa:tp,paq:true,uds:qp*p.upp,detalle:"",nombre:`${nom} · paquete de ${p.upp} u`})}
-  if(fmtDe(p)){const b=precioBase(p);fmtDe(p).filter(f=>f[0]!=="U").forEach(f=>{const qf=cart[p.cod+"@"+f[0]]||0,po=precioFmt(p,f[0]),pl=po==null?precioLista(p,f[0],qf):null;if(qf)out.push({...p,q:qf,precio:po!=null?po:pl!=null?pl:b==null?null:redondear(b*f[2]),oferta:po!=null?po:p.oferta,mayor:pl!=null&&pl<precioLista(p,f[0],1),tapa:null,paq:false,fmt:true,uds:qf*f[2],detalle:"",nombre:`${nom} · ${f[1].toLowerCase()} (${f[2]} u)`})})}
+  if(fmtDe(p)){const b=precioBase(p);fmtDe(p).filter(f=>f[0]!=="U").forEach(f=>{const qf=cart[p.cod+"@"+f[0]]||0,po=precioFmt(p,f[0]),pl=po==null?precioLista(p,f[0],qf):null;if(qf)out.push({...p,q:qf,precio:po!=null?po:pl!=null?pl:b==null?null:redondear(b*f[2]),oferta:po!=null?po:p.oferta,mayor:pl!=null&&pl<precioLista(p,f[0],1),tapa:null,paq:false,fmt:true,uds:p.bolsas?Math.round(qf*f[2])/1000:qf*f[2],detalle:"",nombre:`${nom} · ${f[1].toLowerCase()}${p.bolsas?"":` (${f[2]} u)`}`})})}
   if(qu){const {pr,m}=precioQ(p,qu);out.push({...p,q:qu,precio:pr,mayor:m,tapa:tp,paq:false,uds:qu,detalle:tienePaq(p)||fmtDe(p)?"por unidad":p.detalle,nombre:nom})}
 });return out};
-const lineasMyPyme=()=>{const m=new Map();items().forEach(x=>{const k1=x.cod+(x.paq?" paq":" u");m.set(k1,(m.get(k1)||0)+(x.fmt?x.uds:x.q));if(x.tapa){const k2=x.tapa.cod+" u";m.set(k2,(m.get(k2)||0)+x.uds)}});return [...m].map(([k,q])=>{const [c,u]=k.split(" ");return `${c}: ${q} ${u}`}).join(", ")};
+const lineasMyPyme=()=>{const m=new Map();items().forEach(x=>{const k1=x.cod+(x.paq?" paq":x.bolsas?" kg":" u");m.set(k1,(m.get(k1)||0)+(x.fmt?x.uds:x.q));if(x.tapa){const k2=x.tapa.cod+" u";m.set(k2,(m.get(k2)||0)+x.uds)}});return [...m].map(([k,q])=>{const [c,u]=k.split(" ");return `${c}: ${q} ${u}`}).join(", ")};
 const total=()=>items().reduce((a,x)=>a+x.q*(x.precio||0),0);
 const sub=x=>x.precio==null?"precio por confirmar":clp(x.q*x.precio);
 
