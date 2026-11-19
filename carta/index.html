@@ -1590,7 +1590,7 @@ const LOCALES = {
       {cod:"DES049",cat:"Platos, cubiertos y desechables",nombre:"Tenedor plástico",detalle:"Precio por unidad",precio:20},
       {cod:"DES021",cat:"Platos, cubiertos y desechables",nombre:"Cuchara transparente para helado",detalle:"Precio por unidad",precio:35,stock:300},
       {cod:"DES012",cat:"Platos, cubiertos y desechables",nombre:"Cuchara de colores para helado",detalle:"Precio por unidad",precio:null,stock:484,foto:"../img/productos/fotos/DES012.webp"},
-      {cod:"DES015",cat:"Platos, cubiertos y desechables",nombre:"Cuchara larga para helado Good Food",detalle:"Precio por unidad · paquete de 100 u",precio:36,upp:100,pq:3590,stock:500,nuevo:true,foto:"../img/productos/fotos/DES015.webp"},
+      {cod:"DES015",cat:"Platos, cubiertos y desechables",nombre:"Cuchara larga para helado Good Food",detalle:"Precio por paquete de 100 u",precio:3590,stock:500,nuevo:true,foto:"../img/productos/fotos/DES015.webp"},
       {cod:"DES007",cat:"Platos, cubiertos y desechables",nombre:"Brocheta 25 cm",detalle:"Precio por unidad",precio:9,stock:4200},
       {cod:"DES006",cat:"Platos, cubiertos y desechables",nombre:"Brocheta 20 cm",detalle:"Precio por unidad · paquete de 100 u",precio:8,upp:100,stock:17100,foto:"../img/productos/fotos/DES006.webp"},
       {cod:"DES009",cat:"Platos, cubiertos y desechables",nombre:"Brocheta 40 cm",detalle:"Precio por unidad · paquete de 100 u",precio:61,upp:100,stock:500},
@@ -2113,12 +2113,14 @@ function precioPaq(p,n){if(!tienePaq(p))return null;
   return pq!=null?redondear(pq*(100-DMAY)/(100-DPAQ)):redondear(b*p.upp*(1-DMAY/100))}
 function escalones(p){ // por mayor de lo que no viene en paquete: desde 10 y 50 u (o su precio por mayor propio desde 10 u)
   const base=precioBase(p);
-  if(!MAYOR||base==null||p.oferta!=null||!porUnidad(p)||tienePaq(p))return [];
-  const pm=pmDe(p);if(pm!=null)return pm<base?[{desde:MAYOR.sinPaquete[0],precio:pm}]:[];
+  if(!MAYOR||base==null||p.oferta!=null||tienePaq(p))return [];
+  const pm=pmDe(p);if(pm!=null)return pm<base?[{desde:soloPaq(p)?MIN_PAQ_MAYOR:MAYOR.sinPaquete[0],precio:pm}]:[];
+  if(!porUnidad(p))return [];
   return MAYOR.sinPaquete.map((d,i)=>({desde:d,precio:redondear(base*(1-MAYOR.dctos[i]/100))})).filter(e=>e.precio<base);
 }
 function precioQ(p,q){let pr=precioBase(p),m=false;for(const e of escalones(p))if(q>=e.desde){pr=e.precio;m=true}return {pr,m}}
 const unidad=p=>/por kilo/i.test(p.detalle||"")?"kg":porUnidad(p)?"c/u":"";
+const soloPaq=p=>/por paquete/i.test(p.detalle||"")&&!porUnidad(p); // se vende solo por paquete
 function precioHTML(p){
   if(p.virtual)return p.precio==null?`<span class="precio pc">Precio por confirmar</span>`:`<span class="precio"><small class="u">Desde</small> ${clp(p.precio)} <small class="u">c/u</small></span>`;
   if(p.oferta!=null)return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(p.oferta)}${p.precio!=null?` <s>${clp(p.precio)}</s>`:""}</span>`;
@@ -2132,7 +2134,7 @@ function precioHTML(p){
     return `<span class="precio">${clp(base)} <small class="u">c/u</small></span><small class="cu">Por paquete de ${p.upp} u: ${clp(pq)}</small>`;
   }
   const u=unidad(p), es=escalones(p);
-  return `<span class="precio">${clp(base)}${u?` <small class="u">${u}</small>`:""}</span>`+(es.length?`<span class="mayor">Por mayor: ${es.map(e=>`<span>${e.desde} u o más: ${clp(e.precio)} c/u</span>`).join("")}</span>`:"");
+  return `<span class="precio">${clp(base)}${u?` <small class="u">${u}</small>`:""}</span>`+(es.length?`<span class="mayor">Por mayor: ${es.map(e=>soloPaq(p)?`<span>${e.desde} paquetes o más: ${clp(e.precio)} c/paquete</span>`:`<span>${e.desde} u o más: ${clp(e.precio)} c/u</span>`).join("")}</span>`:"");
 }
 const formaVenta=p=>{const d=p.detalle||"";const m=d.match(/por (unidad|paquete(?: de \d+ u)?|kilo|bandeja)/i);return m?"Se vende por "+m[1].toLowerCase():""};
 const modosHTML=p=>fmtDe(p)?`<label class="fmt">Formato <select data-fcod="${p.cod}" aria-label="Formato de ${p.nombre}">${fmtDe(p).map(f=>`<option value="${f[0]}"${modoDe(p)===f[0]?" selected":""}>${f[1]}${f[2]>1?` (${f[2]} u)`:""}</option>`).join("")}</select></label>`:tienePaq(p)?`<div class="modos" role="group" aria-label="Llevar ${p.nombre} por paquete o por unidad">${[["P","Paquete de "+p.upp+" u"],["U","Unidad"]].map(([m,x])=>`<button type="button" class="mchip" data-mcod="${p.cod}" data-modo="${m}" aria-pressed="${modoDe(p)===m}">${x}</button>`).join("")}</div>`:(formaVenta(p)?`<span class="venta">${formaVenta(p)}</span>`:"");
