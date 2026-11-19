@@ -170,6 +170,8 @@ html.bloqueo,html.bloqueo body{overflow:hidden}
 .linea.dcto{color:var(--sol-t);font-weight:700}
 .info .precio small.u{display:inline;font-family:var(--texto);font-size:12px;font-weight:600;color:var(--suave)}
 .mayor{display:none;margin-top:4px;font-size:12px;color:var(--campo);font-weight:600;line-height:1.5}
+.mayor.siempre{display:block} /* vista «por caja» de los huevos: los precios por cantidad se ven siempre */
+.mayor.siempre span.ok{background:var(--campo);color:#fff}
 .mayor span{display:inline-block;margin:2px 6px 0 0;background:#eef6f0;border-radius:6px;padding:1px 7px;font-weight:600}
 body.vermayor .mayor{display:block}
 .mayorBtn{display:inline-flex;align-items:center;gap:7px;margin:10px 0 0;border:1.5px solid var(--campo);background:#fff;color:var(--campo);border-radius:99px;padding:8px 14px;font-size:13.5px;font-weight:700;cursor:pointer;min-height:40px}
@@ -2083,6 +2085,17 @@ const TRAMOS_CAJA=[1,5,25,35];
 const CAL_HUEVO={HUE004:"superJumbo",HUE005:"jumbo",HUE006:"jumbo",HUE007:"super",HUE009:"super",HUE012:"extra",HUE013:"extra",HUE014:"primera",HUE015:"primera",HUE017:"segunda",HUE018:"segunda",HUE020:"tercera",HUE021:"tercera",HUE022:"quintaJumbo"};
 // precio de lista de un formato de huevo para n bandejas o cajas (la caja baja por tramos); null si no hay
 function precioLista(p,fid,n){const c=LISTA_HUEVOS[CAL_HUEVO[p.cod]],v=c&&c[fid];if(v==null)return null;if(!Array.isArray(v))return v;let pr=v[0];TRAMOS_CAJA.forEach((d,i)=>{if(n>=d&&v[i]!=null)pr=v[i]});return pr}
+// páginas de huevos en vista «por caja»: ahí la caja es la única forma de venta (sin selector de formato)
+const vistaCaja=new Set();
+const enCaja=p=>!!fmtDe(p)&&vistaCaja.has(p.cat)&&/^F1[08]0$/.test(modoDe(p));
+const CANT_CAJAS=[1,2,3,4,5,6,7,8,9,10,15,20,25,30,35,40,45,50];
+function cajasEn(p){return cart[clave(p.cod,modoDe(p))]||0}
+function selCajasHTML(p){const f=fmtInfo(p,modoDe(p)),q=cajasEn(p),ns=CANT_CAJAS.includes(q)||!q?CANT_CAJAS:[...CANT_CAJAS,q].sort((a,b)=>a-b);
+  return `<label class="fmt">Cajas <select data-ccod="${p.cod}" aria-label="Cantidad de cajas de ${p.nombre} (${f[1].toLowerCase()})"><option value="0"${q?"":" selected"}>Elegir cantidad</option>${ns.map(n=>`<option value="${n}"${q===n?" selected":""}>${n} caja${n>1?"s":""} · ${clp(precioLista(p,f[0],n))} c/u</option>`).join("")}</select></label>`}
+function cajaPrecioHTML(p){const f=fmtInfo(p,modoDe(p)),q=cajasEn(p),pr=precioLista(p,f[0],Math.max(1,q)),ts=tramosLista(p,f[0]);
+  return `<span class="precio">${clp(pr)} <small class="u">la ${f[1].toLowerCase()}</small></span>`
+    +(q?`<small class="cu">${q} caja${q>1?"s":""}: ${clp(pr*q)}</small>`:`<small class="cu">Sale a ${clp(Math.round(pr/f[2]))} c/u</small>`)
+    +(ts.length?`<span class="mayor siempre">Más cajas, mejor precio: ${ts.map(e=>`<span${q>=e.desde?' class="ok"':""}>${e.desde} o más: ${clp(e.precio)}</span>`).join("")}</span>`:"")}
 function tramosLista(p,fid){const c=LISTA_HUEVOS[CAL_HUEVO[p.cod]],v=c&&c[fid];if(!Array.isArray(v))return [];return TRAMOS_CAJA.map((d,i)=>({desde:d,precio:v[i]})).filter((e,i)=>i>0&&e.precio!=null&&e.precio<v[0])}
 L.productos.forEach(p=>{const r=SUBCATS[p.cat];if(!r||esPieza(p))return;p.catBase=p.cat;p.cat=(r.find(([,re])=>re.test(nPlano(p.nombre)))||r[r.length-1])[0]});
 // las páginas de una misma sección van juntas y en el orden de la lista
@@ -2149,8 +2162,9 @@ function precioHTML(p){
   if(p.oferta!=null)return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(p.oferta)}${p.precio!=null?` <s>${clp(p.precio)}</s>`:""}</span>`;
   const base=precioBase(p);
   if(fmtDe(p)&&precioFmt(p,modoDe(p))!=null){const f=fmtInfo(p,modoDe(p)),po=precioFmt(p,f[0]),pl=precioLista(p,f[0],1);return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(po)}${pl!=null&&pl>po?` <s>${clp(pl)}</s>`:""} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">Sale a ${clp(Math.round(po/f[2]))} c/u</small>`}
+  if(enCaja(p)&&precioLista(p,modoDe(p),1)!=null)return `<span class="pcaja" data-pcaja="${p.cod}">${cajaPrecioHTML(p)}</span>`;
   if(fmtDe(p)){const f=fmtInfo(p,modoDe(p)),pl=precioLista(p,f[0],1);if(pl!=null){const ts=tramosLista(p,f[0]);
-    return `<span class="precio">${clp(pl)} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">Sale a ${clp(Math.round(pl/f[2]))} c/u</small>`+(ts.length?`<span class="mayor">Por mayor: ${ts.map(e=>`<span>${e.desde} cajas o más: ${clp(e.precio)} c/caja</span>`).join("")}</span>`:"")}}
+    return `<span class="precio">${clp(pl)} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">Sale a ${clp(Math.round(pl/f[2]))} c/u</small>`+(ts.length?`<span class="mayor${enCaja(p)?" siempre":""}">${enCaja(p)?"Más cajas, mejor precio:":"Por mayor:"} ${ts.map(e=>`<span>${e.desde} cajas o más: ${clp(e.precio)} c/caja</span>`).join("")}</span>`:"")}}
   if(base==null)return `<span class="precio pc">Precio por confirmar</span>`;
   if(fmtDe(p)){const f=fmtInfo(p,modoDe(p));return `<span class="precio">${clp(redondear(base*f[2]))} <small class="u">${f[1].toLowerCase()}</small></span>`+(f[2]>1?`<small class="cu">Sale a ${clp(base)} c/u</small>`:"")}
   if(tienePaq(p)){
@@ -2162,7 +2176,7 @@ function precioHTML(p){
   return `<span class="precio">${clp(base)}${u?` <small class="u">${u}</small>`:""}</span>`+(es.length?`<span class="mayor">Por mayor: ${es.map(e=>soloPaq(p)?`<span>${e.desde} paquetes o más: ${clp(e.precio)} c/paquete</span>`:`<span>${e.desde} u o más: ${clp(e.precio)} c/u</span>`).join("")}</span>`:"");
 }
 const formaVenta=p=>{const d=p.detalle||"";const m=d.match(/por (unidad|paquete(?: de \d+ u)?|kilo|bandeja)/i);return m?"Se vende por "+m[1].toLowerCase():""};
-const modosHTML=p=>fmtDe(p)?`<label class="fmt">Formato <select data-fcod="${p.cod}" aria-label="Formato de ${p.nombre}">${fmtDe(p).map(f=>`<option value="${f[0]}"${modoDe(p)===f[0]?" selected":""}>${f[1]}${f[2]>1?` (${f[2]} u)`:""}</option>`).join("")}</select></label>`:tienePaq(p)?`<div class="modos" role="group" aria-label="Llevar ${p.nombre} por paquete o por unidad">${[["P","Paquete de "+p.upp+" u"],["U","Unidad"]].map(([m,x])=>`<button type="button" class="mchip" data-mcod="${p.cod}" data-modo="${m}" aria-pressed="${modoDe(p)===m}">${x}</button>`).join("")}</div>`:(formaVenta(p)?`<span class="venta">${formaVenta(p)}</span>`:"");
+const modosHTML=p=>enCaja(p)?selCajasHTML(p):fmtDe(p)?`<label class="fmt">Formato <select data-fcod="${p.cod}" aria-label="Formato de ${p.nombre}">${fmtDe(p).map(f=>`<option value="${f[0]}"${modoDe(p)===f[0]?" selected":""}>${f[1]}${f[2]>1?` (${f[2]} u)`:""}</option>`).join("")}</select></label>`:tienePaq(p)?`<div class="modos" role="group" aria-label="Llevar ${p.nombre} por paquete o por unidad">${[["P","Paquete de "+p.upp+" u"],["U","Unidad"]].map(([m,x])=>`<button type="button" class="mchip" data-mcod="${p.cod}" data-modo="${m}" aria-pressed="${modoDe(p)===m}">${x}</button>`).join("")}</div>`:(formaVenta(p)?`<span class="venta">${formaVenta(p)}</span>`:"");
 const sinTapa=n=>{const s=n.replace(/^(tapas?|blondas?)\s+(para\s+)?/i,"");return s?s[0].toUpperCase()+s.slice(1):n};
 const tapasHTML=p=>{const ts=tapasDe[p.cod];if(!ts)return "";const sel=tapaDe(p);
   return `<div class="tapas"><span class="tl">${ts.length>1?`Elige la ${pieza(sel)} (va incluida, 1 por ${porQue(sel)})`:`Incluye ${pieza(sel)} (1 por ${porQue(sel)})`}</span>${ts.length>1?`<div class="tsel" role="group" aria-label="${pieza(sel)==="blonda"?"Blonda":"Tapa"} para ${p.nombre}">${ts.map(t=>`<button type="button" class="tchip${t.stock===0?" sin":""}" data-selenv="${p.cod}" data-seltapa="${t.cod}" aria-pressed="${t===sel}">${sinTapa(t.nombre)}</button>`).join("")}</div>`:`<span class="tuna">${sinTapa(sel.nombre)}</span>`}</div>`};
@@ -2284,6 +2298,7 @@ try{(JSON.parse(localStorage.getItem("cerrados-"+KEY)||"[]")||[]).forEach(c=>{co
 const conCaja=x=>deCat(x).some(p=>fmtDe(p));
 const botonPag=(x,c)=>{const b=`<button type="button" data-sec="g-${slug(x)}"${x===c?' aria-current="true"':""}${conCaja(x)?' data-vista="bandeja"':""}>${x}</button>`;
   return conCaja(x)?`<span class="sf-par">${b}<button type="button" class="sf-caja${x===c?" esta":""}" data-sec="g-${slug(x)}" data-vista="caja" aria-label="${x} por caja">por caja</button></span>`:b};
+cats.forEach(c=>{const ps=deCat(c).filter(p=>fmtDe(p));if(ps.length&&ps.every(p=>/^F1[08]0$/.test(modoDe(p))))vistaCaja.add(c)});
 $("carta").innerHTML=cats.map(c=>`
   <section class="grupo${FOTOS[c]?" foto":""}" id="g-${slug(c)}"${FOTOS[c]?` style="--foto:url(../img/${FOTOS[c]})"`:""}>
     ${c!==FAV&&famDe(c)?`<p class="fam-et">${famDe(c)}</p>`:""}<h2>${c===FAV?ICONOS._fav:(ICONOS[BASEDE[c]||c]||(c==="Hueveras"?ICONOS.Huevos:ICONOS._))}${c}</h2>
@@ -2319,10 +2334,11 @@ const esSeccion=id=>SECC.some(x=>x.id===id);
 /* antes de ir a un producto (desde el carro o un aviso) se muestra su sección */
 const asegura=el=>{const g=el&&el.closest(".grupo");if(g&&g.hidden)verSeccion(g.id,{desplazar:false});return el};
 /* Vista de una página de huevos: todos sus huevos por bandeja (20 o 30) o por caja (100 o 180) */
-function vistaHuevos(id,vista){const g=SECC.find(x=>x.id===id);if(!g)return;
-  deCat(nomSec(g)).filter(p=>fmtDe(p)).forEach(p=>{const gr=p.formatos==="huevoGrande";modo[p.cod]=vista==="caja"?(gr?"F100":"F180"):(gr?"F20":"F30");repintar(p)});
+function vistaHuevos(id,vista){const g=SECC.find(x=>x.id===id);if(!g)return;const c=nomSec(g);
+  if(vista==="caja")vistaCaja.add(c);else vistaCaja.delete(c);
+  deCat(c).filter(p=>fmtDe(p)).forEach(p=>{const gr=p.formatos==="huevoGrande";modo[p.cod]=vista==="caja"?(gr?"F100":"F180"):(gr?"F20":"F30");repintar(p)});
   guardaPref("modos-"+KEY,JSON.stringify(modo));g.dataset.vista=vista}
-SECC.forEach(g=>{const ps=deCat(nomSec(g)).filter(p=>fmtDe(p));if(ps.length&&ps.every(p=>/^F1[08]0$/.test(modoDe(p))))g.dataset.vista="caja"});
+SECC.forEach(g=>{if(vistaCaja.has(nomSec(g)))g.dataset.vista="caja"});
 $("carta").addEventListener("click",e=>{const b=e.target.closest("button[data-sec]");if(!b)return;verSeccion(b.dataset.sec,{enfocar:true});if(b.dataset.vista)vistaHuevos(b.dataset.sec,b.dataset.vista)});
 verSeccion(leePref("seccion-"+KEY)||SECC[0].id,{desplazar:false});
 /* Búsqueda: encuentra aunque falten tildes, se escriba en singular o plural, a medias o con alguna letra cambiada */
@@ -2600,6 +2616,7 @@ function refrescar(){
       a.querySelector(".menos").disabled=q===0; a.querySelector(".mas").disabled=lleno;
       const ps=a.querySelector(".paso"); if(ps)ps.classList.toggle("vacio",q===0);
       const tg=a.querySelector(".tope"); if(tg){tg.hidden=!(lleno&&tp>0);tg.textContent=`Máximo disponible: ${tp} u`}
+      if(enCaja(p)){const pc=a.querySelector("[data-pcaja]");if(pc)pc.innerHTML=cajaPrecioHTML(p);const sc=a.querySelector("select[data-ccod]");if(sc&&document.activeElement!==sc&&sc.value!==String(cajasEn(p)))sc.closest("label").outerHTML=selCajasHTML(p)}
       const ep=a.querySelector(".enped"); if(ep){ep.hidden=!otra;ep.textContent=!otra?"":fmtDe(p)?`Además llevas ${otra}`:m==="P"?`Además llevas ${otra} u sueltas`:`Además llevas ${otra} paquete${otra>1?"s":""}`}
     });
   });
@@ -2629,6 +2646,9 @@ function pintarCarro(){
   const bv=$("cVaciar"); bv.classList.remove("seguro"); bv.textContent="Vaciar carro";
   refrescar();
 }
+/* cantidad de cajas elegida en el selector: queda así en el pedido */
+document.addEventListener("change",e=>{const sc=e.target.closest("select[data-ccod]");if(!sc)return;const p=PROD[sc.dataset.ccod];if(!p)return;
+  const k=clave(p.cod,modoDe(p)),n=Number(sc.value)||0;if(n>0)cart[k]=n;else delete cart[k];guardar();refrescar()});
 document.addEventListener("change",e=>{const sel=e.target.closest("select[data-fcod]");if(!sel)return;const p=PROD[sel.dataset.fcod];if(!p)return;modo[p.cod]=sel.value;guardaPref("modos-"+KEY,JSON.stringify(modo));const enCarroLista=!!sel.closest("#carroLista");repintar(p);const nuevo=document.querySelector((enCarroLista?"#carroLista ":"")+`select[data-fcod="${p.cod}"]`);if(nuevo)nuevo.focus()});
 $("bCarro").onclick=()=>{pintarCarro();$("carroLista").parentNode.scrollTop=0;abrirHoja("veloCarro",$("seguirCarro"))};
 const seguirComprando=()=>cerrarHoja("veloCarro");
