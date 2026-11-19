@@ -2308,7 +2308,9 @@ const FOTOS={"Huevos blancos":"huevos-blancos-bandeja.jpg","Huevos de color":"hu
 /* Fondos de secciones (David, 19/11/2026): plásticos (dibujo en mosaico, también en bolsas y papeles y en vasos, platos y cubiertos) y aluminio */
 ["Envases","Contenedores","Cúpulas","Potes","Salseros","Bolsas","Sacos y mallas","Papeles y film","Vasos","Platos","Cubiertos y servilletas","Bombillas, brochetas y palitos"].forEach(c=>{FOTOS[c]="fondo-plasticos.webp"});
 ["Envases de aluminio","Foil y moldes de aluminio"].forEach(c=>{FOTOS[c]="fondo-aluminio.webp"});
-const TIPOFONDO={"fondo-plasticos.webp":"mosaico","fondo-aluminio.webp":"metal"}; // mosaico: se repite en vez de estirarse; metal: velo más suave y neutro para que se vea el metal
+["Abarrotes","Frutas en conserva","Mariscos y atún","Lácteos","Golosinas"].forEach(c=>{FOTOS[c]="fondo-despensa.webp"});
+["Bolsas de basura","Traperos","Papel higiénico y afeitado","Guantes y cofias"].forEach(c=>{FOTOS[c]="fondo-aseo.webp"});
+const TIPOFONDO={"fondo-plasticos.webp":"mosaico","fondo-aseo.webp":"mosaico","fondo-aluminio.webp":"metal"}; // mosaico: se repite en vez de estirarse; metal: velo más suave y neutro para que se vea el metal
 /* Productos cerrados en la página por stock bajo (decisión en SabAPP o en la planilla): primero lo último que se supo */
 Object.values(PROD).forEach(p=>{p.sinStock0=!!p.sinStock});
 try{(JSON.parse(localStorage.getItem("cerrados-"+KEY)||"[]")||[]).forEach(c=>{const p=PROD[c];if(p){p.cerrado=true;p.sinStock=true}})}catch(e){}
