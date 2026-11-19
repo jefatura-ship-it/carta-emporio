@@ -172,6 +172,12 @@ html.bloqueo,html.bloqueo body{overflow:hidden}
 .mayor{display:none;margin-top:4px;font-size:12px;color:var(--campo);font-weight:600;line-height:1.5}
 .mayor.siempre{display:block} /* vista «por caja» de los huevos: los precios por cantidad se ven siempre */
 .mayor.siempre span.ok{background:var(--campo);color:#fff}
+/* Alimentos para aves (Pedidos a la avícola): cada producto con su precio */
+.ali-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin:8px 0 10px}
+.ali-lista h4{grid-column:1/-1;margin:6px 0 0;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:var(--campo)}
+.ali-op{display:flex;flex-direction:column;gap:2px;text-align:left;padding:9px 11px;border:1.5px solid #e2dccd;border-radius:12px;background:#fff;color:var(--tinta);font:inherit;cursor:pointer}
+.ali-op b{font-size:14.5px}.ali-op span{font-size:13px;font-weight:700;color:var(--campo)}.ali-op small{font-size:11.5px;color:#6b6b66;line-height:1.3}
+.ali-op[aria-pressed="true"]{border-color:var(--campo);box-shadow:inset 0 0 0 2px var(--campo);background:#f2f8f3}
 .regla-mayor{display:block;margin-top:4px;font-size:11.5px;font-weight:700;color:#9a3412}
 /* Huevos: etiqueta lateral sobre la foto con calibre, color y formato (como el costado de una caja) */
 .ico.con-et{position:relative}
@@ -1061,10 +1067,10 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
     <a class="btn wsp" id="aviPolBtn" href="https://wa.me/56966087529" target="_blank" rel="noopener">Pedir al WhatsApp de crianzas</a>
     <a class="avi-otro" href="https://www.instagram.com/pollitasoroverde/" target="_blank" rel="noopener">Instagram @pollitasoroverde</a>
   </div>
-  <div class="avi-item">
+  <div class="avi-item" id="aviAliItem">
     <b>Alimento para aves</b>
-    <small>Lo hace ALL FOOD, nuestra fábrica de alimentos. Primero elige el tipo y, después, a quién enviar el pedido. En cuanto al precio, consúltalo al momento de pedir.</small>
-    <div class="modos" role="group" aria-label="Tipo de alimento"><button type="button" class="mchip" data-tipoali="ponedora" aria-pressed="true">Ponedora</button><button type="button" class="mchip" data-tipoali="pollita" aria-pressed="false">Pollita</button></div>
+    <small>Lo hace ALL FOOD, nuestra fábrica de alimentos. Elige el producto, cuántos sacos y a quién enviar el pedido. Precios de la lista del 13-11-2026 (pueden cambiar); te confirmamos el total al pedir.</small>
+    <div class="ali-lista" id="aliLista" role="group" aria-label="Producto"></div>
     <label for="aviAli">¿Cuántos sacos? <input id="aviAli" type="number" inputmode="numeric" min="1" step="1" placeholder="Ej.: 5"></label>
     <a class="btn wsp" id="aviAliBtn" href="https://wa.me/56954158511" target="_blank" rel="noopener">Enviar a Distribuidora Santa Bárbara</a>
     <a class="btn sec" id="aviGrande" href="https://wa.me/56931397602" target="_blank" rel="noopener">Enviar a Ventas Avícola</a>
@@ -2323,9 +2329,32 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
 /* Pedidos a la avícola: el mensaje lleva la cantidad y va al WhatsApp que corresponde */
 (()=>{const nom=()=>cliente&&cliente.nombre?` Mi nombre es ${cliente.nombre}.`:"";
   const cant=id=>Math.max(0,Math.floor(Number($(id).value)||0));
-  let tipoAli="ponedora";
-  document.querySelectorAll("[data-tipoali]").forEach(b=>b.addEventListener("click",()=>{tipoAli=b.dataset.tipoali;document.querySelectorAll("[data-tipoali]").forEach(x=>x.setAttribute("aria-pressed",x===b));arma()}));
-  const arma=()=>{const np=cant("aviPol"),ns=cant("aviAli"),ali=`alimento ${tipoAli==="pollita"?"de pollita":"de ponedora"}`;
+  /* Lista de precios de alimentos del 13-11-2026 (Distribuidora Avícola Santa Bárbara): precio sala de 1 saco y precios por mayor */
+  const ALIMENTOS=[
+    {g:"Alimentos",n:"Ponedora",d:"Saco de 25 kg",p:14500,m:"Desde 40 sacos: $14.000",msj:"alimento de ponedora"},
+    {g:"Alimentos",n:"Pollita",d:"Saco de 25 kg",p:16000,m:"Desde 40 sacos: $15.500",msj:"alimento de pollita"},
+    {g:"Alimentos",n:"Conchuela",d:"Saco de 25 kg",p:3990,m:"Desde 2: $3.700 · desde 11: $3.400"},
+    {g:"Alimentos",n:"Afrechillo",d:"Saco de 25 kg",p:7700,m:"Desde 2: $7.300 · desde 11: $6.400"},
+    {g:"Alimentos",n:"Bicarbonato",d:"Saco de 25 kg",p:20000,m:"Desde 2 sacos: $19.000"},
+    {g:"Alimentos",n:"Maíz chancado",d:"Saco de 25 kg",p:12000,m:"Desde 2: $11.700 · desde 11: $11.400"},
+    {g:"Alimentos",n:"Fosfato peruano",d:"Saco de 25 kg",p:37000},
+    {g:"Alimentos",n:"Harina de carne",d:"Saco de 25 kg",p:24000},
+    {g:"Alimentos",n:"Maíz entero",d:"Saco de 25 kg",p:10500,m:"Desde 2: $10.200 · desde 11: $9.990"},
+    {g:"Alimentos",n:"Sal",d:"Saco de 25 kg",p:4500,m:"Desde 2 sacos: $4.000"},
+    {g:"Alimentos",n:"Soya",d:"Saco de 25 kg",p:19500,m:"Desde 40 sacos: $18.900"},
+    {g:"Núcleos y aditivos",n:"Fintox",d:"Saco de 25 kg",k:5000,p:104900},
+    {g:"Núcleos y aditivos",n:"Lisina",d:"Saco de 25 kg",k:3500,p:60000},
+    {g:"Núcleos y aditivos",n:"Metionina",d:"Saco de 25 kg",k:9200,p:210000},
+    {g:"Núcleos y aditivos",n:"Núcleo pollita",d:"Saco de 24 kg",k:8500,p:178000},
+    {g:"Núcleos y aditivos",n:"Núcleo ponedora Nutrial",d:"Saco cerrado",k:10500,p:218850},
+    {g:"Núcleos y aditivos",n:"Núcleo ponedora Rovimix",d:"Saco cerrado",k:15750,p:365000},
+    {g:"Núcleos y aditivos",n:"Peptasan",d:"Saco de 25 kg",k:11500,p:244000},
+    {g:"Núcleos y aditivos",n:"Polifeed",d:"Saco de 20 kg",k:8500,p:92990}];
+  $("aliLista").innerHTML=ALIMENTOS.map((a,i)=>(i===0||ALIMENTOS[i-1].g!==a.g?`<h4>${a.g}</h4>`:"")
+    +`<button type="button" class="ali-op" data-tipoali="${i}" aria-pressed="${i===0}"><b>${a.n}</b><span>${a.k!=null?`${clp(a.k)} el kilo · ${clp(a.p)} el saco cerrado`:`${clp(a.p)} el saco`}</span><small>${a.d}${a.m?" · "+a.m:""}</small></button>`).join("");
+  let tipoAli=0;
+  $("aliLista").addEventListener("click",e=>{const b=e.target.closest("[data-tipoali]");if(!b)return;tipoAli=Number(b.dataset.tipoali);$("aliLista").querySelectorAll("[data-tipoali]").forEach(x=>x.setAttribute("aria-pressed",String(x===b)));arma()});
+  const arma=()=>{const np=cant("aviPol"),ns=cant("aviAli"),A=ALIMENTOS[tipoAli],ali=(A.msj||(A.g==="Alimentos"?A.n.toLowerCase():A.n))+` (${A.d.toLowerCase()})`;
     const msjAli=(ns?`Hola, quiero pedir ${ns} ${ns===1?"saco":"sacos"} de ${ali}.`:`Hola, quiero pedir ${ali}.`)+nom()+" ¿Precio y disponibilidad?";
     $("aviPolBtn").href="https://wa.me/56966087529?text="+encodeURIComponent((np?`Hola, quiero pedir ${np} pollitas Oro Verde de 14 semanas.`:"Hola, quiero pedir pollitas Oro Verde de 14 semanas.")+nom()+" ¿Precio y fecha de entrega?");
     $("aviAliBtn").href="https://wa.me/56954158511?text="+encodeURIComponent(msjAli);
@@ -2556,14 +2585,14 @@ function mostrarLista(titulo,prods,vacio){const res=$("resBusca");if(!res)return
   const VITRINA=[
     {img:"../img/huevos-cafe-bandeja.jpg",et:"Oferta del mes",precio:"$2.000",tit:"Huevo tercera, bandeja de 30",txt:"En blanco o café. Elija la bandeja de 30 y agréguela a su pedido.",alt:"Bandeja de huevos café.",ir:"g-ofertas-y-promos",cta:"Ver la oferta"},
     {img:"../img/huevos-blancos-bandeja.jpg",et:"Promo Gym Bro",precio:"$3.800",tit:"Bandeja de huevo tercera + una Monster",txt:"Para quienes no omiten el entrenamiento de piernas: una bandeja de 30 huevos tercera junto con una Monster Ultra, la blanca sin azúcar.",alt:"Bandeja de huevos blancos.",extra:"../img/productos/monster.webp",wa:"https://wa.me/56933903395?text=Hola%2C%20quiero%20la%20Promo%20Gym%20Bro%3A%20bandeja%20de%2030%20huevos%20tercera%20%2B%20Monster%20Ultra%20blanca%2C%20a%20%243.800.",letra:"La bebida energética no se recomienda para menores de 18 años, embarazadas ni personas sensibles a la cafeína."},
-    {img:"../img/avicola-pabellon-silos.jpg",et:"Nuestra avícola",tit:"Del campo de Oro Verde a tu mesa",txt:"Nuestro pabellón nuevo y sus silos, en las afueras de Chillán.",alt:"Pabellón nuevo de la avícola, de techo rojo, con dos silos metálicos bajo un cielo azul."},
+    {img:"../img/avicola-pabellon-silos.jpg",et:"Nuestra avícola",tit:"Del campo de Oro Verde a tu mesa",txt:"Nuestro pabellón nuevo y sus silos, en las afueras de Chillán.",alt:"Pabellón nuevo de la avícola, de techo rojo, con dos silos metálicos bajo un cielo azul.",ali:true},
     {img:"../img/huevos-cafe-bandeja.jpg",et:"Huevos",tit:"Huevos frescos, sanos, ricos y naturales",txt:"Blancos, de color y azules, por bandeja y por caja.",alt:"Bandeja de huevos café sobre una mesa de madera.",ir:"g-huevos-de-color"},
     {img:"../img/pollitas-llegada.jpg",et:"Pollitas Oro Verde",tit:"Pollitas de 14 semanas para tu gallinero",txt:"Llegan con 1 día de vida y cumplen su calendario de vacunación.",alt:"Pollitas amarillas recién nacidas dentro de cajas de cartón.",avi:true},
     {img:"../img/avicola-interior.jpg",et:"Cómo trabajamos",tit:"Cuidado en cada etapa",txt:"Nuestros pabellones, por dentro.",alt:"Pasillo interior de un pabellón, entre hileras de jaulas metálicas iluminadas."},
     {img:"../img/fabrica-nueva-vista.jpg",et:"ALL FOOD",tit:"Hacemos el alimento de nuestras aves",txt:"Nuestra fábrica de alimentos está creciendo.",alt:"Obra de la fábrica nueva con tres silos metálicos."}
   ];
   const vit=document.createElement("section");vit.className="vitrina";vit.setAttribute("aria-roledescription","carrusel");vit.setAttribute("aria-label","Desde nuestra avícola");
-  vit.innerHTML='<div class="vt-pista">'+VITRINA.map((v,i)=>`<figure class="vt-slide" role="group" aria-roledescription="diapositiva" aria-label="${i+1} de ${VITRINA.length}"${i?' aria-hidden="true"':""}><img src="${v.img}" alt="${v.alt}" loading="${i?"lazy":"eager"}">${v.extra?`<img class="vt-extra" src="${v.extra}" alt="Lata de Monster Ultra blanca, sin azúcar." loading="${i?"lazy":"eager"}">`:""}<figcaption><small>${v.et}</small>${v.precio?`<span class="vt-precio"><small>Precio</small>${v.precio}</span>`:""}<b>${v.tit}</b><span>${v.txt}</span>${v.letra?`<em class="vt-letra">${v.letra}</em>`:""}${v.wa?`<a class="vt-cta" href="${v.wa}" target="_blank" rel="noopener">Pedir por WhatsApp</a>`:v.ir?`<button type="button" class="vt-cta" data-sec="${v.ir}">${v.cta||"Ver productos"}</button>`:v.avi?'<button type="button" class="vt-cta" data-vavi="1">Pedir pollitas</button>':""}</figcaption></figure>`).join("")+'</div>'
+  vit.innerHTML='<div class="vt-pista">'+VITRINA.map((v,i)=>`<figure class="vt-slide" role="group" aria-roledescription="diapositiva" aria-label="${i+1} de ${VITRINA.length}"${i?' aria-hidden="true"':""}><img src="${v.img}" alt="${v.alt}" loading="${i?"lazy":"eager"}">${v.extra?`<img class="vt-extra" src="${v.extra}" alt="Lata de Monster Ultra blanca, sin azúcar." loading="${i?"lazy":"eager"}">`:""}<figcaption><small>${v.et}</small>${v.precio?`<span class="vt-precio"><small>Precio</small>${v.precio}</span>`:""}<b>${v.tit}</b><span>${v.txt}</span>${v.letra?`<em class="vt-letra">${v.letra}</em>`:""}${v.wa?`<a class="vt-cta" href="${v.wa}" target="_blank" rel="noopener">Pedir por WhatsApp</a>`:v.ir?`<button type="button" class="vt-cta" data-sec="${v.ir}">${v.cta||"Ver productos"}</button>`:v.avi?'<button type="button" class="vt-cta" data-vavi="1">Pedir pollitas</button>':v.ali?'<button type="button" class="vt-cta" data-vavi="ali">Ver productos</button>':""}</figcaption></figure>`).join("")+'</div>'
     +'<button type="button" class="vt-fl vt-ant" aria-label="Foto anterior">‹</button><button type="button" class="vt-fl vt-sig" aria-label="Foto siguiente">›</button>'
     +'<div class="vt-puntos">'+VITRINA.map((v,i)=>`<button type="button" aria-label="Ver foto ${i+1}"${i?"":' aria-current="true"'}></button>`).join("")+'</div>';
   barra.before(vit);
@@ -2575,7 +2604,8 @@ function mostrarLista(titulo,prods,vacio){const res=$("resBusca");if(!res)return
     vit.addEventListener("mouseenter",()=>clearInterval(auto));vit.addEventListener("mouseleave",reloj);
     let x0=null;vit.addEventListener("pointerdown",e=>{x0=e.clientX});vit.addEventListener("pointerup",e=>{if(x0==null)return;const dx=e.clientX-x0;x0=null;if(Math.abs(dx)>40){ir(i+(dx<0?1:-1));reloj()}});
     vit.addEventListener("click",e=>{const b=e.target.closest("button[data-sec]");if(b){verSeccion(b.dataset.sec,{enfocar:true});return}
-      if(e.target.closest("[data-vavi]")){$("tbMenu").click();setTimeout(()=>{const d=document.querySelector('#menuCats button[data-ir="avicola"]');if(d)d.click()},350)}});
+      const va=e.target.closest("[data-vavi]");if(va){$("tbMenu").click();setTimeout(()=>{const d=document.querySelector('#menuCats button[data-ir="avicola"]');if(d)d.click();
+        if(va.dataset.vavi==="ali")setTimeout(()=>{const it=$("aviAliItem");if(it)it.scrollIntoView({behavior:"smooth",block:"start"})},450)},350)}});
     reloj()})();
   const est={stock:false,precio:false,formas:new Set(),texto:""};
   const forma=p=>tienePaq(p)?"paq":fmtDe(p)?"fmt":"uni";
