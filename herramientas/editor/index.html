@@ -80,6 +80,13 @@ table.prod tr.oculto td{color:#999}
 .aviso.ver{display:block}
 .sel-info{padding:8px 10px;border-radius:10px;background:#f6f2e8;font-family:ui-monospace,Consolas,monospace;font-size:12px;word-break:break-all}
 .check{display:flex;align-items:center;gap:8px;margin:6px 0}
+.subir{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin:10px 0;padding:12px;border:1.5px dashed var(--campo);border-radius:12px;background:#f6faf7}
+.subir input[type=file]{font-size:13px}
+.avisos{margin:8px 0;padding:8px 10px 8px 26px;border-radius:10px;background:#fdf0ef;color:#7a1d17;font-size:12.5px}
+.avisos li{margin:2px 0}
+table.prod td.num{text-align:right;white-space:nowrap}
+table.prod tr.revisar td{background:#fff3cd}
+.flecha{color:var(--suave)}
 @media (max-width:1100px){.cuerpo{grid-template-columns:150px 360px minmax(0,1fr)}}
 </style>
 </head>
@@ -103,6 +110,7 @@ table.prod tr.oculto td{color:#999}
     <button type="button" role="tab" data-p="menu" aria-selected="false"><span class="ico">☰</span>Menú y orden</button>
     <button type="button" role="tab" data-p="vitrina" aria-selected="false"><span class="ico">🖼</span>Vitrina</button>
     <button type="button" role="tab" data-p="productos" aria-selected="false"><span class="ico">📦</span>Productos y precios</button>
+    <button type="button" role="tab" data-p="excel" aria-selected="false"><span class="ico">📊</span>Precios por Excel</button>
     <button type="button" role="tab" data-p="promos" aria-selected="false"><span class="ico">%</span>Promos y ofertas</button>
     <button type="button" role="tab" data-p="textos" aria-selected="false"><span class="ico">✎</span>Textos</button>
     <button type="button" role="tab" data-p="seleccion" aria-selected="false"><span class="ico">⌖</span>Elegir en la vista</button>
@@ -117,6 +125,7 @@ table.prod tr.oculto td{color:#999}
 </div>
 <div class="aviso" id="aviso" role="status"></div>
 <script src="cambios.js"></script>
+<script src="planilla.js"></script>
 <script>
 /* Editor del Catálogo Sabroso: solo funciona en este PC (servidor local). Lee carta/index.html, muestra la vista en vivo
    y guarda tus cambios como borrador. «Enviar a Claude» descarga un archivo con los cambios para publicarlos. */
@@ -145,6 +154,8 @@ async function iniciar() {
     if (b.huella === huellaBase || confirm('Hay un borrador guardado de una versión anterior del catálogo. ¿Lo recupero?')) estado = b.estado;
   }
   if (!estado) estado = clon(base);
+  ['listaHuevos', 'alimentos'].forEach(function (k) { if (estado[k] === undefined) estado[k] = clon(base[k]); }); // borradores de antes del 19/11/2026
+  ['mayor', 'tramosCaja', 'calHuevo'].forEach(function (k) { estado[k] = clon(base[k]); }); // solo lectura: siempre los de la carta
   imagenes = await listarImagenes();
   pintarPanel(); pintarEstado(); ajustarMarco(); refrescarVista(true);
 }
@@ -217,7 +228,7 @@ $('bEnviar').onclick = function () { document.querySelector('[data-p="enviar"]')
 
 function pintarPanel() {
   var p = $('panel');
-  var f = { colores: panelColores, menu: panelMenu, vitrina: panelVitrina, productos: panelProductos, promos: panelPromos, textos: panelTextos, seleccion: panelSeleccion, opciones: panelOpciones, enviar: panelEnviar }[pestana];
+  var f = { colores: panelColores, menu: panelMenu, vitrina: panelVitrina, productos: panelProductos, excel: panelExcel, promos: panelPromos, textos: panelTextos, seleccion: panelSeleccion, opciones: panelOpciones, enviar: panelEnviar }[pestana];
   var y = p.scrollTop; p.innerHTML = f(); p.scrollTop = y;
 }
 
@@ -292,7 +303,7 @@ function panelProductos() {
   });
   var dentro = function (i, paso) { var p = estado.productos[i]; for (var k = i + paso; k >= 0 && k < estado.productos.length; k += paso) if (estado.productos[k].cat === p.cat) return k; return -1; };
   return '<h2>Productos y precios</h2><p class="nota">Precio vacío = «Precio por confirmar». Desmarca «Visible» para ocultar un producto. «En ofertas» lo muestra en Ofertas y promos. Con una categoría elegida puedes cambiar el orden (↑ ↓).</p>'
-    + '<p class="nota"><b>Huevos:</b> el precio es <b>por huevo</b>; el catálogo calcula la bandeja y la caja (por ejemplo, 30 × precio). Para fijar el precio de una bandeja usa «Ofertas por formato» en la pestaña Promos y ofertas.</p>'
+    + '<p class="nota"><b>Huevos:</b> aquí el precio es <b>por huevo suelto</b> (unidad, media docena, docena y 15). Las bandejas y cajas tienen su propia lista de precios: cámbialas en «Precios por Excel». Para una oferta de bandeja usa «Ofertas por formato» en Promos y ofertas.</p>'
     + '<div class="fila"><input class="mini" id="pQ" placeholder="Buscar código o nombre" value="' + esc(filtroProd.q) + '"><select class="mini" id="pCat" style="max-width:150px"><option value="">Todas</option>' + cats.map(function (c) { return '<option' + (c === filtroProd.cat ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></div>'
     + '<p class="nota">' + lista.length + ' producto(s)</p>'
     + '<table class="prod"><thead><tr><th>Código</th><th>Nombre</th><th style="width:72px">Precio</th><th style="width:72px">Oferta</th><th title="Visible">Vis.</th><th title="En Ofertas y promos">Of.</th>' + (filtroProd.cat ? '<th></th>' : '') + '</tr></thead><tbody>'
@@ -306,6 +317,44 @@ function panelProductos() {
         + (filtroProd.cat ? '<td style="white-space:nowrap"><button type="button" class="ib" data-pmueve="' + i + '" data-a="' + dentro(i, -1) + '"' + (dentro(i, -1) < 0 ? ' disabled' : '') + '>↑</button><button type="button" class="ib" data-pmueve="' + i + '" data-a="' + dentro(i, 1) + '"' + (dentro(i, 1) < 0 ? ' disabled' : '') + '>↓</button></td>' : '')
         + '</tr>';
     }).join('') + '</tbody></table>';
+}
+
+/* ---------- Precios por Excel (planilla de actualización masiva) ---------- */
+var subida = null; // resultado de la última planilla subida: {archivo, cambios, avisos, iguales} o {archivo, error}
+function panelExcel() {
+  var PL = window.PlanillaPrecios;
+  var h = '<h2>Precios por Excel</h2><p class="nota">Cambia muchos precios de una vez: rellena en la planilla las columnas amarillas («Precio nuevo ✎» y «Por mayor nuevo ✎») y súbela aquí. Cada fila es un formato de venta (unidad, paquete, kilo, bolsa, bandeja, caja…) y el precio va por esa medida. Lo que dejes en blanco no cambia.</p>'
+    + '<label class="subir"><b>Subir planilla rellenada</b><span class="nota" style="margin:0">Archivo .xlsx: la planilla que te dio Claude o una descargada aquí. Puedes subirla las veces que quieras; solo cuenta lo que sea distinto de la carta.</span><input type="file" id="xlsxArchivo" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>'
+    + '<div class="fila"><button type="button" class="bt2" id="bXlsxBajar">⬇ Descargar planilla con los precios de ahora</button></div>'
+    + '<p class="nota">La planilla descargada aquí trae los precios actuales, incluidos los cambios de tu borrador.</p>';
+  if (!subida) return h;
+  if (subida.error) return h + '<ul class="avisos"><li>' + esc(subida.error) + '</li></ul><button type="button" class="bt2" id="bXlsxDescartar">Cerrar</button>';
+  var c = subida.cambios, n = c.length;
+  h += '<h3>' + esc(subida.archivo) + '</h3><p class="nota">' + (n ? n + (n > 1 ? ' precios cambian' : ' precio cambia') : 'Ningún precio cambia') + (subida.iguales ? ' · ' + subida.iguales + ' ya estaban iguales' : '') + (subida.avisos.length ? ' · ' + subida.avisos.length + ' aviso' + (subida.avisos.length > 1 ? 's' : '') : '') + (c.some(function (x) { return x.revisar; }) ? '. En amarillo con ⚠, los que cambian mucho: revísalos.' : '.') + '</p>';
+  if (subida.avisos.length) h += '<ul class="avisos">' + subida.avisos.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>';
+  if (!n) return h + '<button type="button" class="bt2" id="bXlsxDescartar">Cerrar</button>';
+  return h + '<div class="fila"><button type="button" class="bt2 prim" id="bXlsxAplicar">Aplicar ' + n + ' cambio' + (n > 1 ? 's' : '') + ' al borrador</button><button type="button" class="bt2" id="bXlsxDescartar">Descartar</button></div>'
+    + '<table class="prod"><thead><tr><th>Código</th><th>Producto · formato</th><th style="text-align:right">Antes</th><th style="text-align:right">Después</th></tr></thead><tbody>'
+    + c.map(function (x) {
+      return '<tr class="' + (x.revisar ? 'revisar' : '') + '"><td class="cod">' + esc(x.cod) + '</td><td>' + esc(x.producto) + '<br><small class="cod">' + esc(x.formato) + (x.formatoNuevo ? ' → queda «' + esc(x.formatoNuevo.detalle) + '»' : '') + '</small></td>'
+        + '<td class="num">' + esc(PL.clp(x.antes)) + '</td><td class="num"><b>' + esc(PL.clp(x.despues)) + '</b>' + (x.revisar ? ' ⚠' : '') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+}
+function leerPlanilla(archivo) {
+  if (!archivo) return;
+  archivo.arrayBuffer().then(function (buf) { return PlanillaPrecios.leerXlsx(new Uint8Array(buf)); }).then(function (leidas) {
+    var r = PlanillaPrecios.compararPlanilla(estado, leidas); r.archivo = archivo.name; subida = r; pintarPanel();
+    avisar(r.cambios.length ? r.cambios.length + ' precio(s) para revisar antes de aplicar' : 'La planilla no trae precios distintos de la carta');
+  }).catch(function (e) { subida = { archivo: archivo.name, error: 'No pude leer «' + archivo.name + '»: ' + e.message }; pintarPanel(); });
+}
+function bajarPlanilla() {
+  var PL = PlanillaPrecios, f = new Date(), p2 = function (n) { return String(n).padStart(2, '0'); };
+  var bytes = PL.crearXlsx(PL.filasPrecios(estado), { origen: 'precios del editor del catálogo (con los cambios del borrador)' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+  a.download = 'Actualización de precios - Catálogo Emporio ' + f.getFullYear() + '-' + p2(f.getMonth() + 1) + '-' + p2(f.getDate()) + '.xlsx';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  avisar('Planilla descargada: rellénala y súbela aquí');
 }
 
 /* ---------- Promos y ofertas por formato ---------- */
@@ -424,6 +473,7 @@ P.addEventListener('input', function (e) {
 });
 P.addEventListener('change', function (e) {
   var t = e.target, d = t.dataset, i = +d.i;
+  if (t.id === 'xlsxArchivo') { leerPlanilla(t.files && t.files[0]); return; }
   if (d.color) { pintarPanel(); return; }
   if (d.colortxt) { var v = t.value.trim().toLowerCase(); if (/^#[0-9a-f]{6}$/.test(v)) { cambio(function (s) { s.colores[d.colortxt] = v; }, { sinVista: true, panel: true }); colorEnVista(d.colortxt, v); } else avisar('Usa un código como #1d5c36'); return; }
   if (d.famnombre !== undefined) { cambio(function (s) { s.familias[+d.famnombre][0] = t.value.trim() || s.familias[+d.famnombre][0]; }); return; }
@@ -478,6 +528,13 @@ P.addEventListener('click', function (e) {
     a2.href = URL.createObjectURL(new Blob([paquete()], { type: 'application/json' }));
     a2.download = 'cambios-catalogo-' + f.getFullYear() + '-' + p2(f.getMonth() + 1) + '-' + p2(f.getDate()) + '-' + p2(f.getHours()) + p2(f.getMinutes()) + '.json';
     document.body.appendChild(a2); a2.click(); a2.remove(); avisar('Archivo descargado: dile a Claude «aplica los cambios del editor»'); return;
+  }
+  if (b.id === 'bXlsxBajar') { bajarPlanilla(); return; }
+  if (b.id === 'bXlsxDescartar') { subida = null; pintarPanel(); return; }
+  if (b.id === 'bXlsxAplicar' && subida && subida.cambios) {
+    var cs = subida.cambios; subida = null;
+    cambio(function (s) { PlanillaPrecios.aplicarEnEstado(s, cs); }, { panel: true });
+    avisar(cs.length + ' cambio(s) en el borrador: revisa la vista y luego «Enviar a Claude»'); return;
   }
   if (b.id === 'bCopiar') { navigator.clipboard.writeText(paquete()).then(function () { avisar('Cambios copiados: pégalos en el chat con Claude'); }, function () { avisar('No se pudo copiar'); }); return; }
   if (b.id === 'bDescartar') { if (!confirm('¿Descartar todos los cambios del borrador?')) return; cambio(function (s) { var n = clon(base); Object.keys(s).forEach(function (k) { delete s[k]; }); Object.assign(s, n); }, { panel: true }); return; }

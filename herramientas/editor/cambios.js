@@ -16,7 +16,10 @@
     ['--suave', 'Texto secundario'], ['--borde', 'Bordes suaves'], ['--linea', 'Borde de los campos'],
     ['--wsp', 'Botón de WhatsApp'], ['--sol-t', 'Naranja para textos']
   ];
-  var INI_ESTILOS = '/* ==== EDITOR DEL CATÁLOGO: inicio (generado por herramientas/editor) ==== */';
+  // Campos de cada producto que el editor puede cambiar. upp: unidades por paquete; pq: precio fijo del paquete;
+  // pm: precio por mayor propio (c/u desde 10 u, o c/paquete desde 10 paquetes); bolsas: [[gramos, precio]] del granel.
+  var CAMPOS_PRODUCTO = ['nombre', 'detalle', 'precio', 'oferta', 'retirado', 'fav', 'upp', 'pq', 'pm', 'bolsas'];
+  var INI_ESTILOS ='/* ==== EDITOR DEL CATÁLOGO: inicio (generado por herramientas/editor) ==== */';
   var FIN_ESTILOS = '/* ==== EDITOR DEL CATÁLOGO: fin ==== */';
 
   function literal(txt) { return new Function('return (' + txt + ');')(); } // solo con el código propio del catálogo
@@ -49,6 +52,13 @@
     datos.promos = (html.match(/^L\.productos\.push\(\{.*\}\);$/gm) || []).map(function (l) { return literal(l.slice('L.productos.push('.length, -2)); });
     // Ofertas por formato
     var of = html.match(/^const OFERTAS_FMT=(\{.*\});$/m); datos.ofertasFormato = of ? literal(of[1]) : {};
+    // Precios de huevos por bandeja y caja (la caja por tramos) y lista de alimentos para aves (pedido por WhatsApp)
+    datos.listaHuevos = literal('{' + trozo(html, 'const LISTA_HUEVOS={', '\n};').dentro + '}');
+    datos.alimentos = literal('[' + trozo(html, '  const ALIMENTOS=[', '];').dentro + ']');
+    // Solo lectura (para calcular precios de paquete y por mayor como la carta)
+    var my = html.match(/\n    mayor:(\{[^\n]*?\}),/); datos.mayor = my ? literal(my[1]) : null;
+    var tc = html.match(/^const TRAMOS_CAJA=(\[[^\n]*\]);/m); datos.tramosCaja = tc ? literal(tc[1]) : [1];
+    var ch = html.match(/^const CAL_HUEVO=(\{[^\n]*\});/m); datos.calHuevo = ch ? literal(ch[1]) : {};
     // Familias del menú
     datos.familias = literal('[' + trozo(html, 'const FAMILIAS=[', '\n];').dentro + ']');
     // Vitrina
@@ -75,10 +85,19 @@
     var pr = {};
     (estado.productos || []).forEach(function (p) {
       var b = porCod[p.cod]; if (!b) return; var d = {};
-      ['nombre', 'detalle', 'precio', 'oferta', 'retirado', 'fav'].forEach(function (k) { if (!iguales(p[k], b[k]) && !(p[k] === undefined && b[k] === undefined) && !(!p[k] && !b[k] && (k === 'retirado' || k === 'fav'))) d[k] = p[k] === undefined ? null : p[k]; });
+      CAMPOS_PRODUCTO.forEach(function (k) {
+        var a = p[k], z = b[k];
+        if (iguales(a, z) || (a == null && z == null) || (!a && !z && (k === 'retirado' || k === 'fav'))) return;
+        d[k] = a === undefined ? null : a;
+      });
       if (Object.keys(d).length) pr[p.cod] = d;
     });
     if (Object.keys(pr).length) c.productos = pr;
+    if (estado.listaHuevos && !iguales(base.listaHuevos, estado.listaHuevos)) c.listaHuevos = estado.listaHuevos;
+    if (estado.alimentos) {
+      var al = {}; (estado.alimentos || []).forEach(function (a) { var b = (base.alimentos || []).filter(function (x) { return x.n === a.n; })[0]; if (!b) return; var d = {}; ['p', 'k'].forEach(function (k) { if (!iguales(a[k], b[k]) && !(a[k] == null && b[k] == null)) d[k] = a[k] == null ? null : a[k]; }); if (Object.keys(d).length) al[a.n] = d; });
+      if (Object.keys(al).length) c.alimentos = al;
+    }
     var ordenBase = base.productos.map(function (p) { return p.cod; }), ordenEst = (estado.productos || []).map(function (p) { return p.cod; });
     if (!iguales(ordenBase, ordenEst)) c.ordenProductos = ordenEst;
     if (!iguales(base.promos, estado.promos)) c.promos = estado.promos;
@@ -141,6 +160,9 @@
           if (['nombre', 'detalle'].indexOf(k) >= 0) p[k] = String(d[k] == null ? '' : d[k]);
           else if (k === 'precio' || k === 'oferta') { if (d[k] === null || d[k] === '') { if (k === 'precio') p.precio = null; else delete p.oferta; } else p[k] = Math.max(0, Math.round(Number(d[k]) || 0)); }
           else if (k === 'retirado' || k === 'fav') { if (d[k]) p[k] = true; else delete p[k]; }
+          else if (k === 'pq' || k === 'pm') { if (d[k] === null || d[k] === '') delete p[k]; else p[k] = Math.max(0, Math.round(Number(d[k]) || 0)); }
+          else if (k === 'upp') { var u = Math.round(Number(d[k]) || 0); if (u > 1) p.upp = u; else delete p.upp; }
+          else if (k === 'bolsas') { if (Array.isArray(d[k]) && d[k].length) p.bolsas = d[k].map(function (b) { return [Math.round(Number(b[0]) || 0), b[1] === null || b[1] === '' ? null : Math.max(0, Math.round(Number(b[1]) || 0))]; }).filter(function (b) { return b[0] > 0; }); }
         });
         var sangria = x.linea.match(/^\s*/)[0], coma = /,\s*$/.test(x.linea) ? ',' : '';
         x.linea = sangria + objetoJS(p) + coma;
@@ -151,6 +173,28 @@
       idx.forEach(function (i, n) { var l = porCod[orden[n]].linea; lineas[i] = l.replace(/,?\s*$/, ',') ; });
       var nuevo = lineas.join('\n');
       html = html.slice(0, lista.a) + '    productos:[' + nuevo + '\n    ]' + html.slice(lista.b);
+    }
+    // Huevos por bandeja y caja: se reescribe la tabla completa, un calibre por línea
+    if (c.listaHuevos) {
+      var lh = trozo(html, 'const LISTA_HUEVOS={', '\n};');
+      var limpio = function (v) { return v === null || v === '' || v === undefined ? null : Math.max(0, Math.round(Number(v) || 0)); };
+      var lineasH = Object.keys(c.listaHuevos).map(function (cal) {
+        var f = c.listaHuevos[cal], o = {};
+        Object.keys(f).forEach(function (fid) { o[fid] = Array.isArray(f[fid]) ? f[fid].map(limpio) : limpio(f[fid]); });
+        return '  ' + clave(cal) + ':' + JSON.stringify(o).replace(/"([A-Za-z_$][\w$]*)":/g, '$1:');
+      });
+      html = html.slice(0, lh.a) + 'const LISTA_HUEVOS={\n' + lineasH.join(',\n') + '\n};' + html.slice(lh.b);
+    }
+    // Alimentos para aves: precio del saco (p) y del kilo (k) de cada producto, por su nombre
+    if (c.alimentos) {
+      var la = trozo(html, '  const ALIMENTOS=[', '];'), filasA = la.dentro.split('\n');
+      filasA = filasA.map(function (l) {
+        if (!/^\s*\{g:/.test(l)) return l;
+        var a = literal(l.trim().replace(/,\s*$/, '')), d = c.alimentos[a.n]; if (!d) return l;
+        ['p', 'k'].forEach(function (k) { if (!(k in d)) return; if (d[k] === null || d[k] === '') { if (k === 'k') delete a.k; } else a[k] = Math.max(0, Math.round(Number(d[k]) || 0)); });
+        return l.match(/^\s*/)[0] + objetoJS(a) + (/,\s*$/.test(l) ? ',' : '');
+      });
+      html = html.slice(0, la.a) + '  const ALIMENTOS=[' + filasA.join('\n') + '];' + html.slice(la.b);
     }
     // Promos
     if (c.promos) {
@@ -201,9 +245,30 @@
       if ('detalle' in d) partes.push('detalle «' + d.detalle + '»');
       if ('precio' in d) partes.push('precio ' + clp(b.precio) + ' → ' + clp(d.precio));
       if ('oferta' in d) partes.push('oferta ' + clp(b.oferta) + ' → ' + clp(d.oferta));
+      if ('upp' in d) partes.push(d.upp > 1 ? 'paquete de ' + d.upp + ' u' + (b.upp ? ' (antes ' + b.upp + ' u)' : '') : 'sin paquete');
+      if ('pq' in d) partes.push('precio del paquete ' + (b.pq == null ? 'automático' : clp(b.pq)) + ' → ' + (d.pq == null ? 'automático' : clp(d.pq)));
+      if ('pm' in d) partes.push('precio por mayor ' + (b.pm == null ? 'automático' : clp(b.pm)) + ' → ' + (d.pm == null ? 'automático' : clp(d.pm)));
+      if ('bolsas' in d) { var bb = {}; (b.bolsas || []).forEach(function (x) { bb[x[0]] = x[1]; }); partes.push('bolsas: ' + (d.bolsas || []).filter(function (x) { return bb[x[0]] !== x[1]; }).map(function (x) { return (x[0] >= 1000 ? String(x[0] / 1000).replace('.', ',') + ' kg' : x[0] + ' g') + ' ' + clp(bb[x[0]]) + ' → ' + clp(x[1]); }).join(', ')); }
       if ('retirado' in d) partes.push(d.retirado ? 'oculto' : 'visible');
       if ('fav' in d) partes.push(d.fav ? 'en Ofertas y promos' : 'fuera de Ofertas y promos');
       r.push('Producto ' + cod + ' (' + (b.nombre || '') + '): ' + partes.join(', '));
+    });
+    if (c.listaHuevos) {
+      var FMT = { F20: 'bandeja de 20', F30: 'bandeja de 30', F100: 'caja de 100', F180: 'caja de 180' }, tr = base.tramosCaja || [1];
+      Object.keys(c.listaHuevos).forEach(function (cal) {
+        var a = (base.listaHuevos || {})[cal] || {}, z = c.listaHuevos[cal];
+        Object.keys(z).forEach(function (fid) {
+          var va = a[fid], vz = z[fid];
+          if (Array.isArray(vz)) vz.forEach(function (x, i) { var y = Array.isArray(va) ? va[i] : undefined; if (x !== y) r.push('Huevo ' + cal + ' · ' + (FMT[fid] || fid) + ' (' + (i === tr.length - 1 ? 'desde ' + tr[i] : tr[i] + ' a ' + (tr[i + 1] - 1)) + ' cajas): ' + clp(y) + ' → ' + clp(x)); });
+          else if (vz !== va) r.push('Huevo ' + cal + ' · ' + (FMT[fid] || fid) + ': ' + clp(va) + ' → ' + clp(vz));
+        });
+      });
+    }
+    Object.keys(c.alimentos || {}).forEach(function (n) {
+      var a = (base.alimentos || []).filter(function (x) { return x.n === n; })[0] || {}, d = c.alimentos[n], partes = [];
+      if ('p' in d) partes.push('saco ' + clp(a.p) + ' → ' + clp(d.p));
+      if ('k' in d) partes.push('kilo ' + clp(a.k) + ' → ' + clp(d.k));
+      r.push('Alimento para aves «' + n + '»: ' + partes.join(', '));
     });
     if (c.ordenProductos) r.push('Nuevo orden de productos dentro de sus secciones');
     if (c.promos) r.push('Promos: ' + c.promos.length + ' (' + c.promos.map(function (p) { return p.cod + ' ' + clp(p.precio); }).join(', ') + ')');
@@ -216,5 +281,5 @@
     return r;
   }
 
-  return { COLORES: COLORES, leerCatalogo: leerCatalogo, diferencias: diferencias, aplicarCambios: aplicarCambios, resumen: resumen, cssDe: cssDe };
+  return { COLORES: COLORES, CAMPOS_PRODUCTO: CAMPOS_PRODUCTO, leerCatalogo: leerCatalogo, diferencias: diferencias, aplicarCambios: aplicarCambios, resumen: resumen, cssDe: cssDe };
 });
