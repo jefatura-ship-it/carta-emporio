@@ -510,6 +510,7 @@ body.con-fondo::before{content:"";position:fixed;inset:0;z-index:-1;pointer-even
 @keyframes fondoAparece{from{opacity:0}to{opacity:1}}
 body.con-fondo[data-fondo="mosaico"]::before{background:linear-gradient(180deg,rgba(18,40,24,.58),rgba(18,40,24,.48) 45%,rgba(18,40,24,.62)),var(--fondo-pag) 0 0/340px repeat}
 body.con-fondo[data-fondo="metal"]::before{background:linear-gradient(180deg,rgba(14,20,26,.5),rgba(14,20,26,.22) 45%,rgba(14,20,26,.5)),var(--fondo-pag) center/cover no-repeat}
+body.con-fondo[data-fondo="papel"]::before{background:linear-gradient(180deg,rgba(66,42,18,.55),rgba(66,42,18,.3) 45%,rgba(66,42,18,.55)),var(--fondo-pag) center/cover no-repeat}
 .grupo.foto[data-fondo="mosaico"]::before{background:linear-gradient(180deg,rgba(18,40,24,.62) 0%,rgba(18,40,24,.38) 38%,rgba(248,246,238,.15) 62%,var(--masa) 96%),var(--foto) 0 0/300px repeat}
 body.con-fondo .grupo.foto::before{display:none}
 body.con-fondo .grupo.foto{padding-top:28px}
@@ -2308,9 +2309,10 @@ const FOTOS={"Huevos blancos":"huevos-blancos-bandeja.jpg","Huevos de color":"hu
 /* Fondos de secciones (David, 19/11/2026): plásticos (dibujo en mosaico, también en bolsas y papeles y en vasos, platos y cubiertos) y aluminio */
 ["Envases","Contenedores","Cúpulas","Potes","Salseros","Bolsas","Sacos y mallas","Papeles y film","Vasos","Platos","Cubiertos y servilletas","Bombillas, brochetas y palitos"].forEach(c=>{FOTOS[c]="fondo-plasticos.webp"});
 ["Envases de aluminio","Foil y moldes de aluminio"].forEach(c=>{FOTOS[c]="fondo-aluminio.webp"});
+["Cajas de cartón","Bandejas de cartón","Bowls y conos de cartón"].forEach(c=>{FOTOS[c]="fondo-carton.webp"}); // papel arrugado, foto de SJ Objio en Unsplash (licencia Unsplash)
 ["Abarrotes","Frutas en conserva","Mariscos y atún","Lácteos","Golosinas"].forEach(c=>{FOTOS[c]="fondo-despensa.webp"});
 ["Bolsas de basura","Traperos","Papel higiénico y afeitado","Guantes y cofias"].forEach(c=>{FOTOS[c]="fondo-aseo.webp"});
-const TIPOFONDO={"fondo-plasticos.webp":"mosaico","fondo-aseo.webp":"mosaico","fondo-aluminio.webp":"metal"}; // mosaico: se repite en vez de estirarse; metal: velo más suave y neutro para que se vea el metal
+const TIPOFONDO={"fondo-plasticos.webp":"mosaico","fondo-aseo.webp":"mosaico","fondo-aluminio.webp":"metal","fondo-carton.webp":"papel"}; // mosaico: se repite en vez de estirarse; metal: velo más suave y neutro para que se vea el metal
 /* Productos cerrados en la página por stock bajo (decisión en SabAPP o en la planilla): primero lo último que se supo */
 Object.values(PROD).forEach(p=>{p.sinStock0=!!p.sinStock});
 try{(JSON.parse(localStorage.getItem("cerrados-"+KEY)||"[]")||[]).forEach(c=>{const p=PROD[c];if(p){p.cerrado=true;p.sinStock=true}})}catch(e){}
