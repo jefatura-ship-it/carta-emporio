@@ -2109,10 +2109,12 @@ function rangosLista(p,fid){const c=LISTA_HUEVOS[CAL_HUEVO[p.cod]],v=c&&c[fid];i
   return t.map((e,i)=>({...e,hasta:t[i+1]?t[i+1].desde-1:null}))}
 const textoRango=r=>r.hasta==null?(r.desde===1?"Desde 1 caja":`${r.desde} cajas o más`):`${r.desde} a ${r.hasta} caja${r.hasta>1?"s":""}`;
 function cajasEn(p){return cart[clave(p.cod,modoDe(p))]||0}
-function selCajasHTML(p){const f=fmtInfo(p,modoDe(p)),q=cajasEn(p),rs=rangosLista(p,f[0]),ns=CANT_CAJAS.includes(q)||!q?CANT_CAJAS:[...CANT_CAJAS,q].sort((a,b)=>a-b);
-  const op=n=>`<option value="${n}"${q===n?" selected":""}>${n} caja${n>1?"s":""}</option>`;
-  return `<label class="fmt">Cajas <select data-ccod="${p.cod}" aria-label="Cantidad de cajas de ${p.nombre} (${f[1].toLowerCase()})"><option value="0"${q?"":" selected"}>Elegir cantidad</option>`
-    +rs.map(r=>`<optgroup label="${textoRango(r)}: ${clp(r.precio)} c/caja">${ns.filter(n=>n>=r.desde&&(r.hasta==null||n<=r.hasta)).map(op).join("")}</optgroup>`).join("")+`</select></label>`}
+// rango (tramo de precio) que corresponde a q cajas
+function rangoDe(p,q){return rangosLista(p,modoDe(p)).find(r=>q>=r.desde&&(r.hasta==null||q<=r.hasta))||null}
+// selector de rangos: se elige el rango (y su precio por caja); la cantidad exacta se ajusta con − y +
+function selCajasHTML(p){const f=fmtInfo(p,modoDe(p)),q=cajasEn(p),rs=rangosLista(p,f[0]),ra=q?rangoDe(p,q):null;
+  return `<label class="fmt">Cajas <select data-ccod="${p.cod}" aria-label="Rango de cajas de ${p.nombre} (${f[1].toLowerCase()})">${q?"":`<option value="0" selected>Elegir cantidad</option>`}`
+    +rs.map(r=>`<option value="${r.desde}"${ra&&ra.desde===r.desde?" selected":""}>${textoRango(r)} · ${clp(r.precio)} c/caja</option>`).join("")+`</select></label>`}
 function cajaPrecioHTML(p){const f=fmtInfo(p,modoDe(p)),q=cajasEn(p),pr=precioLista(p,f[0],Math.max(1,q)),rs=rangosLista(p,f[0]),n=Math.max(1,q);
   return `<span class="precio">${clp(pr)} <small class="u">la ${f[1].toLowerCase()}</small></span>`
     +(q?`<small class="cu">${q} caja${q>1?"s":""}: ${clp(pr*q)}</small>`:`<small class="cu">Sale a ${clp(Math.round(pr/f[2]))} c/u</small>`)
@@ -2649,7 +2651,7 @@ function refrescar(){
       a.querySelector(".menos").disabled=q===0; a.querySelector(".mas").disabled=lleno;
       const ps=a.querySelector(".paso"); if(ps)ps.classList.toggle("vacio",q===0);
       const tg=a.querySelector(".tope"); if(tg){tg.hidden=!(lleno&&tp>0);tg.textContent=`Máximo disponible: ${tp} u`}
-      if(enCaja(p)){const pc=a.querySelector("[data-pcaja]");if(pc)pc.innerHTML=cajaPrecioHTML(p);const sc=a.querySelector("select[data-ccod]");if(sc&&document.activeElement!==sc&&sc.value!==String(cajasEn(p)))sc.closest("label").outerHTML=selCajasHTML(p)}
+      if(enCaja(p)){const pc=a.querySelector("[data-pcaja]");if(pc)pc.innerHTML=cajaPrecioHTML(p);const sc=a.querySelector("select[data-ccod]");if(sc&&document.activeElement!==sc&&sc.value!==String((rangoDe(p,cajasEn(p))||{desde:0}).desde))sc.closest("label").outerHTML=selCajasHTML(p)}
       const ep=a.querySelector(".enped"); if(ep){ep.hidden=!otra;ep.textContent=!otra?"":fmtDe(p)?`Además llevas ${otra}`:m==="P"?`Además llevas ${otra} u sueltas`:`Además llevas ${otra} paquete${otra>1?"s":""}`}
     });
   });
@@ -2681,7 +2683,7 @@ function pintarCarro(){
 }
 /* cantidad de cajas elegida en el selector: queda así en el pedido */
 document.addEventListener("change",e=>{const sc=e.target.closest("select[data-ccod]");if(!sc)return;const p=PROD[sc.dataset.ccod];if(!p)return;
-  const k=clave(p.cod,modoDe(p)),n=Number(sc.value)||0;if(n>0)cart[k]=n;else delete cart[k];guardar();refrescar()});
+  const k=clave(p.cod,modoDe(p)),d=Number(sc.value)||0,q=cart[k]||0;if(!d){delete cart[k]}else{const r=rangoDe(p,d);cart[k]=r&&q>=r.desde&&(r.hasta==null||q<=r.hasta)?q:d}guardar();refrescar()});
 document.addEventListener("change",e=>{const sel=e.target.closest("select[data-fcod]");if(!sel)return;const p=PROD[sel.dataset.fcod];if(!p)return;modo[p.cod]=sel.value;guardaPref("modos-"+KEY,JSON.stringify(modo));const enCarroLista=!!sel.closest("#carroLista");repintar(p);const nuevo=document.querySelector((enCarroLista?"#carroLista ":"")+`select[data-fcod="${p.cod}"]`);if(nuevo)nuevo.focus()});
 $("bCarro").onclick=()=>{pintarCarro();$("carroLista").parentNode.scrollTop=0;abrirHoja("veloCarro",$("seguirCarro"))};
 const seguirComprando=()=>cerrarHoja("veloCarro");
