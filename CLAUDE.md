@@ -173,6 +173,12 @@ David no quiere que la dirección diga «jefatura»; eligió **avicolasb.com**, 
      - De internet (Flickr, CC BY 2.0, crédito en `legal.html`): té azul ABA088 y té verde ABA092.
      - Sin foto libre que sirviera (Openverse): nuez a granel 1 kg (la carta solo tiene bolsa de 100 g), té rojo, té negro Ceylán, cacao ecuatoriano, azúcar rubia y azúcar de coco. Firecrawl llegó a su límite diario.
      - «Alpiste» no existe en la carta ni en la planilla. La carne de soya ya tenía foto (Pixabay).
+   - 20/11/2026 noche, tercer lote de fotos de David (publicado el mismo día):
+     - Granel: avena pelada ABA028, coco rallado ABA044, pimienta negra entera ABA077, clavo de olor ABA042, mote de trigo ABA070, merkén ABA064 y pimienta blanca entera ABA076.
+     - Semilla de calabaza: la bolsa chica es ABA083-100 con `fotoFmt:{Fb100:…}`; la grande, ABA083 para el kilo.
+     - Desechables: brocheta 25 cm Bio Ely DES007, guante vinilo talla S DES054 (opaco.py), cuchillo plástico DES023, tenedor plástico DES049, cuchara de madera DES014, tenedor de madera DES046, cuchara Sterling → «Cuchara plástica» DES017 y bombilla Great Value DES002.
+     - Ya tenían esa misma foto: brochetas 15 y 20 cm, mondadientes, guante nitrilo, set cubiertos madera y pack cubiertos.
+     - Bombilla de papel Vanni a rayas: la ficha está hecha (`bombillaVanni.webp` en el scratchpad), pero falta que David diga si es la gruesa DES004 o la estrecha DES003.
    - ABA069 «Mostacilla de color redonda» figura con bolsa de 10 g (planilla: «10 bolsas de 10 g»), pero en la foto de David la bolsa parece más grande: confirmar con él.
    - Maní confitado sabor queso ABA061: sin foto. La única foto de maní suelto en internet es de una tienda (sin licencia libre); se le pidió a David una foto de su bolsa de 100 g.
      - Una sesión paralela («CLAUDE.md pendientes (fork)») hizo PLA033, charqui ABA094/ABA095, carne de soya ABA035 y las cajas CAR046–CAR053:
