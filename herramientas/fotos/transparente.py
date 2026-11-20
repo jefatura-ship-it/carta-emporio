@@ -6,7 +6,7 @@
 import sys, json, numpy as np, cv2
 from PIL import Image
 HUESO = np.array([251, 246, 236], np.float32)
-def recorta(ruta, poli, salida, margen=35, brillo=1.5, suave=25, q=8, soloPoligono=False):
+def recorta(ruta, poli, salida, margen=35, brillo=1.5, suave=25, q=8, soloPoligono=False, fondoCol=None, impreso=False, sinOscuro=False):
     im = np.asarray(Image.open(ruta).convert('RGB')); H, W = im.shape[:2]; f = im.astype(np.float32)
     polis = poli if isinstance(poli[0][0], list) else [poli]
     dentro = np.zeros((H, W), np.uint8); [cv2.fillPoly(dentro, [np.array(x, np.int32)], 1) for x in polis]
@@ -30,6 +30,12 @@ def recorta(ruta, poli, salida, margen=35, brillo=1.5, suave=25, q=8, soloPoligo
     hueco = cv2.resize(((cerca == 1) | tela).astype(np.uint8), (W // q, H // q), interpolation=cv2.INTER_NEAREST)
     Lr = cv2.inpaint(np.clip(Lc, 0, 255).astype(np.uint8), hueco, 25, cv2.INPAINT_TELEA).astype(np.float32)
     Lbg = np.maximum(cv2.GaussianBlur(cv2.resize(Lr, (W, H), interpolation=cv2.INTER_CUBIC), (0, 0), suave), 40)
+    # fondoCol=[y0, y1] (20/11/2026, cajas de sushi): cuando detrás hay un borde vertical (pared clara | monitor oscuro),
+    # el relleno suave deja una mancha gris; se usa la luz de la pared de esas filas, columna por columna
+    if fondoCol:
+        col = np.median(L[fondoCol[0]:fondoCol[1]], axis=0)
+        col = cv2.GaussianBlur(col.reshape(1, -1).astype(np.float32), (0, 0), 4).ravel()
+        Lbg = np.maximum(np.broadcast_to(col, (H, W)).astype(np.float32), 40)
     r = L / Lbg
     # más claro que el fondo solo en los brillos del plástico (zonas con detalle), no en zonas lisas de la pared
     det = cv2.GaussianBlur(np.abs(L - cv2.GaussianBlur(L, (0, 0), 3)), (0, 0), 4)
@@ -38,12 +44,24 @@ def recorta(ruta, poli, salida, margen=35, brillo=1.5, suave=25, q=8, soloPoligo
     # sobre fondo oscuro (borde del monitor) el plástico se ve por sus reflejos: se dibuja en gris según cuánto difiere del fondo
     r_osc = 1 - np.clip(np.abs(L - Lbg) / 110, 0, 0.6)
     w = np.clip((Lbg - 55) / 50, 0, 1)
+    if sinOscuro: w = np.ones_like(Lbg)   # pared azul marino (no monitor negro): el plástico se trata como sobre fondo claro
     r = w * r + (1 - w) * r_osc
     rgb = np.clip(HUESO * r[..., None], 0, 255)
+    # impreso=true (20/11/2026, envase de miel con diseño): donde el color NO es el azul de la pared (tinta naranja,
+    # dorada, verde, abejas blancas y negras) se deja el color de la foto; lo transparente sigue en blanco hueso
+    # 20/11/2026 (bolsas de granel sobre pared azul oscura): el azul se mide como proporción (B / max(R, G)), así la
+    # pared azul marino también cuenta como fondo; y los brillos claros y sin color del plástico van al blanco hueso.
+    if impreso:
+        mx = np.maximum(f[..., 0], f[..., 1]); bl = f[..., 2] / (mx + 8)
+        wp = np.clip((1.15 - bl) / 0.12, 0, 1)
+        sat = (f.max(axis=2) - f.min(axis=2)) / (f.max(axis=2) + 1)
+        claro = np.clip((L - 175) / 40, 0, 1) * np.clip((0.25 - sat) / 0.15, 0, 1)
+        wp = cv2.GaussianBlur(wp * (1 - claro), (0, 0), 1.2)[..., None]
+        rgb = wp * f + (1 - wp) * rgb
     a = cv2.GaussianBlur(k.astype(np.float32), (0, 0), 1.5)
     x, y, w, h = cv2.boundingRect(k)
     Image.fromarray(np.dstack([rgb, a * 255]).astype(np.uint8)[y:y + h, x:x + w], 'RGBA').save(salida)
     return w, h
 if __name__ == '__main__':
     cfg = json.load(open(sys.argv[1], encoding='utf-8'))
-    for nombre, c in cfg.items(): print(nombre, recorta(c['foto'], c['poli'], c['salida'], brillo=c.get('brillo', 1.5), suave=c.get('suave', 25), q=c.get('q', 8), soloPoligono=c.get('soloPoligono', False)))
+    for nombre, c in cfg.items(): print(nombre, recorta(c['foto'], c['poli'], c['salida'], brillo=c.get('brillo', 1.5), suave=c.get('suave', 25), q=c.get('q', 8), soloPoligono=c.get('soloPoligono', False), fondoCol=c.get('fondoCol'), impreso=c.get('impreso', False), sinOscuro=c.get('sinOscuro', False)))

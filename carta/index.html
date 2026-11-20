@@ -979,7 +979,7 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 #carta .prod>.ico .verfotos img{object-fit:contain;padding:0}
 #carta .prod>.ico:has(.verfotos){background:#fbf6ec}
 /* Carro: «Guardar como lista» y «Vaciar carro» */
-.carro-acc{display:grid;grid-template-columns:1fr 1fr;margin:16px 0 0;border-block:1px solid var(--borde)}
+.carro-acc{display:grid;grid-template-columns:repeat(3,1fr);margin:16px 0 0;border-block:1px solid var(--borde)}
 .carro-acc[hidden],.carro-lista-form[hidden]{display:none}
 .carro-acc .enlace{min-height:50px;padding:6px 8px;border:0;background:none;color:var(--campo);font-family:inherit;font-size:15px;font-weight:800;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
 .carro-acc .enlace+.enlace{border-left:1px solid var(--borde)}
@@ -989,6 +989,44 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 .carro-lista-form .fila{display:grid;grid-template-columns:1fr auto;gap:8px}
 .carro-lista-form input{min-height:46px;padding:8px 12px;border:1.5px solid var(--borde);border-radius:12px;background:#fff;font-family:inherit;font-size:16px}
 .carro-msg{min-height:1em;margin:10px 0 0;color:var(--campo);font-size:13.5px;font-weight:700}
+/* Cotización imprimible (David, 20/11/2026): se arma con el carro, vale solo por hoy; nombre y teléfono del cliente opcionales */
+.carro-cotiz .nota-cot{margin:0 0 10px;color:var(--suave);font-size:13.5px;line-height:1.45}
+.carro-cotiz .dos-cot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.carro-cotiz .dos-cot input{width:100%;box-sizing:border-box}
+.carro-cotiz .btn{width:100%}
+@media (max-width:420px){.carro-cotiz .dos-cot{grid-template-columns:1fr}}
+#cotizImp{display:none}
+@media print{
+  body.cotiz-imp{background:#fff!important;margin:0!important;padding:0!important}
+  body.cotiz-imp>*:not(#cotizImp){display:none!important}
+  body.cotiz-imp #cotizImp{display:block!important}
+  @page{margin:12mm}
+}
+#cotizImp{color:#1f2a22;font-family:"DM Sans",Arial,sans-serif;font-size:10.5pt;line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#cotizImp .cot-cab{display:flex;gap:14px;align-items:center;padding-bottom:10px;border-bottom:2.5px solid #1d5c36}
+#cotizImp .cot-cab img{width:74px;height:74px;flex:none}
+#cotizImp .cot-emp{flex:1}
+#cotizImp .cot-emp b{display:block;font-family:Fraunces,Georgia,serif;font-size:18pt;color:#1d5c36;line-height:1.1}
+#cotizImp .cot-emp span{display:block;font-size:9pt;color:#4a554d}
+#cotizImp .cot-num{text-align:right;font-size:9.5pt}
+#cotizImp .cot-num strong{display:block;font-family:Fraunces,Georgia,serif;font-size:15pt;letter-spacing:.04em;color:#1d5c36}
+#cotizImp .cot-cli{display:grid;grid-template-columns:2fr 1fr;gap:6px 18px;margin:12px 0 4px}
+#cotizImp .cot-cli div{padding:2px 0 3px;border-bottom:1px solid #b9bfb7;min-height:1.3em}
+#cotizImp .cot-cli em{font-style:normal;font-size:8.5pt;color:#4a554d;margin-right:6px}
+#cotizImp .cot-valida{margin:8px 0 10px;padding:6px 10px;border:1.5px solid #c8560f;border-radius:6px;color:#8a3a06;font-weight:700;font-size:10pt}
+#cotizImp table{width:100%;border-collapse:collapse}
+#cotizImp thead{display:table-header-group}
+#cotizImp th{padding:6px 8px;background:#1d5c36;color:#fff;font-size:9pt;text-align:left}
+#cotizImp td{padding:6px 8px;border-bottom:1px solid #d9ddd6;vertical-align:top}
+#cotizImp tr{break-inside:avoid}
+#cotizImp .c{text-align:center;width:52px}
+#cotizImp .n{text-align:right;white-space:nowrap;width:96px}
+#cotizImp td small{display:block;color:#4a554d;font-size:8.5pt}
+#cotizImp .may{display:inline-block;margin-top:2px;padding:0 5px;border-radius:4px;background:#e8f0e8;color:#1d5c36;font-size:8pt;font-weight:700}
+#cotizImp tfoot td{border:0;padding-top:10px;font-size:12pt;font-weight:800}
+#cotizImp tfoot .n{font-size:13pt;color:#1d5c36}
+#cotizImp .cot-notas{margin:14px 0 0;padding:0 0 0 16px;font-size:8.8pt;color:#4a554d}
+#cotizImp .cot-pie{margin-top:16px;padding-top:8px;border-top:1px solid #b9bfb7;font-size:8.8pt;color:#4a554d;text-align:center}
 </style>
 </head>
 <body>
@@ -1160,7 +1198,16 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
       <div id="carroLista" class="lista"></div>
       <div class="carro-acc" id="carroAcc">
         <button type="button" class="enlace" id="cGuardarLista" aria-expanded="false" aria-controls="cListaForm">Guardar como lista</button>
+        <button type="button" class="enlace" id="cCotiz" aria-expanded="false" aria-controls="cCotizForm">Imprimir cotización</button>
         <button type="button" class="enlace" id="cVaciar">Vaciar carro</button>
+      </div>
+      <div class="carro-lista-form carro-cotiz" id="cCotizForm" hidden>
+        <p class="nota-cot">Imprime o guarda en PDF una cotización con los productos de este carro. Vale solo por hoy.</p>
+        <div class="dos-cot">
+          <div><label for="cotNom">Nombre del cliente <small>(opcional)</small></label><input id="cotNom" maxlength="60" autocomplete="off"></div>
+          <div><label for="cotTel">Teléfono <small>(opcional)</small></label><input id="cotTel" type="tel" inputmode="tel" maxlength="20" autocomplete="off"></div>
+        </div>
+        <button type="button" class="btn prim" id="cotImprimir">Imprimir o guardar en PDF</button>
       </div>
       <div class="carro-lista-form" id="cListaForm" hidden>
         <label for="cListaNom">Nombre de la lista</label>
@@ -1348,6 +1395,8 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
     </div>
   </section>
 </div>
+<!-- Hoja de cotización: solo se ve al imprimir (body.cotiz-imp) -->
+<div id="cotizImp" aria-hidden="true"></div>
 
 <script>
 /* =================== CONFIGURACIÓN =================== */
@@ -1383,9 +1432,9 @@ const LOCALES = {
       // Las blondas tampoco: cada bandeja de cartón de torta va con su blonda de la misma medida (envase: la bandeja), a un solo precio. Una blonda sin bandeja asignada no se muestra.
       {cod:"TAP033",cat:"Tapas",nombre:"Tapa vaso 500 cc",para:"Para vaso de 500 cc",detalle:"Precio por unidad",precio:30,envase:["ANT-VAS007", "VAS006", "VAS004", "VAS005"]},
       {cod:"TAP026",cat:"Tapas",nombre:"Tapa salsero 1 oz",para:"Para salsero 1 oz",detalle:"Precio por unidad · paquete de 50 u",precio:20,stock:2467,envase:["POT016"],upp:50},
-      {cod:"TAP016",cat:"Tapas",nombre:"Tapa cúpula torta chica",para:"Para cúpula torta chico",detalle:"Precio por unidad",precio:null,stock:106,envase:["PLA027"]},
+      {cod:"TAP016",cat:"Tapas",nombre:"Tapa cúpula torta chica",para:"Para cúpula torta chico",detalle:"Precio por unidad",precio:0,stock:106,envase:["PLA027"]},
       {cod:"TAP007",cat:"Tapas",nombre:"Tapa C40",para:"Para envase aluminio C 40",detalle:"Precio por unidad",precio:30,stock:200,envase:["ALU008"]},
-      {cod:"TAP006",cat:"Tapas",nombre:"Tapa C15 cartón",para:"Para envase aluminio C 15",detalle:"Precio por unidad",precio:null,stock:367,envase:["ALU002"]},
+      {cod:"TAP006",cat:"Tapas",nombre:"Tapa C15 cartón",para:"Para envase aluminio C 15",detalle:"Precio por unidad",precio:0,stock:367,envase:["ALU002"]},
       {cod:"TAP005",cat:"Tapas",nombre:"Tapa C10 cartón",para:"Para envase aluminio C 10",detalle:"Precio por unidad",precio:16,stock:120,envase:["ALU001"]},
       {cod:"TAP029",cat:"Tapas",nombre:"Tapa salsero 3,25 - 5,5 oz",para:"Para salseros 3,25 oz y 5,5 oz",detalle:"Precio por unidad · paquete de 50 u",precio:14,upp:50,stock:4800,envase:["POT020", "ANT-POT007"]},
       {cod:"TAP036",cat:"Tapas",nombre:"Tapa vaso con bombilla",detalle:"Precio por unidad",precio:40},
@@ -1401,14 +1450,14 @@ const LOCALES = {
       {cod:"TAP025",cat:"Tapas",nombre:"Tapa R 50",para:"Para envase aluminio R 50",detalle:"Precio por unidad",precio:20,envase:["ALU018"],stock:1827},
       {cod:"TAP020",cat:"Tapas",nombre:"Tapas para bandejas de huevos",para:"Para bandejas de huevos",detalle:"Precio por paquete",precio:12700,envase:["HUE001"]},
       {cod:"TAP030",cat:"Tapas",nombre:"Tapa salsero 3,25 oz",para:"Para salsero 3,25 oz",detalle:"Precio por unidad · paquete de 50 u",precio:14,upp:50,stock:500,envase:["POT020"]},
-      {cod:"TAP015",cat:"Tapas",nombre:"Tapa cúpula pollo plástica",para:"Para cúpula pollo",detalle:"Precio por unidad",precio:null,stock:58,envase:["PLA022"]},
+      {cod:"TAP015",cat:"Tapas",nombre:"Tapa cúpula pollo plástica",para:"Para cúpula pollo",detalle:"Precio por unidad",precio:0,stock:58,envase:["PLA022"]},
       {cod:"TAP017",cat:"Tapas",nombre:"Tapa cúpula torta grande",para:"Para cúpula torta grande",detalle:"Precio por unidad",precio:50,stock:108,envase:["PLA029"]},
       {cod:"TAP043",cat:"Tapas",nombre:"Tapas venecianas 3-5 oz",detalle:"Precio por unidad",precio:40,stock:25},
-      {cod:"TAP013",cat:"Tapas",nombre:"Tapa copa veneciana 8 a 12 oz",para:"Para copa veneciana 350 cc (12 oz)",detalle:"Precio por unidad",precio:null,stock:247,envase:["VAS001"]},
-      {cod:"TAP037",cat:"Tapas",nombre:"Tapa vaso copa 200 cc",para:"Para vaso copa 200 cc",detalle:"Precio por unidad · paquete de 50 u",precio:null,stock:198,envase:["VAS010"],upp:50},
+      {cod:"TAP013",cat:"Tapas",nombre:"Tapa copa veneciana 8 a 12 oz",para:"Para copa veneciana 350 cc (12 oz)",detalle:"Precio por unidad",precio:0,stock:247,envase:["VAS001"]},
+      {cod:"TAP037",cat:"Tapas",nombre:"Tapa vaso copa 200 cc",para:"Para vaso copa 200 cc",detalle:"Precio por unidad · paquete de 50 u",precio:0,stock:198,envase:["VAS010"],upp:50},
       {cod:"TAP009",cat:"Tapas",nombre:"Tapa café 12 oz plástica",para:"Para vaso de café 12 oz",detalle:"Precio por unidad",precio:25,stock:50,envase:["VAS011"]},
       {cod:"TAP010",cat:"Tapas",nombre:"Tapa café 16 oz plástica",detalle:"Precio por unidad",precio:30,stock:550},
-      {cod:"TAP011",cat:"Tapas",nombre:"Tapa café plástico blanco",detalle:"Precio por unidad",precio:null,stock:46},
+      {cod:"TAP011",cat:"Tapas",nombre:"Tapa café plástico blanco",detalle:"Precio por unidad",precio:0,stock:46},
       {cod:"TAP012",cat:"Tapas",nombre:"Tapa café 12 oz plástica negra",para:"Para vaso de café 12 oz",detalle:"Precio por unidad",precio:25,stock:46,envase:["VAS011"]},
       {cod:"TAP014",cat:"Tapas",nombre:"Tapa cúpula brazo reina",para:"Para cúpula brazo reina",detalle:"Precio por unidad",precio:30,stock:66,envase:["PLA019"]},
       {cod:"TAP028",cat:"Tapas",nombre:"Tapas salsero 3 - 5 oz",para:"Para salseros 3,25 oz y 5,5 oz",detalle:"Precio por unidad · paquete de 50 u",precio:14,upp:50,stock:3150,envase:["POT020", "ANT-POT007"]},
@@ -1420,12 +1469,12 @@ const LOCALES = {
       {cod:"TAP027",cat:"Tapas",nombre:"Tapa salsero 2 oz",para:"Para salsero 2 oz",detalle:"Precio por unidad",precio:10,stock:4190,envase:["POT018"]},
       {cod:"TAP002",cat:"Tapas",nombre:"Tapa bowl 1000 ml",para:"Para bowl 1000 cc",detalle:"Precio por unidad",precio:30,stock:50,envase:["CAR019"]},
       {cod:"TAP032",cat:"Tapas",nombre:"Tapa vaso",detalle:"Precio por unidad",precio:30,stock:0,sinStock:true},
-      {cod:"TAP004",cat:"Tapas",nombre:"Tapa bowl kraft 1300 cc",para:"Para bowl kraft 1300 cc",detalle:"Precio por unidad",precio:null,stock:0,envase:["CAR022"],sinStock:true},
-      {cod:"TAP022",cat:"Tapas",nombre:"Tapa plástica multiuso Integrity",detalle:"Precio por unidad",precio:null,stock:70},
-      {cod:"TAP038",cat:"Tapas",nombre:"Tapa vaso domo PET 12-16 oz",para:"Para vasos domo 12 y 16 oz",detalle:"Precio por paquete de 50 u",precio:null,stock:2200,envase:["VAS013", "VAS014"]},
+      {cod:"TAP004",cat:"Tapas",nombre:"Tapa bowl kraft 1300 cc",para:"Para bowl kraft 1300 cc",detalle:"Precio por unidad",precio:0,stock:0,envase:["CAR022"],sinStock:true},
+      {cod:"TAP022",cat:"Tapas",nombre:"Tapa plástica multiuso Integrity",detalle:"Precio por unidad",precio:0,stock:70},
+      {cod:"TAP038",cat:"Tapas",nombre:"Tapa vaso domo PET 12-16 oz",para:"Para vasos domo 12 y 16 oz",detalle:"Precio por paquete de 50 u",precio:0,stock:2200,envase:["VAS013","VAS014"]},
       {cod:"TAP041",cat:"Tapas",nombre:"Tapa vaso térmico 10 oz café",detalle:"Precio por unidad · paquete de 50 u",precio:23,upp:50,stock:900},
       {cod:"PLA043",cat:"Envases y contenedores",nombre:"Envase triángulo kuchen 11*5cm",detalle:"Precio por unidad",precio:329},
-      {cod:"PLA033",cat:"Envases y contenedores",nombre:"Envase miel 1/2 kg con tapa",detalle:"Precio por unidad · paquete de 50 u",precio:150,stock:600,upp:50},
+      {cod:"PLA033",cat:"Envases y contenedores",nombre:"Envase miel 1/2 kg con tapa",detalle:"Precio por unidad · paquete de 50 u",precio:150,stock:600,upp:50,foto:"../img/productos/fotos/PLA033.webp"},
       {cod:"PLA044",cat:"Envases y contenedores",nombre:"Envase triangular selladito",detalle:"Precio por unidad",precio:329,stock:246},
       {cod:"PLA026",cat:"Envases y contenedores",nombre:"Cúpula torta 135 mm 98-5",detalle:"Precio por unidad",precio:900},
       {cod:"PLA024",cat:"Envases y contenedores",nombre:"Cúpula torta 23*7cm 99-2",detalle:"Precio por unidad",precio:1645},
@@ -1446,9 +1495,9 @@ const LOCALES = {
       {cod:"PLA025",cat:"Envases y contenedores",nombre:"Cúpula torta 23*7cm 99-98",detalle:"Precio por unidad",precio:1645},
       {cod:"PLA022",cat:"Envases y contenedores",nombre:"Cúpula pollo",detalle:"Precio por unidad",precio:290,stock:151},
       {cod:"PLA030",cat:"Envases y contenedores",nombre:"Cúpula torta N° 2",detalle:"Precio por unidad",precio:750},
-      {cod:"PLA001",cat:"Envases y contenedores",nombre:"Bandeja plástica muffin para 6 unidades",detalle:"Precio por unidad",precio:null,stock:42,foto:"../img/productos/fotos/PLA001.webp",fotos:["../img/productos/fotos/PLA001.webp", "../img/productos/fotos/PLA001-2.webp"]},
-      {cod:"PLA002",cat:"Envases y contenedores",nombre:"Cp 790 cuchuflí",detalle:"Precio por unidad",precio:200,pm:150,stock:252},
-      {cod:"PLA034",cat:"Envases y contenedores",nombre:"Envase miel 1 kg con diseño (sin tapa)",detalle:"Precio por unidad",precio:null,stock:168},
+      {cod:"PLA001",cat:"Envases y contenedores",nombre:"Bandeja plástica muffin para 6 unidades",detalle:"Precio por unidad",precio:1500,stock:42,foto:"../img/productos/fotos/PLA001.webp",fotos:["../img/productos/fotos/PLA001.webp","../img/productos/fotos/PLA001-2.webp"]},
+      {cod:"PLA002",cat:"Envases y contenedores",nombre:"Cp 790 cuchuflí",detalle:"Precio por unidad",precio:200,pm:150,stock:252,foto:"../img/productos/fotos/PLA002.webp",fotos:["../img/productos/fotos/PLA002.webp","../img/productos/fotos/PLA002-2.webp","../img/productos/fotos/PLA002-3.webp"]},
+      {cod:"PLA034",cat:"Envases y contenedores",nombre:"Envase miel 1 kg con diseño (sin tapa)",detalle:"Precio por unidad",precio:900,stock:168,foto:"../img/productos/fotos/PLA034.webp"},
       {cod:"PLA035",cat:"Envases y contenedores",nombre:"Envase miel 1 kg con tapa Darnel",detalle:"Precio por unidad",precio:150,stock:263},
       {cod:"ANT-PLA027",cat:"Envases y contenedores",nombre:"Envase miel 1 kg sin tapa Darnel",detalle:"Precio por unidad",precio:null,stock:215,retirado:true},
       {cod:"PLA032",cat:"Envases y contenedores",nombre:"Cúpula torta N° 8",detalle:"Precio por unidad",precio:850,stock:0,sinStock:true},
@@ -1456,22 +1505,22 @@ const LOCALES = {
       {cod:"PLA018",cat:"Envases y contenedores",nombre:"CT max hot dog",detalle:"Precio por unidad",precio:70,stock:0,sinStock:true},
       {cod:"PLA011",cat:"Envases y contenedores",nombre:"CT 3",detalle:"Precio por unidad",precio:90},
       {cod:"PLA021",cat:"Envases y contenedores",nombre:"Cúpula kuchen grande 1025-3 26 × 7 cm",detalle:"Precio por unidad",precio:1645,stock:17},
-      {cod:"PLA040",cat:"Envases y contenedores",nombre:"Sushi 2 rolls",detalle:"Precio por unidad",precio:null,stock:228},
-      {cod:"PLA041",cat:"Envases y contenedores",nombre:"Sushi 3 rolls",detalle:"Precio por unidad",precio:null,stock:89},
-      {cod:"PLA007",cat:"Envases y contenedores",nombre:"Clamshell 3/4 kg “Kilo Falso”",detalle:"Precio por unidad",precio:null,stock:140,foto:"../img/productos/fotos/PLA007.webp",fotos:["../img/productos/fotos/PLA007.webp", "../img/productos/fotos/PLA007-2.webp", "../img/productos/fotos/PLA007-3.webp", "../img/productos/fotos/PLA007-4.webp"]},
-      {cod:"PLA023",cat:"Envases y contenedores",nombre:"Cúpula torta 23 cm con tapa",detalle:"Precio por unidad",precio:null,stock:20},
-      {cod:"PLA037",cat:"Envases y contenedores",nombre:"Envase miel 1 kg transparente",detalle:"Precio por unidad · paquete de 50 u",precio:null,stock:950,upp:50},
-      {cod:"PLA038",cat:"Envases y contenedores",nombre:"Envase miel con logo con tapa",detalle:"Precio por unidad",precio:null,stock:250},
-      {cod:"PLA016",cat:"Envases y contenedores",nombre:"CT 6 bio grande sin división",detalle:"Precio por unidad",precio:null,stock:70,nuevo:true,foto:"../img/productos/fotos/PLA016.webp"},
-      {cod:"PLA015",cat:"Envases y contenedores",nombre:"CT 6 bio grande con división",detalle:"Precio por unidad",precio:null,stock:30,nuevo:true,foto:"../img/productos/fotos/PLA015.webp"},
-      {cod:"PLA012",cat:"Envases y contenedores",nombre:"CT 3 bio cuadrado",detalle:"Precio por unidad",precio:null,stock:30,nuevo:true,foto:"../img/productos/fotos/PLA012.webp"},
+      {cod:"PLA040",cat:"Envases y contenedores",nombre:"Sushi 2 rolls",detalle:"Precio por unidad",precio:240,stock:228,foto:"../img/productos/fotos/PLA040.webp",fotos:["../img/productos/fotos/PLA040.webp","../img/productos/fotos/PLA040-2.webp","../img/productos/fotos/PLA040-3.webp"]},
+      {cod:"PLA041",cat:"Envases y contenedores",nombre:"Sushi 3 rolls",detalle:"Precio por unidad",precio:450,stock:89,foto:"../img/productos/fotos/PLA041.webp",fotos:["../img/productos/fotos/PLA041.webp","../img/productos/fotos/PLA041-2.webp"]},
+      {cod:"PLA007",cat:"Envases y contenedores",nombre:"Clamshell 3/4 kg “Kilo Falso”",detalle:"Precio por unidad",precio:1200,stock:140,foto:"../img/productos/fotos/PLA007.webp",fotos:["../img/productos/fotos/PLA007.webp","../img/productos/fotos/PLA007-2.webp","../img/productos/fotos/PLA007-3.webp","../img/productos/fotos/PLA007-4.webp"]},
+      {cod:"PLA023",cat:"Envases y contenedores",nombre:"Cúpula torta 23 cm con tapa",detalle:"Precio por unidad",precio:2400,stock:20},
+      {cod:"PLA037",cat:"Envases y contenedores",nombre:"Envase miel 1 kg transparente",detalle:"Precio por unidad · paquete de 50 u",precio:900,stock:950,upp:50},
+      {cod:"PLA038",cat:"Envases y contenedores",nombre:"Envase miel con logo con tapa",detalle:"Precio por unidad",precio:1400,stock:250},
+      {cod:"PLA016",cat:"Envases y contenedores",nombre:"CT 6 bio grande sin división",detalle:"Precio por unidad",precio:200,stock:70,nuevo:true,foto:"../img/productos/fotos/PLA016.webp",tramos:[[20,185]]},
+      {cod:"PLA015",cat:"Envases y contenedores",nombre:"CT 6 bio grande con división",detalle:"Precio por unidad",precio:200,stock:30,nuevo:true,foto:"../img/productos/fotos/PLA015.webp",tramos:[[20,185]]},
+      {cod:"PLA012",cat:"Envases y contenedores",nombre:"CT 3 bio cuadrado",detalle:"Precio por unidad",precio:165,stock:30,nuevo:true,foto:"../img/productos/fotos/PLA012.webp",tramos:[[20,150]]},
       {cod:"PLA003",cat:"Envases y contenedores",nombre:"Caja plástica cuchuflí grande",detalle:"Precio por unidad",precio:250,pm:170,stock:26,nuevo:true},
       {cod:"PLA004",cat:"Envases y contenedores",nombre:"Clamshell 1/2 kilo normal",detalle:"Precio por unidad",precio:150,pm:100,stock:234,nuevo:true,foto:"../img/productos/fotos/PLA004.webp",fotos:["../img/productos/fotos/PLA004.webp", "../img/productos/fotos/PLA004-2.webp", "../img/productos/fotos/PLA004-3.webp"]},
-      {cod:"PLA028",cat:"Envases y contenedores",nombre:"Cúpula torta chica lisa con tapa",detalle:"Precio por unidad",precio:null,stock:20,nuevo:true},
+      {cod:"PLA028",cat:"Envases y contenedores",nombre:"Cúpula torta chica lisa con tapa",detalle:"Precio por unidad",precio:650,stock:20,nuevo:true,pm:600},
       {cod:"CAR033",cat:"Cajas y bandejas de cartón",nombre:"Caja torta grande blanca",detalle:"Precio por unidad",precio:769,stock:39},
       {cod:"CAR025",cat:"Cajas y bandejas de cartón",nombre:"Caja genérica chica",detalle:"Precio por paquete de 25 u",precio:17000},
       {cod:"CAR034",cat:"Cajas y bandejas de cartón",nombre:"Caja torta kraft chica",detalle:"Precio por unidad",precio:734,stock:19},
-      {cod:"CAR017",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda N° 10",detalle:"Precio por unidad",precio:845,stock:154,foto:"../img/productos/fotos/CAR017.webp",fotos:["../img/productos/fotos/CAR017.webp", "../img/productos/fotos/CAR017-2.webp"]},
+      {cod:"CAR017",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda N° 10",detalle:"Precio por unidad",precio:270,stock:154,foto:"../img/productos/fotos/CAR017.webp",fotos:["../img/productos/fotos/CAR017.webp","../img/productos/fotos/CAR017-2.webp"]},
       {cod:"CAR038",cat:"Cajas y bandejas de cartón",nombre:"Completero cartón grande",detalle:"Precio por unidad",precio:20,stock:400},
       {cod:"CAR040",cat:"Cajas y bandejas de cartón",nombre:"Completero chico pl.",detalle:"Precio por unidad",precio:90},
       {cod:"ANT-CAR007",cat:"Cajas y bandejas de cartón",nombre:"Caja pizza blanca grande",detalle:"Precio por unidad",precio:190,stock:59,retirado:true},
@@ -1481,37 +1530,47 @@ const LOCALES = {
       {cod:"CAR028",cat:"Cajas y bandejas de cartón",nombre:"Caja kuchen grande",detalle:"Precio por unidad",precio:649,stock:9},
       {cod:"ANT-CAR012",cat:"Cajas y bandejas de cartón",nombre:"Bowl 1200 cc",detalle:"Precio por unidad",precio:130,stock:50,retirado:true},
       {cod:"CAR020",cat:"Cajas y bandejas de cartón",nombre:"Envase redondo cartón impermeable 1200 cc",detalle:"Precio por unidad",precio:130,stock:116},
-      {cod:"CAR001",cat:"Cajas y bandejas de cartón",nombre:"Bandeja cartón brazo reina",detalle:"Precio por unidad",precio:null,stock:181,foto:"../img/productos/fotos/CAR001.webp"},
-      {cod:"CAR024",cat:"Cajas y bandejas de cartón",nombre:"Caja canapé grande cartón blanco",detalle:"Precio por unidad",precio:null,stock:20},
+      {cod:"CAR001",cat:"Cajas y bandejas de cartón",nombre:"Bandeja cartón brazo reina",detalle:"Precio por unidad",precio:120,stock:181,foto:"../img/productos/fotos/CAR001.webp",tramos:[[10,95]]},
+      {cod:"CAR024",cat:"Cajas y bandejas de cartón",nombre:"Caja canapé grande cartón blanco",detalle:"Precio por unidad",precio:450,stock:20,tramos:[[20,350]]},
       {cod:"CAR036",cat:"Cajas y bandejas de cartón",nombre:"Caja torta rectangular blanca",detalle:"Precio por unidad",precio:1069,stock:23},
-      {cod:"CAR023",cat:"Cajas y bandejas de cartón",nombre:"Caja brazo de reina cartón blanco chica",detalle:"Precio por unidad",precio:null,stock:44,foto:"../img/productos/fotos/CAR023.webp"},
-      {cod:"CAR044",cat:"Cajas y bandejas de cartón",nombre:"Huicha cartón blanco",detalle:"Precio por unidad",precio:null,stock:200,foto:"../img/productos/fotos/CAR044.webp"},
+      {cod:"CAR023",cat:"Cajas y bandejas de cartón",nombre:"Caja brazo de reina cartón blanco chica",detalle:"Precio por unidad",precio:840,stock:44,foto:"../img/productos/fotos/CAR023.webp",tramos:[[20,760]]},
+      {cod:"CAR044",cat:"Cajas y bandejas de cartón",nombre:"Huicha cartón blanco",detalle:"Precio por unidad",precio:150,stock:200,foto:"../img/productos/fotos/CAR044.webp",tramos:[]},
       {cod:"CAR008",cat:"Cajas y bandejas de cartón",nombre:"Bandeja kraft pequeña",detalle:"Precio por unidad · paquete de 20 u",precio:135,upp:20,stock:520,foto:"../img/productos/fotos/CAR008.webp"},
       {cod:"CAR007",cat:"Cajas y bandejas de cartón",nombre:"Bandeja kraft mediana",detalle:"Precio por unidad · paquete de 20 u",precio:165,upp:20,stock:80,foto:"../img/productos/fotos/CAR007.webp"},
       {cod:"CAR005",cat:"Cajas y bandejas de cartón",nombre:"Bandeja hot dog",detalle:"Precio por unidad · paquete de 100 u",precio:20,upp:100,stock:400},
       {cod:"CAR004",cat:"Cajas y bandejas de cartón",nombre:"Bandeja completero N° 01 85 × 193 mm",detalle:"Precio por unidad · paquete de 200 u",precio:20,upp:200,stock:600},
-      {cod:"CAR002",cat:"Cajas y bandejas de cartón",nombre:"Bandeja canasto N° 00 210 × 142 mm cartón blanco",detalle:"Precio por paquete de 200 u",precio:null,stock:600,foto:"../img/productos/fotos/CAR002.webp"},
-      {cod:"CAR003",cat:"Cajas y bandejas de cartón",nombre:"Bandeja canasto N° 01 230 × 145 mm cartón blanco",detalle:"Precio por paquete de 200 u",precio:null,stock:400,foto:"../img/productos/fotos/CAR003.webp"},
-      {cod:"CAR026",cat:"Cajas y bandejas de cartón",nombre:"Caja kraft 1400 ml delivery",detalle:"Precio por unidad",precio:null,stock:70},
-      {cod:"CAR037",cat:"Cajas y bandejas de cartón",nombre:"Caja ventana talla L kraft (papa frita)",detalle:"Precio por unidad",precio:null,stock:115,foto:"../img/productos/fotos/CAR037.webp"},
-      {cod:"CAR042",cat:"Cajas y bandejas de cartón",nombre:"Envase papa frita chica cartón kraft",detalle:"Precio por unidad",precio:null,stock:211},
+      {cod:"CAR002",cat:"Cajas y bandejas de cartón",nombre:"Bandeja canasto N° 00 210 × 142 mm cartón blanco",detalle:"Precio por unidad",precio:75,stock:600,foto:"../img/productos/fotos/CAR002.webp",tramos:[[200,60]]},
+      {cod:"CAR003",cat:"Cajas y bandejas de cartón",nombre:"Bandeja canasto N° 01 230 × 145 mm cartón blanco",detalle:"Precio por unidad",precio:80,stock:400,foto:"../img/productos/fotos/CAR003.webp",tramos:[[200,65]]},
+      {cod:"CAR026",cat:"Cajas y bandejas de cartón",nombre:"Caja kraft 1400 ml delivery",detalle:"Precio por unidad",precio:350,stock:70,tramos:[[20,315]]},
+      {cod:"CAR037",cat:"Cajas y bandejas de cartón",nombre:"Caja ventana talla L kraft (papa frita)",detalle:"Precio por unidad",precio:450,stock:115,foto:"../img/productos/fotos/CAR037.webp",tramos:[[20,350]]},
+      {cod:"CAR042",cat:"Cajas y bandejas de cartón",nombre:"Envase papa frita chica cartón kraft",detalle:"Precio por unidad · paquete de 100 u",precio:78,stock:211,upp:100,pq:6500},
       {cod:"CAR039",cat:"Cajas y bandejas de cartón",nombre:"Completero cartón prepicado",detalle:"Precio por unidad · paquete de 50 u",precio:20,upp:50,stock:600,foto:"../img/productos/fotos/CAR039.webp",fotos:["../img/productos/fotos/CAR039.webp", "../img/productos/fotos/CAR039-2.webp"]},
       {cod:"CAR029",cat:"Cajas y bandejas de cartón",nombre:"Caja multiuso mediana",detalle:"Precio por unidad",precio:215,stock:62},
       {cod:"CAR022",cat:"Cajas y bandejas de cartón",nombre:"Bowl kraft 1300 cc",detalle:"Precio por unidad",precio:130,stock:0,sinStock:true,foto:"../img/productos/fotos/CAR022.webp"},
       {cod:"CAR030",cat:"Cajas y bandejas de cartón",nombre:"Caja multiuso pequeña kraft",detalle:"Precio por unidad",precio:140,stock:79},
-      {cod:"CAR041",cat:"Cajas y bandejas de cartón",nombre:"Cono papas fritas blanco 16 oz",detalle:"Precio por paquete de 25 u",precio:null,stock:175,foto:"../img/productos/fotos/CAR041.webp"},
+      {cod:"CAR041",cat:"Cajas y bandejas de cartón",nombre:"Cono papas fritas blanco 16 oz",detalle:"Precio por unidad · paquete de 100 u",precio:60,stock:175,foto:"../img/productos/fotos/CAR041.webp",upp:100,pq:5500},
       {cod:"CAR043",cat:"Cajas y bandejas de cartón",nombre:"Sándwich biodegradable",detalle:"Precio por unidad",precio:250,stock:0,sinStock:true},
       {cod:"CAR006",cat:"Cajas y bandejas de cartón",nombre:"Bandeja kraft grande",detalle:"Precio por unidad · paquete de 20 u",precio:190,upp:20,stock:240,foto:"../img/productos/fotos/CAR006.webp"},
-      {cod:"CAR035",cat:"Cajas y bandejas de cartón",nombre:"Caja torta mediana blanca",detalle:"Precio por unidad",precio:null,stock:25,nuevo:true},
-      {cod:"CAR018",cat:"Cajas y bandejas de cartón",nombre:"Bowl 500 cc",detalle:"Precio por unidad",precio:null,stock:50,nuevo:true,foto:"../img/productos/fotos/CAR018.webp"},
-      {cod:"CAR009",cat:"Cajas y bandejas de cartón",nombre:"Bandeja rectangular cartulina N° 7 228 × 158",detalle:"Precio por unidad",precio:null,stock:100,nuevo:true},
-      {cod:"CAR013",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda cartulina N° 6 293 mm",detalle:"Precio por unidad",precio:null,stock:148,nuevo:true,foto:"../img/productos/fotos/CAR013.webp",fotos:["../img/productos/fotos/CAR013.webp", "../img/productos/fotos/CAR013-2.webp"]},
-      {cod:"CAR014",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda cartulina N° 7",detalle:"Precio por unidad",precio:null,stock:69,nuevo:true,foto:"../img/productos/fotos/CAR014.webp",fotos:["../img/productos/fotos/CAR014.webp", "../img/productos/fotos/CAR014-2.webp"]},
-      {cod:"CAR012",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda cartulina N° 5",detalle:"Precio por unidad",precio:null,stock:105,nuevo:true,foto:"../img/productos/fotos/CAR012.webp",fotos:["../img/productos/fotos/CAR012.webp", "../img/productos/fotos/CAR012-2.webp"]},
-      {cod:"CAR011",cat:"Cajas y bandejas de cartón",nombre:"Bandeja rectangular cartulina N° 14 266 × 321",detalle:"Precio por unidad",precio:null,stock:191,nuevo:true},
-      {cod:"CAR010",cat:"Cajas y bandejas de cartón",nombre:"Bandeja rectangular cartulina N° 13",detalle:"Precio por unidad",precio:null,stock:85,nuevo:true},
-      {cod:"CAR016",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda cartulina N° 9",detalle:"Precio por unidad",precio:null,stock:147,nuevo:true,foto:"../img/productos/fotos/CAR016.webp",fotos:["../img/productos/fotos/CAR016.webp", "../img/productos/fotos/CAR016-2.webp"]},
-      {cod:"CAR015",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda cartulina N° 8",detalle:"Precio por unidad",precio:null,stock:156,nuevo:true,foto:"../img/productos/fotos/CAR015.webp",fotos:["../img/productos/fotos/CAR015.webp", "../img/productos/fotos/CAR015-2.webp"]},
+      {cod:"CAR035",cat:"Cajas y bandejas de cartón",nombre:"Caja torta mediana blanca",detalle:"Precio por unidad",precio:610,stock:25,nuevo:true,tramos:[[20,550]]},
+      {cod:"CAR018",cat:"Cajas y bandejas de cartón",nombre:"Bowl 500 cc",detalle:"Precio por unidad",precio:200,stock:50,nuevo:true,foto:"../img/productos/fotos/CAR018.webp",tramos:[[20,150]]},
+      {cod:"CAR009",cat:"Cajas y bandejas de cartón",nombre:"Bandeja rectangular cartulina N° 7 228 × 158",detalle:"Precio por unidad · paquete de 100 u",precio:65,stock:100,nuevo:true,upp:100,pq:4500},
+      {cod:"CAR013",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda cartulina N° 6 293 mm",detalle:"Precio por unidad",precio:170,stock:148,nuevo:true,foto:"../img/productos/fotos/CAR013.webp",fotos:["../img/productos/fotos/CAR013.webp","../img/productos/fotos/CAR013-2.webp"],tramos:[[100,100]]},
+      {cod:"CAR014",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda cartulina N° 7",detalle:"Precio por unidad",precio:170,stock:69,nuevo:true,foto:"../img/productos/fotos/CAR014.webp",fotos:["../img/productos/fotos/CAR014.webp","../img/productos/fotos/CAR014-2.webp"],tramos:[[100,100]]},
+      {cod:"CAR012",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda cartulina N° 5",detalle:"Precio por unidad",precio:165,stock:105,nuevo:true,foto:"../img/productos/fotos/CAR012.webp",fotos:["../img/productos/fotos/CAR012.webp","../img/productos/fotos/CAR012-2.webp"],tramos:[[100,100]]},
+      {cod:"CAR011",cat:"Cajas y bandejas de cartón",nombre:"Bandeja rectangular cartulina N° 14 266 × 321",detalle:"Precio por unidad · paquete de 100 u",precio:350,stock:191,nuevo:true,upp:100,pq:22790},
+      {cod:"CAR010",cat:"Cajas y bandejas de cartón",nombre:"Bandeja rectangular cartulina N° 13",detalle:"Precio por unidad · paquete de 100 u",precio:320,stock:85,nuevo:true,upp:100,pq:21650},
+      {cod:"CAR016",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda cartulina N° 9",detalle:"Precio por unidad",precio:190,stock:147,nuevo:true,foto:"../img/productos/fotos/CAR016.webp",fotos:["../img/productos/fotos/CAR016.webp","../img/productos/fotos/CAR016-2.webp"],tramos:[[100,120]]},
+      {cod:"CAR015",cat:"Cajas y bandejas de cartón",nombre:"Bandeja redonda cartulina N° 8",detalle:"Precio por unidad",precio:180,stock:156,nuevo:true,foto:"../img/productos/fotos/CAR015.webp",fotos:["../img/productos/fotos/CAR015.webp","../img/productos/fotos/CAR015-2.webp"],tramos:[[100,110]]},
+      {cod:"CAR045",cat:"Cajas y bandejas de cartón",nombre:"Bandeja torta chica cartón blanco con blonda",detalle:"Precio por unidad",precio:485,nuevo:true},
+      {cod:"CAR046",cat:"Cajas y bandejas de cartón",nombre:"Caja pizza chica 17 × 17 × 4 cm",detalle:"Precio por unidad",precio:259,nuevo:true,pm:199,foto:"../img/productos/fotos/CAR046.webp"},
+      {cod:"CAR047",cat:"Cajas y bandejas de cartón",nombre:"Caja pizza mediana 32 × 32 × 4,5 cm",detalle:"Precio por unidad",precio:279,nuevo:true,pm:249,foto:"../img/productos/fotos/CAR047.webp"},
+      {cod:"CAR048",cat:"Cajas y bandejas de cartón",nombre:"Caja pizza grande 38 × 38 × 4,5 cm",detalle:"Precio por unidad",precio:450,nuevo:true,pm:420,foto:"../img/productos/fotos/CAR048.webp"},
+      {cod:"CAR049",cat:"Cajas y bandejas de cartón",nombre:"Caja pizza cartulina chica",detalle:"Precio por unidad",precio:120,nuevo:true,pm:100,foto:"../img/productos/fotos/CAR049.webp"},
+      {cod:"CAR051",cat:"Cajas y bandejas de cartón",nombre:"Caja papa frita cartulina blanca 12 × 11 × 8,5 cm",detalle:"Precio por unidad",precio:130,nuevo:true,pm:100,foto:"../img/productos/fotos/CAR051.webp"},
+      {cod:"CAR052",cat:"Cajas y bandejas de cartón",nombre:"Caja pollo cartulina blanca 22,5 × 10,5 × 10,5 cm",detalle:"Precio por unidad",precio:250,nuevo:true,pm:199,foto:"../img/productos/fotos/CAR052.webp"},
+      {cod:"CAR053",cat:"Cajas y bandejas de cartón",nombre:"Caja pollo cartulina blanca 22,5 × 14,5 × 10,5 cm",detalle:"Precio por unidad",precio:350,nuevo:true,pm:300,foto:"../img/productos/fotos/CAR053.webp"},
+      {cod:"CAR054",cat:"Cajas y bandejas de cartón",nombre:"Caja torta kraft grande",detalle:"Precio por unidad",precio:750,nuevo:true,pm:700},
+      {cod:"CAR055",cat:"Cajas y bandejas de cartón",nombre:"Bandeja kraft extra grande",detalle:"Precio por unidad",precio:180,nuevo:true,pm:100},
       {cod:"BOL048",cat:"Bolsas, sacos y papeles",nombre:"Saco blanco 1/2 kilo",detalle:"Precio por unidad · paquete de 50 u",precio:26,foto:"../img/productos/fotos/BOL048.webp",upp:50},
       {cod:"ANT-BOL002",cat:"Bolsas, sacos y papeles",nombre:"Mallas",detalle:"Precio por paquete",precio:490,retirado:true},
       {cod:"BOL027",cat:"Bolsas, sacos y papeles",nombre:"Film 100 m Vanni",detalle:"Precio por unidad",precio:2595,stock:30,foto:"../img/productos/fotos/BOL027.webp"},
@@ -1527,72 +1586,94 @@ const LOCALES = {
       {cod:"BOL043",cat:"Bolsas, sacos y papeles",nombre:"Papel mantequilla pliego",detalle:"Precio por unidad",precio:300},
       {cod:"BOL034",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft",detalle:"Precio por unidad",precio:30,stock:90},
       {cod:"BOL044",cat:"Bolsas, sacos y papeles",nombre:"Papel alfajor",detalle:"Precio por paquete de 100 u",precio:990,stock:9900},
-      {cod:"BOL030",cat:"Bolsas, sacos y papeles",nombre:"Malla curanto amarilla",detalle:"Precio por unidad · paquete de 20 u",precio:null,stock:1220,foto:"../img/productos/fotos/BOL030.webp",upp:20},
+      {cod:"BOL030",cat:"Bolsas, sacos y papeles",nombre:"Malla curanto amarilla",detalle:"Precio por unidad · paquete de 20 u",precio:45,stock:1220,foto:"../img/productos/fotos/BOL030.webp",upp:20},
       {cod:"BOL025",cat:"Bolsas, sacos y papeles",nombre:"Etiquetas regalo unidad",detalle:"Precio por unidad",precio:30,stock:0,sinStock:true},
-      {cod:"BOL035",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft con diseño N° 3",detalle:"Precio por unidad",precio:null,stock:276,foto:"../img/productos/fotos/BOL035.webp"},
-      {cod:"BOL039",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 5",detalle:"Precio por unidad",precio:null,stock:500,foto:"../img/productos/fotos/BOL039.webp"},
-      {cod:"BOL038",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 4",detalle:"Precio por unidad",precio:null,stock:950,foto:"../img/productos/fotos/BOL038.webp"},
-      {cod:"BOL023",cat:"Bolsas, sacos y papeles",nombre:"Cartucho extra corto kraft",detalle:"Precio por unidad · paquete de 50 u",precio:null,stock:1250,upp:50},
-      {cod:"BOL042",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft sin diseño N° 3",detalle:"Precio por unidad",precio:null,stock:1850,foto:"../img/productos/fotos/BOL042.webp"},
-      {cod:"BOL022",cat:"Bolsas, sacos y papeles",nombre:"Cartucho corto kraft medida 00",detalle:"Precio por unidad · paquete de 50 u",precio:null,stock:150,upp:50},
-      {cod:"BOL040",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 6",detalle:"Precio por unidad",precio:null,stock:1800,foto:"../img/productos/fotos/BOL040.webp"},
-      {cod:"BOL041",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 7",detalle:"Precio por unidad",precio:null,stock:750,foto:"../img/productos/fotos/BOL041.webp"},
+      {cod:"BOL035",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft con diseño N° 3",detalle:"Precio por unidad",precio:null,stock:276,foto:"../img/productos/fotos/BOL035.webp",retirado:true},
+      {cod:"BOL039",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 5",detalle:"Precio por unidad",precio:null,stock:500,foto:"../img/productos/fotos/BOL039.webp",retirado:true},
+      {cod:"BOL038",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 4",detalle:"Precio por unidad",precio:null,stock:950,foto:"../img/productos/fotos/BOL038.webp",retirado:true},
+      {cod:"BOL023",cat:"Bolsas, sacos y papeles",nombre:"Cartucho extra corto kraft",detalle:"Precio por unidad · paquete de 50 u",precio:25,stock:1250,upp:50},
+      {cod:"BOL042",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft sin diseño N° 3",detalle:"Precio por unidad",precio:null,stock:1850,foto:"../img/productos/fotos/BOL042.webp",retirado:true},
+      {cod:"BOL022",cat:"Bolsas, sacos y papeles",nombre:"Cartucho corto kraft medida 00",detalle:"Precio por unidad · paquete de 50 u",precio:25,stock:150,upp:50},
+      {cod:"BOL040",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 6",detalle:"Precio por unidad",precio:null,stock:1800,foto:"../img/productos/fotos/BOL040.webp",retirado:true},
+      {cod:"BOL041",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 7",detalle:"Precio por unidad",precio:null,stock:750,foto:"../img/productos/fotos/BOL041.webp",retirado:true},
       {cod:"BOL002",cat:"Bolsas, sacos y papeles",nombre:"Bolsa camiseta 28 × 35",detalle:"Precio por unidad · paquete de 100 u",precio:9,stock:1800,foto:"../img/productos/fotos/BOL002.webp",upp:100},
       {cod:"BOL003",cat:"Bolsas, sacos y papeles",nombre:"Bolsa camiseta 32 × 40",detalle:"Precio por unidad · paquete de 100 u",precio:10,stock:1400,foto:"../img/productos/fotos/BOL003.webp",upp:100},
       {cod:"BOL004",cat:"Bolsas, sacos y papeles",nombre:"Bolsa camiseta 40 × 50",detalle:"Precio por unidad · paquete de 100 u",precio:18,stock:1100,foto:"../img/productos/fotos/BOL004.webp",upp:100},
-      {cod:"BOL036",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 1",detalle:"Precio por unidad",precio:null,stock:687,foto:"../img/productos/fotos/BOL036.webp"},
+      {cod:"BOL036",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 1",detalle:"Precio por unidad",precio:null,stock:687,foto:"../img/productos/fotos/BOL036.webp",retirado:true},
       {cod:"BOL026",cat:"Bolsas, sacos y papeles",nombre:"Film 30 m",detalle:"Precio por unidad",precio:750,stock:30,foto:"../img/productos/fotos/BOL026.webp"},
       {cod:"BOL031",cat:"Bolsas, sacos y papeles",nombre:"Papel antigrasa",detalle:"Precio por unidad",precio:150,stock:686},
       {cod:"BOL046",cat:"Bolsas, sacos y papeles",nombre:"Saco blanco 1/8",detalle:"Precio por unidad",precio:850,foto:"../img/productos/fotos/BOL046.webp"},
       {cod:"BOL045",cat:"Bolsas, sacos y papeles",nombre:"Rollo envolver 20 cm",detalle:"Precio por unidad",precio:3500},
       {cod:"BOL017",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 15 × 30",detalle:"Precio por kilo",precio:16,stock:7.9,foto:"../img/productos/fotos/BOL017.webp"},
-      {cod:"BOL014",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 11 × 35",detalle:"Precio por kilo",precio:null,stock:2.99,foto:"../img/productos/fotos/BOL014.webp"},
-      {cod:"BOL015",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 12 × 25",detalle:"Precio por kilo",precio:null,stock:3.02,foto:"../img/productos/fotos/BOL015.webp"},
+      {cod:"BOL014",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 11 × 35",detalle:"Precio por kilo",precio:5000,stock:2.99,foto:"../img/productos/fotos/BOL014.webp"},
+      {cod:"BOL015",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 12 × 25",detalle:"Precio por kilo",precio:5000,stock:3.02,foto:"../img/productos/fotos/BOL015.webp"},
       {cod:"BOL018",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 20 × 30",detalle:"Precio por kilo",precio:5995,stock:3,foto:"../img/productos/fotos/BOL018.webp"},
-      {cod:"BOL016",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 14 × 25",detalle:"Precio por kilo",precio:null,stock:5.35,foto:"../img/productos/fotos/BOL016.webp"},
-      {cod:"BOL008",cat:"Bolsas, sacos y papeles",nombre:"Bolsa pan de pascua 1 kg con diseño",detalle:"Precio por unidad",precio:null,stock:1273,foto:"../img/productos/fotos/BOL008.webp"},
+      {cod:"BOL016",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 14 × 25",detalle:"Precio por kilo",precio:5000,stock:5.35,foto:"../img/productos/fotos/BOL016.webp"},
+      {cod:"BOL008",cat:"Bolsas, sacos y papeles",nombre:"Bolsa pan de pascua 1 kg con diseño",detalle:"Precio por unidad",precio:130,stock:1273,foto:"../img/productos/fotos/BOL008.webp"},
       {cod:"BOL005",cat:"Bolsas, sacos y papeles",nombre:"Bolsa camiseta 45 × 55",detalle:"Precio por unidad · paquete de 100 u",precio:22,upp:100,stock:100,foto:"../img/productos/fotos/BOL005.webp"},
-      {cod:"BOL037",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 2",detalle:"Precio por unidad",precio:null,stock:445,foto:"../img/productos/fotos/BOL037.webp"},
-      {cod:"BOL021",cat:"Bolsas, sacos y papeles",nombre:"Cartucho blanco papel kraft 3 1/4 × 9 pulg",detalle:"Precio por unidad",precio:null,stock:1985},
-      {cod:"BOL020",cat:"Bolsas, sacos y papeles",nombre:"Cartucho blanco papel kraft 3 1/4 × 9 1/2 pulg",detalle:"Precio por unidad",precio:null,stock:1400},
-      {cod:"BOL019",cat:"Bolsas, sacos y papeles",nombre:"Cartucho blanco papel kraft 3 1/4 × 7 pulg",detalle:"Precio por unidad",precio:null,stock:716},
+      {cod:"BOL037",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft N° 2",detalle:"Precio por unidad",precio:null,stock:445,foto:"../img/productos/fotos/BOL037.webp",retirado:true},
+      {cod:"BOL021",cat:"Bolsas, sacos y papeles",nombre:"Cartucho blanco papel kraft 3 1/4 × 9 pulg",detalle:"Precio por unidad",precio:30,stock:1985},
+      {cod:"BOL020",cat:"Bolsas, sacos y papeles",nombre:"Cartucho blanco papel kraft 3 1/4 × 9 1/2 pulg",detalle:"Precio por unidad",precio:30,stock:1400},
+      {cod:"BOL019",cat:"Bolsas, sacos y papeles",nombre:"Cartucho blanco papel kraft 3 1/4 × 7 pulg",detalle:"Precio por unidad",precio:30,stock:716},
       {cod:"BOL033",cat:"Bolsas, sacos y papeles",nombre:"Papel celofán 30 × 20",detalle:"Precio por kilo",precio:7000,stock:2200,foto:"../img/productos/fotos/BOL033.webp"},
       {cod:"BOL032",cat:"Bolsas, sacos y papeles",nombre:"Papel celofán 10 × 20",detalle:"Precio por unidad · paquete de 100 u",precio:10,stock:3700,foto:"../img/productos/fotos/BOL032.webp",upp:100},
       {cod:"BOL012",cat:"Bolsas, sacos y papeles",nombre:"Bolsa prepicada 20 × 30",detalle:"Precio por kilo",precio:5995,stock:10.15},
       {cod:"BOL010",cat:"Bolsas, sacos y papeles",nombre:"Bolsa papel kraft con manilla grande 30 × 12 × 41 L",detalle:"Precio por unidad",precio:120,stock:49},
       {cod:"BOL011",cat:"Bolsas, sacos y papeles",nombre:"Bolsa papel kraft con manilla mediana 30 × 12 × 32 M",detalle:"Precio por unidad",precio:140,stock:35},
       {cod:"BOL009",cat:"Bolsas, sacos y papeles",nombre:"Bolsa papel kraft con manilla chica",detalle:"Precio por unidad",precio:132,stock:118},
-      {cod:"BOL001",cat:"Bolsas, sacos y papeles",nombre:"Alambre de colores amarras pan de pascua",detalle:"Precio por unidad · paquete de 100 u",precio:null,stock:13100,upp:100},
+      {cod:"BOL001",cat:"Bolsas, sacos y papeles",nombre:"Alambre de colores amarras pan de pascua",detalle:"Precio por paquete de 100 u",precio:1990,stock:13100},
       {cod:"BOL006",cat:"Bolsas, sacos y papeles",nombre:"Bolsa camiseta 50 × 60",detalle:"Precio por unidad · paquete de 100 u",precio:25,stock:300,foto:"../img/productos/fotos/BOL006.webp",upp:100},
-      {cod:"BOL007",cat:"Bolsas, sacos y papeles",nombre:"Bolsa pan de pascua 1/2 kg con diseño",detalle:"Precio por unidad",precio:null,stock:15,nuevo:true,foto:"../img/productos/fotos/BOL007.webp"},
-      {cod:"BOL028",cat:"Bolsas, sacos y papeles",nombre:"Film económico",detalle:"Precio por unidad",precio:null,stock:38,nuevo:true,foto:"../img/productos/fotos/BOL028.webp"},
+      {cod:"BOL007",cat:"Bolsas, sacos y papeles",nombre:"Bolsa pan de pascua 1/2 kg con diseño",detalle:"Precio por unidad",precio:130,stock:15,nuevo:true,foto:"../img/productos/fotos/BOL007.webp"},
+      {cod:"BOL028",cat:"Bolsas, sacos y papeles",nombre:"Film económico",detalle:"Precio por unidad",precio:990,stock:38,nuevo:true,foto:"../img/productos/fotos/BOL028.webp"},
       {cod:"BOL013",cat:"Bolsas, sacos y papeles",nombre:"Bolsa reutilizable con diseño",detalle:"Precio por unidad",precio:null,stock:25,nuevo:true},
-      {cod:"BOL024",cat:"Bolsas, sacos y papeles",nombre:"Envoltorio bombón papel metálico",detalle:"Precio por unidad · paquete de 50 u",precio:null,upp:50,stock:4500,nuevo:true},
+      {cod:"BOL024",cat:"Bolsas, sacos y papeles",nombre:"Envoltorio bombón papel metálico",detalle:"Precio por paquete de 100 u",precio:1590,stock:4500,nuevo:true},
+      {cod:"BOL064",cat:"Bolsas, sacos y papeles",nombre:"Etiquetas alfajores artesanales",detalle:"Precio por unidad · paquete de 1000 u",precio:25,upp:1000,pq:6500,nuevo:true},
+      {cod:"BOL065",cat:"Bolsas, sacos y papeles",nombre:"Etiquetas Día de la Madre",detalle:"Precio por unidad · paquete de 1000 u",precio:25,upp:1000,pq:6500,nuevo:true},
+      {cod:"BOL066",cat:"Bolsas, sacos y papeles",nombre:"Etiquetas mermelada casera",detalle:"Precio por unidad · paquete de 1000 u",precio:25,upp:1000,pq:6500,nuevo:true},
+      {cod:"BOL067",cat:"Bolsas, sacos y papeles",nombre:"Etiquetas pan de pascua",detalle:"Precio por unidad · paquete de 1000 u",precio:25,upp:1000,pq:6500,nuevo:true},
+      {cod:"BOL068",cat:"Bolsas, sacos y papeles",nombre:"Etiquetas producto artesanal",detalle:"Precio por unidad · paquete de 1000 u",precio:25,upp:1000,pq:6500,nuevo:true},
+      {cod:"BOL069",cat:"Bolsas, sacos y papeles",nombre:"Etiquetas trufas artesanales",detalle:"Precio por unidad · paquete de 1000 u",precio:25,upp:1000,pq:6500,nuevo:true},
+      {cod:"BOL075",cat:"Bolsas, sacos y papeles",nombre:"Etiquetas Día del Amor",detalle:"Precio por unidad · paquete de 1000 u",precio:25,upp:1000,pq:6500,nuevo:true},
+      {cod:"BOL076",cat:"Bolsas, sacos y papeles",nombre:"Etiquetas Pascua conejo",detalle:"Precio por unidad · paquete de 1000 u",precio:25,upp:1000,pq:6500,nuevo:true},
+      {cod:"BOL077",cat:"Bolsas, sacos y papeles",nombre:"Etiquetas «Gracias por su compra»",detalle:"Precio por unidad · paquete de 1000 u",precio:25,upp:1000,pq:6500,nuevo:true},
+      {cod:"BOL059",cat:"Bolsas, sacos y papeles",nombre:"Bolsa papel kraft sin manilla",detalle:"Precio por unidad",precio:null,nuevo:true},
+      {cod:"BOL060",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 3 con diseño",detalle:"Precio por unidad",precio:100,nuevo:true,tramos:[[100,50],[500,30]]},
+      {cod:"BOL057",cat:"Bolsas, sacos y papeles",nombre:"Bolsa de baja densidad 15 × 25",detalle:"Precio por kilo",precio:5000,nuevo:true},
+      {cod:"BOL058",cat:"Bolsas, sacos y papeles",nombre:"Bolsa de baja densidad 8 × 25",detalle:"Precio por kilo",precio:5000,nuevo:true},
+      {cod:"BOL061",cat:"Bolsas, sacos y papeles",nombre:"Papel celofán 12 × 10",detalle:"Precio por paquete de 100 u",precio:875,nuevo:true},
+      {cod:"BOL062",cat:"Bolsas, sacos y papeles",nombre:"Bolsa de baja densidad 15 × 20",detalle:"Precio por kilo",precio:5000,nuevo:true},
+      {cod:"BOL063",cat:"Bolsas, sacos y papeles",nombre:"Bolsa de baja densidad 12 × 15",detalle:"Precio por kilo",precio:5000,nuevo:true},
+      {cod:"BOL070",cat:"Bolsas, sacos y papeles",nombre:"Bolsa de baja densidad 50 × 50",detalle:"Precio por kilo",precio:5000,nuevo:true},
+      {cod:"BOL071",cat:"Bolsas, sacos y papeles",nombre:"Bolsa de baja densidad 65 × 70",detalle:"Precio por kilo",precio:5000,nuevo:true},
+      {cod:"BOL072",cat:"Bolsas, sacos y papeles",nombre:"Bolsa de baja densidad 10 × 15",detalle:"Precio por kilo",precio:5000,nuevo:true},
+      {cod:"BOL073",cat:"Bolsas, sacos y papeles",nombre:"Bolsa de baja densidad 20 × 40",detalle:"Precio por kilo",precio:5000,nuevo:true},
+      {cod:"BOL074",cat:"Bolsas, sacos y papeles",nombre:"Bolsa de baja densidad 25 × 30",detalle:"Precio por kilo",precio:5000,nuevo:true},
       {cod:"VAS021",cat:"Vasos",nombre:"Vaso plumavit 10 oz Eco Unicel",detalle:"Precio por unidad · paquete de 25 u",precio:48,upp:25,stock:700},
-      {cod:"VAS006",cat:"Vasos",nombre:"Vaso 500 cc Vanni",detalle:"Precio por unidad · paquete de 50 u",precio:54,upp:50},
+      {cod:"VAS006",cat:"Vasos",nombre:"Vaso 500 cc Vanni",detalle:"Precio por unidad · paquete de 50 u",precio:54,upp:50,foto:"../img/productos/fotos/VAS006.webp"},
       {cod:"VAS013",cat:"Vasos",nombre:"Vaso domo 12 oz",detalle:"Precio por unidad",precio:90,stock:250},
       {cod:"VAS020",cat:"Vasos",nombre:"Vaso plumavit 8 oz Copobras",detalle:"Precio por unidad · paquete de 25 u",precio:44,upp:25,stock:525,foto:"../img/productos/fotos/VAS020.webp",fotos:["../img/productos/fotos/VAS020.webp", "../img/productos/fotos/VAS020-2.webp"]},
       {cod:"VAS014",cat:"Vasos",nombre:"Vaso domo 16 oz",detalle:"Precio por unidad · paquete de 50 u",precio:90,stock:500,upp:50},
       {cod:"VAS016",cat:"Vasos",nombre:"Vaso plástico 300 cc",detalle:"Precio por unidad",precio:38},
       {cod:"ANT-VAS007",cat:"Vasos",nombre:"Vaso plástico 500 cc",detalle:"Precio por unidad",precio:45,retirado:true},
       {cod:"VAS024",cat:"Vasos",nombre:"Vaso polipapel 240 cc",detalle:"Precio por unidad",precio:100},
-      {cod:"VAS001",cat:"Vasos",nombre:"Copa veneciana 350 cc",detalle:"Precio por unidad",precio:250,stock:322},
+      {cod:"VAS001",cat:"Vasos",nombre:"Copa veneciana 350 cc",detalle:"Precio por unidad",precio:250,stock:322,foto:"../img/productos/fotos/VAS001.webp"},
       {cod:"VAS010",cat:"Vasos",nombre:"Vaso copa 200 cc",detalle:"Precio por paquete de 50 u",precio:2990,stock:1430,foto:"../img/productos/fotos/VAS010.webp"},
-      {cod:"VAS023",cat:"Vasos",nombre:"Vaso polipapel 290 cc 10 oz",detalle:"Precio por unidad",precio:100},
+      {cod:"VAS023",cat:"Vasos",nombre:"Vaso polipapel 290 cc 10 oz",detalle:"Precio por unidad",precio:100,foto:"../img/productos/fotos/VAS023.webp"},
       {cod:"VAS003",cat:"Vasos",nombre:"Vaso 300 cc Vanni",detalle:"Precio por unidad · paquete de 50 u",precio:38,upp:50,stock:2600},
       {cod:"VAS022",cat:"Vasos",nombre:"Vaso polipapel 8 oz",detalle:"Precio por unidad",precio:100,stock:550},
       {cod:"VAS004",cat:"Vasos",nombre:"Vaso 500 cc Cheap",detalle:"Precio por unidad · paquete de 50 u",precio:54,upp:50},
       {cod:"VAS011",cat:"Vasos",nombre:"Vaso corrugado 12 oz",detalle:"Precio por unidad",precio:135,stock:225,foto:"../img/productos/fotos/VAS011.webp"},
       {cod:"VAS015",cat:"Vasos",nombre:"Vaso plástico 16 oz",detalle:"Precio por unidad · paquete de 50 u",precio:54,upp:50,stock:1000},
       {cod:"VAS005",cat:"Vasos",nombre:"Vaso 500 cc Good Food",detalle:"Precio por unidad · paquete de 50 u",precio:54,upp:50,stock:2500},
-      {cod:"VAS019",cat:"Vasos",nombre:"Vaso 500 cc rojo Vacan",detalle:"Precio por unidad · paquete de 25 u",precio:44,upp:25,stock:975},
-      {cod:"VAS025",cat:"Vasos",nombre:"Vaso rectangular N° 7",detalle:"Precio por unidad",precio:null,stock:0,sinStock:true},
+      {cod:"VAS019",cat:"Vasos",nombre:"Vaso 500 cc rojo Vacan",detalle:"Precio por unidad · paquete de 25 u",precio:44,upp:25,stock:975,foto:"../img/productos/fotos/VAS019.webp"},
+      {cod:"VAS025",cat:"Vasos",nombre:"Vaso rectangular N° 7",detalle:"Precio por unidad",precio:null,stock:0,sinStock:true,retirado:true},
       {cod:"VAS012",cat:"Vasos",nombre:"Vaso domo 12 - 16 oz con tapas",detalle:"Precio por unidad",precio:90,stock:0,sinStock:true},
       {cod:"VAS007",cat:"Vasos",nombre:"Vaso bambú 16 oz",detalle:"Precio por paquete de 50 u",precio:4990,stock:0,sinStock:true,foto:"../img/productos/fotos/VAS007.webp"},
       {cod:"ANT-VAS022",cat:"Vasos",nombre:"Vaso rojo plástico 14-16 oz",detalle:"Precio por unidad",precio:44,stock:0,sinStock:true,retirado:true},
       {cod:"VAS002",cat:"Vasos",nombre:"Vaso 300 cc Good Food",detalle:"Precio por unidad · paquete de 50 u",precio:38,upp:50,stock:2700},
-      {cod:"VAS008",cat:"Vasos",nombre:"Vaso café liso",detalle:"Precio por unidad",precio:null,stock:246},
-      {cod:"VAS009",cat:"Vasos",nombre:"Vaso café corrugado marrón 8 oz",detalle:"Precio por unidad · paquete de 25 u",precio:null,upp:25,stock:500,nuevo:true,foto:"../img/productos/fotos/VAS009.webp"},
+      {cod:"VAS008",cat:"Vasos",nombre:"Vaso café liso",detalle:"Precio por unidad",precio:75,stock:246,tramos:[[25,55],[100,50]],foto:"../img/productos/fotos/VAS008.webp"},
+      {cod:"VAS009",cat:"Vasos",nombre:"Vaso café corrugado marrón 8 oz",detalle:"Precio por unidad",precio:120,stock:500,nuevo:true,foto:"../img/productos/fotos/VAS009.webp",tramos:[[25,100],[100,85]]},
+      {cod:"VAS026",cat:"Vasos",nombre:"Copa helado Garza con pedestal",detalle:"Precio por unidad",precio:250,nuevo:true,tramos:[[50,225]],foto:"../img/productos/fotos/VAS026.webp"},
       {cod:"DES025",cat:"Platos, cubiertos y desechables",nombre:"Guante polietileno",detalle:"Precio por unidad · paquete de 100 u",precio:23,upp:100,stock:19100,foto:"../img/productos/fotos/DES025.webp"},
       {cod:"DES005",cat:"Platos, cubiertos y desechables",nombre:"Brocheta 15 cm",detalle:"Precio por unidad · paquete de 100 u",precio:8,upp:100,stock:1700,foto:"../img/productos/fotos/DES005.webp"},
       {cod:"DES042",cat:"Platos, cubiertos y desechables",nombre:"Revolvedor corto madera",detalle:"Precio por unidad",precio:590,stock:2700},
@@ -1617,7 +1698,7 @@ const LOCALES = {
       {cod:"DES022",cat:"Platos, cubiertos y desechables",nombre:"Cuchillo madera Bio Ely",detalle:"Precio por paquete de 100 u",precio:990,stock:1700},
       {cod:"DES049",cat:"Platos, cubiertos y desechables",nombre:"Tenedor plástico",detalle:"Precio por unidad · paquete de 100 u",precio:20,upp:100},
       {cod:"DES021",cat:"Platos, cubiertos y desechables",nombre:"Cuchara transparente para helado",detalle:"Precio por unidad · paquete de 100 u",precio:35,stock:300,upp:100},
-      {cod:"DES012",cat:"Platos, cubiertos y desechables",nombre:"Cuchara de colores para helado",detalle:"Precio por unidad · paquete de 100 u",precio:null,stock:484,foto:"../img/productos/fotos/DES012.webp",upp:100},
+      {cod:"DES012",cat:"Platos, cubiertos y desechables",nombre:"Cuchara de colores para helado",detalle:"Precio por unidad · paquete de 100 u",precio:60,stock:484,foto:"../img/productos/fotos/DES012.webp",upp:100},
       {cod:"DES015",cat:"Platos, cubiertos y desechables",nombre:"Cuchara larga para helado Good Food",detalle:"Precio por paquete de 100 u",precio:3590,stock:500,nuevo:true,foto:"../img/productos/fotos/DES015.webp"},
       {cod:"DES007",cat:"Platos, cubiertos y desechables",nombre:"Brocheta 25 cm",detalle:"Precio por unidad · paquete de 50 u",precio:9,stock:4200,upp:50},
       {cod:"DES006",cat:"Platos, cubiertos y desechables",nombre:"Brocheta 20 cm",detalle:"Precio por unidad · paquete de 100 u",precio:8,upp:100,stock:17100,foto:"../img/productos/fotos/DES006.webp"},
@@ -1630,21 +1711,28 @@ const LOCALES = {
       {cod:"DES019",cat:"Platos, cubiertos y desechables",nombre:"Cuchara sopera N° 6 Cubiertos Inka",detalle:"Precio por unidad · paquete de 100 u",precio:30,upp:100,stock:600},
       {cod:"DES020",cat:"Platos, cubiertos y desechables",nombre:"Cuchara sopa blanca Good Food",detalle:"Precio por unidad · paquete de 100 u",precio:30,upp:100,stock:3400},
       {cod:"ANT-DES036",cat:"Platos, cubiertos y desechables",nombre:"Tenedor Dispack",detalle:"Precio por unidad · paquete de 100 u",precio:20,upp:100,stock:900,retirado:true},
-      {cod:"DES024",cat:"Platos, cubiertos y desechables",nombre:"Cuchillo Good Food",detalle:"Precio por unidad · paquete de 100 u",precio:null,stock:700,upp:100},
+      {cod:"DES024",cat:"Platos, cubiertos y desechables",nombre:"Cuchillo Good Food",detalle:"Precio por unidad · paquete de 100 u",precio:15,stock:700,upp:100},
       {cod:"DES004",cat:"Platos, cubiertos y desechables",nombre:"Bombilla de papel gruesa",detalle:"Precio por unidad · paquete de 100 u",precio:23,upp:100,stock:1600},
       {cod:"DES003",cat:"Platos, cubiertos y desechables",nombre:"Bombilla de papel estrecha",detalle:"Precio por unidad · paquete de 100 u",precio:23,upp:100,stock:100},
       {cod:"DES002",cat:"Platos, cubiertos y desechables",nombre:"Bombilla de papel 20 cm 6 mm Great Value",detalle:"Precio por unidad · paquete de 50 u",precio:30,upp:50,stock:2700},
-      {cod:"DES046",cat:"Platos, cubiertos y desechables",nombre:"Tenedor madera Bio Ely",detalle:"Precio por unidad · paquete de 100 u",precio:null,stock:700,upp:100},
-      {cod:"DES047",cat:"Platos, cubiertos y desechables",nombre:"Tenedor de madera corto Bio Ely",detalle:"Precio por unidad · paquete de 100 u",precio:null,stock:400,upp:100},
-      {cod:"DES014",cat:"Platos, cubiertos y desechables",nombre:"Cuchara de madera Bio Ely",detalle:"Precio por unidad · paquete de 100 u",precio:null,stock:1400,upp:100},
-      {cod:"DES032",cat:"Platos, cubiertos y desechables",nombre:"Palito coctel madera bambú 6,5 cm",detalle:"Precio por unidad · paquete de 100 u",precio:null,stock:100,upp:100},
+      {cod:"DES046",cat:"Platos, cubiertos y desechables",nombre:"Tenedor madera Bio Ely",detalle:"Precio por unidad · paquete de 100 u",precio:80,stock:700,upp:100},
+      {cod:"DES047",cat:"Platos, cubiertos y desechables",nombre:"Tenedor de madera corto Bio Ely",detalle:"Precio por unidad · paquete de 100 u",precio:80,stock:400,upp:100},
+      {cod:"DES014",cat:"Platos, cubiertos y desechables",nombre:"Cuchara de madera Bio Ely",detalle:"Precio por unidad · paquete de 100 u",precio:85,stock:1400,upp:100},
+      {cod:"DES032",cat:"Platos, cubiertos y desechables",nombre:"Palito coctel madera bambú 6,5 cm",detalle:"Precio por unidad · paquete de 100 u",precio:3,stock:100,upp:100},
       {cod:"DES033",cat:"Platos, cubiertos y desechables",nombre:"Plato blanco N° 2 cartón 195 ml",detalle:"Precio por unidad · paquete de 250 u",precio:63,upp:250,stock:500,foto:"../img/productos/fotos/DES033.webp"},
       {cod:"DES010",cat:"Platos, cubiertos y desechables",nombre:"Cofia blanca",detalle:"Precio por unidad",precio:15,stock:1256,foto:"../img/productos/fotos/DES010.webp"},
       {cod:"DES048",cat:"Platos, cubiertos y desechables",nombre:"Tenedor desechable Good Food",detalle:"Precio por unidad · paquete de 100 u",precio:20,upp:100,stock:3900},
       {cod:"DES031",cat:"Platos, cubiertos y desechables",nombre:"Pack cubiertos con servilleta",detalle:"Precio por unidad",precio:150,pm:120,stock:208,nuevo:true,foto:"../img/productos/fotos/DES031.webp"},
+      {cod:"DES054",cat:"Platos, cubiertos y desechables",nombre:"Guante vinilo talla S",detalle:"Precio por paquete de 100 u",precio:3100,nuevo:true},
+      {cod:"DES008",cat:"Platos, cubiertos y desechables",nombre:"Brocheta 30 cm",detalle:"Precio por paquete de 50 u",precio:990,nuevo:true},
+      {cod:"DES051",cat:"Platos, cubiertos y desechables",nombre:"Brocheta 15 cm Bio Ely",detalle:"Precio por paquete de 50 u",precio:990,nuevo:true},
+      {cod:"DES052",cat:"Platos, cubiertos y desechables",nombre:"Brocheta 20 cm Bio Ely",detalle:"Precio por paquete de 50 u",precio:990,nuevo:true},
+      {cod:"DES001",cat:"Platos, cubiertos y desechables",nombre:"Bombilla con envoltorio de papel",detalle:"Precio por paquete de 50 u",precio:2250,nuevo:true},
+      {cod:"DES053",cat:"Platos, cubiertos y desechables",nombre:"Cuchillo mediano de madera",detalle:"Precio por paquete de 100 u",precio:990,nuevo:true},
+      {cod:"DES055",cat:"Platos, cubiertos y desechables",nombre:"Tenedor plástico Vacán",detalle:"Precio por paquete de 100 u",precio:990,nuevo:true},
       {cod:"POT013",cat:"Potes y salseros",nombre:"Pote transparente con tapa 24 oz",detalle:"Precio por unidad · paquete de 50 u",precio:171,upp:50},
       {cod:"POT001",cat:"Potes y salseros",nombre:"Pote 32 oz con tapa",detalle:"Precio por unidad",precio:214},
-      {cod:"POT016",cat:"Potes y salseros",nombre:"Salsero 1 oz",detalle:"Precio por unidad · paquete de 50 u",precio:19,upp:50,stock:39},
+      {cod:"POT016",cat:"Potes y salseros",nombre:"Salsero 1 oz",detalle:"Precio por unidad · paquete de 50 u",precio:19,upp:50,stock:39,foto:"../img/productos/fotos/POT016.webp"},
       {cod:"ANT-POT004",cat:"Potes y salseros",nombre:"Salsero 1,5 a 2 oz",detalle:"Precio por unidad · paquete de 50 u",precio:26,upp:50,stock:900,retirado:true},
       {cod:"POT018",cat:"Potes y salseros",nombre:"Salsero 2 oz",detalle:"Precio por unidad",precio:28,stock:100,foto:"../img/productos/fotos/POT018.webp"},
       {cod:"POT020",cat:"Potes y salseros",nombre:"Salsero 3,25 oz",detalle:"Precio por unidad · paquete de 50 u",precio:34,upp:50,stock:3250,foto:"../img/productos/fotos/POT020.webp"},
@@ -1655,17 +1743,18 @@ const LOCALES = {
       {cod:"POT014",cat:"Potes y salseros",nombre:"Pote uso 40-8",detalle:"Precio por unidad",precio:83},
       {cod:"POT009",cat:"Potes y salseros",nombre:"Pote helado 24 oz",detalle:"Precio por unidad · paquete de 25 u",precio:171,upp:25},
       {cod:"POT017",cat:"Potes y salseros",nombre:"Salsero 2 oz con tapas",detalle:"Precio por unidad · paquete de 50 u",precio:31,upp:50,stock:8100,foto:"../img/productos/fotos/POT017.webp"},
-      {cod:"POT011",cat:"Potes y salseros",nombre:"Pote palomita N° 1",detalle:"Precio por unidad",precio:null,stock:33,foto:"../img/productos/fotos/POT011.webp"},
-      {cod:"POT012",cat:"Potes y salseros",nombre:"Pote palomita N° 2",detalle:"Precio por unidad",precio:null,stock:100,foto:"../img/productos/fotos/POT012.webp"},
+      {cod:"POT011",cat:"Potes y salseros",nombre:"Pote palomita N° 1",detalle:"Precio por unidad",precio:350,stock:33,foto:"../img/productos/fotos/POT011.webp",tramos:[[20,300]]},
+      {cod:"POT012",cat:"Potes y salseros",nombre:"Pote palomita N° 2",detalle:"Precio por unidad",precio:450,stock:100,foto:"../img/productos/fotos/POT012.webp",tramos:[[20,400]]},
       {cod:"POT008",cat:"Potes y salseros",nombre:"Pote helado 16 oz",detalle:"Precio por unidad · paquete de 25 u",precio:146,upp:25,stock:172,foto:"../img/productos/fotos/POT008.webp"},
       {cod:"ANT-POT017",cat:"Potes y salseros",nombre:"Salsero 2 oz negros copas",detalle:"Precio por unidad · paquete de 100 u",precio:28,upp:100,stock:0,sinStock:true,retirado:true},
       {cod:"POT003",cat:"Potes y salseros",nombre:"Pote BIO chico",detalle:"Precio por unidad",precio:70,stock:0,sinStock:true},
       {cod:"POT010",cat:"Potes y salseros",nombre:"Pote helado bambú 16 oz",detalle:"Precio por unidad",precio:128,stock:175},
       {cod:"POT004",cat:"Potes y salseros",nombre:"Pote BIO grande",detalle:"Precio por unidad",precio:90,stock:0,sinStock:true},
       {cod:"POT019",cat:"Potes y salseros",nombre:"Salsero 3,25 oz con tapas",detalle:"Precio por unidad · paquete de 50 u",precio:34,upp:50,stock:9250,foto:"../img/productos/fotos/POT019.webp"},
-      {cod:"POT002",cat:"Potes y salseros",nombre:"Pote acrílico con pedestal",detalle:"Precio por unidad",precio:null,stock:99,nuevo:true},
-      {cod:"POT015",cat:"Potes y salseros",nombre:"Salsero 1 oz con tapas",detalle:"Precio por unidad · paquete de 50 u",precio:null,upp:50,stock:4950,nuevo:true},
-      {cod:"POT021",cat:"Potes y salseros",nombre:"Salsero 5,5 oz con tapas",detalle:"Precio por unidad · paquete de 50 u",precio:null,upp:50,stock:7150,nuevo:true},
+      {cod:"POT002",cat:"Potes y salseros",nombre:"Pote acrílico con pedestal",detalle:"Precio por unidad",precio:550,stock:99,nuevo:true,tramos:[[100,350]]},
+      {cod:"POT015",cat:"Potes y salseros",nombre:"Salsero 1 oz con tapas",detalle:"Precio por unidad · paquete de 50 u",precio:20,upp:50,stock:4950,nuevo:true,foto:"../img/productos/fotos/POT015.webp"},
+      {cod:"POT021",cat:"Potes y salseros",nombre:"Salsero 5,5 oz con tapas",detalle:"Precio por unidad · paquete de 50 u",precio:45,upp:50,stock:7150,nuevo:true},
+      {cod:"POT022",cat:"Potes y salseros",nombre:"Pote miel transparente 16 oz (500 cc) con tapa",detalle:"Precio por unidad",precio:180,nuevo:true,tramos:[[25,155],[100,135]]},
       {cod:"ALU020",cat:"Aluminio",nombre:"Molde queque aluminio rectangular",detalle:"Precio por unidad",precio:200,stock:113,foto:"../img/productos/fotos/ALU020.webp",fotos:["../img/productos/fotos/ALU020.webp", "../img/productos/fotos/ALU020-2.webp", "../img/productos/fotos/ALU020-3.webp"]},
       {cod:"ALU023",cat:"Aluminio",nombre:"Aluminio pavera",detalle:"Precio por unidad",precio:1600,stock:12,foto:"../img/productos/fotos/ALU023.webp",fotos:["../img/productos/fotos/ALU023.webp", "../img/productos/fotos/ALU023-2.webp", "../img/productos/fotos/ALU023-3.webp"]},
       {cod:"ALU001",cat:"Aluminio",nombre:"Envase aluminio C 10",detalle:"Precio por paquete de 20 u",precio:1000,stock:900,foto:"../img/productos/fotos/ALU001.webp",fotos:["../img/productos/fotos/ALU001.webp", "../img/productos/fotos/ALU001-2.webp", "../img/productos/fotos/ALU001-3.webp"]},
@@ -1679,28 +1768,30 @@ const LOCALES = {
       {cod:"ALU015",cat:"Aluminio",nombre:"Envase aluminio R 10",detalle:"Precio por unidad",precio:150,stock:364,foto:"../img/productos/fotos/ALU015.webp"},
       {cod:"ALU019",cat:"Aluminio",nombre:"Envase aluminio R 80",detalle:"Precio por paquete de 20 u",precio:3990,stock:100,foto:"../img/productos/fotos/ALU019.webp"},
       {cod:"ALU018",cat:"Aluminio",nombre:"Envase aluminio R 50",detalle:"Precio por paquete de 20 u",precio:3490,stock:160,foto:"../img/productos/fotos/ALU018.webp"},
-      {cod:"ALU013",cat:"Aluminio",nombre:"Envase aluminio R 3",detalle:"Precio por unidad",precio:null,stock:287,foto:"../img/productos/fotos/ALU013.webp"},
+      {cod:"ALU013",cat:"Aluminio",nombre:"Envase aluminio R 3",detalle:"Precio por unidad",precio:130,stock:287,foto:"../img/productos/fotos/ALU013.webp"},
       {cod:"ALU008",cat:"Aluminio",nombre:"Envase aluminio C 40 sin tapa",detalle:"Precio por paquete",precio:3390,stock:164,foto:"../img/productos/fotos/ALU008.webp",fotos:["../img/productos/fotos/ALU008.webp", "../img/productos/fotos/ALU008-2.webp", "../img/productos/fotos/ALU008-3.webp", "../img/productos/fotos/ALU008-4.webp"]},
-      {cod:"ALU009",cat:"Aluminio",nombre:"Envase aluminio C 45",detalle:"Precio por unidad",precio:null,stock:30,foto:"../img/productos/fotos/ALU009.webp",fotos:["../img/productos/fotos/ALU009.webp", "../img/productos/fotos/ALU009-2.webp"]},
+      {cod:"ALU009",cat:"Aluminio",nombre:"Envase aluminio C 45",detalle:"Precio por unidad",precio:550,stock:30,foto:"../img/productos/fotos/ALU009.webp",fotos:["../img/productos/fotos/ALU009.webp","../img/productos/fotos/ALU009-2.webp"]},
       {cod:"ALU004",cat:"Aluminio",nombre:"Envase aluminio C 18",detalle:"Precio por paquete de 20 u",precio:2000,stock:20,foto:"../img/productos/fotos/ALU004.webp",fotos:["../img/productos/fotos/ALU004.webp", "../img/productos/fotos/ALU004-2.webp"]},
       {cod:"ALU012",cat:"Aluminio",nombre:"Envase aluminio R 1",detalle:"Precio por paquete",precio:100,stock:0,sinStock:true},
       {cod:"ALU011",cat:"Aluminio",nombre:"Envase aluminio C 85",detalle:"Precio por unidad",precio:1290},
-      {cod:"ALU021",cat:"Aluminio",nombre:"Alu foil 4 m",detalle:"Precio por unidad",precio:null,stock:6,nuevo:true,foto:"../img/productos/fotos/ALU021.webp"},
-      {cod:"ALU022",cat:"Aluminio",nombre:"Foil aluminio 100 m",detalle:"Precio por unidad",precio:null,stock:20,nuevo:true,foto:"../img/productos/fotos/ALU022.webp"},
-      {cod:"ALU007",cat:"Aluminio",nombre:"Envase aluminio C-40 L con tapa plástica",detalle:"Precio por unidad · paquete de 10 u",precio:null,upp:10,stock:50,nuevo:true,foto:"../img/productos/fotos/ALU007.webp"},
-      {cod:"ALU003",cat:"Aluminio",nombre:"Envase aluminio C 15 sin tapa",detalle:"Precio por unidad",precio:null,stock:441,nuevo:true,foto:"../img/productos/fotos/ALU003.webp",fotos:["../img/productos/fotos/ALU003.webp", "../img/productos/fotos/ALU003-2.webp"]},
-      {cod:"BLO001",cat:"Blondas",nombre:"Blonda brazo de reina N° 20",detalle:"Precio por unidad",precio:null,stock:2152,envase:["CAR001"]},
-      {cod:"BLO004",cat:"Blondas",nombre:"Blonda rectangular 15",detalle:"Precio por unidad",precio:90,stock:442},
-      {cod:"BLO003",cat:"Blondas",nombre:"Blonda rectangular N° 13",detalle:"Precio por unidad",precio:null,stock:123,envase:["CAR010"]},
-      {cod:"BLO002",cat:"Blondas",nombre:"Blonda torta N° 10",detalle:"Precio por unidad",precio:null,stock:400},
-      {cod:"BLO005",cat:"Blondas",nombre:"Blonda redonda N° 5",detalle:"Precio por unidad",precio:null,stock:200,envase:["CAR012"]},
+      {cod:"ALU021",cat:"Aluminio",nombre:"Alu foil 4 m",detalle:"Precio por unidad",precio:1000,stock:6,nuevo:true,foto:"../img/productos/fotos/ALU021.webp"},
+      {cod:"ALU022",cat:"Aluminio",nombre:"Foil aluminio 100 m",detalle:"Precio por unidad",precio:10990,stock:20,nuevo:true,foto:"../img/productos/fotos/ALU022.webp"},
+      {cod:"ALU007",cat:"Aluminio",nombre:"Envase aluminio C-40 L con tapa plástica",detalle:"Precio por unidad · paquete de 10 u",precio:690,upp:10,stock:50,nuevo:true,foto:"../img/productos/fotos/ALU007.webp"},
+      {cod:"ALU003",cat:"Aluminio",nombre:"Envase aluminio C 15 sin tapa",detalle:"Precio por unidad",precio:160,stock:441,nuevo:true,foto:"../img/productos/fotos/ALU003.webp",fotos:["../img/productos/fotos/ALU003.webp","../img/productos/fotos/ALU003-2.webp"]},
+      {cod:"BLO001",cat:"Blondas",nombre:"Blonda brazo de reina N° 20",detalle:"Precio por unidad",precio:0,stock:2152,envase:["CAR001"]},
+      {cod:"BLO004",cat:"Blondas",nombre:"Blonda rectangular 15",detalle:"Precio por unidad",precio:0,stock:442},
+      {cod:"BLO003",cat:"Blondas",nombre:"Blonda rectangular N° 13",detalle:"Precio por unidad",precio:0,stock:123,envase:["CAR010"]},
+      {cod:"BLO002",cat:"Blondas",nombre:"Blonda torta N° 10",detalle:"Precio por unidad",precio:0,stock:400,envase:["CAR017"]},
+      {cod:"BLO005",cat:"Blondas",nombre:"Blonda redonda N° 5",detalle:"Precio por unidad",precio:0,stock:200,envase:["CAR012"]},
       {cod:"ANT-BLO013",cat:"Moldes",nombre:"Molde cupcake",detalle:"Precio por unidad",precio:28,stock:0,sinStock:true,retirado:true},
-      {cod:"BLO009",cat:"Moldes",nombre:"Molde queque rectangular kraft con diseño",detalle:"Precio por unidad",precio:null,stock:32,foto:"../img/productos/fotos/BLO009.webp",fotos:["../img/productos/fotos/BLO009.webp", "../img/productos/fotos/BLO009-2.webp", "../img/productos/fotos/BLO009-3.webp"]},
+      {cod:"BLO009",cat:"Moldes",nombre:"Molde queque rectangular kraft con diseño",detalle:"Precio por unidad",precio:320,stock:32,foto:"../img/productos/fotos/BLO009.webp",fotos:["../img/productos/fotos/BLO009.webp","../img/productos/fotos/BLO009-2.webp","../img/productos/fotos/BLO009-3.webp"],tramos:[[25,290]]},
       {cod:"BLO006",cat:"Moldes",nombre:"Molde pan de pascua 1 kg",detalle:"Precio por unidad · paquete de 10 u",precio:200,upp:10,stock:149,foto:"../img/productos/fotos/BLO006.webp"},
       {cod:"BLO007",cat:"Moldes",nombre:"Molde pan de pascua 500 g",detalle:"Precio por unidad · paquete de 10 u",precio:100,stock:289,upp:10,foto:"../img/productos/fotos/BLO007.webp"},
+      {cod:"BLO010",cat:"Moldes",nombre:"Cápsula blanca N° 2C",detalle:"Precio por unidad",precio:30,nuevo:true},
       {cod:"HUE003",cat:"Hueveras",nombre:"Huevera 12 × 200 u",detalle:"Precio por paquete de 200 u",precio:48000},
       {cod:"HUE001",cat:"Hueveras",nombre:"Bandeja 30 × 75 u",detalle:"Precio por paquete de 75 u",precio:9500},
       {cod:"HUE002",cat:"Hueveras",nombre:"Huevera 6 × 200 u",detalle:"Precio por unidad",precio:300},
+      {cod:"HUE025",cat:"Hueveras",nombre:"Bandeja para 20 huevos",detalle:"Precio por paquete de 65 u",precio:8450,tramos:[[2,8150],[11,8000]],nuevo:true},
       {cod:"HUE023",retirado:true,cat:"Huevos",nombre:"Huevo de quinta",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
       {cod:"HUE020",cat:"Huevos",nombre:"Huevo tercera blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE005",cat:"Huevos",nombre:"Huevo jumbo blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
@@ -1713,7 +1804,7 @@ const LOCALES = {
       {cod:"HUE015",cat:"Huevos",nombre:"Huevo primera café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE017",cat:"Huevos",nombre:"Huevo segunda blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE019",retirado:true,cat:"Huevos",nombre:"Huevo segunda café bandeja 30",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
-      {cod:"HUE022",cat:"Huevos",nombre:"Huevo de quinta jumbo × 20",detalle:"Precio por unidad",precio:null,formatos:"huevoGrande"},
+      {cod:"HUE022",cat:"Huevos",nombre:"Huevo de quinta jumbo × 20",detalle:"Precio por unidad",precio:null,formatos:"huevoGrande",retirado:true},
       {cod:"HUE024",retirado:true,cat:"Huevos",nombre:"Huevo quinta × 30",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
       {cod:"HUE018",cat:"Huevos",nombre:"Huevo segunda café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE016",retirado:true,cat:"Huevos",nombre:"Huevo primera café bandeja",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
@@ -1735,23 +1826,44 @@ const LOCALES = {
       {cod:"ABA012",cat:"Abarrotes",nombre:"Miel 1 kilo",detalle:"Precio por unidad",precio:5245},
       {cod:"ABA015",cat:"Abarrotes",nombre:"Ecovin vinagre incoloro 2 l",detalle:"Precio por unidad",precio:1300,stock:0,sinStock:true},
       {cod:"ABA001",cat:"Abarrotes",nombre:"Chancaca 400 g Delisiosa",detalle:"Precio por unidad",precio:1225,stock:64,foto:"../img/productos/fotos/ABA001.webp"},
-      {cod:"ABA009",cat:"Abarrotes",nombre:"Esencia pan de pascua Gourmet",detalle:"Precio por unidad",precio:null,stock:7},
+      {cod:"ABA009",cat:"Abarrotes",nombre:"Esencia pan de pascua Gourmet",detalle:"Precio por unidad",precio:950,stock:7},
       {cod:"ABA011",cat:"Abarrotes",nombre:"Esencia vainilla Dino",detalle:"Precio por unidad",precio:825,stock:6},
-      {cod:"ABA002",cat:"Abarrotes",nombre:"Colorante en polvo azul brillante 15 g Guttche",detalle:"Precio por unidad",precio:null,stock:6},
-      {cod:"ABA003",cat:"Abarrotes",nombre:"Colorante en polvo verde hoja 15 g Guttche",detalle:"Precio por unidad",precio:null,stock:7},
-      {cod:"ABA006",cat:"Abarrotes",nombre:"Esencia limón Guttche",detalle:"Precio por unidad",precio:null,stock:9},
-      {cod:"ABA005",cat:"Abarrotes",nombre:"Esencia coñac Guttche",detalle:"Precio por unidad",precio:null,stock:13},
-      {cod:"ABA004",cat:"Abarrotes",nombre:"Esencia anís Guttche",detalle:"Precio por unidad",precio:null,stock:7},
-      {cod:"ABA007",cat:"Abarrotes",nombre:"Esencia menta Guttche",detalle:"Precio por unidad",precio:null,stock:10},
-      {cod:"ABA008",cat:"Abarrotes",nombre:"Esencia naranja Guttche",detalle:"Precio por unidad",precio:null,stock:2},
-      {cod:"ABA010",cat:"Abarrotes",nombre:"Esencia ron Guttche",detalle:"Precio por unidad",precio:null,stock:4},
+      {cod:"ABA002",cat:"Abarrotes",nombre:"Colorante en polvo azul brillante 15 g Guttche",detalle:"Precio por unidad",precio:1700,stock:6},
+      {cod:"ABA003",cat:"Abarrotes",nombre:"Colorante en polvo verde hoja 15 g Guttche",detalle:"Precio por unidad",precio:1700,stock:7},
+      {cod:"ABA006",cat:"Abarrotes",nombre:"Esencia limón Guttche",detalle:"Precio por unidad",precio:1500,stock:9},
+      {cod:"ABA005",cat:"Abarrotes",nombre:"Esencia coñac Guttche",detalle:"Precio por unidad",precio:1500,stock:13},
+      {cod:"ABA004",cat:"Abarrotes",nombre:"Esencia anís Guttche",detalle:"Precio por unidad",precio:1500,stock:7},
+      {cod:"ABA007",cat:"Abarrotes",nombre:"Esencia menta Guttche",detalle:"Precio por unidad",precio:1500,stock:10},
+      {cod:"ABA008",cat:"Abarrotes",nombre:"Esencia naranja Guttche",detalle:"Precio por unidad",precio:1500,stock:2},
+      {cod:"ABA010",cat:"Abarrotes",nombre:"Esencia ron Guttche",detalle:"Precio por unidad",precio:1500,stock:4},
+      {cod:"ABA016",cat:"Abarrotes",nombre:"Vinagre de manzana Higuera 5 l",detalle:"Precio por unidad",precio:3290,nuevo:true},
+      {cod:"ABA017",cat:"Abarrotes",nombre:"Vinagre blanco Traverso 5 l",detalle:"Precio por unidad",precio:3290,nuevo:true},
+      {cod:"ABA094",cat:"Abarrotes",nombre:"Charqui equino",detalle:"Precio por kilo",precio:46160,bolsas:[[40,1850],[1000,46160]],nuevo:true,foto:"../img/productos/fotos/ABA094.webp"},
+      {cod:"ABA095",cat:"Abarrotes",nombre:"Charqui equino molido",detalle:"Precio por kilo",precio:40000,bolsas:[[25,1000]],nuevo:true,foto:"../img/productos/fotos/ABA095.webp"},
+      {cod:"ABA035",cat:"Abarrotes",nombre:"Carne de soya",detalle:"Precio por kilo",precio:2980,nuevo:true,bolsas:[[500,1490]],foto:"../img/productos/fotos/ABA035.webp"},
+      {cod:"BEB001",cat:"Bebidas y jugos",nombre:"Agua Vital con gas 600 cc",detalle:"Precio por unidad · paquete de 12 u",precio:410,upp:12,nuevo:true,foto:"../img/productos/fotos/BEB001.webp"},
+      {cod:"BEB002",cat:"Bebidas y jugos",nombre:"Agua Vital con gas 1,6 l",detalle:"Precio por unidad · paquete de 6 u",precio:720,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB002.webp"},
+      {cod:"BEB003",cat:"Bebidas y jugos",nombre:"Agua Vital sin gas 600 cc",detalle:"Precio por unidad · paquete de 12 u",precio:410,upp:12,nuevo:true,foto:"../img/productos/fotos/BEB003.webp"},
+      {cod:"BEB004",cat:"Bebidas y jugos",nombre:"Agua Vital sin gas 1,6 l",detalle:"Precio por unidad · paquete de 6 u",precio:720,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB004.webp"},
+      {cod:"BEB005",cat:"Bebidas y jugos",nombre:"Coca-Cola 561 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1190,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB005.webp"},
+      {cod:"BEB006",cat:"Bebidas y jugos",nombre:"Coca-Cola 1,5 l",detalle:"Precio por unidad · paquete de 6 u",precio:2240,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB006.webp"},
+      {cod:"BEB007",cat:"Bebidas y jugos",nombre:"Coca-Cola 3 l",detalle:"Precio por unidad · paquete de 6 u",precio:3410,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB007.webp"},
+      {cod:"BEB008",cat:"Bebidas y jugos",nombre:"Fanta naranja 1,5 l",detalle:"Precio por unidad · paquete de 6 u",precio:2240,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB008.webp"},
+      {cod:"BEB009",cat:"Bebidas y jugos",nombre:"Sprite 1,5 l",detalle:"Precio por unidad · paquete de 6 u",precio:2220,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB009.webp"},
+      {cod:"BEB010",cat:"Bebidas y jugos",nombre:"Sprite 3 l",detalle:"Precio por unidad · paquete de 6 u",precio:2590,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB010.webp"},
+      {cod:"BEB011",cat:"Bebidas y jugos",nombre:"Jugo Andina del Valle durazno 300 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1040,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB011.webp"},
+      {cod:"BEB012",cat:"Bebidas y jugos",nombre:"Jugo Andina del Valle naranja 300 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1040,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB012.webp"},
+      {cod:"BEB013",cat:"Bebidas y jugos",nombre:"Jugo Andina del Valle piña 200 cc",detalle:"Precio por unidad · paquete de 6 u",precio:370,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB013.webp"},
+      {cod:"BEB014",cat:"Bebidas y jugos",nombre:"Monster Energy 473 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1740,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB014.webp"},
+      {cod:"BEB015",cat:"Bebidas y jugos",nombre:"Monster Ultra 473 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1720,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB015.webp"},
+      {cod:"BEB016",cat:"Bebidas y jugos",nombre:"Néctar Andina del Valle durazno 200 cc",detalle:"Precio por unidad · paquete de 6 u",precio:370,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB016.webp"},
       {cod:"ASE009",cat:"Aseo",nombre:"Prestobarba simpli venus",detalle:"Precio por unidad",precio:774},
       {cod:"ASE008",cat:"Aseo",nombre:"Papel higiénico 50 m Genio",detalle:"Precio por unidad · paquete de 4 u",precio:1000,upp:4,stock:4,foto:"../img/productos/fotos/ASE008.webp"},
       {cod:"ASE012",cat:"Aseo",nombre:"Trapero húmedo Homecleaner",detalle:"Precio por unidad",precio:100,foto:"../img/productos/fotos/ASE012.webp"},
       {cod:"ASE014",cat:"Aseo",nombre:"Trapero húmedo olor naranja Virginia",detalle:"Precio por unidad · paquete de 10 u",precio:100,upp:10,stock:90,foto:"../img/productos/fotos/ASE014.webp"},
       {cod:"ASE011",cat:"Aseo",nombre:"Trapero algodón Virutex",detalle:"Precio por unidad",precio:1500},
       {cod:"ASE010",cat:"Aseo",nombre:"Prestobarba Venus suave aloe vera Gillette",detalle:"Precio por unidad",precio:774,stock:75},
-      {cod:"ASE006",cat:"Aseo",nombre:"Bolsa basura 110 × 120 Doña Gaby",detalle:"Precio por rollo",precio:null,stock:260,foto:"../img/productos/fotos/ASE006.webp"},
+      {cod:"ASE006",cat:"Aseo",nombre:"Bolsa basura 110 × 120 Doña Gaby",detalle:"Precio por rollo",precio:600,stock:260,foto:"../img/productos/fotos/ASE006.webp"},
       {cod:"ASE007",cat:"Aseo",nombre:"Bolsa basura con asas 50 × 65 Superior",detalle:"Precio por rollo",precio:260,stock:130,foto:"../img/productos/fotos/ASE007.webp"},
       {cod:"ASE002",cat:"Aseo",nombre:"Bolsa basura 70 × 90 Clean",detalle:"Precio por rollo",precio:500,stock:23,foto:"../img/productos/fotos/ASE002.webp"},
       {cod:"ASE003",cat:"Aseo",nombre:"Bolsa basura 80 × 110 Impeque",detalle:"Precio por rollo",precio:595,stock:55},
@@ -1759,24 +1871,74 @@ const LOCALES = {
       {cod:"ASE004",cat:"Aseo",nombre:"Bolsa basura 80 × 110 Virutex",detalle:"Precio por rollo",precio:825,stock:39,foto:"../img/productos/fotos/ASE004.webp"},
       {cod:"ASE005",cat:"Aseo",nombre:"Bolsa basura 80 × 120 Superior",detalle:"Precio por rollo",precio:595,stock:30,foto:"../img/productos/fotos/ASE005.webp"},
       {cod:"ASE013",cat:"Aseo",nombre:"Trapero húmedo olor lavanda Virginia",detalle:"Precio por unidad · paquete de 10 u",precio:100,upp:10,stock:140},
+      {cod:"ASE015",cat:"Aseo",nombre:"Bolsa basura 50 × 70",detalle:"Precio por rollo",precio:500,nuevo:true},
+      {cod:"ASE016",cat:"Aseo",nombre:"Papel higiénico 50 m (maleta de 24 rollos)",detalle:"Precio por unidad · paquete de 24 u",precio:500,upp:24,pq:11990,nuevo:true},
+      {cod:"ASE017",cat:"Aseo",nombre:"Detergente Genio 5 l",detalle:"Precio por unidad",precio:1540,nuevo:true},
+      {cod:"ASE018",cat:"Aseo",nombre:"Detergente Genio 3 l",detalle:"Precio por unidad",precio:1100,nuevo:true},
+      {cod:"ASE019",cat:"Aseo",nombre:"Cloro Euge 5 l",detalle:"Precio por unidad",precio:1350,nuevo:true},
       {cod:"OTR012",cat:"Lácteos",nombre:"Quesillo 230 g Los Tilos",detalle:"Precio por unidad",precio:1900},
+      {cod:"LAC001",cat:"Lácteos",nombre:"Queso chanco Don Isidro (pieza)",detalle:"Precio por kilo",precio:9940,bolsas:[[250,2490],[1000,9940]],porcion:true,nuevo:true},
+      {cod:"LAC002",cat:"Lácteos",nombre:"Queso chanco Don Isidro (barra)",detalle:"Precio por kilo",precio:9940,bolsas:[[250,2490],[1000,9940]],porcion:true,nuevo:true},
+      {cod:"LAC003",cat:"Lácteos",nombre:"Queso chanco Río Cruces (pieza)",detalle:"Precio por kilo",precio:10200,bolsas:[[250,2550],[1000,10200]],porcion:true,nuevo:true},
+      {cod:"LAC004",cat:"Lácteos",nombre:"Queso chanco Río Cruces (barra)",detalle:"Precio por kilo",precio:10200,bolsas:[[250,2550],[1000,10200]],porcion:true,nuevo:true},
+      {cod:"LAC005",cat:"Lácteos",nombre:"Queso laminado Don Isidro ¼ kg",detalle:"Precio por unidad",precio:2990,nuevo:true},
+      {cod:"LAC006",cat:"Lácteos",nombre:"Queso laminado Don Isidro ½ kg",detalle:"Precio por unidad",precio:5980,nuevo:true},
+      {cod:"LAC007",cat:"Lácteos",nombre:"Queso gauda (barra)",detalle:"Precio por kilo",precio:5990,bolsas:[[250,1590],[1000,5990]],porcion:true,nuevo:true},
+      {cod:"LAC008",cat:"Lácteos",nombre:"Queso despunte 1 kg",detalle:"Precio por unidad",precio:5990,nuevo:true},
       {cod:"OTR001",cat:"Golosinas",nombre:"Bon o bon dulce de leche",detalle:"Precio por unidad",precio:118},
       {cod:"OTR004",cat:"Otros",nombre:"Hilo ovillo chico",detalle:"Precio por unidad",precio:3990,foto:"../img/productos/fotos/OTR004.webp"},
       {cod:"OTR003",cat:"Otros",nombre:"Hilo cono",detalle:"Precio por unidad",precio:12750,stock:42,foto:"../img/productos/fotos/OTR003.webp"},
-      {cod:"OTR007",cat:"Otros",nombre:"Marmitas",detalle:"Precio por unidad",precio:150},
+      {cod:"OTR007",cat:"Otros",nombre:"Marmitas",detalle:"Precio por unidad",precio:200},
       {cod:"OTR013",cat:"Otros",nombre:"Toalla clásica Nova",detalle:"Precio por paquete",precio:2100},
       {cod:"OTR006",cat:"Otros",nombre:"Limpiapisos 900 cc Glade",detalle:"Precio por unidad",precio:1498},
       {cod:"OTR008",cat:"Otros",nombre:"Pasta de zapatos café Virginia",detalle:"Precio por unidad",precio:1175,foto:"../img/productos/fotos/OTR008.webp"},
       {cod:"OTR009",cat:"Otros",nombre:"Pasta de zapatos negro Virginia",detalle:"Precio por unidad",precio:1095,foto:"../img/productos/fotos/OTR009.webp"},
       {cod:"ANT-OTR011",cat:"Otros",nombre:"Hilo bobina colores",detalle:"Precio por unidad",precio:6600,retirado:true},
-      {cod:"OTR010",cat:"Otros",nombre:"Pita de color (rollo chico)",detalle:"Precio por unidad",precio:null,stock:8,foto:"../img/productos/fotos/OTR010.webp"},
-      {cod:"OTR011",cat:"Otros",nombre:"Pita (rollo grande)",detalle:"Precio por unidad",precio:null,stock:19,foto:"../img/productos/fotos/OTR011.webp"},
-      {cod:"OTR005",cat:"Otros",nombre:"Hilo (rollo grande)",detalle:"Precio por unidad",precio:null,stock:18},
+      {cod:"OTR010",cat:"Otros",nombre:"Pita de color (rollo chico)",detalle:"Precio por unidad",precio:2500,stock:8,foto:"../img/productos/fotos/OTR010.webp"},
+      {cod:"OTR011",cat:"Otros",nombre:"Pita (rollo grande)",detalle:"Precio por unidad",precio:9990,stock:19,foto:"../img/productos/fotos/OTR011.webp"},
+      {cod:"OTR005",cat:"Otros",nombre:"Hilo (rollo grande)",detalle:"Precio por unidad",precio:5990,stock:18},
+      {cod:"OTR014",cat:"Otros",nombre:"Balanza 40 kg",detalle:"Precio por unidad",precio:27000,nuevo:true},
+      {cod:"OTR015",cat:"Otros",nombre:"Balanza 150 kg",detalle:"Precio por unidad",precio:41290,nuevo:true},
+      {cod:"OTR016",cat:"Otros",nombre:"Balanza 300 kg",detalle:"Precio por unidad",precio:57000,nuevo:true},
       // Granel por bolsa (David, 19/11/2026): precio por kilo de la planilla (7) y precio de cada bolsa (columna «Precio por bolsa»)
-      {cod:"ABA080",cat:"Especias y sales",nombre:"Sal Himalaya fina",detalle:"Precio por kilo",precio:3200,bolsas:[[250, 830]],nuevo:true},
+      {cod:"ABA080",cat:"Especias y sales",nombre:"Sal Himalaya fina",detalle:"Precio por kilo",precio:3200,bolsas:[[250, 830]],nuevo:true,foto:"../img/productos/fotos/ABA080.webp"},
       {cod:"ABA081",cat:"Especias y sales",nombre:"Sal Himalaya gruesa",detalle:"Precio por kilo",precio:3200,bolsas:[[250, 830]],nuevo:true},
+      {cod:"ABA018",cat:"Especias y sales",nombre:"Ajinomoto",detalle:"Precio por kilo",precio:3890,nuevo:true,bolsas:[[500,1990],[1000,3890]]},
+      {cod:"ABA019",cat:"Especias y sales",nombre:"Ajo en escamas",detalle:"Precio por kilo",precio:9900,nuevo:true,bolsas:[[100,990]],foto:"../img/productos/fotos/ABA019.webp"},
+      {cod:"ABA020",cat:"Especias y sales",nombre:"Ajo en polvo",detalle:"Precio por kilo",precio:9900,nuevo:true,bolsas:[[100,990]]},
+      {cod:"ABA021",cat:"Especias y sales",nombre:"Albahaca",detalle:"Precio por kilo",precio:37500,nuevo:true,bolsas:[[20,750]]},
+      {cod:"ABA026",cat:"Especias y sales",nombre:"Anís en polvo",detalle:"Precio por kilo",precio:11400,nuevo:true,bolsas:[[50,570]]},
+      {cod:"ABA033",cat:"Especias y sales",nombre:"Canela en polvo",detalle:"Precio por kilo",precio:18990,nuevo:true,bolsas:[[50,990],[100,1950],[1000,18990]]},
+      {cod:"ABA034",cat:"Especias y sales",nombre:"Cardamomo en polvo",detalle:"Precio por kilo",precio:90360,nuevo:true,fav:true,bolsas:[[250,22590]]},
+      {cod:"ABA036",cat:"Especias y sales",nombre:"Cebolla en escamas",detalle:"Precio por kilo",precio:19900,nuevo:true,bolsas:[[100,1990]]},
+      {cod:"ABA041",cat:"Especias y sales",nombre:"Cilantro",detalle:"Precio por kilo",precio:4990,nuevo:true,bolsas:[[50,590],[1000,4990]]},
+      {cod:"ABA042",cat:"Especias y sales",nombre:"Clavo de olor",detalle:"Precio por kilo",precio:39800,nuevo:true,bolsas:[[50,1990]]},
+      {cod:"ABA043",cat:"Especias y sales",nombre:"Clavo de olor molido",detalle:"Precio por kilo",precio:29900,nuevo:true,bolsas:[[100,2990]]},
+      {cod:"ABA045",cat:"Especias y sales",nombre:"Curry en polvo",detalle:"Precio por kilo",precio:25900,nuevo:true,bolsas:[[100,2590]]},
+      {cod:"ABA046",cat:"Especias y sales",nombre:"Eneldo",detalle:"Precio por kilo",precio:63600,nuevo:true,bolsas:[[25,1590]]},
+      {cod:"ABA047",cat:"Especias y sales",nombre:"Estragón",detalle:"Precio por kilo",precio:null,nuevo:true},
+      {cod:"ABA056",cat:"Especias y sales",nombre:"Jengibre",detalle:"Precio por kilo",precio:15900,nuevo:true,bolsas:[[100,1590]]},
+      {cod:"ABA063",cat:"Especias y sales",nombre:"Maqui molido",detalle:"Precio por kilo",precio:71800,nuevo:true,bolsas:[[50,3590]]},
+      {cod:"ABA064",cat:"Especias y sales",nombre:"Merkén",detalle:"Precio por kilo",precio:18900,nuevo:true,bolsas:[[100,1890]]},
+      {cod:"ABA072",cat:"Especias y sales",nombre:"Nuez moscada entera",detalle:"Precio por kilo",precio:null,nuevo:true},
+      {cod:"ABA073",cat:"Especias y sales",nombre:"Nuez moscada molida",detalle:"Precio por kilo",precio:39980,nuevo:true,bolsas:[[50,2190],[500,19990]]},
+      {cod:"ABA074",cat:"Especias y sales",nombre:"Pimentón rojo",detalle:"Precio por kilo",precio:15900,nuevo:true,bolsas:[[100,1590]]},
+      {cod:"ABA075",cat:"Especias y sales",nombre:"Pimienta blanca",detalle:"Precio por kilo",precio:13500,nuevo:true,bolsas:[[100,1350]]},
+      {cod:"ABA076",cat:"Especias y sales",nombre:"Pimienta blanca entera",detalle:"Precio por kilo",precio:13500,nuevo:true,bolsas:[[100,1350]]},
+      {cod:"ABA077",cat:"Especias y sales",nombre:"Pimienta negra entera",detalle:"Precio por kilo",precio:13500,nuevo:true,bolsas:[[100,1350]]},
+      {cod:"ABA082",cat:"Especias y sales",nombre:"Semilla de anís partida",detalle:"Precio por kilo",precio:15970,nuevo:true,bolsas:[[50,850],[1000,15970]]},
       {cod:"ABA031",cat:"Frutos secos y deshidratados",nombre:"Banana chip",detalle:"Precio por kilo",precio:8000,bolsas:[[100, 800]],nuevo:true},
       {cod:"ABA049",cat:"Frutos secos y deshidratados",nombre:"Fruta confitada",detalle:"Precio por kilo",precio:3590,bolsas:[[500, 1860], [1000, 3590]],nuevo:true},
+      {cod:"ABA022",cat:"Frutos secos y deshidratados",nombre:"Almendra",detalle:"Precio por kilo",precio:14990,nuevo:true,bolsas:[[100,1890],[250,3990],[1000,14990]],foto:"../img/productos/fotos/ABA022.webp",fotos:["../img/productos/fotos/ABA022.webp","../img/productos/fotos/ABA022-granel.webp"],fotoFmt:{Fb1000:"../img/productos/fotos/ABA022-granel.webp"}},
+      {cod:"ABA023",cat:"Frutos secos y deshidratados",nombre:"Almendra laminada",detalle:"Precio por kilo",precio:17590,nuevo:true,bolsas:[[100,1899],[1000,17590]],foto:"../img/productos/fotos/ABA023.webp"},
+      {cod:"ABA027",cat:"Frutos secos y deshidratados",nombre:"Avellana",detalle:"Precio por kilo",precio:21430,nuevo:true},
+      {cod:"ABA044",cat:"Frutos secos y deshidratados",nombre:"Coco rallado",detalle:"Precio por kilo",precio:7960,nuevo:true,bolsas:[[250,1990]]},
+      {cod:"ABA051",cat:"Frutos secos y deshidratados",nombre:"Gran berry",detalle:"Precio por kilo",precio:13990,nuevo:true,bolsas:[[100,1590],[1000,13990]],foto:"../img/productos/fotos/ABA051.webp"},
+      {cod:"ABA061",cat:"Frutos secos y deshidratados",nombre:"Maní confitado sabor queso",detalle:"Precio por kilo",precio:11900,nuevo:true,bolsas:[[100,1190]]},
+      {cod:"ABA062",cat:"Frutos secos y deshidratados",nombre:"Maqui entero",detalle:"Precio por kilo",precio:59800,nuevo:true,bolsas:[[50,2990]]},
+      {cod:"ABA065",cat:"Frutos secos y deshidratados",nombre:"Mix cóctel",detalle:"Precio por kilo",precio:7570,nuevo:true},
+      {cod:"ABA066",cat:"Frutos secos y deshidratados",nombre:"Mix tropical",detalle:"Precio por kilo",precio:7180,nuevo:true},
+      {cod:"ABA071",cat:"Frutos secos y deshidratados",nombre:"Nuez",detalle:"Precio por kilo",precio:21900,nuevo:true,bolsas:[[100,2190]],foto:"../img/productos/fotos/ABA071.webp"},
       {cod:"ABA029",cat:"Harinas y repostería",nombre:"Azúcar de coco",detalle:"Precio por kilo",precio:5790,bolsas:[[250, 1500]],nuevo:true},
       {cod:"ABA030",cat:"Harinas y repostería",nombre:"Azúcar rubia",detalle:"Precio por kilo",precio:2090,bolsas:[[500, 1090]],nuevo:true},
       {cod:"ABA040",cat:"Harinas y repostería",nombre:"Chuño",detalle:"Precio por kilo",precio:3180,bolsas:[[500, 1590]],nuevo:true},
@@ -1787,30 +1949,32 @@ const LOCALES = {
       {cod:"ABA055",cat:"Harinas y repostería",nombre:"Harina tostada",detalle:"Precio por kilo",precio:1290,bolsas:[[1000, 1290]],nuevo:true},
       {cod:"ABA057",cat:"Harinas y repostería",nombre:"Levadura instantánea",detalle:"Precio por kilo",precio:10000,bolsas:[[50, 500]],nuevo:true},
       {cod:"ABA059",cat:"Harinas y repostería",nombre:"Maicena",detalle:"Precio por kilo",precio:1780,bolsas:[[500, 890]],nuevo:true},
-      {cod:"ABA067",cat:"Harinas y repostería",nombre:"Mostacilla de chocolate",detalle:"Precio por kilo",precio:7900,bolsas:[[100, 790], [1000, 7900]],nuevo:true},
-      {cod:"ABA068",cat:"Harinas y repostería",nombre:"Mostacilla de color de palito",detalle:"Precio por kilo",precio:7900,bolsas:[[100, 790]],nuevo:true},
-      {cod:"ABA069",cat:"Harinas y repostería",nombre:"Mostacilla de color redonda",detalle:"Precio por kilo",precio:7900,bolsas:[[10, 90]],nuevo:true},
-      {cod:"ABA024",cat:"Semillas y cereales",nombre:"Amapola",detalle:"Precio por kilo",precio:9990,bolsas:[[50, 750]],nuevo:true},
+      {cod:"ABA067",cat:"Harinas y repostería",nombre:"Mostacilla de chocolate",detalle:"Precio por kilo",precio:7900,bolsas:[[100, 790], [1000, 7900]],nuevo:true,foto:"../img/productos/fotos/ABA067.webp"},
+      {cod:"ABA068",cat:"Harinas y repostería",nombre:"Mostacilla de color de palito",detalle:"Precio por kilo",precio:7900,bolsas:[[100, 790]],nuevo:true,foto:"../img/productos/fotos/ABA068.webp"},
+      {cod:"ABA069",cat:"Harinas y repostería",nombre:"Mostacilla de color redonda",detalle:"Precio por kilo",precio:7900,bolsas:[[10, 90]],nuevo:true,foto:"../img/productos/fotos/ABA069.webp"},
+      {cod:"ABA032",cat:"Harinas y repostería",nombre:"Cacao ecuatoriano",detalle:"Precio por kilo",precio:9960,nuevo:true,bolsas:[[250,2490]]},
+      {cod:"ABA038",cat:"Harinas y repostería",nombre:"Chocolate dulce",detalle:"Precio por kilo",precio:8760,nuevo:true,bolsas:[[250,2190]]},
+      {cod:"ABA024",cat:"Semillas y cereales",nombre:"Amapola",detalle:"Precio por kilo",precio:9990,bolsas:[[50, 750]],nuevo:true,foto:"../img/productos/fotos/ABA024.webp"},
       {cod:"ABA025",cat:"Semillas y cereales",nombre:"Amaranto",detalle:"Precio por kilo",precio:4590,bolsas:[[500, 2380]],nuevo:true},
       {cod:"ABA028",cat:"Semillas y cereales",nombre:"Avena pelada entera",detalle:"Precio por kilo",precio:640,bolsas:[[1000, 990], [25000, 15990]],nuevo:true},
-      {cod:"ABA039",cat:"Semillas y cereales",nombre:"Chuchoca entera",detalle:"Precio por kilo",precio:2890,bolsas:[[500, 1500]],nuevo:true},
+      {cod:"ABA039",cat:"Semillas y cereales",nombre:"Chuchoca entera",detalle:"Precio por kilo",precio:2890,bolsas:[[500, 1500]],nuevo:true,foto:"../img/productos/fotos/ABA039.webp"},
       {cod:"ABA037",cat:"Semillas y cereales",nombre:"Chía",detalle:"Precio por kilo",precio:5590,bolsas:[[100, 750], [500, 3250], [1000, 5590]],nuevo:true},
-      {cod:"ABA058",cat:"Semillas y cereales",nombre:"Linaza entera",detalle:"Precio por kilo",precio:3490,bolsas:[[500, 1890]],nuevo:true},
-      {cod:"ABA060",cat:"Semillas y cereales",nombre:"Maíz para palomitas",detalle:"Precio por kilo",precio:2390,bolsas:[[500, 1240], [1000, 2390]],nuevo:true},
+      {cod:"ABA058",cat:"Semillas y cereales",nombre:"Linaza entera",detalle:"Precio por kilo",precio:3490,bolsas:[[500, 1890]],nuevo:true,foto:"../img/productos/fotos/ABA058.webp"},
+      {cod:"ABA060",cat:"Semillas y cereales",nombre:"Maíz para palomitas",detalle:"Precio por kilo",precio:2390,bolsas:[[500, 1240], [1000, 2390]],nuevo:true,foto:"../img/productos/fotos/ABA060.webp"},
       {cod:"ABA070",cat:"Semillas y cereales",nombre:"Mote de trigo",detalle:"Precio por kilo",precio:1790,bolsas:[[1000, 1790]],nuevo:true},
-      {cod:"ABA078",cat:"Semillas y cereales",nombre:"Quinoa",detalle:"Precio por kilo",precio:4590,bolsas:[[500, 2380], [1000, 4590]],nuevo:true},
-      {cod:"ABA079",cat:"Semillas y cereales",nombre:"Quinoa pipoca",detalle:"Precio por kilo",precio:9990,bolsas:[[250, 2560], [500, 5120]],nuevo:true},
-      {cod:"ABA083",cat:"Semillas y cereales",nombre:"Semilla de calabaza",detalle:"Precio por kilo",precio:8990,bolsas:[[100, 940], [1000, 8990]],nuevo:true},
-      {cod:"ABA084",cat:"Semillas y cereales",nombre:"Semilla de maravilla",detalle:"Precio por kilo",precio:3590,bolsas:[[250, 920], [500, 1840]],nuevo:true},
-      {cod:"ABA085",cat:"Semillas y cereales",nombre:"Sésamo blanco",detalle:"Precio por kilo",precio:5990,bolsas:[[100, 620]],nuevo:true},
-      {cod:"ABA086",cat:"Semillas y cereales",nombre:"Sésamo negro",detalle:"Precio por kilo",precio:5990,bolsas:[[100, 620]],nuevo:true},
-      {cod:"ABA087",cat:"Semillas y cereales",nombre:"Sésamo tostado",detalle:"Precio por kilo",precio:5990,bolsas:[[100, 620]],nuevo:true},
-      {cod:"ABA048",cat:"Té e infusiones",nombre:"Flor de Jamaica",detalle:"Precio por kilo",precio:4990,bolsas:[[50, 260]],nuevo:true},
-      {cod:"ABA088",cat:"Té e infusiones",nombre:"Té azul",detalle:"Precio por kilo",precio:15990,bolsas:[[50, 830]],nuevo:true},
+      {cod:"ABA078",cat:"Semillas y cereales",nombre:"Quinoa",detalle:"Precio por kilo",precio:4590,bolsas:[[500, 2380], [1000, 4590]],nuevo:true,foto:"../img/productos/fotos/ABA078.webp"},
+      {cod:"ABA079",cat:"Semillas y cereales",nombre:"Quinoa pipoca",detalle:"Precio por kilo",precio:9990,bolsas:[[250, 2560], [500, 5120]],nuevo:true,foto:"../img/productos/fotos/ABA079.webp",fotos:["../img/productos/fotos/ABA079.webp","../img/productos/fotos/ABA079-2.webp"]},
+      {cod:"ABA083",cat:"Semillas y cereales",nombre:"Semilla de calabaza",detalle:"Precio por kilo",precio:8990,bolsas:[[100, 940], [1000, 8990]],nuevo:true,foto:"../img/productos/fotos/ABA083.webp"},
+      {cod:"ABA084",cat:"Semillas y cereales",nombre:"Semilla de maravilla",detalle:"Precio por kilo",precio:3590,bolsas:[[250, 920], [500, 1840]],nuevo:true,foto:"../img/productos/fotos/ABA084.webp"},
+      {cod:"ABA085",cat:"Semillas y cereales",nombre:"Sésamo blanco",detalle:"Precio por kilo",precio:5990,bolsas:[[100, 620]],nuevo:true,foto:"../img/productos/fotos/ABA085.webp"},
+      {cod:"ABA086",cat:"Semillas y cereales",nombre:"Sésamo negro",detalle:"Precio por kilo",precio:5990,bolsas:[[100, 620]],nuevo:true,foto:"../img/productos/fotos/ABA086.webp"},
+      {cod:"ABA087",cat:"Semillas y cereales",nombre:"Sésamo tostado",detalle:"Precio por kilo",precio:5990,bolsas:[[100, 620]],nuevo:true,foto:"../img/productos/fotos/ABA087.webp"},
+      {cod:"ABA048",cat:"Té e infusiones",nombre:"Flor de Jamaica",detalle:"Precio por kilo",precio:4990,bolsas:[[50, 260]],nuevo:true,foto:"../img/productos/fotos/ABA048.webp"},
+      {cod:"ABA088",cat:"Té e infusiones",nombre:"Té azul",detalle:"Precio por kilo",precio:15990,bolsas:[[50, 830]],nuevo:true,foto:"../img/productos/fotos/ABA088.webp"},
       {cod:"ABA089",cat:"Té e infusiones",nombre:"Té negro",detalle:"Precio por kilo",precio:7990,bolsas:[[250, 2070]],nuevo:true},
       {cod:"ABA090",cat:"Té e infusiones",nombre:"Té negro Ceylán",detalle:"Precio por kilo",precio:7990,bolsas:[[50, 420]],nuevo:true},
       {cod:"ABA091",cat:"Té e infusiones",nombre:"Té rojo",detalle:"Precio por kilo",precio:7990,bolsas:[[50, 420]],nuevo:true},
-      {cod:"ABA092",cat:"Té e infusiones",nombre:"Té verde",detalle:"Precio por kilo",precio:7990,bolsas:[[100, 830]],nuevo:true},
+      {cod:"ABA092",cat:"Té e infusiones",nombre:"Té verde",detalle:"Precio por kilo",precio:7990,bolsas:[[100, 830]],nuevo:true,foto:"../img/productos/fotos/ABA092.webp"},
       {cod:"ABA093",cat:"Té e infusiones",nombre:"Té verde jazmín",detalle:"Precio por kilo",precio:7990,bolsas:[[50, 420]],nuevo:true},
     ]
   },
@@ -2094,10 +2258,47 @@ const FAV="Ofertas y promos";
 L.productos.push({cod:"PROMO-GYMBRO",cat:"Promos",nombre:"Promo Gym Bro: bandeja de 30 huevos tercera + Monster Ultra",detalle:"Monster Ultra blanca, sin azúcar · bebida no recomendada para menores de 18 años, embarazadas ni personas sensibles a la cafeína",precio:3800,fav:true,promo:true,foto:"../img/productos/monster.webp"});
 L.productos.push({cod:"PROMO-EXTRA-RC",cat:"Promos",nombre:"Promo huevo extra + queso chanco Río Cruces ¼ kg",detalle:"Bandeja de 30 huevos extra (blanco o café) y ¼ kg de queso chanco Río Cruces · 5 % menos que por separado",precio:7450,fav:true,promo:true,foto:"../img/huevos-blancos-bandeja.jpg"});
 L.productos.push({cod:"PROMO-EXTRA-DI",cat:"Promos",nombre:"Promo huevo extra + queso chanco Don Isidro ¼ kg",detalle:"Bandeja de 30 huevos extra (blanco o café) y ¼ kg de queso chanco Don Isidro · 5 % menos que por separado",precio:7400,fav:true,promo:true,foto:"../img/huevos-blancos-bandeja.jpg"});
+L.productos.push({cod:"PROMO-BASURA-3",cat:"Promos",nombre:"Promo bolsa de basura 50 × 70: 3 rollos",detalle:"3 rollos de bolsa de basura 50 × 70 (sale a $463 el rollo)",precio:1390,fav:true,promo:true});
 /* Huevos: la misma foto para todos los calibres (bandeja de huevos blancos o café, según el color) */
 L.productos.forEach(p=>{if(p.foto||p.cat!=="Huevos")return;p.foto=/caf[eé]|color|rojo|marr[oó]n|novogen/i.test(p.nombre)?"../img/huevos-cafe-bandeja.jpg":"../img/huevos-blancos-bandeja.jpg"});
 /* Foto por caja (vista «por caja» de las páginas de huevos; David, 19/11/2026): huevos de color, todos los tamaños con la misma foto */
 L.productos.forEach(p=>{if(p.cat==="Huevos"&&!/quinta/i.test(p.nombre))p.fotoCaja=/caf[eé]|color/i.test(p.nombre)?"../img/productos/fotos/huevos-color-caja.webp":"../img/productos/fotos/huevos-blancos-caja.webp"});
+/* Productos por llegar (David, 19/11/2026): quedan cargados en el editor y en el Excel, pero no se muestran hasta que lleguen */
+L.productos.forEach(p=>{if(p.porLlegar)p.retirado=true});
+  /* Lista de precios de alimentos del 13-11-2026 (Distribuidora Avícola Santa Bárbara): precio sala de 1 saco y precios por mayor */
+  const ALIMENTOS=[
+    {g:"Alimentos",n:"Ponedora",d:"Saco de 25 kg",p:14500,m:"Desde 40 sacos: $14.000",msj:"alimento de ponedora"},
+    {g:"Alimentos",n:"Pollita",d:"Saco de 25 kg",p:16000,m:"Desde 40 sacos: $15.500",msj:"alimento de pollita"},
+    {g:"Alimentos",n:"Conchuela",d:"Saco de 25 kg",p:3990,m:"Desde 2: $3.700 · desde 11: $3.400"},
+    {g:"Alimentos",n:"Afrechillo",d:"Saco de 25 kg",p:7700,m:"Desde 2: $7.300 · desde 11: $6.400"},
+    {g:"Alimentos",n:"Bicarbonato",d:"Saco de 25 kg",p:20000,m:"Desde 2 sacos: $19.000"},
+    {g:"Alimentos",n:"Maíz chancado",d:"Saco de 25 kg",p:12000,m:"Desde 2: $11.700 · desde 11: $11.400"},
+    {g:"Alimentos",n:"Fosfato peruano",d:"Saco de 25 kg",p:37000},
+    {g:"Alimentos",n:"Harina de carne",d:"Saco de 25 kg",p:24000},
+    {g:"Alimentos",n:"Maíz entero",d:"Saco de 25 kg",p:10500,m:"Desde 2: $10.200 · desde 11: $9.990"},
+    {g:"Alimentos",n:"Sal",d:"Saco de 25 kg",p:4500,m:"Desde 2 sacos: $4.000"},
+    {g:"Alimentos",n:"Soya",d:"Saco de 25 kg",p:19500,m:"Desde 40 sacos: $18.900"},
+    {g:"Núcleos y aditivos",n:"Fintox",d:"Saco de 25 kg",k:5000,p:104900},
+    {g:"Núcleos y aditivos",n:"Lisina",d:"Saco de 25 kg",k:3500,p:60000},
+    {g:"Núcleos y aditivos",n:"Metionina",d:"Saco de 25 kg",k:9200,p:210000},
+    {g:"Núcleos y aditivos",n:"Núcleo pollita",d:"Saco de 24 kg",k:8500,p:178000},
+    {g:"Núcleos y aditivos",n:"Núcleo ponedora Nutrial",d:"Saco de 24 kg",k:10500,p:218850},
+    {g:"Núcleos y aditivos",n:"Núcleo ponedora Rovimix",d:"Saco de 24 kg",k:15750,p:365000},
+    {g:"Núcleos y aditivos",n:"Peptasan",d:"Saco de 25 kg",k:11500,p:244000},
+    {g:"Núcleos y aditivos",n:"Polifeed",d:"Saco de 20 kg",k:8500,p:92990}];
+/* Alimento para aves también en el menú del catálogo (David, 19/11/2026): cada alimento es un producto del Emporio que va al carro.
+   Por saco (con los tramos de la lista: «Desde 40 sacos: $14.000»); núcleos y aditivos por kilo y por saco si se sabe su peso.
+   La sección «Pedidos a la avícola» sigue igual, por WhatsApp. ALI001–ALI004: códigos de la planilla de inventario. */
+const ALI_COD={"Ponedora":"ALI001","Pollita":"ALI002","Maíz chancado":"ALI003","Maíz entero":"ALI004"};
+if(KEY==="emporio")ALIMENTOS.forEach(a=>{
+  const cod=ALI_COD[a.n]||"ALI-"+a.n.normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase().replace(/[^A-Z0-9]+/g,"-");
+  const nombre=a.msj?a.msj[0].toUpperCase()+a.msj.slice(1):a.n, kg=+((String(a.d).match(/(\d+) kg/)||[])[1]||0);
+  if(a.k!=null){L.productos.push({cod,cat:a.g,nombre,detalle:"Precio por kilo",precio:a.k,bolsas:kg?[[1000,a.k],[kg*1000,a.p]]:[[1000,a.k]],alimento:true});return}
+  const tramos=[];String(a.m||"").replace(/desde (\d+)(?: sacos?)?: \$([\d.]+)/gi,(x,d,pr)=>{tramos.push([+d,+pr.replace(/\./g,"")])});
+  L.productos.push({cod,cat:a.g,nombre,detalle:"Precio por "+String(a.d).toLowerCase(),precio:a.p,tramos,uni:"saco",alimento:true});
+});
+/* Íconos de las secciones nuevas (19/11/2026): bebidas y quesos usan los dibujos que ya existían */
+ICONOS["Bebidas y jugos"]=ICONOS.Bebidas;L.productos.forEach(p=>{if(/^queso/i.test(p.nombre)&&!p.icono)p.icono="Quesos"});
 const PROD=Object.fromEntries(L.productos.map(p=>[p.cod,p]));
 const esPieza=p=>p.cat==="Tapas"||p.cat==="Blondas"; // piezas que van incluidas en otro producto, no se venden solas
 const pieza=t=>t&&t.cat==="Blondas"?"blonda":"tapa", porQue=t=>t&&t.cat==="Blondas"?"bandeja":"envase";
@@ -2109,7 +2310,7 @@ const FORMATOS={huevo:[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",
 /* Súper y jumbo: bandeja de 20 y caja de 100 (no van en bandeja de 30 ni en caja de 180) */
 /* Granel por bolsa (19/11/2026): cada producto con «bolsas» [[gramos, precio]] tiene sus formatos «Bolsa de 100 g»… con precio fijo */
 L.productos.forEach(p=>{if(!Array.isArray(p.bolsas)||!p.bolsas.length)return;p.formatos="b-"+p.cod;
-  FORMATOS[p.formatos]=p.bolsas.map(([g])=>["Fb"+g,g>=20000?`Saco de ${g/1000} kg`:g>=1000?(g===1000?"Bolsa de 1 kg":`Bolsa de ${String(g/1000).replace(".",",")} kg`):`Bolsa de ${g} g`,g])});
+  FORMATOS[p.formatos]=p.bolsas.map(([g])=>["Fb"+g,p.porcion?({250:"¼ kg",500:"½ kg",1000:"1 kg"}[g]||`${g} g`):g>=20000?`Saco de ${g/1000} kg`:g>=1000?(g===1000?"Bolsa de 1 kg":`Bolsa de ${String(g/1000).replace(".",",")} kg`):`Bolsa de ${g} g`,g])}); // porcion: quesos que se cortan (¼ kg, 1 kg)
 FORMATOS.huevoGrande=[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F20","Bandeja de 20",20],["F100","Caja de 100",100]];
 Object.keys(cart).forEach(k=>{const p=PROD[k.replace(/@.*$/,"")];const f=(k.match(/@(F\d+)$/)||[])[1];if(!p||p.retirado||esPieza(p)||(k.endsWith("@P")&&!(p.upp>1))||(f&&!(FORMATOS[p.formatos]||[]).some(x=>x[0]===f)))delete cart[k]});
 let tapaSel={};try{tapaSel=JSON.parse(leePref("tapas-"+KEY)||"{}")||{}}catch(e){tapaSel={}}
@@ -2130,9 +2331,9 @@ const SUBCATS={
   "Potes y salseros":[["Potes",/^pote/],["Salseros",/./]],
   "Aluminio":[["Envases de aluminio",/^envase/],["Foil y moldes de aluminio",/./]],
   "Abarrotes":[["Esencias y colorantes",/^(esencia|colorante)/],["Abarrotes",/./]],
-  "Aseo":[["Bolsas de basura",/^bolsa basura/],["Traperos",/^trapero/],["Papel higiénico y afeitado",/./]],
+  "Aseo":[["Bolsas de basura",/^bolsa basura/],["Traperos",/^trapero/],["Detergentes y cloro",/^(detergente|cloro)/],["Papel higiénico y afeitado",/./]],
   "Conservas":[["Frutas en conserva",/^(durazno|pina)/],["Mariscos y atún",/./]],
-  "Otros":[["Hilos y pitas",/^(hilo|pita)/],["Otros",/./]]
+  "Otros":[["Hilos y pitas",/^(hilo|pita)/],["Balanzas",/^balanza/],["Otros",/./]]
 };
 const BASEDE={}, ORDENSUB={};
 Object.entries(SUBCATS).forEach(([b,l])=>l.forEach(([n],i)=>{BASEDE[n]=b;ORDENSUB[n]=i}));
@@ -2144,7 +2345,7 @@ const CALIBRE=p=>{const n=nPlano(p.nombre);if(/quinta/.test(n))return /jumbo/.te
   hv.map((p,i)=>({p,i,k:CALIBRE(p)})).sort((a,b)=>a.k-b.k||a.i-b.i).forEach((o,j)=>{L.productos[pos[j]]=o.p})})();
 /* Ofertas del mes con precio por formato (dato del Emporio): bandeja de 30 de huevo tercera a $2.000.
    Solo esa bandeja lleva el precio de oferta; la unidad, la docena y la caja siguen con su precio normal. */
-const OFERTAS_FMT={HUE020:{F30:2000},HUE021:{F30:2000}};
+const OFERTAS_FMT={HUE020:{F30:2000},HUE021:{F30:2000},ABA034:{Fb250:19590}};
 L.productos.forEach(p=>{const o=OFERTAS_FMT[p.cod];if(o){p.ofertaFmt=o;p.fav=true}});
 const precioFmt=(p,fid)=>p.ofertaFmt&&p.ofertaFmt[fid]!=null?p.ofertaFmt[fid]:null;
 /* Lista de precios de huevos del 12-11-2026 (con IVA, blanco y color; David, 19/11/2026): bandeja y caja.
@@ -2156,11 +2357,10 @@ const LISTA_HUEVOS={
   extra:{F30:5300,F180:[27000,26000,25000,22500]},
   primera:{F30:5000,F180:[24000,23000,22000,21000]},
   segunda:{F30:4000,F180:[16500,15500,15000,14500]},
-  tercera:{F30:3500,F180:[12000,null,null,11000]},
-  quintaJumbo:{F20:1500,F100:[10000,null,null,null]}
+  tercera:{F30:3500,F180:[12000,null,null,11000]}
 };
 const TRAMOS_CAJA=[1,5,25,35];
-const CAL_HUEVO={HUE004:"superJumbo",HUE005:"jumbo",HUE006:"jumbo",HUE007:"super",HUE009:"super",HUE012:"extra",HUE013:"extra",HUE014:"primera",HUE015:"primera",HUE017:"segunda",HUE018:"segunda",HUE020:"tercera",HUE021:"tercera",HUE022:"quintaJumbo"};
+const CAL_HUEVO={HUE004:"superJumbo",HUE005:"jumbo",HUE006:"jumbo",HUE007:"super",HUE009:"super",HUE012:"extra",HUE013:"extra",HUE014:"primera",HUE015:"primera",HUE017:"segunda",HUE018:"segunda",HUE020:"tercera",HUE021:"tercera"};
 // precio de lista de un formato de huevo para n bandejas o cajas (la caja baja por tramos); null si no hay
 function precioLista(p,fid,n){if(p.bolsas){const b=p.bolsas.find(([g])=>"Fb"+g===fid);return b?b[1]:null}const c=LISTA_HUEVOS[CAL_HUEVO[p.cod]],v=c&&c[fid];if(v==null)return null;if(!Array.isArray(v))return v;let pr=v[0];TRAMOS_CAJA.forEach((d,i)=>{if(n>=d&&v[i]!=null)pr=v[i]});return pr}
 // páginas de huevos en vista «por caja»: ahí la caja es la única forma de venta (sin selector de formato)
@@ -2196,17 +2396,18 @@ const visibles=L.productos.filter(p=>!esPieza(p)&&!p.retirado); // retirado: ya 
 const favs=visibles.filter(p=>p.fav||p.oferta!=null);
 /* Familias: en el menú se ve primero la familia («Plásticos») y al tocarla se despliegan sus páginas («Envases», «Contenedores»…) */
 const FAMILIAS=[
-  ["Huevos",["Huevos blancos","Huevos de color","Huevos de quinta","Huevos","Hueveras"]],
+  ["Huevos",["Huevos blancos","Huevos de color","Huevos","Hueveras"]],
+  ["Alimento para aves",["Alimentos","Núcleos y aditivos"]],
   ["Plásticos",["Envases","Contenedores","Cúpulas","Potes","Salseros"]],
   ["Cartón",["Cajas de cartón","Bandejas de cartón","Bowls y conos de cartón"]],
   ["Aluminio",["Envases de aluminio","Foil y moldes de aluminio"]],
   ["Bolsas y papeles",["Bolsas","Sacos y mallas","Papeles y film"]],
   ["Vasos, platos y cubiertos",["Vasos","Platos","Cubiertos y servilletas","Bombillas, brochetas y palitos"]],
   ["Repostería",["Moldes","Esencias y colorantes"]],
-  ["Despensa",["Abarrotes","Frutas en conserva","Mariscos y atún","Lácteos","Golosinas"]],
+  ["Despensa",["Abarrotes","Bebidas y jugos","Frutas en conserva","Mariscos y atún","Lácteos","Golosinas"]],
   ["Granel",["Frutos secos y deshidratados","Semillas y cereales","Harinas y repostería","Té e infusiones","Especias y sales"]],
-  ["Aseo",["Bolsas de basura","Traperos","Papel higiénico y afeitado","Guantes y cofias"]],
-  ["Otros",["Hilos y pitas","Otros"]]
+  ["Aseo",["Bolsas de basura","Traperos","Detergentes y cloro","Papel higiénico y afeitado","Guantes y cofias"]],
+  ["Otros",["Hilos y pitas","Balanzas","Otros"]]
 ];
 const hayCat=new Set(visibles.filter(p=>!p.promo).map(p=>p.cat));
 const FAMS=FAMILIAS.map(([f,l])=>[f,l.filter(x=>hayCat.has(x))]).filter(([,l])=>l.length);
@@ -2220,7 +2421,8 @@ const precioDe=p=>p.oferta!=null?p.oferta:p.precio;
 const MAYOR=L.mayor||null;
 const DPAQ=MAYOR?MAYOR.dctos[0]:0, DMAY=MAYOR?MAYOR.dctos[1]:0, MIN_PAQ_MAYOR=MAYOR&&MAYOR.paquetes||3;
 /* pm: precio por mayor propio del producto (c/u, o c/paquete si viene en paquete), desde 10 u o 10 paquetes; pq: precio fijo del paquete (David, 19/11/2026) */
-const pmDe=p=>MAYOR&&p.pm!=null&&p.oferta==null&&!tapaDe(p)?p.pm:null;
+const tapaCobra=p=>{const t=tapaDe(p);return !!t&&(precioDe(t)||0)>0}; // tapa o blonda con precio propio (las de $0 van incluidas: no impiden paquete fijo ni por mayor)
+const pmDe=p=>MAYOR&&p.pm!=null&&p.oferta==null&&!tapaCobra(p)?p.pm:null;
 const redondear=n=>n>=100?Math.round(n/10)*10:Math.round(n);
 /* modalidad de venta: lo que viene en paquete se vende primero por paquete y, como opción, por unidad */
 const porUnidad=p=>/por unidad/i.test(p.detalle||"");
@@ -2235,7 +2437,7 @@ const clave=(cod,m)=>m==="P"?cod+"@P":m&&m[0]==="F"?cod+"@"+m:cod;
 const porDe=(p,m)=>m==="P"?(p.upp||1):(fmtInfo(p,m)||[0,0,1])[2];
 const unidadesEn=p=>(cart[clave(p.cod,"P")]||0)*(p.upp||0)+(cart[p.cod]||0)+(fmtDe(p)||[]).filter(f=>f[0]!=="U").reduce((a,f)=>a+(cart[p.cod+"@"+f[0]]||0)*f[2],0);
 function precioPaq(p,n){if(!tienePaq(p))return null;
-  const b=precioBase(p),pq=p.pq!=null&&p.oferta==null&&!tapaDe(p)?p.pq:null;
+  const b=precioBase(p),pq=p.pq!=null&&p.oferta==null&&!tapaCobra(p)?p.pq:null;
   const normal=pq!=null?pq:b==null?null:redondear(b*p.upp*(1-DPAQ/100));
   if(normal==null||n<MIN_PAQ_MAYOR)return normal;
   const pm=pmDe(p);if(pm!=null)return Math.min(pm,normal);
@@ -2243,6 +2445,7 @@ function precioPaq(p,n){if(!tienePaq(p))return null;
 function escalones(p){ // por mayor de lo que no viene en paquete: desde 10 y 50 u (o su precio por mayor propio desde 10 u)
   const base=precioBase(p);
   if(!MAYOR||base==null||p.oferta!=null||tienePaq(p))return [];
+  if(Array.isArray(p.tramos))return p.tramos.map(([d,pr])=>({desde:d,precio:pr})).filter(e=>e.precio<base); // tramos propios: [[desde, precio], …] (alimento por saco, bandeja de 20 huevos)
   const pm=pmDe(p);if(pm!=null)return pm<base?[{desde:soloPaq(p)?MIN_PAQ_MAYOR:MAYOR.sinPaquete[0],precio:pm}]:[];
   if(!porUnidad(p))return [];
   return MAYOR.sinPaquete.map((d,i)=>({desde:d,precio:redondear(base*(1-MAYOR.dctos[i]/100))})).filter(e=>e.precio<base);
@@ -2254,7 +2457,7 @@ function precioHTML(p){
   if(p.virtual)return p.precio==null?`<span class="precio pc">Precio por confirmar</span>`:`<span class="precio"><small class="u">Desde</small> ${clp(p.precio)} <small class="u">c/u</small></span>`;
   if(p.oferta!=null)return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(p.oferta)}${p.precio!=null?` <s>${clp(p.precio)}</s>`:""}</span>`;
   const base=precioBase(p);
-  if(fmtDe(p)&&precioFmt(p,modoDe(p))!=null){const f=fmtInfo(p,modoDe(p)),po=precioFmt(p,f[0]),pl=precioLista(p,f[0],1);return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(po)}${pl!=null&&pl>po?` <s>${clp(pl)}</s>`:""} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">Sale a ${clp(Math.round(po/f[2]))} c/u</small>`}
+  if(fmtDe(p)&&precioFmt(p,modoDe(p))!=null){const f=fmtInfo(p,modoDe(p)),po=precioFmt(p,f[0]),pl=precioLista(p,f[0],1);return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(po)}${pl!=null&&pl>po?` <s>${clp(pl)}</s>`:""} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">${p.bolsas?`Sale a ${clp(Math.round(po/f[2]*1000))} el kilo`:`Sale a ${clp(Math.round(po/f[2]))} c/u`}</small>`}
   if(enCaja(p)&&precioLista(p,modoDe(p),1)!=null)return `<span class="pcaja" data-pcaja="${p.cod}">${cajaPrecioHTML(p)}</span>`;
   if(fmtDe(p)){const f=fmtInfo(p,modoDe(p)),pl=precioLista(p,f[0],1);if(pl!=null){const ts=tramosLista(p,f[0]);
     return `<span class="precio">${clp(pl)} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">${p.bolsas?`Sale a ${clp(Math.round(pl/f[2]*1000))} el kilo`:`Sale a ${clp(Math.round(pl/f[2]))} c/u`}</small>`+(ts.length?`<span class="mayor${enCaja(p)?" siempre":""}">${enCaja(p)?"Más cajas, mejor precio:":"Por mayor:"} ${rangosLista(p,f[0]).map(r=>`<span>${textoRango(r)}: ${clp(r.precio)} c/caja</span>`).join("")}</span>`:"")}}
@@ -2265,8 +2468,8 @@ function precioHTML(p){
     if(modoDe(p)==="P")return `<span class="precio">${clp(pq)} <small class="u">paquete de ${p.upp} u</small></span><small class="cu">Sale a ${clp(Math.round(pq/p.upp))} c/u</small>`+(pm<pq?`<span class="mayor">Por mayor: <span>${MIN_PAQ_MAYOR} paquetes o más: ${clp(pm)} c/paquete</span></span>`:"");
     return `<span class="precio">${clp(base)} <small class="u">c/u</small></span><small class="cu">Por paquete de ${p.upp} u: ${clp(pq)}</small>`;
   }
-  const u=unidad(p), es=escalones(p);
-  return `<span class="precio">${clp(base)}${u?` <small class="u">${u}</small>`:""}</span>`+(es.length?`<span class="mayor">Por mayor: ${es.map(e=>soloPaq(p)?`<span>${e.desde} paquetes o más: ${clp(e.precio)} c/paquete</span>`:`<span>${e.desde} u o más: ${clp(e.precio)} c/u</span>`).join("")}</span>`:"");
+  const u=p.uni?"el "+p.uni:unidad(p), es=escalones(p);
+  return `<span class="precio">${clp(base)}${u?` <small class="u">${u}</small>`:""}</span>`+(es.length?`<span class="mayor">Por mayor: ${es.map(e=>p.uni?`<span>${e.desde} ${p.uni}s o más: ${clp(e.precio)} c/${p.uni}</span>`:soloPaq(p)?`<span>${e.desde} paquetes o más: ${clp(e.precio)} c/paquete</span>`:`<span>${e.desde} u o más: ${clp(e.precio)} c/u</span>`).join("")}</span>`:"");
 }
 const formaVenta=p=>{const d=p.detalle||"";const m=d.match(/por (unidad|paquete(?: de \d+ u)?|kilo|bandeja)/i);return m?"Se vende por "+m[1].toLowerCase():""};
 const modosHTML=p=>enCaja(p)?selCajasHTML(p):fmtDe(p)?`<label class="fmt">Formato <select data-fcod="${p.cod}" aria-label="Formato de ${p.nombre}">${fmtDe(p).map(f=>`<option value="${f[0]}"${modoDe(p)===f[0]?" selected":""}>${f[1]}${p.bolsas?` · ${clp(precioLista(p,f[0],1))}`:f[2]>1?` (${f[2]} u)`:""}</option>`).join("")}</select></label>`:tienePaq(p)?`<div class="modos" role="group" aria-label="Llevar ${p.nombre} por paquete o por unidad">${[["P","Paquete de "+p.upp+" u"],["U","Unidad"]].map(([m,x])=>`<button type="button" class="mchip" data-mcod="${p.cod}" data-modo="${m}" aria-pressed="${modoDe(p)===m}">${x}</button>`).join("")}</div>`:(formaVenta(p)?`<span class="venta">${formaVenta(p)}</span>`:"");
@@ -2277,7 +2480,8 @@ const tapasHTML=p=>{const ts=tapasDe[p.cod];if(!ts)return "";const sel=tapaDe(p)
 let favCli=[];try{favCli=JSON.parse(localStorage.getItem("favoritos-"+KEY)||"[]")}catch(e){favCli=[]}
 const esFavCli=cod=>favCli.includes(cod);
 /* Foto del producto: al tocarla se abre la galería; «1/3» avisa cuántas fotos tiene */
-const fotosDe=p=>enCaja(p)&&p.fotoCaja?[p.fotoCaja]:p.fotos&&p.fotos.length?p.fotos:(p.foto?[p.foto]:[]);
+/* fotoFmt (20/11/2026): foto propia de un formato de bolsa, p. ej. la almendra a granel en la bolsa de 1 kg (fotoFmt:{Fb1000:"…"}); va primero cuando ese formato está elegido */
+const fotosDe=p=>{if(enCaja(p)&&p.fotoCaja)return [p.fotoCaja];const b=p.fotos&&p.fotos.length?p.fotos:(p.foto?[p.foto]:[]);const ff=p.fotoFmt&&fmtDe(p)&&p.fotoFmt[modoDe(p)];return ff?[ff,...b.filter(x=>x!==ff)]:b};
 const fotoHTML=p=>{const n=fotosDe(p).length;return `<button type="button" class="verfotos" data-galeria="${p.cod}" aria-label="Ver ${n>1?"las "+n+" fotos":"la foto"} de ${p.nombre}"><img src="${fotosDe(p)[0]||p.foto}" alt="" loading="lazy">${n>1?`<span class="nfotos" aria-hidden="true">1/${n}</span>`:""}</button>`};
 /* Productos que se venden en varios tamaños (pedido de David, 17/11/2026): en la carta van en UNA tarjeta con cuadritos para
    elegir el tamaño. Cada tamaño sigue siendo su propio producto (su código de MyPyme, precio, foto y línea en el pedido).
@@ -2308,7 +2512,7 @@ function pintaVar(a){const v=VARG[a.dataset.var];if(!v)return;const lle=[];
 const repintarVar=g=>{document.querySelectorAll(`article[data-var="${g}"]`).forEach(a=>{a.outerHTML=cardVar(g)});refrescar()};
 const card=(p,c,vg)=>`
       <article class="prod${vg?" var":""}${agotado(p)?" agotado":""}${p.oferta!=null||p.ofertaFmt||p.promo?" oferta":""}" data-prod="${p.cod}"${vg?` data-var="${vg}"`:c===FAV?"":` id="p-${p.cod}"`}>${p.virtual?"":`<button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>`}
-        <div class="ico${fmtDe(p)&&p.foto?" con-et":""}">${p.foto?fotoHTML(p):((ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}${fmtDe(p)&&p.foto?etLatHTML(p):""}</div>
+        <div class="ico${fmtDe(p)&&p.foto?" con-et":""}">${p.foto?fotoHTML(p):((ICONOS[p.icono]||ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}${fmtDe(p)&&p.foto?etLatHTML(p):""}</div>
         <div class="info"><small class="tipo-p">${p.cat}</small><b>${vg?VARG[vg].nombre:p.nombre}</b>${vg?tallasHTML(vg):""}${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.cerrado?"Agotado por ahora":p.sinStock?"Stock 0 en el conteo":p.stock===0?"Sin stock":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
         ${p.virtual?`<div class="paso vacio pista-var"><button type="button" class="elige" disabled>Elige un tamaño</button></div>`:`<div class="paso vacio">
           <button class="menos" data-cod="${p.cod}" data-d="-1" aria-label="Quitar ${p.nombre}">−</button>
@@ -2373,27 +2577,6 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
 /* Pedidos a la avícola: el mensaje lleva la cantidad y va al WhatsApp que corresponde */
 (()=>{const nom=()=>cliente&&cliente.nombre?` Mi nombre es ${cliente.nombre}.`:"";
   const cant=id=>Math.max(0,Math.floor(Number($(id).value)||0));
-  /* Lista de precios de alimentos del 13-11-2026 (Distribuidora Avícola Santa Bárbara): precio sala de 1 saco y precios por mayor */
-  const ALIMENTOS=[
-    {g:"Alimentos",n:"Ponedora",d:"Saco de 25 kg",p:14500,m:"Desde 40 sacos: $14.000",msj:"alimento de ponedora"},
-    {g:"Alimentos",n:"Pollita",d:"Saco de 25 kg",p:16000,m:"Desde 40 sacos: $15.500",msj:"alimento de pollita"},
-    {g:"Alimentos",n:"Conchuela",d:"Saco de 25 kg",p:3990,m:"Desde 2: $3.700 · desde 11: $3.400"},
-    {g:"Alimentos",n:"Afrechillo",d:"Saco de 25 kg",p:7700,m:"Desde 2: $7.300 · desde 11: $6.400"},
-    {g:"Alimentos",n:"Bicarbonato",d:"Saco de 25 kg",p:20000,m:"Desde 2 sacos: $19.000"},
-    {g:"Alimentos",n:"Maíz chancado",d:"Saco de 25 kg",p:12000,m:"Desde 2: $11.700 · desde 11: $11.400"},
-    {g:"Alimentos",n:"Fosfato peruano",d:"Saco de 25 kg",p:37000},
-    {g:"Alimentos",n:"Harina de carne",d:"Saco de 25 kg",p:24000},
-    {g:"Alimentos",n:"Maíz entero",d:"Saco de 25 kg",p:10500,m:"Desde 2: $10.200 · desde 11: $9.990"},
-    {g:"Alimentos",n:"Sal",d:"Saco de 25 kg",p:4500,m:"Desde 2 sacos: $4.000"},
-    {g:"Alimentos",n:"Soya",d:"Saco de 25 kg",p:19500,m:"Desde 40 sacos: $18.900"},
-    {g:"Núcleos y aditivos",n:"Fintox",d:"Saco de 25 kg",k:5000,p:104900},
-    {g:"Núcleos y aditivos",n:"Lisina",d:"Saco de 25 kg",k:3500,p:60000},
-    {g:"Núcleos y aditivos",n:"Metionina",d:"Saco de 25 kg",k:9200,p:210000},
-    {g:"Núcleos y aditivos",n:"Núcleo pollita",d:"Saco de 24 kg",k:8500,p:178000},
-    {g:"Núcleos y aditivos",n:"Núcleo ponedora Nutrial",d:"Saco cerrado",k:10500,p:218850},
-    {g:"Núcleos y aditivos",n:"Núcleo ponedora Rovimix",d:"Saco cerrado",k:15750,p:365000},
-    {g:"Núcleos y aditivos",n:"Peptasan",d:"Saco de 25 kg",k:11500,p:244000},
-    {g:"Núcleos y aditivos",n:"Polifeed",d:"Saco de 20 kg",k:8500,p:92990}];
   $("aliLista").innerHTML=ALIMENTOS.map((a,i)=>(i===0||ALIMENTOS[i-1].g!==a.g?`<h4>${a.g}</h4>`:"")
     +`<button type="button" class="ali-op" data-tipoali="${i}" aria-pressed="${i===0}"><b>${a.n}</b><span>${a.k!=null?`${clp(a.k)} el kilo · ${clp(a.p)} el saco cerrado`:`${clp(a.p)} el saco`}</span><small>${a.d}${a.m?" · "+a.m:""}</small></button>`).join("");
   let tipoAli=0;
@@ -2406,13 +2589,14 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
   ["aviPol","aviAli"].forEach(id=>$(id).addEventListener("input",arma));arma();
 })();
 /* Páginas con foto de fondo arriba (fotos propias de la avícola) */
-const FOTOS={"Huevos blancos":"huevos-blancos-bandeja.jpg","Huevos de color":"huevos-cafe-bandeja.jpg","Huevos de quinta":"huevos-editorial.jpg","Huevos":"huevos-editorial.jpg","Hueveras":"huevos-editorial.jpg"};
+const FOTOS={"Huevos blancos":"huevos-blancos-bandeja.jpg","Huevos de color":"huevos-cafe-bandeja.jpg","Huevos":"huevos-editorial.jpg","Hueveras":"huevos-editorial.jpg"};
 /* Fondos de secciones (David, 19/11/2026): plásticos (dibujo en mosaico, también en bolsas y papeles y en vasos, platos y cubiertos) y aluminio */
 ["Envases","Contenedores","Cúpulas","Potes","Salseros","Bolsas","Sacos y mallas","Papeles y film","Vasos","Platos","Cubiertos y servilletas","Bombillas, brochetas y palitos"].forEach(c=>{FOTOS[c]="fondo-plasticos.webp"});
 ["Envases de aluminio","Foil y moldes de aluminio"].forEach(c=>{FOTOS[c]="fondo-aluminio.webp"});
 ["Cajas de cartón","Bandejas de cartón","Bowls y conos de cartón"].forEach(c=>{FOTOS[c]="fondo-carton.webp"}); // papel arrugado, foto de SJ Objio en Unsplash (licencia Unsplash)
-["Abarrotes","Frutas en conserva","Mariscos y atún","Lácteos","Golosinas"].forEach(c=>{FOTOS[c]="fondo-despensa.webp"});
-["Bolsas de basura","Traperos","Papel higiénico y afeitado","Guantes y cofias"].forEach(c=>{FOTOS[c]="fondo-aseo.webp"});
+["Abarrotes","Bebidas y jugos","Frutas en conserva","Mariscos y atún","Lácteos","Golosinas"].forEach(c=>{FOTOS[c]="fondo-despensa.webp"});
+["Bolsas de basura","Traperos","Detergentes y cloro","Papel higiénico y afeitado","Guantes y cofias"].forEach(c=>{FOTOS[c]="fondo-aseo.webp"});
+["Alimentos","Núcleos y aditivos"].forEach(c=>{FOTOS[c]="fabrica-nueva-silos.jpg"}); // foto propia: silos de la fábrica de alimentos
 const TIPOFONDO={"fondo-plasticos.webp":"mosaico","fondo-aseo.webp":"mosaico","fondo-aluminio.webp":"metal","fondo-carton.webp":"papel"}; // mosaico: se repite en vez de estirarse; metal: velo más suave y neutro para que se vea el metal
 /* Productos cerrados en la página por stock bajo (decisión en SabAPP o en la planilla): primero lo último que se supo */
 Object.values(PROD).forEach(p=>{p.sinStock0=!!p.sinStock});
@@ -2768,6 +2952,7 @@ function pintarCarro(){
   $("carroLista").innerHTML=ps.map(p=>`<div class="crow" data-crow="${p.cod}">${card(p,FAV)}<button type="button" class="quitar" data-quitar="${p.cod}" aria-label="Quitar ${p.nombre} del pedido">Quitar</button></div>`).join("");
   $("carroLista").hidden=!ps.length; $("carroVacio").hidden=!!ps.length; $("carroPie").hidden=!ps.length;
   $("carroAcc").hidden=!ps.length; $("cListaForm").hidden=true; $("cGuardarLista").setAttribute("aria-expanded","false"); $("cListaMsg").textContent="";
+  $("cCotizForm").hidden=true; $("cCotiz").setAttribute("aria-expanded","false");
   const bv=$("cVaciar"); bv.classList.remove("seguro"); bv.textContent="Vaciar carro";
   refrescar();
 }
@@ -2799,6 +2984,45 @@ $("irPedido").onclick=()=>{cerrarHoja("veloCarro");abrirRevision()};
   $("cVaciar").onclick=()=>{const b=$("cVaciar");
     if(!b.classList.contains("seguro")){b.classList.add("seguro");b.textContent="¿Seguro? Toca otra vez";clearTimeout(t);t=setTimeout(()=>{b.classList.remove("seguro");b.textContent="Vaciar carro"},4000);return}
     clearTimeout(t);Object.keys(cart).forEach(k=>delete cart[k]);guardar();pintarCarro();$("volverVacio").focus()};
+})();
+/* «Imprimir cotización» (David, 20/11/2026): el vendedor (o el cliente) arma el carro y saca una hoja impresa o en PDF
+   con los productos, precios (con IVA) y total. Vale solo por el día de hoy. Nombre y teléfono del cliente opcionales;
+   si quedan en blanco, la hoja trae líneas para escribirlos a mano. Precios normales y por mayor, sin el descuento de bienvenida. */
+(()=>{
+  const f=$("cCotizForm"),b=$("cCotiz"),p2=n=>String(n).padStart(2,"0");
+  b.onclick=()=>{const abre=f.hidden;f.hidden=!abre;b.setAttribute("aria-expanded",String(abre));
+    if(abre){$("cListaForm").hidden=true;$("cGuardarLista").setAttribute("aria-expanded","false");$("cotNom").focus()}};
+  $("cGuardarLista").addEventListener("click",()=>{f.hidden=true;b.setAttribute("aria-expanded","false")});
+  const fono=w=>String(w||"").replace(/^56(9)(\d{4})(\d{4})$/,"+56 $1 $2 $3");
+  function hoja(){
+    const its=items(),d=new Date(),G=L.legal||{},U=L.ubicacion||{};
+    const num=`COT-${L.pref||""}${p2(d.getDate())}${p2(d.getMonth()+1)}-${p2(d.getHours())}${p2(d.getMinutes())}`;
+    const fecha=`${DIAS[d.getDay()]} ${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}`;
+    const nom=$("cotNom").value.trim(),tel=$("cotTel").value.trim();
+    const sinPrecio=its.some(x=>x.precio==null),tot=total();
+    const filas=its.map(x=>{
+      const det=[x.detalle&&!/^(precio )?por unidad$/i.test(x.detalle)?x.detalle:"",x.tapa?"incluye tapa":""].filter(Boolean).join(" · ");
+      return `<tr><td class="c">${x.q.toLocaleString("es-CL")}</td><td>${escHTML(x.nombre)}${det?`<small>${escHTML(det)}</small>`:""}${x.mayor?`<span class="may">precio por mayor</span>`:""}</td>`
+        +`<td class="n">${x.precio==null?"Por confirmar":clp(x.precio)}</td><td class="n">${x.precio==null?"—":clp(x.q*x.precio)}</td></tr>`}).join("");
+    return `<div class="cot-cab"><img src="../img/emporio-sello.webp" alt="">
+      <div class="cot-emp"><b>${escHTML(L.nombre)}</b>${G.razon?`<span>${escHTML(G.razon)}${G.rut?" · RUT "+escHTML(G.rut):""}</span>`:""}
+        <span>${escHTML(G.direccion||U.calle||"")}${U.horario?" · "+escHTML(U.horario):""}</span>
+        <span>WhatsApp ${escHTML(fono(L.whatsapp))} · www.avicolasb.com</span></div>
+      <div class="cot-num">COTIZACIÓN<strong>${num}</strong>${fecha} · ${p2(d.getHours())}:${p2(d.getMinutes())}</div></div>
+    <div class="cot-cli"><div><em>Cliente</em>${escHTML(nom)}</div><div><em>Teléfono</em>${escHTML(tel)}</div></div>
+    <p class="cot-valida">Cotización válida solo por hoy, ${fecha}. Precios con IVA incluido.</p>
+    <table><thead><tr><th class="c">Cant.</th><th>Producto</th><th class="n">Precio</th><th class="n">Subtotal</th></tr></thead>
+      <tbody>${filas}</tbody>
+      <tfoot><tr><td></td><td>TOTAL${sinPrecio?" (sin los productos por confirmar)":""}</td><td></td><td class="n">${clp(tot)}</td></tr></tfoot></table>
+    <ul class="cot-notas"><li>Los precios y el stock pueden cambiar desde mañana; esta cotización no reserva productos.</li>
+      <li>No incluye despacho.</li>${its.some(x=>x.mayor)?"<li>«Precio por mayor»: el precio rebajado por la cantidad que lleva.</li>":""}</ul>
+    <p class="cot-pie">${escHTML(L.nombre)} · ${escHTML(U.calle||G.direccion||"")}${U.ref?" ("+escHTML(U.ref.replace(/^Chillán · /,""))+")":""} · Gracias por preferirnos</p>`}
+  const fin=()=>document.body.classList.remove("cotiz-imp");
+  addEventListener("afterprint",fin);
+  $("cotImprimir").onclick=()=>{if(!items().length)return;
+    const z=$("cotizImp");z.innerHTML=hoja();document.body.classList.add("cotiz-imp");
+    const im=z.querySelector("img"),ir=()=>{window.print()};
+    if(im&&!im.complete){im.onload=im.onerror=ir}else ir()};
 })();
 $("carroLista").addEventListener("click",e=>{
   const q=e.target.closest("button[data-quitar]"); if(!q)return;

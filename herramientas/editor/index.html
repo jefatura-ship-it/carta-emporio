@@ -68,6 +68,10 @@ table.prod input[type=text],table.prod input[type=number]{width:100%;padding:4px
 table.prod input:hover,table.prod input:focus{border-color:var(--linea);background:#fff}
 table.prod tr.cambiado td{background:#fff6e8}
 table.prod tr.oculto td{color:#999}
+details.nuevoProd{border:1px solid #e3dccb;border-radius:10px;padding:8px 10px;margin:6px 0 12px;background:#fffdf7}
+details.nuevoProd summary{cursor:pointer}
+details.nuevoProd .fila{gap:8px;align-items:flex-end}
+details.nuevoProd .campo select,details.nuevoProd .campo input:not([type=checkbox]){width:100%}
 .cod{font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--suave)}
 .resumen{margin:8px 0;padding-left:18px}
 .resumen li{margin:3px 0}
@@ -155,7 +159,7 @@ async function iniciar() {
   }
   if (!estado) estado = clon(base);
   ['listaHuevos', 'alimentos'].forEach(function (k) { if (estado[k] === undefined) estado[k] = clon(base[k]); }); // borradores de antes del 19/11/2026
-  ['mayor', 'tramosCaja', 'calHuevo'].forEach(function (k) { estado[k] = clon(base[k]); }); // solo lectura: siempre los de la carta
+  ['mayor', 'tramosCaja', 'calHuevo', 'codigosAntes'].forEach(function (k) { estado[k] = clon(base[k]); }); // solo lectura: siempre los de la carta
   imagenes = await listarImagenes();
   pintarPanel(); pintarEstado(); ajustarMarco(); refrescarVista(true);
 }
@@ -302,17 +306,30 @@ function panelProductos() {
     return !q || slug(p.cod + ' ' + p.nombre + ' ' + p.cat).indexOf(q) >= 0;
   });
   var dentro = function (i, paso) { var p = estado.productos[i]; for (var k = i + paso; k >= 0 && k < estado.productos.length; k += paso) if (estado.productos[k].cat === p.cat) return k; return -1; };
-  return '<h2>Productos y precios</h2><p class="nota">Precio vacío = «Precio por confirmar». Desmarca «Visible» para ocultar un producto. «En ofertas» lo muestra en Ofertas y promos. Con una categoría elegida puedes cambiar el orden (↑ ↓).</p>'
+  var PL = window.PlanillaPrecios, secs = PL.seccionesDe(estado);
+  var formNuevo = '<details class="nuevoProd"><summary><b>➕ Agregar un producto nuevo</b> (también uno que aún no llega)</summary>'
+    + '<label class="campo"><span>Sección</span><select id="npSec">' + secs.map(function (c) { return '<option' + (c === filtroProd.cat ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>'
+    + '<label class="campo"><span>Nombre (como se verá en la carta)</span><input id="npNom" maxlength="120" placeholder="Ej.: Agua tónica 1,5 l"></label>'
+    + '<div class="fila"><label class="campo" style="flex:2"><span>Cómo se vende</span><select id="npComo">' + PL.COMO.map(function (c) { return '<option>' + c + '</option>'; }).join('') + '</select></label>'
+    + '<label class="campo" style="flex:1"><span>Unidades del paquete</span><input id="npUpp" type="number" min="2" step="1" placeholder="—"></label></div>'
+    + '<div class="fila"><label class="campo" style="flex:1"><span>Precio</span><input id="npPre" type="number" min="0" step="10" placeholder="Por confirmar"></label>'
+    + '<label class="campo" style="flex:1"><span>Por mayor (opcional)</span><input id="npMay" type="number" min="0" step="10" placeholder="—"></label>'
+    + '<label class="campo" style="flex:1"><span>Código MyPyme (opcional)</span><input id="npCod" maxlength="20" placeholder="Ej.: BEB017"></label></div>'
+    + '<label style="display:flex;gap:8px;align-items:flex-start;margin:10px 0 4px;font-size:13px"><input type="checkbox" id="npLlega" checked style="margin-top:2px"><span>Aún no llega: queda oculto en la carta hasta que desmarques «Lleg.» en la lista de abajo</span></label>'
+    + '<p class="nota">El precio va por la medida de «Cómo se vende»; en «Por unidad y por paquete» es el precio de 1 unidad. Sin código MyPyme queda con un código NUE001, NUE002…</p>'
+    + '<button type="button" class="bt2 prim" id="bNuevoProd">Agregar al borrador</button></details>';
+  return '<h2>Productos y precios</h2>' + formNuevo + '<p class="nota">Precio vacío = «Precio por confirmar». Desmarca «Visible» para ocultar un producto. «Por llegar» lo deja oculto hasta que llegue: desmárcalo cuando llegue. «En ofertas» lo muestra en Ofertas y promos. Con una categoría elegida puedes cambiar el orden (↑ ↓).</p>'
     + '<p class="nota"><b>Huevos:</b> aquí el precio es <b>por huevo suelto</b> (unidad, media docena, docena y 15). Las bandejas y cajas tienen su propia lista de precios: cámbialas en «Precios por Excel». Para una oferta de bandeja usa «Ofertas por formato» en Promos y ofertas.</p>'
     + '<div class="fila"><input class="mini" id="pQ" placeholder="Buscar código o nombre" value="' + esc(filtroProd.q) + '"><select class="mini" id="pCat" style="max-width:150px"><option value="">Todas</option>' + cats.map(function (c) { return '<option' + (c === filtroProd.cat ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></div>'
     + '<p class="nota">' + lista.length + ' producto(s)</p>'
-    + '<table class="prod"><thead><tr><th>Código</th><th>Nombre</th><th style="width:72px">Precio</th><th style="width:72px">Oferta</th><th title="Visible">Vis.</th><th title="En Ofertas y promos">Of.</th>' + (filtroProd.cat ? '<th></th>' : '') + '</tr></thead><tbody>'
+    + '<table class="prod"><thead><tr><th>Código</th><th>Nombre</th><th style="width:72px">Precio</th><th style="width:72px">Oferta</th><th title="Visible">Vis.</th><th title="Por llegar: oculto hasta que llegue">Lleg.</th><th title="En Ofertas y promos">Of.</th>' + (filtroProd.cat ? '<th></th>' : '') + '</tr></thead><tbody>'
     + lista.map(function (x) {
-      var p = x[0], i = x[1], b = porCod[p.cod] || {}, cambiado = JSON.stringify([p.nombre, p.precio, p.oferta, !!p.retirado, !!p.fav]) !== JSON.stringify([b.nombre, b.precio, b.oferta, !!b.retirado, !!b.fav]);
-      return '<tr class="' + (cambiado ? 'cambiado ' : '') + (p.retirado ? 'oculto' : '') + '"><td class="cod">' + esc(p.cod) + '</td><td><input type="text" value="' + esc(p.nombre) + '" data-pcampo="nombre" data-i="' + i + '"></td>'
+      var p = x[0], i = x[1], b = porCod[p.cod] || {}, cambiado = JSON.stringify([p.nombre, p.precio, p.oferta, !!p.retirado, !!p.fav, !!p.porLlegar]) !== JSON.stringify([b.nombre, b.precio, b.oferta, !!b.retirado, !!b.fav, !!b.porLlegar]);
+      return '<tr class="' + (cambiado ? 'cambiado ' : '') + (p.retirado || p.porLlegar ? 'oculto' : '') + '"><td class="cod">' + esc(p.cod) + (porCod[p.cod] ? '' : '<br><small>nuevo</small>') + '</td><td><input type="text" value="' + esc(p.nombre) + '" data-pcampo="nombre" data-i="' + i + '"></td>'
         + '<td><input type="number" min="0" step="' + (p.formatos ? 1 : 10) + '" value="' + (p.precio == null ? '' : p.precio) + '" data-pcampo="precio" data-i="' + i + '" placeholder="—"' + (p.formatos ? ' title="Precio por huevo' + (p.precio ? ': bandeja de 30 = $' + Math.round(p.precio * 30).toLocaleString('es-CL') : '') + '"' : '') + '>' + (p.formatos ? '<small class="cod">c/u</small>' : '') + '</td>'
         + '<td><input type="number" min="0" step="10" value="' + (p.oferta == null ? '' : p.oferta) + '" data-pcampo="oferta" data-i="' + i + '" placeholder="—"></td>'
         + '<td><input type="checkbox" ' + (p.retirado ? '' : 'checked') + ' data-pcampo="visible" data-i="' + i + '" aria-label="Visible"></td>'
+        + '<td><input type="checkbox" ' + (p.porLlegar ? 'checked' : '') + ' data-pcampo="porLlegar" data-i="' + i + '" aria-label="Por llegar"></td>'
         + '<td><input type="checkbox" ' + (p.fav ? 'checked' : '') + ' data-pcampo="fav" data-i="' + i + '" aria-label="En ofertas"></td>'
         + (filtroProd.cat ? '<td style="white-space:nowrap"><button type="button" class="ib" data-pmueve="' + i + '" data-a="' + dentro(i, -1) + '"' + (dentro(i, -1) < 0 ? ' disabled' : '') + '>↑</button><button type="button" class="ib" data-pmueve="' + i + '" data-a="' + dentro(i, 1) + '"' + (dentro(i, 1) < 0 ? ' disabled' : '') + '>↓</button></td>' : '')
         + '</tr>';
@@ -324,32 +341,33 @@ var subida = null; // resultado de la última planilla subida: {archivo, cambios
 function panelExcel() {
   var PL = window.PlanillaPrecios;
   var h = '<h2>Precios por Excel</h2><p class="nota">Cambia muchos precios de una vez: rellena en la planilla las columnas amarillas («Precio nuevo ✎» y «Por mayor nuevo ✎») y súbela aquí. Cada fila es un formato de venta (unidad, paquete, kilo, bolsa, bandeja, caja…) y el precio va por esa medida. Lo que dejes en blanco no cambia.</p>'
+    + '<p class="nota">En la hoja <b>«Productos nuevos»</b> agregas productos, también los que aún no llegan: quedan ocultos hasta que pongas «Sí» en «¿Ya llegó?» y vuelvas a subir la planilla.</p>'
     + '<label class="subir"><b>Subir planilla rellenada</b><span class="nota" style="margin:0">Archivo .xlsx: la planilla que te dio Claude o una descargada aquí. Puedes subirla las veces que quieras; solo cuenta lo que sea distinto de la carta.</span><input type="file" id="xlsxArchivo" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>'
     + '<div class="fila"><button type="button" class="bt2" id="bXlsxBajar">⬇ Descargar planilla con los precios de ahora</button></div>'
     + '<p class="nota">La planilla descargada aquí trae los precios actuales, incluidos los cambios de tu borrador.</p>';
   if (!subida) return h;
   if (subida.error) return h + '<ul class="avisos"><li>' + esc(subida.error) + '</li></ul><button type="button" class="bt2" id="bXlsxDescartar">Cerrar</button>';
   var c = subida.cambios, n = c.length;
-  h += '<h3>' + esc(subida.archivo) + '</h3><p class="nota">' + (n ? n + (n > 1 ? ' precios cambian' : ' precio cambia') : 'Ningún precio cambia') + (subida.iguales ? ' · ' + subida.iguales + ' ya estaban iguales' : '') + (subida.avisos.length ? ' · ' + subida.avisos.length + ' aviso' + (subida.avisos.length > 1 ? 's' : '') : '') + (c.some(function (x) { return x.revisar; }) ? '. En amarillo con ⚠, los que cambian mucho: revísalos.' : '.') + '</p>';
+  h += '<h3>' + esc(subida.archivo) + '</h3><p class="nota">' + (n ? n + (n > 1 ? ' cambios' : ' cambio') : 'Nada cambia') + (subida.iguales ? ' · ' + subida.iguales + ' ya estaban iguales' : '') + (subida.avisos.length ? ' · ' + subida.avisos.length + ' aviso' + (subida.avisos.length > 1 ? 's' : '') : '') + (c.some(function (x) { return x.revisar; }) ? '. En amarillo con ⚠, los que cambian mucho: revísalos.' : '.') + '</p>';
   if (subida.avisos.length) h += '<ul class="avisos">' + subida.avisos.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>';
   if (!n) return h + '<button type="button" class="bt2" id="bXlsxDescartar">Cerrar</button>';
   return h + '<div class="fila"><button type="button" class="bt2 prim" id="bXlsxAplicar">Aplicar ' + n + ' cambio' + (n > 1 ? 's' : '') + ' al borrador</button><button type="button" class="bt2" id="bXlsxDescartar">Descartar</button></div>'
     + '<table class="prod"><thead><tr><th>Código</th><th>Producto · formato</th><th style="text-align:right">Antes</th><th style="text-align:right">Después</th></tr></thead><tbody>'
     + c.map(function (x) {
       return '<tr class="' + (x.revisar ? 'revisar' : '') + '"><td class="cod">' + esc(x.cod) + '</td><td>' + esc(x.producto) + '<br><small class="cod">' + esc(x.formato) + (x.formatoNuevo ? ' → queda «' + esc(x.formatoNuevo.detalle) + '»' : '') + '</small></td>'
-        + '<td class="num">' + esc(PL.clp(x.antes)) + '</td><td class="num"><b>' + esc(PL.clp(x.despues)) + '</b>' + (x.revisar ? ' ⚠' : '') + '</td></tr>';
+        + '<td class="num">' + (x.tipo === 'nuevo' ? '—' : esc(PL.clp(x.antes))) + '</td><td class="num"><b>' + esc(PL.clp(x.despues)) + '</b>' + (x.revisar ? ' ⚠' : '') + '</td></tr>';
     }).join('') + '</tbody></table>';
 }
 function leerPlanilla(archivo) {
   if (!archivo) return;
   archivo.arrayBuffer().then(function (buf) { return PlanillaPrecios.leerXlsx(new Uint8Array(buf)); }).then(function (leidas) {
     var r = PlanillaPrecios.compararPlanilla(estado, leidas); r.archivo = archivo.name; subida = r; pintarPanel();
-    avisar(r.cambios.length ? r.cambios.length + ' precio(s) para revisar antes de aplicar' : 'La planilla no trae precios distintos de la carta');
+    avisar(r.cambios.length ? r.cambios.length + ' cambio(s) para revisar antes de aplicar' : 'La planilla no trae nada distinto de la carta');
   }).catch(function (e) { subida = { archivo: archivo.name, error: 'No pude leer «' + archivo.name + '»: ' + e.message }; pintarPanel(); });
 }
 function bajarPlanilla() {
   var PL = PlanillaPrecios, f = new Date(), p2 = function (n) { return String(n).padStart(2, '0'); };
-  var bytes = PL.crearXlsx(PL.filasPrecios(estado), { origen: 'precios del editor del catálogo (con los cambios del borrador)' });
+  var bytes = PL.crearXlsx(PL.filasPrecios(estado), { origen: 'precios del editor del catálogo (con los cambios del borrador)', datos: estado });
   var a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
   a.download = 'Actualización de precios - Catálogo Emporio ' + f.getFullYear() + '-' + p2(f.getMonth() + 1) + '-' + p2(f.getDate()) + '.xlsx';
@@ -488,6 +506,7 @@ P.addEventListener('change', function (e) {
       else if (campo === 'oferta') { if (vv === '') delete p.oferta; else p.oferta = Math.round(+vv); }
       else if (campo === 'visible') { if (vv) delete p.retirado; else p.retirado = true; }
       else if (campo === 'fav') { if (vv) p.fav = true; else delete p.fav; }
+      else if (campo === 'porLlegar') { if (vv) p.porLlegar = true; else delete p.porLlegar; }
     }, { panel: true }); return;
   }
   if (t.id === 'pCat') { filtroProd.cat = t.value; pintarPanel(); return; }
@@ -508,6 +527,15 @@ P.addEventListener('click', function (e) {
     if (d.vit === 'nueva') { cambio(function (s) { s.vitrina.push({ img: imagenes[0] || '', et: 'Nueva', tit: 'Título de la diapositiva', txt: 'Texto breve.', alt: 'Foto.' }); }, { panel: true }); return; }
     if (d.vit === 'borra' && !confirm('¿Eliminar esta diapositiva?')) return;
     cambio(function (s) { if (d.vit === 'sube') mueve(s.vitrina, i, i - 1); if (d.vit === 'baja') mueve(s.vitrina, i, i + 1); if (d.vit === 'dup') s.vitrina.splice(i + 1, 0, clon(s.vitrina[i])); if (d.vit === 'borra') s.vitrina.splice(i, 1); }, { panel: true }); return;
+  }
+  if (b.id === 'bNuevoProd') {
+    var PLn = PlanillaPrecios, fila = { seccion: $('npSec').value, producto: $('npNom').value, como: $('npComo').value, upp: $('npUpp').value, precio: $('npPre').value, mayor: $('npMay').value, llego: $('npLlega').checked ? 'No' : 'Sí', codMy: $('npCod').value };
+    var plano = function (t) { return slug(t); };
+    if (estado.productos.some(function (p) { return plano(p.nombre) === plano(fila.producto); })) { avisar('Ya hay un producto con ese nombre'); return; }
+    var r = PLn.crearProducto(fila, { usados: PLn.usadosDe(estado), secciones: PLn.seccionesDe(estado), donde: 'Producto nuevo' });
+    if (r.errores.length) { avisar('Falta: ' + r.errores.join('; ')); return; }
+    cambio(function (s) { PLn.aplicarEnEstado(s, [{ tipo: 'nuevo', cod: r.p.cod, nuevoProducto: r.p }]); }, { panel: true });
+    avisar('Agregado ' + r.p.cod + (r.p.porLlegar ? ' (oculto hasta que llegue)' : '') + (r.avisos.length ? ' · ' + r.avisos.join(' ') : '')); return;
   }
   if (d.pmueve !== undefined) { var a = +d.pmueve, z = +d.a; if (z < 0) return; cambio(function (s) { var x = s.productos[a]; s.productos[a] = s.productos[z]; s.productos[z] = x; }, { panel: true }); return; }
   if (d.promo) {

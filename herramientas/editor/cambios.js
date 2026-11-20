@@ -18,7 +18,25 @@
   ];
   // Campos de cada producto que el editor puede cambiar. upp: unidades por paquete; pq: precio fijo del paquete;
   // pm: precio por mayor propio (c/u desde 10 u, o c/paquete desde 10 paquetes); bolsas: [[gramos, precio]] del granel.
-  var CAMPOS_PRODUCTO = ['nombre', 'detalle', 'precio', 'oferta', 'retirado', 'fav', 'upp', 'pq', 'pm', 'bolsas'];
+  // porLlegar: producto cargado que aún no llega (no se muestra en la carta hasta que se marque que llegó).
+  // tramos: por mayor propio por tramos [[desde, precio], …] (por ejemplo desde 20 u); [] = precio fijo, sin por mayor.
+  var CAMPOS_PRODUCTO = ['nombre', 'detalle', 'precio', 'oferta', 'retirado', 'fav', 'porLlegar', 'upp', 'pq', 'pm', 'bolsas', 'tramos'];
+  var BANDERAS = ['retirado', 'fav', 'porLlegar'];
+  var COD_VALIDO = /^[A-Z0-9][A-Z0-9-]{2,19}$/;
+  // Producto nuevo creado en el editor o en la planilla: solo campos conocidos y textos sin < ni >
+  function limpiarNuevo(p) {
+    if (!p || !COD_VALIDO.test(String(p.cod || ''))) return null;
+    var txt = function (v, largo) { return String(v == null ? '' : v).replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, largo); };
+    var num = function (v) { return v === null || v === undefined || v === '' ? null : Math.max(0, Math.round(Number(v) || 0)); };
+    var o = { cod: String(p.cod), cat: txt(p.cat, 60) || 'Otros', nombre: txt(p.nombre, 120), detalle: txt(p.detalle, 120) || 'Precio por unidad', precio: num(p.precio) };
+    if (!o.nombre) return null;
+    var u = Math.round(Number(p.upp) || 0); if (u > 1) o.upp = u;
+    if (num(p.pq) != null) o.pq = num(p.pq);
+    if (num(p.pm) != null) o.pm = num(p.pm);
+    BANDERAS.forEach(function (k) { if (p[k]) o[k] = true; });
+    o.nuevo = true;
+    return o;
+  }
   var INI_ESTILOS ='/* ==== EDITOR DEL CATÁLOGO: inicio (generado por herramientas/editor) ==== */';
   var FIN_ESTILOS = '/* ==== EDITOR DEL CATÁLOGO: fin ==== */';
 
@@ -59,6 +77,7 @@
     var my = html.match(/\n    mayor:(\{[^\n]*?\}),/); datos.mayor = my ? literal(my[1]) : null;
     var tc = html.match(/^const TRAMOS_CAJA=(\[[^\n]*\]);/m); datos.tramosCaja = tc ? literal(tc[1]) : [1];
     var ch = html.match(/^const CAL_HUEVO=(\{[^\n]*\});/m); datos.calHuevo = ch ? literal(ch[1]) : {};
+    var ca = html.match(/^const CODIGOS_ANTES=(\{[^\n]*\});/m); datos.codigosAntes = ca ? Object.keys(literal(ca[1])) : []; // códigos provisorios: no se reusan
     // Familias del menú
     datos.familias = literal('[' + trozo(html, 'const FAMILIAS=[', '\n];').dentro + ']');
     // Vitrina
@@ -82,17 +101,18 @@
     var tx = {}; Object.keys(estado.textos || {}).forEach(function (k) { if (estado.textos[k] !== base.textos[k]) tx[k] = estado.textos[k]; });
     if (Object.keys(tx).length) c.textos = tx;
     var porCod = {}; base.productos.forEach(function (p) { porCod[p.cod] = p; });
-    var pr = {};
+    var pr = {}, nuevos = [];
     (estado.productos || []).forEach(function (p) {
-      var b = porCod[p.cod]; if (!b) return; var d = {};
+      var b = porCod[p.cod]; if (!b) { var n = limpiarNuevo(p); if (n) nuevos.push(n); return; } var d = {};
       CAMPOS_PRODUCTO.forEach(function (k) {
         var a = p[k], z = b[k];
-        if (iguales(a, z) || (a == null && z == null) || (!a && !z && (k === 'retirado' || k === 'fav'))) return;
+        if (iguales(a, z) || (a == null && z == null) || (!a && !z && BANDERAS.indexOf(k) >= 0)) return;
         d[k] = a === undefined ? null : a;
       });
       if (Object.keys(d).length) pr[p.cod] = d;
     });
     if (Object.keys(pr).length) c.productos = pr;
+    if (nuevos.length) c.nuevos = nuevos;
     if (estado.listaHuevos && !iguales(base.listaHuevos, estado.listaHuevos)) c.listaHuevos = estado.listaHuevos;
     if (estado.alimentos) {
       var al = {}; (estado.alimentos || []).forEach(function (a) { var b = (base.alimentos || []).filter(function (x) { return x.n === a.n; })[0]; if (!b) return; var d = {}; ['p', 'k'].forEach(function (k) { if (!iguales(a[k], b[k]) && !(a[k] == null && b[k] == null)) d[k] = a[k] == null ? null : a[k]; }); if (Object.keys(d).length) al[a.n] = d; });
@@ -150,7 +170,7 @@
       html = html.slice(0, emp.a) + te + html.slice(emp.b);
     }
     // Productos (campos y orden)
-    if (c.productos || c.ordenProductos) {
+    if (c.productos || c.ordenProductos || c.nuevos) {
       var emp2 = bloqueEmporio(html), lista = trozo(html, '    productos:[', '\n    ]', emp2.a);
       var lineas = lista.dentro.split('\n'), idx = [], porCod = {};
       lineas.forEach(function (l, i) { if (/^\s*\{cod:"/.test(l)) { idx.push(i); var p = literal(l.trim().replace(/,\s*$/, '')); porCod[p.cod] = { linea: l, p: p }; } });
@@ -159,9 +179,10 @@
         Object.keys(d).forEach(function (k) {
           if (['nombre', 'detalle'].indexOf(k) >= 0) p[k] = String(d[k] == null ? '' : d[k]);
           else if (k === 'precio' || k === 'oferta') { if (d[k] === null || d[k] === '') { if (k === 'precio') p.precio = null; else delete p.oferta; } else p[k] = Math.max(0, Math.round(Number(d[k]) || 0)); }
-          else if (k === 'retirado' || k === 'fav') { if (d[k]) p[k] = true; else delete p[k]; }
+          else if (BANDERAS.indexOf(k) >= 0) { if (d[k]) p[k] = true; else delete p[k]; }
           else if (k === 'pq' || k === 'pm') { if (d[k] === null || d[k] === '') delete p[k]; else p[k] = Math.max(0, Math.round(Number(d[k]) || 0)); }
           else if (k === 'upp') { var u = Math.round(Number(d[k]) || 0); if (u > 1) p.upp = u; else delete p.upp; }
+          else if (k === 'tramos') { if (Array.isArray(d[k])) p.tramos = d[k].map(function (t) { return [Math.max(1, Math.round(Number(t[0]) || 0)), Math.max(0, Math.round(Number(t[1]) || 0))]; }).filter(function (t) { return t[0] > 1; }).sort(function (a, b) { return a[0] - b[0]; }); else delete p.tramos; }
           else if (k === 'bolsas') { if (Array.isArray(d[k]) && d[k].length) p.bolsas = d[k].map(function (b) { return [Math.round(Number(b[0]) || 0), b[1] === null || b[1] === '' ? null : Math.max(0, Math.round(Number(b[1]) || 0))]; }).filter(function (b) { return b[0] > 0; }); }
         });
         var sangria = x.linea.match(/^\s*/)[0], coma = /,\s*$/.test(x.linea) ? ',' : '';
@@ -171,6 +192,17 @@
       var codsActuales = idx.map(function (i) { return literal(lineas[i].trim().replace(/,\s*$/, '')).cod; });
       if (!orden || orden.length !== codsActuales.length) orden = codsActuales;
       idx.forEach(function (i, n) { var l = porCod[orden[n]].linea; lineas[i] = l.replace(/,?\s*$/, ',') ; });
+      // Productos nuevos: van después del producto que los antecede en el orden del editor, o al final de su sección
+      var codDe = function (l) { var m = l.match(/^\s*\{cod:"([^"]*)"/); return m ? m[1] : null; };
+      var catDe = function (l) { var m = l.match(/cat:"([^"]*)"/); return m ? m[1] : null; };
+      (c.nuevos || []).forEach(function (n0) {
+        var n = limpiarNuevo(n0); if (!n || lineas.some(function (l) { return codDe(l) === n.cod; })) return;
+        var pos = -1, ord = c.ordenProductos || [], k = ord.indexOf(n.cod);
+        for (var j = k - 1; j >= 0 && pos < 0; j--) for (var i = 0; i < lineas.length; i++) if (codDe(lineas[i]) === ord[j]) { pos = i; break; }
+        if (pos < 0) for (var i2 = lineas.length - 1; i2 >= 0; i2--) if (codDe(lineas[i2]) && catDe(lineas[i2]) === n.cat) { pos = i2; break; }
+        if (pos < 0) for (var i3 = lineas.length - 1; i3 >= 0; i3--) if (codDe(lineas[i3])) { pos = i3; break; }
+        lineas.splice(pos + 1, 0, '      ' + objetoJS(n) + ',');
+      });
       var nuevo = lineas.join('\n');
       html = html.slice(0, lista.a) + '    productos:[' + nuevo + '\n    ]' + html.slice(lista.b);
     }
@@ -249,9 +281,14 @@
       if ('pq' in d) partes.push('precio del paquete ' + (b.pq == null ? 'automático' : clp(b.pq)) + ' → ' + (d.pq == null ? 'automático' : clp(d.pq)));
       if ('pm' in d) partes.push('precio por mayor ' + (b.pm == null ? 'automático' : clp(b.pm)) + ' → ' + (d.pm == null ? 'automático' : clp(d.pm)));
       if ('bolsas' in d) { var bb = {}; (b.bolsas || []).forEach(function (x) { bb[x[0]] = x[1]; }); partes.push('bolsas: ' + (d.bolsas || []).filter(function (x) { return bb[x[0]] !== x[1]; }).map(function (x) { return (x[0] >= 1000 ? String(x[0] / 1000).replace('.', ',') + ' kg' : x[0] + ' g') + ' ' + clp(bb[x[0]]) + ' → ' + clp(x[1]); }).join(', ')); }
+      if ('tramos' in d) partes.push(!Array.isArray(d.tramos) ? 'por mayor automático' : d.tramos.length ? 'por mayor ' + d.tramos.map(function (t) { return clp(t[1]) + ' desde ' + t[0]; }).join(' y ') : 'precio fijo (sin por mayor)');
       if ('retirado' in d) partes.push(d.retirado ? 'oculto' : 'visible');
+      if ('porLlegar' in d) partes.push(d.porLlegar ? 'por llegar (oculto hasta que llegue)' : 'ya llegó: se muestra en la carta');
       if ('fav' in d) partes.push(d.fav ? 'en Ofertas y promos' : 'fuera de Ofertas y promos');
       r.push('Producto ' + cod + ' (' + (b.nombre || '') + '): ' + partes.join(', '));
+    });
+    (c.nuevos || []).forEach(function (n) {
+      r.push('Producto nuevo ' + n.cod + ' «' + n.nombre + '» en ' + n.cat + ': ' + (n.detalle || '').replace(/^Precio /, '') + ', ' + clp(n.precio) + (n.pq != null ? ', paquete ' + clp(n.pq) : '') + (n.pm != null ? ', por mayor ' + clp(n.pm) : '') + (n.porLlegar ? ' · por llegar (oculto hasta que llegue)' : ' · visible'));
     });
     if (c.listaHuevos) {
       var FMT = { F20: 'bandeja de 20', F30: 'bandeja de 30', F100: 'caja de 100', F180: 'caja de 180' }, tr = base.tramosCaja || [1];
@@ -270,7 +307,10 @@
       if ('k' in d) partes.push('kilo ' + clp(a.k) + ' → ' + clp(d.k));
       r.push('Alimento para aves «' + n + '»: ' + partes.join(', '));
     });
-    if (c.ordenProductos) r.push('Nuevo orden de productos dentro de sus secciones');
+    if (c.ordenProductos) { // con productos nuevos el orden siempre viaja (para ubicarlos); solo se avisa si cambió el de los que ya estaban
+      var ob = base.productos.map(function (p) { return p.cod; });
+      if (!iguales(ob, c.ordenProductos.filter(function (cod) { return porCod[cod]; }))) r.push('Nuevo orden de productos dentro de sus secciones');
+    }
     if (c.promos) r.push('Promos: ' + c.promos.length + ' (' + c.promos.map(function (p) { return p.cod + ' ' + clp(p.precio); }).join(', ') + ')');
     if (c.ofertasFormato) r.push('Ofertas por formato: ' + Object.keys(c.ofertasFormato).map(function (k) { return k + ' ' + Object.keys(c.ofertasFormato[k]).map(function (f) { return f + ' ' + clp(c.ofertasFormato[k][f]); }).join(', '); }).join(' · '));
     if (c.familias) r.push('Menú: ' + c.familias.map(function (f) { return f[0] + ' (' + f[1].join(', ') + ')'; }).join(' · '));
@@ -281,5 +321,5 @@
     return r;
   }
 
-  return { COLORES: COLORES, CAMPOS_PRODUCTO: CAMPOS_PRODUCTO, leerCatalogo: leerCatalogo, diferencias: diferencias, aplicarCambios: aplicarCambios, resumen: resumen, cssDe: cssDe };
+  return { COLORES: COLORES, CAMPOS_PRODUCTO: CAMPOS_PRODUCTO, COD_VALIDO: COD_VALIDO, limpiarNuevo: limpiarNuevo, leerCatalogo: leerCatalogo, diferencias: diferencias, aplicarCambios: aplicarCambios, resumen: resumen, cssDe: cssDe };
 });

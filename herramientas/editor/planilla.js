@@ -46,10 +46,11 @@
     k.porUnidad = function (p) { return /por unidad/i.test(p.detalle || ''); };
     k.tienePaq = function (p) { return p.upp > 1 && k.porUnidad(p); };
     k.soloPaq = function (p) { return /por paquete/i.test(p.detalle || '') && !k.porUnidad(p); };
-    k.pmDe = function (p) { return datos.mayor && p.pm != null && p.oferta == null && !k.tapaDe(p) ? p.pm : null; };
+    k.tapaCobra = function (p) { var t = k.tapaDe(p); return !!t && (k.precioDe(t) || 0) > 0; }; // las tapas y blondas de $0 van incluidas
+    k.pmDe = function (p) { return datos.mayor && p.pm != null && p.oferta == null && !k.tapaCobra(p) ? p.pm : null; };
     k.precioPaq = function (p, n) {
       if (!k.tienePaq(p)) return null;
-      var b = k.precioBase(p), pq = p.pq != null && p.oferta == null && !k.tapaDe(p) ? p.pq : null;
+      var b = k.precioBase(p), pq = p.pq != null && p.oferta == null && !k.tapaCobra(p) ? p.pq : null;
       var normal = pq != null ? pq : b == null ? null : k.redondear(b * p.upp * (1 - DPAQ / 100));
       if (normal == null || n < MINP) return normal;
       var pm = k.pmDe(p); if (pm != null) return Math.min(pm, normal);
@@ -58,6 +59,7 @@
     k.escalones = function (p) {
       var base = k.precioBase(p);
       if (!datos.mayor || base == null || p.oferta != null || k.tienePaq(p)) return [];
+      if (Array.isArray(p.tramos)) return p.tramos.map(function (t) { return { desde: t[0], precio: t[1] }; }).filter(function (e) { return e.precio < base; });
       var pm = k.pmDe(p); if (pm != null) return pm < base ? [{ desde: k.soloPaq(p) ? MINP : M.sinPaquete[0], precio: pm }] : [];
       if (!k.porUnidad(p)) return [];
       return M.sinPaquete.map(function (d, i) { return { desde: d, precio: k.redondear(base * (1 - M.dctos[i] / 100)) }; }).filter(function (e) { return e.precio < base; });
@@ -87,7 +89,7 @@
   /* ---------- Filas de la planilla ---------- */
   function filasPrecios(datos, ref) {
     ref = ref || {}; var R = ref.productos || {}, k = calculos(datos), filas = [];
-    var vivos = datos.productos.filter(function (p) { return !p.retirado; });
+    var vivos = datos.productos.filter(function (p) { return !p.retirado && !p.porLlegar; }); // los por llegar van en la hoja «Productos nuevos»
     var esPieza = function (p) { return p.cat === 'Tapas' || p.cat === 'Blondas'; };
     var cal = datos.calHuevo || {};
     var fila = function (o) { o.clave = o.clave || ''; filas.push(o); return o; };
@@ -119,7 +121,7 @@
 
     // 2) Productos de la carta, en el orden de la carta
     vivos.filter(function (p) { return !esPieza(p) && !(p.formatos && cal[p.cod]); }).forEach(function (p) {
-      var x = extra(p.cod), t = k.tapaDe(p), base = { seccion: p.cat, cod: p.cod, codMy: x.codMy, producto: p.nombre };
+      var x = extra(p.cod), t0 = k.tapaDe(p), t = k.tapaCobra(p) ? t0 : null, base = { seccion: p.cat, cod: p.cod, codMy: x.codMy, producto: p.nombre };
       var conTapa = t ? 'En la carta se cobra con su ' + (t.cat === 'Blondas' ? 'blonda' : 'tapa') + ' (' + t.cod + ' ' + clp(k.precioDe(t)) + '): ' + clp(k.precioBase(p)) + ' c/u' : '';
       var oferta = p.oferta != null ? 'En oferta a ' + clp(p.oferta) + ' (el por mayor no corre con oferta)' : '';
       if (Array.isArray(p.bolsas) && p.bolsas.length) {
@@ -140,10 +142,13 @@
             : notas(conTapa ? 'Se calcula solo con el precio del envase y de su tapa: cambia el precio por unidad.' : oferta, 'No se puede fijar aquí.') }));
         return;
       }
-      var esc = k.escalones(p), mayorEd = !t && p.oferta == null && !!datos.mayor;
-      var auto = !p.pm && esc.length > 1 ? 'Por mayor automático: ' + esc.map(function (e) { return clp(e.precio) + ' desde ' + e.desde + ' u'; }).join(' y ') + '. Si escribes un precio, queda ese desde ' + esc[0].desde + ' u.' : '';
+      // tramos propios: con un solo tramo (ej. desde 20 u) el «Por mayor nuevo» cambia su precio; [] = precio fijo; con varios tramos se cambia pidiéndoselo a Claude
+      var tr = Array.isArray(p.tramos) ? p.tramos : null, uniT = k.soloPaq(p) ? ' paquetes' : p.uni ? ' ' + p.uni + 's' : ' u';
+      var esc = k.escalones(p), mayorEd = !t && p.oferta == null && !!datos.mayor && (!tr || tr.length === 1);
+      if (tr) x = Object.assign({}, x, { nota: notas(!tr.length ? 'Precio fijo: sin precio por mayor.' : tr.length === 1 ? 'Por mayor propio desde ' + tr[0][0] + uniT + ' («-» lo quita y vuelve el automático).' : 'Por mayor por tramos: ' + tr.map(function (e) { return clp(e[1]) + ' desde ' + e[0]; }).join(' y ') + ' (se cambia pidiéndoselo a Claude).', x.nota) });
+      var auto = !p.pm && esc.length > 1 && !tr ? 'Por mayor automático: ' + esc.map(function (e) { return clp(e.precio) + ' desde ' + e.desde + ' u'; }).join(' y ') + '. Si escribes un precio, queda ese desde ' + esc[0].desde + ' u.' : '';
       fila(Object.assign({}, base, { formato: medida(p, k), actual: p.precio, planilla: x.planilla, clave: 'P|' + p.cod + '|precio' + (x.pista ? '|' + x.pista : ''),
-        mayorDesde: mayorEd || esc.length ? unidadesMayor(p, k) : '', mayorActual: esc.length ? esc[0].precio : null, mayorEditable: mayorEd,
+        mayorDesde: tr ? (tr.length ? tr[0][0] + uniT : '') : mayorEd || esc.length ? unidadesMayor(p, k) : '', mayorActual: tr ? (tr.length ? tr[0][1] : null) : esc.length ? esc[0].precio : null, mayorEditable: mayorEd && !(tr && !tr.length),
         nota: notas(conTapa, oferta, auto, x.nota) }));
     });
 
@@ -158,9 +163,9 @@
     // 4) Alimento para aves (se pide por WhatsApp a la Distribuidora o a Ventas Avícola)
     (datos.alimentos || []).forEach(function (a) {
       var x = (ref.alimentos || {})[a.n] || {};
-      fila({ seccion: 'Alimento para aves (pedido por WhatsApp)', cod: '', codMy: x.codMy, producto: a.n, formato: a.d || 'Saco', actual: a.p, planilla: x.planilla, clave: 'A|' + a.n + '|p',
+      fila({ seccion: 'Alimento para aves (en el menú y por WhatsApp)', cod: '', codMy: x.codMy, producto: a.n, formato: a.d || 'Saco', actual: a.p, planilla: x.planilla, clave: 'A|' + a.n + '|p',
         nota: a.m ? 'Tramos (texto fijo en la carta, no cambia con esta planilla): ' + a.m : '' });
-      if (a.k != null) fila({ seccion: 'Alimento para aves (pedido por WhatsApp)', cod: '', producto: a.n, formato: 'Kilo', actual: a.k, clave: 'A|' + a.n + '|k' });
+      if (a.k != null) fila({ seccion: 'Alimento para aves (en el menú y por WhatsApp)', cod: '', producto: a.n, formato: 'Kilo', actual: a.k, clave: 'A|' + a.n + '|k' });
     });
 
     // 5) Promos
@@ -229,7 +234,7 @@
     if (typeof v === 'number' && isFinite(v)) return '<c r="' + ref + '" s="' + s + '"><v>' + v + '</v></c>';
     return '<c r="' + ref + '" s="' + s + '" t="inlineStr"><is><t xml:space="preserve">' + x(v) + '</t></is></c>';
   }
-  // Estilos: 0 normal, 1 encabezado, 2 texto, 3 pesos, 4 pesos a rellenar (amarillo), 5 nota, 6 clave, 7 no aplica (gris), 8 título, 9 negrita, 10 texto largo, 11 pesos de referencia (gris claro)
+  // Estilos: 0 normal, 1 encabezado, 2 texto, 3 pesos, 4 pesos a rellenar (amarillo), 5 nota, 6 clave, 7 no aplica (gris), 8 título, 9 negrita, 10 texto largo, 11 pesos de referencia (gris claro), 12 texto a rellenar (amarillo)
   var ESTILOS = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
     + '<numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;$&quot;#,##0"/></numFmts>'
     + '<fonts count="6"><font><sz val="10"/><name val="Arial"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Arial"/></font><font><sz val="9"/><color rgb="FF7F7F7F"/><name val="Arial"/></font>'
@@ -237,7 +242,7 @@
     + '<fills count="5"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1D5C36"/><bgColor indexed="64"/></patternFill></fill>'
     + '<fill><patternFill patternType="solid"><fgColor rgb="FFFFF2CC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF2F2F2"/><bgColor indexed="64"/></patternFill></fill></fills>'
     + '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD9D9D9"/></left><right style="thin"><color rgb="FFD9D9D9"/></right><top style="thin"><color rgb="FFD9D9D9"/></top><bottom style="thin"><color rgb="FFD9D9D9"/></bottom><diagonal/></border></borders>'
-    + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="12">'
+    + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="13">'
     + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
     + '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
     + '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>'
@@ -250,6 +255,7 @@
     + '<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>'
     + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf>'
     + '<xf numFmtId="164" fontId="5" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>'
+    + '<xf numFmtId="0" fontId="0" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>'
     + '</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
   var NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
 
@@ -288,6 +294,90 @@
       + (anchos || [110]).map(function (w, i) { return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>'; }).join('')
       + '</cols><sheetData>' + filasXml.join('') + '</sheetData><pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/></worksheet>';
   }
+  /* ---------- Productos nuevos (también los que aún no llegan) ---------- */
+  var HOJA_NUEVOS = 'Productos nuevos', FILAS_VACIAS = 40;
+  var COMO = ['Por unidad', 'Por unidad y por paquete', 'Solo por paquete', 'Por kilo', 'Por rollo'];
+  var COL_NUEVOS = [['seccion', 'Sección ✎', 26], ['producto', 'Producto ✎', 40], ['como', 'Cómo se vende ✎', 23], ['upp', 'Unidades del paquete ✎', 12],
+    ['precio', 'Precio ✎', 12], ['mayor', 'Por mayor ✎', 12], ['llego', '¿Ya llegó? ✎', 11], ['codMy', 'Código MyPyme ✎', 13], ['nota', 'Notas', 54], ['clave', 'Clave (no tocar)', 16]];
+  function plano(t) { return String(t == null ? '' : t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+  function comoNormal(t) { // texto de «Cómo se vende» → u | paq | soloPaq | kg | rollo
+    var s = plano(t); if (!s) return 'u';
+    if (/kilo|\bkg\b/.test(s)) return 'kg'; if (/rollo/.test(s)) return 'rollo';
+    if (/solo/.test(s) || (/paquete/.test(s) && !/unidad/.test(s))) return 'soloPaq';
+    if (/paquete/.test(s)) return 'paq'; return 'u';
+  }
+  function detalleDe(como, upp) {
+    return { u: 'Precio por unidad', paq: 'Precio por unidad · paquete de ' + upp + ' u', soloPaq: 'Precio por paquete de ' + upp + ' u', kg: 'Precio por kilo', rollo: 'Precio por rollo' }[como];
+  }
+  function comoDe(p) { // producto → [texto de «Cómo se vende», unidades del paquete]
+    var d = p.detalle || '', m = d.match(/por paquete de (\d+)/i);
+    if (/por unidad/i.test(d) && p.upp > 1) return [COMO[1], p.upp];
+    if (m) return [COMO[2], +m[1]]; if (/por kilo/i.test(d)) return [COMO[3], null]; if (/por rollo/i.test(d)) return [COMO[4], null];
+    return [COMO[0], null];
+  }
+  function seccionesDe(datos) {
+    var r = []; datos.productos.forEach(function (p) { if (p.cat !== 'Tapas' && p.cat !== 'Blondas' && r.indexOf(p.cat) < 0) r.push(p.cat); });
+    return r;
+  }
+  function usadosDe(datos) { var u = {}; datos.productos.forEach(function (p) { u[p.cod] = true; }); (datos.codigosAntes || []).forEach(function (c) { u[c] = true; }); return u; }
+  function codigoNuevo(codMy, usados, avisos, donde) { // el código MyPyme si está libre; si no, NUE001, NUE002…
+    var c = String(codMy == null ? '' : codMy).trim().toUpperCase();
+    if (c && /^[A-Z0-9][A-Z0-9-]{2,19}$/.test(c) && !usados[c]) { usados[c] = true; return c; }
+    if (c) avisos.push(donde + ': el código «' + c + '» ' + (usados[c] ? 'ya lo usa otro producto de la carta' : 'no sirve como código') + '; queda con un código NUE.');
+    for (var n = 1; n < 1000; n++) { var k = 'NUE' + String(n).padStart(3, '0'); if (!usados[k]) { usados[k] = true; return k; } }
+    return null;
+  }
+  /* Arma un producto desde una fila de «Productos nuevos» o del formulario del editor.
+     fila: {seccion, producto, como, upp, precio, mayor, llego, codMy}; op: {cod (si ya existe), usados, secciones, donde} → {p, errores, avisos} */
+  function crearProducto(fila, op) {
+    op = op || {}; var errores = [], avisos = [], donde = op.donde || 'Producto nuevo';
+    var nombre = String(fila.producto == null ? '' : fila.producto).replace(/\s+/g, ' ').trim();
+    if (!nombre) errores.push('falta el nombre');
+    var como = comoNormal(fila.como), upp = Math.round(Number(fila.upp) || 0);
+    if ((como === 'paq' || como === 'soloPaq') && !(upp > 1)) errores.push('falta «Unidades del paquete» (más de 1)');
+    var vp = valor(fila.precio), vm = valor(fila.mayor);
+    if (vp.error) errores.push('«' + fila.precio + '» no es un precio'); if (vm.error) errores.push('«' + fila.mayor + '» no es un precio por mayor');
+    var seccion = String(fila.seccion == null ? '' : fila.seccion).trim() || 'Otros';
+    if (op.secciones && op.secciones.indexOf(seccion) < 0) avisos.push(donde + ': la sección «' + seccion + '» no existe en la carta; queda como página nueva dentro de «Otros» del menú.');
+    if (errores.length) return { p: null, errores: errores, avisos: avisos };
+    var cod = op.cod || codigoNuevo(fila.codMy, op.usados || {}, avisos, donde);
+    var p = { cod: cod, cat: seccion, nombre: nombre, detalle: detalleDe(como, upp), precio: vp.n != null ? vp.n : null };
+    if (como === 'paq') p.upp = upp;
+    if (vm.n != null) p.pm = vm.n;
+    if (!/^s[ií]/i.test(String(fila.llego == null ? '' : fila.llego).trim())) p.porLlegar = true; // en blanco o «No»: aún no llega (oculto)
+    p.nuevo = true;
+    return { p: p, errores: [], avisos: avisos };
+  }
+  function hojaNuevos(datos) {
+    var porLlegar = datos.productos.filter(function (p) { return p.porLlegar && !p.retirado; });
+    var n = porLlegar.length + FILAS_VACIAS, ultima = n + 2, L = function (k) { for (var i = 0; i < COL_NUEVOS.length; i++) if (COL_NUEVOS[i][0] === k) return letra(i); };
+    var filas = ['<row r="1" ht="48" customHeight="1">' + celda('A1', 'Escribe aquí los productos nuevos, también los que aún no llegan, en las filas vacías de abajo. Con «¿Ya llegó?» en «No» o en blanco quedan cargados pero ocultos en la carta; cuando llegue el producto, cámbialo a «Sí» y vuelve a subir la planilla. El precio va por la medida de «Cómo se vende» (por unidad, kilo, rollo o paquete); en «Por unidad y por paquete» es el precio de 1 unidad. Los que ya cargaste y aún no llegan aparecen primero.', 10) + '</row>',
+      '<row r="2" ht="30" customHeight="1">' + COL_NUEVOS.map(function (c, i) { return celda(letra(i) + '2', c[1], 1); }).join('') + '</row>'];
+    porLlegar.forEach(function (p, j) {
+      var r = j + 3, cm = comoDe(p);
+      var v = { seccion: p.cat, producto: p.nombre, como: cm[0], upp: cm[1], precio: p.precio, mayor: p.pm, llego: 'No', codMy: p.cod, nota: 'Ya cargado, oculto en la carta hasta que llegue (código ' + p.cod + ').', clave: 'N|' + p.cod };
+      filas.push('<row r="' + r + '">' + COL_NUEVOS.map(function (c, i) {
+        var k = c[0], s = k === 'precio' || k === 'mayor' ? 4 : k === 'nota' ? 5 : k === 'clave' ? 6 : k === 'codMy' ? 7 : 12;
+        return celda(letra(i) + r, k === 'codMy' ? p.cod : v[k], s);
+      }).join('') + '</row>');
+    });
+    for (var j = porLlegar.length; j < n; j++) {
+      var r = j + 3;
+      filas.push('<row r="' + r + '">' + COL_NUEVOS.map(function (c, i) { var k = c[0]; return celda(letra(i) + r, k === 'clave' ? 'N|nuevo' : null, k === 'precio' || k === 'mayor' ? 4 : k === 'nota' ? 5 : k === 'clave' ? 6 : 12); }).join('') + '</row>');
+    }
+    var nSec = seccionesDe(datos).length, rango = function (k) { return L(k) + '3:' + L(k) + ultima; };
+    var lista = function (k, f, titulo, error) { return '<dataValidation type="list" allowBlank="1" showErrorMessage="1" errorTitle="' + x(titulo) + '" error="' + x(error) + '" sqref="' + rango(k) + '"><formula1>' + x(f) + '</formula1></dataValidation>'; };
+    var numero = function (k) { var c = L(k); return '<dataValidation type="custom" allowBlank="1" showErrorMessage="1" errorTitle="Número" error="Escribe un número sin puntos (ej.: 1990)." sqref="' + rango(k) + '"><formula1>AND(ISNUMBER(' + c + '3),' + c + '3&gt;=0)</formula1></dataValidation>'; };
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet ' + NS + '><sheetPr><tabColor rgb="FFE8A33D"/></sheetPr><dimension ref="A1:' + letra(COL_NUEVOS.length - 1) + ultima + '"/>'
+      + '<sheetViews><sheetView zoomScaleNormal="100" workbookViewId="0"><pane ySplit="2" topLeftCell="A3" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="A' + (porLlegar.length + 3) + '" sqref="A' + (porLlegar.length + 3) + '"/></sheetView></sheetViews>'
+      + '<sheetFormatPr defaultRowHeight="15"/><cols>' + COL_NUEVOS.map(function (c, i) { return '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + c[2] + '" customWidth="1"/>'; }).join('') + '</cols>'
+      + '<sheetData>' + filas.join('') + '</sheetData><mergeCells count="1"><mergeCell ref="A1:' + letra(COL_NUEVOS.length - 1) + '1"/></mergeCells>'
+      + '<dataValidations count="6">' + lista('seccion', 'Listas!$A$1:$A$' + Math.max(1, nSec), 'Sección', 'Elige una sección de la lista.') + lista('como', '"' + COMO.join(',') + '"', 'Cómo se vende', 'Elige una opción de la lista.')
+      + lista('llego', '"Sí,No"', '¿Ya llegó?', 'Elige Sí o No.') + numero('upp') + numero('precio') + numero('mayor') + '</dataValidations>'
+      + '<pageMargins left="0.4" right="0.4" top="0.5" bottom="0.5" header="0.3" footer="0.3"/></worksheet>';
+  }
+  function hojaListas(datos) { return hojaTexto(seccionesDe(datos).map(function (s) { return [s, 0]; }), [40]); }
+
   function instrucciones(op) {
     var L = [['Actualización masiva de precios — Catálogo Emporio Sabroso', 8], ['Generada el ' + (op.fecha || new Date().toLocaleString('es-CL')) + (op.origen ? ' · ' + op.origen : ''), 10], ['', 10],
       ['Qué rellenar', 9],
@@ -296,6 +386,9 @@
       ['«Por mayor nuevo» fija el precio por mayor desde la cantidad de «Por mayor desde» (10 u, 10 kg o 10 paquetes). Si lo dejas en blanco, sigue el cálculo automático de la carta.', 10],
       ['«Precio planilla (7)» es el precio de venta de la planilla de inventario, solo como referencia. «Precio actual» es el que tiene hoy la carta.', 10],
       ['No cambies la columna «Clave (no tocar)»: con ella el editor sabe qué precio es cada fila. Puedes ordenar, filtrar u ocultar filas y columnas.', 10], ['', 10],
+      ['Productos nuevos (hoja «Productos nuevos»)', 9],
+      ['Para agregar un producto a la carta, también uno que aún no llega, llena una fila vacía: sección, nombre, cómo se vende (por unidad, por unidad y por paquete, solo por paquete, por kilo o por rollo), unidades del paquete si corresponde, precio (puede quedar en blanco = «por confirmar») y, si quieres, el precio por mayor y el código de MyPyme.', 10],
+      ['«¿Ya llegó?» en «No» o en blanco: el producto queda cargado pero oculto en la carta. Cuando llegue, cámbialo a «Sí» (en la fila del producto, que aparece al principio de esa hoja) y vuelve a subir la planilla: desde ese momento se ve y se puede pedir, y su precio pasa a la hoja «Precios».', 10], ['', 10],
       ['Ejemplo de una fila rellenada', 9],
       [['Código carta', 'Producto', 'Formato de venta', 'Precio actual', 'Precio nuevo ✎', 'Por mayor desde', 'Por mayor nuevo ✎'], [1, 1, 1, 1, 1, 1, 1]],
       [['BOL003', 'Bolsa camiseta 32 × 40', 'Unidad (viene en paquete de 100 u)', 10, 12, '', ''], [2, 2, 2, 3, 4, 7, 7]],
@@ -310,14 +403,15 @@
 
   function crearXlsx(filas, op) {
     op = op || {};
-    var hojas = [{ nombre: HOJA, xml: hojaPrecios(filas) }, { nombre: 'Cómo usar', xml: instrucciones(op) }].concat(op.hojasExtra || []);
+    var hojas = [{ nombre: HOJA, xml: hojaPrecios(filas) }].concat(op.datos ? [{ nombre: HOJA_NUEVOS, xml: hojaNuevos(op.datos) }] : [], [{ nombre: 'Cómo usar', xml: instrucciones(op) }], op.hojasExtra || [],
+      op.datos ? [{ nombre: 'Listas', xml: hojaListas(op.datos), oculta: true }] : []);
     var archivos = [
       { nombre: '[Content_Types].xml', datos: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
         + hojas.map(function (h, i) { return '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'; }).join('')
         + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>' },
       { nombre: '_rels/.rels', datos: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
       { nombre: 'xl/workbook.xml', datos: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook ' + NS + '><bookViews><workbookView activeTab="0"/></bookViews><sheets>'
-        + hojas.map(function (h, i) { return '<sheet name="' + x(h.nombre) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>'; }).join('')
+        + hojas.map(function (h, i) { return '<sheet name="' + x(h.nombre) + '" sheetId="' + (i + 1) + '"' + (h.oculta ? ' state="hidden"' : '') + ' r:id="rId' + (i + 1) + '"/>'; }).join('')
         + '</sheets><definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">' + HOJA + '!$A$1:$' + letra(COLUMNAS.length - 1) + '$' + (filas.length + 1) + '</definedName></definedNames></workbook>' },
       { nombre: 'xl/_rels/workbook.xml.rels', datos: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
         + hojas.map(function (h, i) { return '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>'; }).join('')
@@ -338,31 +432,49 @@
       if (!r[0]) throw new Error('El archivo no es un Excel (.xlsx).');
       var hojas = [], m, re = /<sheet\b([^>]*)\/?>/g;
       while ((m = re.exec(r[0]))) { var nom = (m[1].match(/name="([^"]*)"/) || [])[1], id = (m[1].match(/r:id="([^"]*)"/) || [])[1]; hojas.push({ nombre: desXml(nom || ''), id: id }); }
-      var hoja = hojas.filter(function (h) { return h.nombre === HOJA; })[0] || hojas[0];
-      var rel = new RegExp('<Relationship\\b[^>]*Id="' + hoja.id + '"[^>]*>'), rm = (r[1] || '').match(rel), destino = rm && (rm[0].match(/Target="([^"]*)"/) || [])[1];
-      destino = destino ? destino.replace(/^\/?xl\//, '').replace(/^\//, '') : 'worksheets/sheet1.xml';
       var comp = []; if (r[2]) { var re2 = /<si>([\s\S]*?)<\/si>/g, s; while ((s = re2.exec(r[2]))) comp.push(textos(s[1])); }
-      return leer('xl/' + destino).then(function (xml) {
-        if (!xml) throw new Error('No encontré la hoja «' + HOJA + '» en el Excel.');
-        var filas = [], rr = /<row\b([^>]*)>([\s\S]*?)<\/row>/g, f;
-        while ((f = rr.exec(xml))) {
-          var num = +((f[1].match(/\br="(\d+)"/) || [])[1] || filas.length + 1), celdas = {}, rc = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g, c;
-          while ((c = rc.exec(f[2]))) {
-            var ref = (c[1].match(/\br="([A-Z]+)\d+"/) || [])[1], t = (c[1].match(/\bt="([^"]*)"/) || [])[1], dentro = c[2] || '', v = (dentro.match(/<v>([\s\S]*?)<\/v>/) || [])[1], val;
-            if (!ref) continue;
-            if (t === 's') val = comp[+v]; else if (t === 'inlineStr') val = textos(dentro); else if (t === 'str' || t === 'e') val = v == null ? '' : desXml(v); else if (t === 'b') val = v === '1'; else val = v == null ? null : Number(v);
-            celdas[ref] = val;
+      var leerHoja = function (hoja) { // → Promise de [{n, c:{A: valor…}}] o null si no está
+        if (!hoja) return Promise.resolve(null);
+        var rel = new RegExp('<Relationship\\b[^>]*Id="' + hoja.id + '"[^>]*>'), rm = (r[1] || '').match(rel), destino = rm && (rm[0].match(/Target="([^"]*)"/) || [])[1];
+        destino = destino ? destino.replace(/^\/?xl\//, '').replace(/^\//, '') : 'worksheets/sheet1.xml';
+        return leer('xl/' + destino).then(function (xml) {
+          if (!xml) return null;
+          var filas = [], rr = /<row\b([^>]*)>([\s\S]*?)<\/row>/g, f;
+          while ((f = rr.exec(xml))) {
+            var num = +((f[1].match(/\br="(\d+)"/) || [])[1] || filas.length + 1), celdas = {}, rc = /<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g, c;
+            while ((c = rc.exec(f[2]))) {
+              var ref = (c[1].match(/\br="([A-Z]+)\d+"/) || [])[1], t = (c[1].match(/\bt="([^"]*)"/) || [])[1], dentro = c[2] || '', v = (dentro.match(/<v>([\s\S]*?)<\/v>/) || [])[1], val;
+              if (!ref) continue;
+              if (t === 's') val = comp[+v]; else if (t === 'inlineStr') val = textos(dentro); else if (t === 'str' || t === 'e') val = v == null ? '' : desXml(v); else if (t === 'b') val = v === '1'; else val = v == null ? null : Number(v);
+              celdas[ref] = val;
+            }
+            filas.push({ n: num, c: celdas });
           }
-          filas.push({ n: num, c: celdas });
-        }
-        var cab = filas.filter(function (fl) { return Object.keys(fl.c).some(function (k) { return /^Clave/i.test(String(fl.c[k] || '').trim()); }); })[0];
+          return filas;
+        });
+      };
+      var cabecera = function (filas) { return filas.filter(function (fl) { return Object.keys(fl.c).some(function (k) { return /^Clave/i.test(String(fl.c[k] || '').trim()); }); })[0]; };
+      var colDeEn = function (cab) { return function (re) { return Object.keys(cab.c).filter(function (k) { return re.test(String(cab.c[k] || '').trim()); })[0]; }; };
+      var hoja = hojas.filter(function (h) { return h.nombre === HOJA; })[0] || hojas[0], hojaN = hojas.filter(function (h) { return h.nombre === HOJA_NUEVOS; })[0];
+      return Promise.all([leerHoja(hoja), leerHoja(hojaN)]).then(function (dos) {
+        var filas = dos[0]; if (!filas) throw new Error('No encontré la hoja «' + HOJA + '» en el Excel.');
+        var cab = cabecera(filas);
         if (!cab) throw new Error('No encontré la columna «Clave (no tocar)» en la hoja «' + hoja.nombre + '». ¿Es la planilla de precios del editor?');
-        var colDe = function (re) { return Object.keys(cab.c).filter(function (k) { return re.test(String(cab.c[k] || '').trim()); })[0]; };
+        var colDe = colDeEn(cab);
         var cClave = colDe(/^Clave/i), cNuevo = colDe(/^Precio nuevo/i), cMayor = colDe(/^Por mayor nuevo/i), cProd = colDe(/^Producto/i), cFmt = colDe(/^Formato/i);
         if (!cNuevo) throw new Error('No encontré la columna «Precio nuevo ✎».');
-        return filas.filter(function (fl) { return fl.n > cab.n && fl.c[cClave]; }).map(function (fl) {
+        var leidas = filas.filter(function (fl) { return fl.n > cab.n && fl.c[cClave]; }).map(function (fl) {
           return { clave: String(fl.c[cClave]).trim(), nuevo: fl.c[cNuevo], mayorNuevo: cMayor ? fl.c[cMayor] : null, fila: fl.n, producto: cProd ? fl.c[cProd] : '', formato: cFmt ? fl.c[cFmt] : '' };
         });
+        // Hoja «Productos nuevos» (si viene): filas con nombre de producto o con clave de un producto ya cargado
+        var fn = dos[1], cn = fn && cabecera(fn);
+        if (cn) {
+          var cd = colDeEn(cn), C = { seccion: cd(/^Secci/i), producto: cd(/^Producto/i), como: cd(/^C[oó]mo se vende/i), upp: cd(/^Unidades/i), precio: cd(/^Precio/i), mayor: cd(/^Por mayor/i), llego: cd(/lleg/i), codMy: cd(/^C[oó]digo/i), clave: cd(/^Clave/i) };
+          leidas.nuevos = fn.filter(function (fl) { return fl.n > cn.n && (String(fl.c[C.producto] == null ? '' : fl.c[C.producto]).trim() || /^N\|(?!nuevo$)/.test(String(fl.c[C.clave] || ''))); }).map(function (fl) {
+            var o = { fila: fl.n }; Object.keys(C).forEach(function (k) { o[k] = C[k] ? fl.c[C[k]] : null; }); o.clave = String(o.clave || '').trim(); return o;
+          });
+        }
+        return leidas;
       });
     });
   }
@@ -399,15 +511,61 @@
         cambios.push(c);
       });
     });
+    if (leidas.nuevos) { var rn = compararNuevos(datos, leidas.nuevos, avisos); cambios = cambios.concat(rn.cambios); iguales += rn.iguales; }
     return { cambios: cambios, avisos: avisos, iguales: iguales };
+  }
+  function compararNuevos(datos, filas, avisos) {
+    var cambios = [], iguales = 0, usados = usadosDe(datos), secciones = seccionesDe(datos), porCod = {}, porNombre = {};
+    datos.productos.forEach(function (p) { porCod[p.cod] = p; porNombre[plano(p.nombre)] = p; });
+    var vistos = {};
+    filas.forEach(function (f) {
+      var donde = 'Productos nuevos, fila ' + f.fila + (f.producto ? ' (' + f.producto + ')' : ''), m = f.clave.match(/^N\|(.+)$/), cod = m && m[1] !== 'nuevo' ? m[1] : null;
+      if (cod) { // producto ya cargado que aún no llega
+        var p = porCod[cod]; if (!p) { avisos.push(donde + ': el producto ' + cod + ' ya no está en la carta.'); return; }
+        if (!p.porLlegar) { iguales++; return; } // ya llegó: esta fila ya no manda
+        var r = crearProducto(f, { cod: cod, secciones: secciones, donde: donde });
+        if (r.errores.length) { avisos.push(donde + ': ' + r.errores.join('; ') + '. No se aplica.'); return; }
+        avisos.push.apply(avisos, r.avisos);
+        var campos = {};
+        [['nombre'], ['cat'], ['detalle'], ['upp'], ['precio'], ['pm']].forEach(function (k) { k = k[0]; var a = p[k] == null ? null : p[k], z = r.p[k] == null ? null : r.p[k]; if (a !== z) campos[k] = z; });
+        if (Object.keys(campos).length) cambios.push({ tipo: 'editarNuevo', clave: f.clave, cod: cod, campos: campos, producto: r.p.nombre, formato: 'Producto por llegar: ' + Object.keys(campos).map(function (k) { return { nombre: 'nombre', cat: 'sección', detalle: 'cómo se vende', upp: 'paquete', precio: 'precio', pm: 'por mayor' }[k]; }).join(', '), antes: p.precio, despues: r.p.precio, fila: f.fila });
+        if (!r.p.porLlegar) cambios.push({ tipo: 'llego', clave: f.clave, cod: cod, producto: r.p.nombre, formato: 'Llegó: se muestra en la carta y se puede pedir', antes: p.precio, despues: r.p.precio, fila: f.fila });
+        if (!Object.keys(campos).length && r.p.porLlegar) iguales++;
+        return;
+      }
+      var nom = plano(f.producto);
+      if (porNombre[nom]) { iguales++; return; } // ya está cargado (por ejemplo, al volver a subir la misma planilla)
+      if (vistos[nom]) { avisos.push(donde + ': está repetido en la planilla; se agrega una sola vez.'); return; }
+      var r2 = crearProducto(f, { usados: usados, secciones: secciones, donde: donde });
+      if (r2.errores.length) { avisos.push(donde + ': ' + r2.errores.join('; ') + '. No se agrega.'); return; }
+      avisos.push.apply(avisos, r2.avisos); vistos[nom] = true;
+      cambios.push({ tipo: 'nuevo', clave: f.clave || 'N|nuevo', cod: r2.p.cod, nuevoProducto: r2.p, producto: r2.p.nombre,
+        formato: 'Producto nuevo en «' + r2.p.cat + '» · ' + r2.p.detalle.replace(/^Precio /, '') + (r2.p.porLlegar ? ' · por llegar (oculto hasta que llegue)' : ' · ya llegó (visible)'), antes: null, despues: r2.p.precio, fila: f.fila });
+    });
+    return { cambios: cambios, iguales: iguales };
   }
   function aplicarEnEstado(estado, cambios) {
     var porCod = {}; estado.productos.forEach(function (p) { porCod[p.cod] = p; });
     cambios.forEach(function (c) {
+      if (c.tipo === 'nuevo') { // después del último producto de su sección (o al final)
+        if (porCod[c.cod]) return; var np = JSON.parse(JSON.stringify(c.nuevoProducto)), pos = -1;
+        for (var i = estado.productos.length - 1; i >= 0; i--) if (estado.productos[i].cat === np.cat) { pos = i; break; }
+        if (pos < 0) estado.productos.push(np); else estado.productos.splice(pos + 1, 0, np);
+        porCod[np.cod] = np; return;
+      }
+      if (c.tipo === 'llego') { if (porCod[c.cod]) delete porCod[c.cod].porLlegar; return; }
+      if (c.tipo === 'editarNuevo') {
+        var q = porCod[c.cod]; if (!q) return;
+        Object.keys(c.campos).forEach(function (k) { var v = c.campos[k]; if (v == null && k !== 'precio') delete q[k]; else q[k] = v; });
+        return;
+      }
       var p3 = c.clave.split('|'), tipo = p3[0], id = p3[1], campo = p3[2], v = c.despues;
       if (tipo === 'P') {
         var p = porCod[id]; if (!p) return;
-        if (c.campo === 'mayor') { if (v === null) delete p.pm; else p.pm = v; return; }
+        if (c.campo === 'mayor') {
+          if (Array.isArray(p.tramos) && p.tramos.length === 1) { if (v === null) delete p.tramos; else p.tramos = [[p.tramos[0][0], v]]; return; } // por mayor propio desde N
+          if (v === null) delete p.pm; else p.pm = v; return;
+        }
         if (campo === 'precio') {
           p.precio = v;
           if (c.formatoNuevo) { p.detalle = c.formatoNuevo.detalle; if (c.formatoNuevo.upp > 1) p.upp = c.formatoNuevo.upp; else delete p.upp; delete p.pq; }
@@ -425,5 +583,5 @@
     return estado;
   }
 
-  return { HOJA: HOJA, COLUMNAS: COLUMNAS, filasPrecios: filasPrecios, crearXlsx: crearXlsx, leerXlsx: leerXlsx, compararPlanilla: compararPlanilla, aplicarEnEstado: aplicarEnEstado, hojaTexto: hojaTexto, calculos: calculos, pista: pista, clp: clp };
+  return { HOJA: HOJA, HOJA_NUEVOS: HOJA_NUEVOS, COMO: COMO, COLUMNAS: COLUMNAS, crearProducto: crearProducto, seccionesDe: seccionesDe, usadosDe: usadosDe, comoDe: comoDe, filasPrecios: filasPrecios, crearXlsx: crearXlsx, leerXlsx: leerXlsx, compararPlanilla: compararPlanilla, aplicarEnEstado: aplicarEnEstado, hojaTexto: hojaTexto, calculos: calculos, pista: pista, clp: clp };
 });
