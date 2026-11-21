@@ -1797,17 +1797,17 @@ const LOCALES = {
       {cod:"HUE005",cat:"Huevos",nombre:"Huevo jumbo blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
       {cod:"HUE008",retirado:true,cat:"Huevos",nombre:"Huevo súper blanco 100 u",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
       {cod:"HUE007",cat:"Huevos",nombre:"Huevo súper blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
-      {cod:"HUE010",cat:"Huevos",nombre:"Huevo súper Novogen",detalle:"Precio por caja",precio:null,formatos:"huevoGrande",modoIni:"F100",nuevo:true},
+      {cod:"HUE010",cat:"Huevos",nombre:"Huevo súper Novogen",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande",nuevo:true},
       {cod:"HUE012",cat:"Huevos",nombre:"Huevo extra blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
-      {cod:"HUE011",cat:"Huevos",nombre:"Huevo extra Novogen",detalle:"Precio por caja",precio:null,formatos:"huevo",modoIni:"F180",nuevo:true},
+      {cod:"HUE011",cat:"Huevos",nombre:"Huevo extra Novogen",detalle:"Precio por bandeja",precio:null,formatos:"huevo",nuevo:true},
       {cod:"HUE014",cat:"Huevos",nombre:"Huevo primera blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE015",cat:"Huevos",nombre:"Huevo primera café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE017",cat:"Huevos",nombre:"Huevo segunda blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
-      {cod:"HUE019",cat:"Huevos",nombre:"Huevo segunda Novogen",detalle:"Precio por caja",precio:null,formatos:"huevo",modoIni:"F180",nuevo:true},
+      {cod:"HUE019",cat:"Huevos",nombre:"Huevo segunda Novogen",detalle:"Precio por bandeja",precio:null,formatos:"huevo",nuevo:true},
       {cod:"HUE022",cat:"Huevos",nombre:"Huevo de quinta jumbo × 20",detalle:"Precio por unidad",precio:null,formatos:"huevoGrande",retirado:true},
       {cod:"HUE024",retirado:true,cat:"Huevos",nombre:"Huevo quinta × 30",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
       {cod:"HUE018",cat:"Huevos",nombre:"Huevo segunda café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
-      {cod:"HUE016",cat:"Huevos",nombre:"Huevo primera Novogen",detalle:"Precio por caja",precio:null,formatos:"huevo",modoIni:"F180",nuevo:true},
+      {cod:"HUE016",cat:"Huevos",nombre:"Huevo primera Novogen",detalle:"Precio por bandeja",precio:null,formatos:"huevo",nuevo:true},
       {cod:"HUE013",cat:"Huevos",nombre:"Huevo extra café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE009",cat:"Huevos",nombre:"Huevo súper café",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
       {cod:"HUE006",cat:"Huevos",nombre:"Huevo jumbo café",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
@@ -2354,22 +2354,26 @@ const precioFmt=(p,fid)=>p.ofertaFmt&&p.ofertaFmt[fid]!=null?p.ofertaFmt[fid]:nu
 /* Lista de precios de huevos del 12-11-2026 (con IVA, blanco y color; David, 19/11/2026): bandeja y caja.
    La caja: [1 caja, desde 5, desde 25, desde 35 cajas] (null = sin precio en ese tramo). La unidad, media docena, docena y 15 quedan por confirmar.
    21/11/2026 (David): cajas a un solo precio, desde 1 caja y la cantidad que sea (sin tramos), en blanco, color y Novogen:
-   súper $13.900 (caja de 100), extra $21.500, primera $18.990 y segunda $13.990 (caja de 180). Novogen solo tiene precio de caja. */
+   súper $13.900 (caja de 100), extra $21.500, primera $18.990 y segunda $13.990 (caja de 180).
+   Bandejas (David, 21/11/2026), en blanco, color y Novogen: jumbo $4.500 y súper $3.790 (bandeja de 20); extra $4.990, primera $4.500 y segunda $3.900 (bandeja de 30). */
 const LISTA_HUEVOS={
   superJumbo:{F20:5500,F100:[24000,23000,22000,21000]},
-  jumbo:{F20:4700,F100:[20500,19000,18000,17000]},
-  super:{F20:4000,F100:[13900,null,null,null]},
-  superNovogen:{F100:[13900,null,null,null]},
-  extra:{F30:5300,F180:[21500,null,null,null]},
-  extraNovogen:{F180:[21500,null,null,null]},
-  primera:{F30:5000,F180:[18990,null,null,null]},
-  primeraNovogen:{F180:[18990,null,null,null]},
-  segunda:{F30:4000,F180:[13990,null,null,null]},
-  segundaNovogen:{F180:[13990,null,null,null]},
+  jumbo:{F20:4500,F100:[20500,19000,18000,17000]},
+  super:{F20:3790,F100:[13900,null,null,null]},
+  superNovogen:{F20:3790,F100:[13900,null,null,null]},
+  extra:{F30:4990,F180:[21500,null,null,null]},
+  extraNovogen:{F30:4990,F180:[21500,null,null,null]},
+  primera:{F30:4500,F180:[18990,null,null,null]},
+  primeraNovogen:{F30:4500,F180:[18990,null,null,null]},
+  segunda:{F30:3900,F180:[13990,null,null,null]},
+  segundaNovogen:{F30:3900,F180:[13990,null,null,null]},
   tercera:{F30:3500,F180:[12000,null,null,11000]}
 };
 const TRAMOS_CAJA=[1,5,25,35];
 const CAL_HUEVO={HUE004:"superJumbo",HUE010:"superNovogen",HUE011:"extraNovogen",HUE016:"primeraNovogen",HUE019:"segundaNovogen",HUE005:"jumbo",HUE006:"jumbo",HUE007:"super",HUE009:"super",HUE012:"extra",HUE013:"extra",HUE014:"primera",HUE015:"primera",HUE017:"segunda",HUE018:"segunda",HUE020:"tercera",HUE021:"tercera"};
+/* Precios de apertura (David, 21/11/2026): los precios nuevos de caja y la promo de tercera son hasta agotar stock */
+const APERTURA={super:"F100",superNovogen:"F100",extra:"F180",extraNovogen:"F180",primera:"F180",primeraNovogen:"F180",segunda:"F180",segundaNovogen:"F180"};
+const aperturaHTML=(p,fid)=>APERTURA[CAL_HUEVO[p.cod]]===fid||promoFmt(p,fid)?`<small class="regla-mayor">Precio de apertura, hasta agotar stock.</small>`:"";
 // precio de lista de un formato de huevo para n bandejas o cajas (la caja baja por tramos); null si no hay
 function precioLista(p,fid,n){if(p.bolsas){const b=p.bolsas.find(([g])=>"Fb"+g===fid);return b?b[1]:null}const c=LISTA_HUEVOS[CAL_HUEVO[p.cod]],v=c&&c[fid];if(v==null)return null;if(!Array.isArray(v))return v;let pr=v[0];TRAMOS_CAJA.forEach((d,i)=>{if(n>=d&&v[i]!=null)pr=v[i]});return pr}
 // páginas de huevos en vista «por caja»: ahí la caja es la única forma de venta (sin selector de formato)
@@ -2391,7 +2395,7 @@ function cajaPrecioHTML(p){const f=fmtInfo(p,modoDe(p)),q=cajasEn(p),pr=precioLi
   return `<span class="precio">${clp(pr)} <small class="u">la ${f[1].toLowerCase()}</small></span>`
     +(q?`<small class="cu">${q} caja${q>1?"s":""}: ${clp(pr*q)}</small>`:`<small class="cu">Sale a ${clp(Math.round(pr/f[2]))} c/u</small>`)
     +(rs.length>1?`<span class="mayor siempre">Precio por caja según cuántas lleves: ${rs.map(r=>`<span${n>=r.desde&&(r.hasta==null||n<=r.hasta)?' class="ok"':""}>${textoRango(r)}: ${clp(r.precio)}</span>`).join("")}</span>`
-      +`<small class="regla-mayor">Precio por mayor (desde ${rs[1].desde} cajas): 1 compra por semana por cliente.</small>`:"")}
+      +`<small class="regla-mayor">Precio por mayor (desde ${rs[1].desde} cajas): 1 compra por semana por cliente.</small>`:"")+aperturaHTML(p,f[0])}
 // etiqueta lateral de los huevos: «Extra color» y el formato elegido («Caja de 180», «Bandeja de 30»…)
 function etLatHTML(p){const n=nPlano(p.nombre),m=n.match(/super jumbo|quinta jumbo|jumbo|super|extra|primera|segunda|tercera|cuarta|quinta/);if(!m)return "";
   const cal={"super jumbo":"Súper jumbo","super":"Súper","quinta jumbo":"Quinta jumbo"}[m[0]]||m[0][0].toUpperCase()+m[0].slice(1);
@@ -2466,10 +2470,10 @@ function precioHTML(p){
   if(p.virtual)return p.precio==null?`<span class="precio pc">Precio por confirmar</span>`:`<span class="precio"><small class="u">Desde</small> ${clp(p.precio)} <small class="u">c/u</small></span>`;
   if(p.oferta!=null)return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(p.oferta)}${p.precio!=null?` <s>${clp(p.precio)}</s>`:""}</span>`;
   const base=precioBase(p);
-  if(fmtDe(p)&&precioFmt(p,modoDe(p))!=null){const f=fmtInfo(p,modoDe(p)),po=precioFmt(p,f[0]),pl=precioLista(p,f[0],1);return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(po)}${pl!=null&&pl>po?` <s>${clp(pl)}</s>`:""} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">${p.bolsas?`Sale a ${clp(Math.round(po/f[2]*1000))} el kilo`:`Sale a ${clp(Math.round(po/f[2]))} c/u`}</small>${(pr=>pr?`<span class="mayor siempre"><span class="ok">Promo: ${pr[0]} ${f[1].replace(/^Bandeja/,"bandejas").toLowerCase()} por ${clp(pr[1])}</span></span>`:"")(promoFmt(p,f[0]))}`}
+  if(fmtDe(p)&&precioFmt(p,modoDe(p))!=null){const f=fmtInfo(p,modoDe(p)),po=precioFmt(p,f[0]),pl=precioLista(p,f[0],1);return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(po)}${pl!=null&&pl>po?` <s>${clp(pl)}</s>`:""} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">${p.bolsas?`Sale a ${clp(Math.round(po/f[2]*1000))} el kilo`:`Sale a ${clp(Math.round(po/f[2]))} c/u`}</small>${(pr=>pr?`<span class="mayor siempre"><span class="ok">Promo: ${pr[0]} ${f[1].replace(/^Bandeja/,"bandejas").toLowerCase()} por ${clp(pr[1])}</span></span>`:"")(promoFmt(p,f[0]))}${aperturaHTML(p,f[0])}`}
   if(enCaja(p)&&precioLista(p,modoDe(p),1)!=null)return `<span class="pcaja" data-pcaja="${p.cod}">${cajaPrecioHTML(p)}</span>`;
   if(fmtDe(p)){const f=fmtInfo(p,modoDe(p)),pl=precioLista(p,f[0],1);if(pl!=null){const ts=tramosLista(p,f[0]);
-    return `<span class="precio">${clp(pl)} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">${p.bolsas?`Sale a ${clp(Math.round(pl/f[2]*1000))} el kilo`:`Sale a ${clp(Math.round(pl/f[2]))} c/u`}</small>`+(ts.length?`<span class="mayor${enCaja(p)?" siempre":""}">${enCaja(p)?"Más cajas, mejor precio:":"Por mayor:"} ${rangosLista(p,f[0]).map(r=>`<span>${textoRango(r)}: ${clp(r.precio)} c/caja</span>`).join("")}</span>`:"")}}
+    return `<span class="precio">${clp(pl)} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">${p.bolsas?`Sale a ${clp(Math.round(pl/f[2]*1000))} el kilo`:`Sale a ${clp(Math.round(pl/f[2]))} c/u`}</small>`+(ts.length?`<span class="mayor${enCaja(p)?" siempre":""}">${enCaja(p)?"Más cajas, mejor precio:":"Por mayor:"} ${rangosLista(p,f[0]).map(r=>`<span>${textoRango(r)}: ${clp(r.precio)} c/caja</span>`).join("")}</span>`:"")+aperturaHTML(p,f[0])}}
   if(base==null)return `<span class="precio pc">Precio por confirmar</span>`;
   if(fmtDe(p)){const f=fmtInfo(p,modoDe(p));return `<span class="precio">${clp(redondear(base*f[2]))} <small class="u">${f[1].toLowerCase()}</small></span>`+(f[2]>1?`<small class="cu">Sale a ${clp(base)} c/u</small>`:"")}
   if(tienePaq(p)){
@@ -2822,7 +2826,7 @@ function mostrarLista(titulo,prods,vacio){const res=$("resBusca");if(!res)return
   $("carta").prepend(barra);
   /* Vitrina: fotos reales de la avícola (más adelante, las ofertas especiales del mes con sus propias fotos) */
   const VITRINA=[
-    {img:"../img/huevos-cafe-bandeja.jpg",et:"Oferta del mes",precio:"$1.990",tit:"Huevo tercera, bandeja de 30",txt:"En blanco o café. Y 2 bandejas por $2.990. Elija la bandeja de 30 y agréguela a su pedido.",alt:"Bandeja de huevos café.",ir:"g-ofertas-y-promos",cta:"Ver la oferta"},
+    {img:"../img/huevos-cafe-bandeja.jpg",et:"Oferta del mes",precio:"$1.990",tit:"Huevo tercera, bandeja de 30",txt:"En blanco o café. Y 2 bandejas por $2.990. Precio de apertura, hasta agotar stock.",alt:"Bandeja de huevos café.",ir:"g-ofertas-y-promos",cta:"Ver la oferta"},
     {img:"../img/huevos-blancos-bandeja.jpg",et:"Promo Gym Bro",precio:"$3.800",tit:"Bandeja de huevo tercera + una Monster",txt:"Para quienes no omiten el entrenamiento de piernas: una bandeja de 30 huevos tercera junto con una Monster Ultra, la blanca sin azúcar.",alt:"Bandeja de huevos blancos.",extra:"../img/productos/monster.webp",wa:"https://wa.me/56933903395?text=Hola%2C%20quiero%20la%20Promo%20Gym%20Bro%3A%20bandeja%20de%2030%20huevos%20tercera%20%2B%20Monster%20Ultra%20blanca%2C%20a%20%243.800.",letra:"La bebida energética no se recomienda para menores de 18 años, embarazadas ni personas sensibles a la cafeína."},
     {img:"../img/avicola-pabellon-silos.jpg",et:"Nuestra avícola",tit:"Del campo de Oro Verde a tu mesa",txt:"Nuestro pabellón nuevo y sus silos, en las afueras de Chillán.",alt:"Pabellón nuevo de la avícola, de techo rojo, con dos silos metálicos bajo un cielo azul.",ali:true},
     {img:"../img/huevos-cafe-bandeja.jpg",et:"Huevos",tit:"Huevos frescos, sanos, ricos y naturales",txt:"Blancos, de color y azules, por bandeja y por caja.",alt:"Bandeja de huevos café sobre una mesa de madera.",ir:"g-huevos-de-color"},
@@ -2918,8 +2922,8 @@ const items=()=>{const out=[];L.productos.forEach(p=>{if(esPieza(p))return;const
   const qp=cart[clave(p.cod,"P")]||0, qu=cart[p.cod]||0;
   if(qp&&tienePaq(p)){const pr=precioPaq(p,qp);out.push({...p,q:qp,precio:pr,mayor:pr!=null&&qp>=MIN_PAQ_MAYOR&&pr<precioPaq(p,1),tapa:tp,paq:true,uds:qp*p.upp,detalle:"",nombre:`${nom} · paquete de ${p.upp} u`})}
   if(fmtDe(p)){const b=precioBase(p);fmtDe(p).filter(f=>f[0]!=="U").forEach(f=>{const qt=cart[p.cod+"@"+f[0]]||0,po=precioFmt(p,f[0]),pl=po==null?precioLista(p,f[0],qt):null,pr=po!=null&&promoFmt(p,f[0]);let qf=qt;
-    if(pr&&qt>=pr[0]){const qp=qt-qt%pr[0];qf=qt-qp;out.push({...p,q:qp,precio:pr[1]/pr[0],oferta:pr[1]/pr[0],mayor:false,tapa:null,paq:false,fmt:true,uds:qp*f[2],detalle:"",nombre:`${nom} · ${f[1].toLowerCase()} (${f[2]} u) · promo ${pr[0]} por ${clp(pr[1])}`})}
-    if(qf)out.push({...p,q:qf,precio:po!=null?po:pl!=null?pl:b==null?null:redondear(b*f[2]),oferta:po!=null?po:p.oferta,mayor:pl!=null&&pl<precioLista(p,f[0],1),tapa:null,paq:false,fmt:true,uds:p.bolsas?Math.round(qf*f[2])/1000:qf*f[2],detalle:"",nombre:`${nom} · ${f[1].toLowerCase()}${p.bolsas?"":` (${f[2]} u)`}`})})}
+    if(pr&&qt>=pr[0]){const qp=qt-qt%pr[0];qf=qt-qp;out.push({...p,q:qp,precio:pr[1]/pr[0],oferta:pr[1]/pr[0],mayor:false,tapa:null,paq:false,fmt:true,fid:f[0],uds:qp*f[2],detalle:"",nombre:`${nom} · ${f[1].toLowerCase()} (${f[2]} u) · promo ${pr[0]} por ${clp(pr[1])}`})}
+    if(qf)out.push({...p,q:qf,precio:po!=null?po:pl!=null?pl:b==null?null:redondear(b*f[2]),oferta:po!=null?po:p.oferta,mayor:pl!=null&&pl<precioLista(p,f[0],1),tapa:null,paq:false,fmt:true,fid:f[0],uds:p.bolsas?Math.round(qf*f[2])/1000:qf*f[2],detalle:"",nombre:`${nom} · ${f[1].toLowerCase()}${p.bolsas?"":` (${f[2]} u)`}`})})}
   if(qu){const {pr,m}=precioQ(p,qu);out.push({...p,q:qu,precio:pr,mayor:m,tapa:tp,paq:false,uds:qu,detalle:tienePaq(p)||fmtDe(p)?"por unidad":p.detalle,nombre:nom})}
 });return out};
 const lineasMyPyme=()=>{const m=new Map();items().forEach(x=>{const k1=x.cod+(x.paq?" paq":x.bolsas?" kg":" u");m.set(k1,(m.get(k1)||0)+(x.fmt?x.uds:x.q));if(x.tapa){const k2=x.tapa.cod+" u";m.set(k2,(m.get(k2)||0)+x.uds)}});return [...m].map(([k,q])=>{const [c,u]=k.split(" ");return `${c}: ${q} ${u}`}).join(", ")};
@@ -3027,7 +3031,7 @@ $("irPedido").onclick=()=>{cerrarHoja("veloCarro");abrirRevision()};
       <tbody>${filas}</tbody>
       <tfoot><tr><td></td><td>TOTAL${sinPrecio?" (sin los productos por confirmar)":""}</td><td></td><td class="n">${clp(tot)}</td></tr></tfoot></table>
     <ul class="cot-notas"><li>Los precios y el stock pueden cambiar desde mañana; esta cotización no reserva productos.</li>
-      <li>No incluye despacho.</li>${its.some(x=>x.mayor)?"<li>«Precio por mayor»: el precio rebajado por la cantidad que lleva.</li>":""}</ul>
+      <li>No incluye despacho.</li>${its.some(x=>x.fid&&aperturaHTML(x,x.fid))?"<li>Huevos: precio de apertura, hasta agotar stock.</li>":""}${its.some(x=>x.mayor)?"<li>«Precio por mayor»: el precio rebajado por la cantidad que lleva.</li>":""}</ul>
     <p class="cot-pie">${escHTML(L.nombre)} · ${escHTML(U.calle||G.direccion||"")}${U.ref?" ("+escHTML(U.ref.replace(/^Chillán · /,""))+")":""} · Gracias por preferirnos</p>`}
   const fin=()=>document.body.classList.remove("cotiz-imp");
   addEventListener("afterprint",fin);
