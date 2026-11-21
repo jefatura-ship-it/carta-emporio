@@ -679,6 +679,8 @@ body.con-fondo .pie-wrap:has(.pie-mas:not([open])) .otra a{color:#fff}
 .ob-pag span{min-width:62px;text-align:center;font-weight:700;font-size:14px;color:var(--tinta)}
 #carta .prod.fuera{display:none!important}
 .sin-filtro{margin:16px 0;padding:14px;border-radius:12px;background:#fff;text-align:center;color:#6b6b66}
+.cod-res{display:block;margin:1px 0 4px;font-size:11.5px;color:#5b6157;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.cod-res .cod-hit{font-weight:800;color:#1f5c3a;background:#fff3d6;border-radius:4px;padding:0 3px}
 .tipo-p{display:block;margin:0 0 2px;font-size:11.5px!important;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7b8075!important}
 /* Computador: panel lateral fijo a la izquierda y tarjetas verticales */
 @media (min-width:1000px){
@@ -1084,7 +1086,7 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 
 <div class="herram"><div class="wrap herram-in">
   <div class="busca" role="search"><svg class="lupa" aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg>
-    <label for="q" class="sr">Buscar productos en el Catálogo Sabroso</label><input id="q" type="search" placeholder="Buscar productos" autocomplete="off" enterkeyhint="search" spellcheck="false">
+    <label for="q" class="sr">Buscar productos en el Catálogo Sabroso</label><input id="q" type="search" placeholder="Buscar productos o código" autocomplete="off" enterkeyhint="search" spellcheck="false">
     <button type="button" class="qborrar" id="qBorrar" hidden aria-label="Borrar la búsqueda">×</button></div>
   <button type="button" class="bcuenta" id="bCuenta" aria-haspopup="dialog"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg><span id="bCuentaTxt">Mi cuenta</span></button>
 </div><p class="sr" id="qEstado" role="status" aria-live="polite"></p></div>
@@ -1453,7 +1455,8 @@ const LOCALES = {
       {cod:"TAP040",cat:"Tapas",nombre:"Tapa vaso térmico 10 oz",detalle:"Precio por unidad · paquete de 100 u",precio:23,upp:100,stock:1000},
       {cod:"TAP018",cat:"Tapas",nombre:"Tapa domo",para:"Para vasos Domo",detalle:"Precio por paquete de 50 u",precio:50,stock:120,envase:["VAS013", "VAS014"]},
       {cod:"ANT-TAP016",cat:"Tapas",nombre:"Tapa salsero 1,5 a 2 oz",para:"Para salseros 1,5 oz y 2 oz",detalle:"Precio por unidad · paquete de 50 u",precio:10,upp:50,stock:900,envase:["ANT-POT004", "POT018"],retirado:true},
-      {cod:"TAP019",cat:"Tapas",nombre:"Tapa miel 1/2 y 1 kg",para:"Para envase de miel",detalle:"Precio por unidad",precio:50,stock:2136,envase:["PLA033", "ANT-PLA027", "PLA034", "PLA037"]},
+      /* Envases de miel (David, 21/11/2026): todos a $100 c/u y $90 c/u desde 10 (pm). Sin paquete de 50 (el paquete no lleva por mayor por unidad) y sin la tapa de $50 enlazada, para que el precio sea exactamente ese */
+      {cod:"TAP019",cat:"Tapas",nombre:"Tapa miel 1/2 y 1 kg",para:"Para envase de miel",detalle:"Precio por unidad",precio:50,stock:2136,envase:["ANT-PLA027"]},
       {cod:"TAP025",cat:"Tapas",nombre:"Tapa R 50",para:"Para envase aluminio R 50",detalle:"Precio por unidad",precio:20,envase:["ALU018"],stock:1827},
       {cod:"TAP020",cat:"Tapas",nombre:"Tapas para bandejas de huevos",para:"Para bandejas de huevos",detalle:"Precio por paquete",precio:12700,envase:["HUE001"]},
       {cod:"TAP030",cat:"Tapas",nombre:"Tapa salsero 3,25 oz",para:"Para salsero 3,25 oz",detalle:"Precio por unidad · paquete de 50 u",precio:14,upp:50,stock:500,envase:["POT020"]},
@@ -1481,7 +1484,7 @@ const LOCALES = {
       {cod:"TAP038",cat:"Tapas",nombre:"Tapa vaso domo PET 12-16 oz",para:"Para vasos domo 12 y 16 oz",detalle:"Precio por paquete de 50 u",precio:0,stock:2200,envase:["VAS013","VAS014"]},
       {cod:"TAP041",cat:"Tapas",nombre:"Tapa vaso térmico 10 oz café",detalle:"Precio por unidad · paquete de 50 u",precio:23,upp:50,stock:900},
       {cod:"PLA043",cat:"Envases y contenedores",nombre:"Envase triángulo kuchen 11*5cm",detalle:"Precio por unidad",precio:329},
-      {cod:"PLA033",cat:"Envases y contenedores",nombre:"Envase miel 1/2 kg con tapa",detalle:"Precio por unidad · paquete de 50 u",precio:150,stock:600,upp:50,foto:"../img/productos/fotos/PLA033.webp"},
+      {cod:"PLA033",cat:"Envases y contenedores",nombre:"Envase miel 1/2 kg con tapa",detalle:"Precio por unidad",precio:100,pm:90,stock:600,foto:"../img/productos/fotos/PLA033.webp"},
       {cod:"PLA044",cat:"Envases y contenedores",nombre:"Envase triangular selladito",detalle:"Precio por unidad",precio:329,stock:246},
       {cod:"PLA026",cat:"Envases y contenedores",nombre:"Cúpula torta 135 mm 98-5",detalle:"Precio por unidad",precio:900},
       {cod:"PLA024",cat:"Envases y contenedores",nombre:"Cúpula torta 23*7cm 99-2",detalle:"Precio por unidad",precio:1645},
@@ -1504,8 +1507,8 @@ const LOCALES = {
       {cod:"PLA030",cat:"Envases y contenedores",nombre:"Cúpula torta N° 2",detalle:"Precio por unidad",precio:750},
       {cod:"PLA001",cat:"Envases y contenedores",nombre:"Bandeja plástica muffin para 6 unidades",detalle:"Precio por unidad",precio:1500,stock:42,foto:"../img/productos/fotos/PLA001.webp",fotos:["../img/productos/fotos/PLA001.webp","../img/productos/fotos/PLA001-2.webp"]},
       {cod:"PLA002",cat:"Envases y contenedores",nombre:"Cp 790 cuchuflí",detalle:"Precio por unidad",precio:200,pm:150,stock:252,foto:"../img/productos/fotos/PLA002.webp",fotos:["../img/productos/fotos/PLA002.webp","../img/productos/fotos/PLA002-2.webp","../img/productos/fotos/PLA002-3.webp"]},
-      {cod:"PLA034",cat:"Envases y contenedores",nombre:"Envase miel 1 kg con diseño (sin tapa)",detalle:"Precio por unidad",precio:900,stock:168,foto:"../img/productos/fotos/PLA034.webp"},
-      {cod:"PLA035",cat:"Envases y contenedores",nombre:"Envase miel 1 kg con tapa Darnel",detalle:"Precio por unidad",precio:150,stock:263},
+      {cod:"PLA034",cat:"Envases y contenedores",nombre:"Envase miel 1 kg con diseño con tapa",detalle:"Precio por unidad",precio:100,pm:90,stock:168,foto:"../img/productos/fotos/PLA034.webp"},
+      {cod:"PLA035",cat:"Envases y contenedores",nombre:"Envase miel 1 kg con tapa Darnel",detalle:"Precio por unidad",precio:100,pm:90,stock:263},
       {cod:"ANT-PLA027",cat:"Envases y contenedores",nombre:"Envase miel 1 kg sin tapa Darnel",detalle:"Precio por unidad",precio:null,stock:215,retirado:true},
       {cod:"PLA032",cat:"Envases y contenedores",nombre:"Cúpula torta N° 8",detalle:"Precio por unidad",precio:850,stock:0,sinStock:true},
       {cod:"PLA009",cat:"Envases y contenedores",nombre:"P 1 contenedor rectangular c/d",detalle:"Precio por unidad",precio:150,stock:0,sinStock:true},
@@ -1516,8 +1519,8 @@ const LOCALES = {
       {cod:"PLA041",cat:"Envases y contenedores",nombre:"Sushi 3 rolls",detalle:"Precio por unidad",precio:450,stock:89,foto:"../img/productos/fotos/PLA041.webp",fotos:["../img/productos/fotos/PLA041.webp","../img/productos/fotos/PLA041-2.webp"]},
       {cod:"PLA007",cat:"Envases y contenedores",nombre:"Clamshell 3/4 kg “Kilo Falso”",detalle:"Precio por unidad",precio:1200,stock:140,foto:"../img/productos/fotos/PLA007.webp",fotos:["../img/productos/fotos/PLA007.webp","../img/productos/fotos/PLA007-2.webp","../img/productos/fotos/PLA007-3.webp","../img/productos/fotos/PLA007-4.webp"]},
       {cod:"PLA023",cat:"Envases y contenedores",nombre:"Cúpula torta 23 cm con tapa",detalle:"Precio por unidad",precio:2400,stock:20},
-      {cod:"PLA037",cat:"Envases y contenedores",nombre:"Envase miel 1 kg transparente",detalle:"Precio por unidad · paquete de 50 u",precio:900,stock:950,upp:50},
-      {cod:"PLA038",cat:"Envases y contenedores",nombre:"Envase miel con logo con tapa",detalle:"Precio por unidad",precio:1400,stock:250},
+      {cod:"PLA037",cat:"Envases y contenedores",nombre:"Envase miel 1 kg transparente",detalle:"Precio por unidad",precio:100,pm:90,stock:950},
+      {cod:"PLA038",cat:"Envases y contenedores",nombre:"Envase miel con logo con tapa",detalle:"Precio por unidad",precio:100,pm:90,stock:250},
       {cod:"PLA016",cat:"Envases y contenedores",nombre:"CT 6 bio grande sin división",detalle:"Precio por unidad",precio:200,stock:70,nuevo:true,foto:"../img/productos/fotos/PLA016.webp",tramos:[[20,185]]},
       {cod:"PLA015",cat:"Envases y contenedores",nombre:"CT 6 bio grande con división",detalle:"Precio por unidad",precio:200,stock:30,nuevo:true,foto:"../img/productos/fotos/PLA015.webp",tramos:[[20,185]]},
       {cod:"PLA012",cat:"Envases y contenedores",nombre:"CT 3 bio cuadrado",detalle:"Precio por unidad",precio:165,stock:30,nuevo:true,foto:"../img/productos/fotos/PLA012.webp",tramos:[[20,150]]},
@@ -1557,7 +1560,7 @@ const LOCALES = {
       {cod:"CAR030",cat:"Cajas y bandejas de cartón",nombre:"Caja multiuso pequeña kraft",detalle:"Precio por unidad",precio:140,stock:79},
       {cod:"CAR041",cat:"Cajas y bandejas de cartón",nombre:"Cono papas fritas blanco 16 oz",detalle:"Precio por unidad · paquete de 100 u",precio:60,stock:175,foto:"../img/productos/fotos/CAR041.webp",upp:100,pq:5500},
       {cod:"CAR043",cat:"Cajas y bandejas de cartón",nombre:"Sándwich biodegradable",detalle:"Precio por unidad",precio:250,stock:0,sinStock:true},
-      {cod:"CAR006",cat:"Cajas y bandejas de cartón",nombre:"Bandeja kraft grande",detalle:"Precio por unidad · paquete de 20 u",precio:190,upp:20,stock:240,foto:"../img/productos/fotos/CAR006.webp"},
+      {cod:"CAR006",cat:"Cajas y bandejas de cartón",nombre:"Bandeja kraft grande",detalle:"Precio por paquete de 20 u",precio:1600,stock:240,foto:"../img/productos/fotos/CAR006.webp"},
       {cod:"CAR035",cat:"Cajas y bandejas de cartón",nombre:"Caja torta mediana blanca",detalle:"Precio por unidad",precio:610,stock:25,nuevo:true,tramos:[[20,550]]},
       {cod:"CAR018",cat:"Cajas y bandejas de cartón",nombre:"Bowl 500 cc",detalle:"Precio por unidad",precio:200,stock:50,nuevo:true,foto:"../img/productos/fotos/CAR018.webp",tramos:[[20,150]]},
       {cod:"CAR009",cat:"Cajas y bandejas de cartón",nombre:"Bandeja rectangular cartulina N° 7 228 × 158",detalle:"Precio por unidad · paquete de 100 u",precio:65,stock:100,nuevo:true,upp:100,pq:4500},
@@ -1611,10 +1614,10 @@ const LOCALES = {
       {cod:"BOL031",cat:"Bolsas, sacos y papeles",nombre:"Papel antigrasa",detalle:"Precio por unidad",precio:150,stock:686},
       {cod:"BOL046",cat:"Bolsas, sacos y papeles",nombre:"Saco blanco 1/8",detalle:"Precio por unidad",precio:850,foto:"../img/productos/fotos/BOL046.webp"},
       {cod:"BOL045",cat:"Bolsas, sacos y papeles",nombre:"Rollo envolver 20 cm",detalle:"Precio por unidad",precio:3500},
-      {cod:"BOL017",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 15 × 30",detalle:"Precio por kilo",precio:16,stock:7.9,foto:"../img/productos/fotos/BOL017.webp"},
+      {cod:"BOL017",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 15 × 30",detalle:"Precio por kilo",precio:5000,stock:7.9,foto:"../img/productos/fotos/BOL017.webp"},
       {cod:"BOL014",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 11 × 35",detalle:"Precio por kilo",precio:5000,stock:2.99,foto:"../img/productos/fotos/BOL014.webp"},
       {cod:"BOL015",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 12 × 25",detalle:"Precio por kilo",precio:5000,stock:3.02,foto:"../img/productos/fotos/BOL015.webp"},
-      {cod:"BOL018",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 20 × 30",detalle:"Precio por kilo",precio:5995,stock:3,foto:"../img/productos/fotos/BOL018.webp"},
+      {cod:"BOL018",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 20 × 30",detalle:"Precio por kilo",precio:5000,stock:3,foto:"../img/productos/fotos/BOL018.webp"},
       {cod:"BOL016",cat:"Bolsas, sacos y papeles",nombre:"Bolsa transparente 14 × 25",detalle:"Precio por kilo",precio:5000,stock:5.35,foto:"../img/productos/fotos/BOL016.webp"},
       {cod:"BOL008",cat:"Bolsas, sacos y papeles",nombre:"Bolsa pan de pascua 1 kg con diseño",detalle:"Precio por unidad",precio:130,stock:1273,foto:"../img/productos/fotos/BOL008.webp"},
       {cod:"BOL005",cat:"Bolsas, sacos y papeles",nombre:"Bolsa camiseta 45 × 55",detalle:"Precio por unidad · paquete de 100 u",precio:22,upp:100,stock:100,foto:"../img/productos/fotos/BOL005.webp"},
@@ -1687,24 +1690,25 @@ const LOCALES = {
       {cod:"DES034",cat:"Platos, cubiertos y desechables",nombre:"Plato cartón N° 1",detalle:"Precio por unidad",precio:60,stock:121,foto:"../img/productos/fotos/DES034.webp"},
       {cod:"ANT-DES005",cat:"Platos, cubiertos y desechables",nombre:"Plato cartón N° 2",detalle:"Precio por unidad",precio:63,stock:141,retirado:true},
       {cod:"DES036",cat:"Platos, cubiertos y desechables",nombre:"Plato cartón N° 3",detalle:"Precio por unidad",precio:75,stock:331,foto:"../img/productos/fotos/DES036.webp"},
-      {cod:"DES018",cat:"Platos, cubiertos y desechables",nombre:"Cuchara sopa madera Bio Vanni",detalle:"Precio por unidad · paquete de 100 u",precio:990,stock:700,upp:100},
+      {cod:"DES018",cat:"Platos, cubiertos y desechables",nombre:"Cuchara sopa madera Bio Vanni",detalle:"Precio por paquete de 100 u",precio:2990,stock:700},
       {cod:"DES043",cat:"Platos, cubiertos y desechables",nombre:"Servilleta Vanni",detalle:"Precio por unidad · paquete de 200 u",precio:4,upp:200,stock:9,foto:"../img/productos/fotos/DES043.webp"},
-      {cod:"DES044",cat:"Platos, cubiertos y desechables",nombre:"Set 3 cubiertos",detalle:"Precio por unidad",precio:99},
+      {cod:"DES044",cat:"Platos, cubiertos y desechables",nombre:"Set 3 cubiertos",detalle:"Precio por unidad",precio:100},
       {cod:"DES050",cat:"Platos, cubiertos y desechables",nombre:"Tenedor Cheap",detalle:"Precio por unidad · paquete de 50 u",precio:20,upp:50,stock:150,foto:"../img/productos/fotos/DES050.webp"},
       {cod:"DES045",cat:"Platos, cubiertos y desechables",nombre:"Set cubiertos madera Tremun",detalle:"Precio por unidad",precio:60,stock:335,foto:"../img/productos/fotos/DES045.webp"},
       {cod:"DES030",cat:"Platos, cubiertos y desechables",nombre:"Mondadientes caja",detalle:"Precio por unidad · paquete de 100 u",precio:3,upp:100,stock:4700,foto:"../img/productos/fotos/DES030.webp"},
       {cod:"ANT-DES013",cat:"Platos, cubiertos y desechables",nombre:"Cucharas de helado pequeñas (paquete)",detalle:"Precio por unidad",precio:35,retirado:true},
-      {cod:"DES040",cat:"Platos, cubiertos y desechables",nombre:"Plato plástico N° 1",detalle:"Precio por unidad",precio:50,stock:66},
+      // 21/11/2026 (David): un solo código para el plato plástico N° 1; el paquete de 20 a $1.000 venía de DES037 (PLA035), que queda retirado
+      {cod:"DES040",cat:"Platos, cubiertos y desechables",nombre:"Plato plástico N° 1",detalle:"Precio por unidad · paquete de 20 u",precio:50,upp:20,pq:1000,stock:66},
       {cod:"DES041",cat:"Platos, cubiertos y desechables",nombre:"Plato plástico N° 3",detalle:"Precio por unidad",precio:75,stock:826},
-      {cod:"DES039",cat:"Platos, cubiertos y desechables",nombre:"Plato plástico 20 cm desechable",detalle:"Precio por unidad · paquete de 20 u",precio:75,upp:20,stock:0,sinStock:true,foto:"../img/productos/fotos/DES039.webp"},
+      {cod:"DES039",cat:"Platos, cubiertos y desechables",nombre:"Plato plástico 20 cm desechable",detalle:"Precio por paquete de 20 u",precio:1450,stock:0,sinStock:true,foto:"../img/productos/fotos/DES039.webp"},
       {cod:"DES038",cat:"Platos, cubiertos y desechables",nombre:"Plato plástico 17 cm desechable",detalle:"Precio por unidad · paquete de 20 u",precio:50,upp:20,stock:940,foto:"../img/productos/fotos/DES038.webp"},
-      {cod:"DES037",cat:"Platos, cubiertos y desechables",nombre:"Plato blanco N° 2 plástico",detalle:"Precio por unidad",precio:50,stock:0,sinStock:true},
+      {cod:"DES037",cat:"Platos, cubiertos y desechables",nombre:"Plato plástico N° 1",detalle:"Precio por paquete de 20 u",precio:1000,stock:0,sinStock:true,retirado:true},
       {cod:"DES023",cat:"Platos, cubiertos y desechables",nombre:"Cuchillo plástico blanco",detalle:"Precio por paquete de 100 u",precio:990,stock:0,sinStock:true,foto:"../img/productos/fotos/DES023.webp"},
       {cod:"DES011",cat:"Platos, cubiertos y desechables",nombre:"Cofia negra",detalle:"Precio por unidad",precio:16,stock:1117,foto:"../img/productos/fotos/DES011.webp",fotos:["../img/productos/fotos/DES011.webp", "../img/productos/fotos/DES011-2.webp"]},
       {cod:"DES017",cat:"Platos, cubiertos y desechables",nombre:"Cuchara plástica",detalle:"Precio por unidad · paquete de 100 u",precio:30,upp:100,foto:"../img/productos/fotos/DES017.webp"},
       {cod:"DES022",cat:"Platos, cubiertos y desechables",nombre:"Cuchillo madera Bio Ely",detalle:"Precio por paquete de 100 u",precio:990,stock:1700},
       {cod:"DES049",cat:"Platos, cubiertos y desechables",nombre:"Tenedor plástico",detalle:"Precio por unidad · paquete de 100 u",precio:20,upp:100,foto:"../img/productos/fotos/DES049.webp"},
-      {cod:"DES021",cat:"Platos, cubiertos y desechables",nombre:"Cuchara transparente para helado",detalle:"Precio por unidad · paquete de 100 u",precio:35,stock:300,upp:100},
+      {cod:"DES021",cat:"Platos, cubiertos y desechables",nombre:"Cuchara transparente para helado",detalle:"Precio por paquete de 100 u",precio:3350,stock:300},
       {cod:"DES012",cat:"Platos, cubiertos y desechables",nombre:"Cuchara de colores para helado",detalle:"Precio por unidad · paquete de 100 u",precio:60,stock:484,foto:"../img/productos/fotos/DES012.webp",upp:100},
       {cod:"DES015",cat:"Platos, cubiertos y desechables",nombre:"Cuchara larga para helado Good Food",detalle:"Precio por paquete de 100 u",precio:3590,stock:500,nuevo:true,foto:"../img/productos/fotos/DES015.webp"},
       {cod:"DES007",cat:"Platos, cubiertos y desechables",nombre:"Brocheta 25 cm",detalle:"Precio por unidad · paquete de 50 u",precio:9,stock:4200,upp:50,foto:"../img/productos/fotos/DES007.webp"},
@@ -1718,7 +1722,7 @@ const LOCALES = {
       {cod:"DES019",cat:"Platos, cubiertos y desechables",nombre:"Cuchara sopera N° 6 Cubiertos Inka",detalle:"Precio por unidad · paquete de 100 u",precio:30,upp:100,stock:600},
       {cod:"DES020",cat:"Platos, cubiertos y desechables",nombre:"Cuchara sopa blanca Good Food",detalle:"Precio por unidad · paquete de 100 u",precio:30,upp:100,stock:3400},
       {cod:"ANT-DES036",cat:"Platos, cubiertos y desechables",nombre:"Tenedor Dispack",detalle:"Precio por unidad · paquete de 100 u",precio:20,upp:100,stock:900,retirado:true},
-      {cod:"DES024",cat:"Platos, cubiertos y desechables",nombre:"Cuchillo Good Food",detalle:"Precio por unidad · paquete de 100 u",precio:15,stock:700,upp:100},
+      {cod:"DES024",cat:"Platos, cubiertos y desechables",nombre:"Cuchillo Good Food",detalle:"Precio por paquete de 100 u",precio:1450,stock:700},
       {cod:"DES004",cat:"Platos, cubiertos y desechables",nombre:"Bombilla de papel gruesa",detalle:"Precio por unidad · paquete de 100 u",precio:23,upp:100,stock:1600},
       {cod:"DES003",cat:"Platos, cubiertos y desechables",nombre:"Bombilla de papel estrecha",detalle:"Precio por unidad · paquete de 100 u",precio:23,upp:100,stock:100,foto:"../img/productos/fotos/DES003.webp"},
       {cod:"DES002",cat:"Platos, cubiertos y desechables",nombre:"Bombilla de papel 20 cm 6 mm Great Value",detalle:"Precio por unidad · paquete de 50 u",precio:30,upp:50,stock:2700,foto:"../img/productos/fotos/DES002.webp"},
@@ -1744,10 +1748,10 @@ const LOCALES = {
       {cod:"POT018",cat:"Potes y salseros",nombre:"Salsero 2 oz",detalle:"Precio por unidad",precio:28,stock:100,foto:"../img/productos/fotos/POT018.webp"},
       {cod:"POT020",cat:"Potes y salseros",nombre:"Salsero 3,25 oz",detalle:"Precio por unidad · paquete de 50 u",precio:34,upp:50,stock:3250,foto:"../img/productos/fotos/POT020.webp"},
       {cod:"ANT-POT007",cat:"Potes y salseros",nombre:"Salsero 5,5 oz",detalle:"Precio por unidad · paquete de 50 u",precio:41,upp:50,stock:2200,retirado:true},
-      {cod:"POT005",cat:"Potes y salseros",nombre:"Pote bisagra liso 40-8 225 g",detalle:"Precio por unidad",precio:83,stock:368},
+      {cod:"POT005",cat:"Potes y salseros",nombre:"Pote bisagra liso 40-8 225 g",detalle:"Precio por unidad",precio:90,stock:368},
       {cod:"POT006",cat:"Potes y salseros",nombre:"Pote bisagra liso 40-12 340 g",detalle:"Precio por unidad",precio:99,stock:17,foto:"../img/productos/fotos/POT006.webp",fotos:["../img/productos/fotos/POT006.webp", "../img/productos/fotos/POT006-2.webp", "../img/productos/fotos/POT006-3.webp"]},
       {cod:"POT007",cat:"Potes y salseros",nombre:"Pote bisagra liso 40-16 500 g",detalle:"Precio por unidad",precio:133,stock:841},
-      {cod:"POT014",cat:"Potes y salseros",nombre:"Pote uso 40-8",detalle:"Precio por unidad",precio:83},
+      {cod:"POT014",cat:"Potes y salseros",nombre:"Pote uso 40-8",detalle:"Precio por unidad",precio:90},
       {cod:"POT009",cat:"Potes y salseros",nombre:"Pote helado 24 oz",detalle:"Precio por unidad · paquete de 25 u",precio:171,upp:25},
       {cod:"POT017",cat:"Potes y salseros",nombre:"Salsero 2 oz con tapas",detalle:"Precio por unidad · paquete de 50 u",precio:31,upp:50,stock:8100,foto:"../img/productos/fotos/POT017.webp"},
       {cod:"POT011",cat:"Potes y salseros",nombre:"Pote palomita N° 1",detalle:"Precio por unidad",precio:350,stock:33,foto:"../img/productos/fotos/POT011.webp",tramos:[[20,300]]},
@@ -1800,7 +1804,7 @@ const LOCALES = {
       {cod:"HUE002",cat:"Hueveras",nombre:"Huevera 6 × 200 u",detalle:"Precio por unidad",precio:300},
       {cod:"HUE025",cat:"Hueveras",nombre:"Bandeja para 20 huevos",detalle:"Precio por paquete de 65 u",precio:8450,tramos:[[2,8150],[11,8000]],nuevo:true},
       {cod:"HUE023",retirado:true,cat:"Huevos",nombre:"Huevo de quinta",detalle:"Precio por unidad",precio:null,formatos:"huevo"},
-      {cod:"HUE020",cat:"Huevos",nombre:"Huevo tercera blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE020",cat:"Huevos",nombre:"Huevo tercera blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevoTercera"},
       {cod:"HUE005",cat:"Huevos",nombre:"Huevo jumbo blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
       {cod:"HUE008",retirado:true,cat:"Huevos",nombre:"Huevo súper blanco 100 u",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
       {cod:"HUE007",cat:"Huevos",nombre:"Huevo súper blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
@@ -1819,7 +1823,7 @@ const LOCALES = {
       {cod:"HUE013",cat:"Huevos",nombre:"Huevo extra café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE009",cat:"Huevos",nombre:"Huevo súper café",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
       {cod:"HUE006",cat:"Huevos",nombre:"Huevo jumbo café",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
-      {cod:"HUE021",cat:"Huevos",nombre:"Huevo tercera café",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
+      {cod:"HUE021",cat:"Huevos",nombre:"Huevo tercera café",detalle:"Precio por bandeja",precio:null,formatos:"huevoTercera"},
       {cod:"HUE004",cat:"Huevos",nombre:"Huevo súper jumbo blanco × 20",detalle:"Precio por unidad",precio:null,formatos:"huevoGrande"},
       {cod:"CON005",cat:"Conservas",nombre:"Durazno mitad 567 g Tia Bela",detalle:"Precio por unidad",precio:895,stock:67},
       {cod:"CON003",cat:"Conservas",nombre:"Choritos en aceite 190 g Tenglo",detalle:"Precio por unidad",precio:745,stock:535,foto:"../img/productos/fotos/CON003.webp"},
@@ -1855,19 +1859,19 @@ const LOCALES = {
       {cod:"BEB004",cat:"Bebidas y jugos",nombre:"Agua Vital sin gas 1,6 l",detalle:"Precio por unidad · paquete de 6 u",precio:720,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB004.webp"},
       {cod:"BEB005",cat:"Bebidas y jugos",nombre:"Coca-Cola 591 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1190,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB005.webp"},
       {cod:"BEB006",cat:"Bebidas y jugos",nombre:"Coca-Cola 1,5 l",detalle:"Precio por unidad · paquete de 6 u",precio:2240,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB006.webp"},
-      {cod:"BEB007",cat:"Bebidas y jugos",nombre:"Coca-Cola 3 l",detalle:"Precio por unidad · paquete de 6 u",precio:3410,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB007.webp"},
+      {cod:"BEB007",cat:"Bebidas y jugos",nombre:"Coca-Cola 3 l",detalle:"Precio por unidad · paquete de 6 u",precio:3400,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB007.webp"},
       {cod:"BEB008",cat:"Bebidas y jugos",nombre:"Fanta naranja 1,5 l",detalle:"Precio por unidad · paquete de 6 u",precio:2240,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB008.webp"},
       {cod:"BEB009",cat:"Bebidas y jugos",nombre:"Sprite 1,5 l",detalle:"Precio por unidad · paquete de 6 u",precio:2220,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB009.webp"},
       {cod:"BEB010",cat:"Bebidas y jugos",nombre:"Sprite 3 l",detalle:"Precio por unidad · paquete de 6 u",precio:2590,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB010.webp"},
-      {cod:"BEB011",cat:"Bebidas y jugos",nombre:"Jugo Andina del Valle durazno 300 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1040,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB011.webp"},
+      {cod:"BEB011",cat:"Bebidas y jugos",nombre:"Jugo Andina del Valle durazno 300 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1100,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB011.webp"},
       {cod:"BEB012",cat:"Bebidas y jugos",nombre:"Jugo Andina del Valle naranja 300 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1040,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB012.webp"},
       {cod:"BEB013",cat:"Bebidas y jugos",nombre:"Jugo Andina del Valle piña 200 cc",detalle:"Precio por unidad · paquete de 6 u",precio:370,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB013.webp"},
-      {cod:"BEB014",cat:"Bebidas y jugos",nombre:"Monster Energy 473 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1740,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB014.webp"},
-      {cod:"BEB015",cat:"Bebidas y jugos",nombre:"Monster Ultra 473 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1720,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB015.webp"},
+      {cod:"BEB014",cat:"Bebidas y jugos",nombre:"Monster Energy 473 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1800,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB014.webp"},
+      {cod:"BEB015",cat:"Bebidas y jugos",nombre:"Monster Ultra 473 cc",detalle:"Precio por unidad · paquete de 6 u",precio:1690,aviso:"Precio hasta agotar stock.",upp:6,nuevo:true,foto:"../img/productos/fotos/BEB015.webp"},
       {cod:"BEB016",cat:"Bebidas y jugos",nombre:"Néctar Andina del Valle durazno 200 cc",detalle:"Precio por unidad · paquete de 6 u",precio:370,upp:6,nuevo:true,foto:"../img/productos/fotos/BEB016.webp"},
       {cod:"ASE009",cat:"Aseo",nombre:"Prestobarba simpli venus",detalle:"Precio por unidad",precio:774},
       {cod:"ASE008",cat:"Aseo",nombre:"Papel higiénico 50 m Genio",detalle:"Precio por unidad · paquete de 4 u",precio:1000,upp:4,stock:4,foto:"../img/productos/fotos/ASE008.webp"},
-      {cod:"ASE012",cat:"Aseo",nombre:"Trapero húmedo Homecleaner",detalle:"Precio por unidad",precio:100,foto:"../img/productos/fotos/ASE012.webp"},
+      {cod:"ASE012",cat:"Aseo",nombre:"Trapero húmedo Homecleaner",detalle:"Precio por paquete de 10 u · cualquier aroma",precio:2990,foto:"../img/productos/fotos/ASE012.webp"},
       {cod:"ASE014",cat:"Aseo",nombre:"Trapero húmedo olor naranja Virginia",detalle:"Precio por unidad · paquete de 10 u",precio:100,upp:10,stock:90,foto:"../img/productos/fotos/ASE014.webp"},
       {cod:"ASE011",cat:"Aseo",nombre:"Trapero algodón Virutex",detalle:"Precio por unidad",precio:1500},
       {cod:"ASE010",cat:"Aseo",nombre:"Prestobarba Venus suave aloe vera Gillette",detalle:"Precio por unidad",precio:774,stock:75},
@@ -1950,7 +1954,7 @@ const LOCALES = {
       {cod:"ABA029",cat:"Harinas y repostería",nombre:"Azúcar de coco",detalle:"Precio por kilo",precio:5790,bolsas:[[250, 1500]],nuevo:true},
       {cod:"ABA030",cat:"Harinas y repostería",nombre:"Azúcar rubia",detalle:"Precio por kilo",precio:2090,bolsas:[[500, 1090]],nuevo:true},
       {cod:"ABA040",cat:"Harinas y repostería",nombre:"Chuño",detalle:"Precio por kilo",precio:3180,bolsas:[[500, 1590]],nuevo:true},
-      {cod:"ABA050",cat:"Harinas y repostería",nombre:"Gelatina sin sabor",detalle:"Precio por kilo",precio:990,bolsas:[[500, 520], [1000, 990]],nuevo:true},
+      {cod:"ABA050",cat:"Harinas y repostería",nombre:"Gelatina sin sabor",detalle:"Precio por kilo",precio:9990,bolsas:[[500, 5170], [1000, 9990]],nuevo:true},
       {cod:"ABA052",cat:"Harinas y repostería",nombre:"Harina de avena",detalle:"Precio por kilo",precio:2000,bolsas:[[500, 1000], [1000, 2000]],nuevo:true},
       {cod:"ABA053",cat:"Harinas y repostería",nombre:"Harina de garbanzo",detalle:"Precio por kilo",precio:5180,bolsas:[[500, 2590]],nuevo:true},
       {cod:"ABA054",cat:"Harinas y repostería",nombre:"Harina de gluten",detalle:"Precio por kilo",precio:11160,bolsas:[[250, 2790]],nuevo:true},
@@ -2323,6 +2327,8 @@ L.productos.forEach(p=>{if(!Array.isArray(p.bolsas)||!p.bolsas.length)return;p.f
 /* Pieza entera (David, 21/11/2026: «te falta el precio por pieza pero a modalidad kilo»): formato «Fpz» de los quesos con p.pieza = precio por kilo
    al llevar la pieza completa. No tiene precio fijo: se pesa en el local; en el carro y la cotización va «por confirmar» con su precio por kilo. */
 FORMATOS.huevoGrande=[["U","Unidad",1],["F6","Media docena",6],["F12","Docena",12],["F15","15 huevos",15],["F20","Bandeja de 20",20],["F100","Caja de 100",100]];
+/* Huevo tercera (David, 21/11/2026): «la venta por caja no está disponible»: sin la caja de 180 */
+FORMATOS.huevoTercera=FORMATOS.huevo.filter(f=>f[0]!=="F180");
 Object.keys(cart).forEach(k=>{const p=PROD[k.replace(/@.*$/,"")];const f=(k.match(/@(F\d+)$/)||[])[1];if(!p||p.retirado||esPieza(p)||(k.endsWith("@P")&&!(p.upp>1))||(f&&!(FORMATOS[p.formatos]||[]).some(x=>x[0]===f)))delete cart[k]});
 let tapaSel={};try{tapaSel=JSON.parse(leePref("tapas-"+KEY)||"{}")||{}}catch(e){tapaSel={}}
 const tapaDe=p=>{const ts=tapasDe[p.cod];if(!ts)return null;return ts.find(t=>t.cod===tapaSel[p.cod])||ts[0]};
@@ -2355,12 +2361,19 @@ const CALIBRE=p=>{const n=nPlano(p.nombre);if(/quinta/.test(n))return /jumbo/.te
 (()=>{const pos=[],hv=[];L.productos.forEach((p,i)=>{if(p.cat==="Huevos"&&!esPieza(p)){pos.push(i);hv.push(p)}});
   hv.map((p,i)=>({p,i,k:CALIBRE(p)})).sort((a,b)=>a.k-b.k||a.i-b.i).forEach((o,j)=>{L.productos[pos[j]]=o.p})})();
 /* Ofertas del mes con precio por formato (dato del Emporio). Promo de huevo tercera (David, 21/11/2026; reemplaza la de $2.000):
-   bandeja de 30 a $1.990 y 2 bandejas por $2.990. Solo la bandeja lleva la promo; la unidad, la docena y la caja siguen con su precio normal.
+   bandeja de 30 a $1.990 y 2 bandejas por $2.990. Solo la bandeja lleva la promo; la unidad y la docena siguen con su precio normal y la caja no se vende.
+   1 promo por cliente al día (David, 21/11/2026): en el carro caben hasta 2 bandejas de tercera entre blanco y café, y se suman para el «2 por $2.990».
    PROMO_FMT: [n, precio] = n del formato por ese precio (en el carro, los pares van a precio de promo y la que sobra a precio de oferta). */
 const OFERTAS_FMT={HUE020:{F30:1990},HUE021:{F30:1990},ABA034:{Fb250:19590}};
 L.productos.forEach(p=>{const o=OFERTAS_FMT[p.cod];if(o){p.ofertaFmt=o;p.fav=true}});
 const PROMO_FMT={HUE020:{F30:[2,2990]},HUE021:{F30:[2,2990]}};
 const promoFmt=(p,fid)=>(PROMO_FMT[p.cod]||{})[fid]||null;
+const PROMO_TERCERA={cods:["HUE020","HUE021"],fid:"F30",tope:2};
+const enPromoTercera=(cod,fid)=>fid===PROMO_TERCERA.fid&&PROMO_TERCERA.cods.includes(cod);
+const bandejasTercera=()=>PROMO_TERCERA.cods.reduce((a,c)=>a+(cart[c+"@"+PROMO_TERCERA.fid]||0),0);
+const AVISO_TERCERA="La promo de huevo tercera es 1 por cliente al día: hasta 2 bandejas, en blanco o café";
+// deja el carro dentro del tope (pedido repetido, listas o un carro guardado de antes): quita primero del último color
+function recortaTercera(){let s=bandejasTercera()-PROMO_TERCERA.tope;[...PROMO_TERCERA.cods].reverse().forEach(c=>{const k=c+"@"+PROMO_TERCERA.fid;if(s>0&&cart[k]){const r=Math.min(s,cart[k]);cart[k]-=r;s-=r;if(!cart[k])delete cart[k]}})}
 const precioFmt=(p,fid)=>p.ofertaFmt&&p.ofertaFmt[fid]!=null?p.ofertaFmt[fid]:null;
 /* Lista de precios de huevos del 12-11-2026 (con IVA, blanco y color; David, 19/11/2026): bandeja y caja.
    La caja: [1 caja, desde 5, desde 25, desde 35 cajas] (null = sin precio en ese tramo). La unidad, media docena, docena y 15 quedan por confirmar.
@@ -2380,7 +2393,7 @@ const LISTA_HUEVOS={
   primeraNovogen:{F30:4500,F180:[18990,null,null,null]},
   segunda:{F30:3900,F180:[13990,null,null,null]},
   segundaNovogen:{F30:3900,F180:[13990,null,null,null]},
-  tercera:{F30:3500,F180:[12000,null,null,11000]}
+  tercera:{F30:3500}
 };
 const TRAMOS_CAJA=[1,5,25,35];
 const CAL_HUEVO={HUE004:"superJumbo",HUE027:"jumboNovogen",HUE010:"superNovogen",HUE011:"extraNovogen",HUE016:"primeraNovogen",HUE019:"segundaNovogen",HUE005:"jumbo",HUE006:"jumbo",HUE007:"super",HUE009:"super",HUE012:"extra",HUE013:"extra",HUE014:"primera",HUE015:"primera",HUE017:"segunda",HUE018:"segunda",HUE020:"tercera",HUE021:"tercera"};
@@ -2419,6 +2432,18 @@ L.productos.forEach(p=>{const r=SUBCATS[p.cat];if(!r||esPieza(p))return;p.catBas
 // las páginas de una misma sección van juntas y en el orden de la lista
 const ordenCats=lista=>{const pos={};lista.forEach((c,i)=>{const b=BASEDE[c]||c;if(!(b in pos))pos[b]=i});return lista.slice().sort((a,b)=>(pos[BASEDE[a]||a]-pos[BASEDE[b]||b])||((ORDENSUB[a]||0)-(ORDENSUB[b]||0)))};
 const visibles=L.productos.filter(p=>!esPieza(p)&&!p.retirado); // retirado: ya no está en la planilla de inventario
+/* Búsqueda por código (David, 21/11/2026: «que en el catálogo también pueda buscar por código de producto»). Además del código del catálogo (p.cod)
+   se aceptan el código nuevo de la planilla de inventario (7) y el de la etiqueta, de la hoja «Mapa de Codigos» (columnas «Código nuevo» y «Código etiqueta»).
+   CODIGOS_OTROS: código del catálogo → "nuevo|etiqueta" (solo cuando son distintos). 90 códigos del catálogo son otro producto en la planilla:
+   por eso los resultados de una búsqueda por código muestran los códigos de cada producto. */
+const CODIGOS_OTROS={"ALU001":"|ENVA022","ALU002":"|ENVA021","ALU004":"|ENVA020","ALU005":"|ENVA019","ALU006":"|ENVA018","ALU008":"|ENVA017","ALU009":"|NUEVO14","ALU010":"|ENVA016","ALU012":"|ENVA013","ALU013":"|NUEVO13","ALU014":"|ENVA010","ALU015":"|ENVA007","ALU016":"|ENVA012","ALU017":"|ENVA011","ALU018":"|ENVA009","ALU019":"|ENVA008","ALU020":"|ENVA014","ALU023":"|ALUM001","TAP005":"ALU024|NUEVO16","TAP006":"ALU025|NUEVO15","TAP007":"ALU026|TAPA026","TAP025":"ALU027|TAPA020","CAR001":"|NUEVO36","CAR002":"|BAND018","CAR003":"|BAND017","CAR004":"|BAND016","CAR005":"|NUEVO51","CAR007":"|NUEVO50","CAR008":"|NUEVO49","CAR017":"|BAND007","CAR020":"|ENVA001","CAR023":"CAR021|CAJA032","CAR024":"CAR022|CAJA033","CAR026":"CAR023|CAJA028","CAR027":"CAR024|CAJA026","CAR028":"CAR025","CAR029":"CAR026","CAR030":"CAR027","CAR032":"CAR028|CAJA013","CAR033":"CAR029|CAJA006","CAR034":"CAR030|CAJA012","CAR035":"CAR031","CAR036":"CAR032|CAJA003","CAR037":"CAR033|CAJA001","CAR038":"CAR034|COMP003","CAR039":"CAR035","CAR041":"CAR036|CONO001","CAR042":"CAR037|NUEVO63","CAR043":"CAR038|SAND001","CAR044":"CAR039|NUEVO48","CAR045":"CAR040","CAR046":"CAR041","CAR047":"CAR042","CAR048":"CAR043","CAR049":"CAR044","CAR051":"CAR045","CAR052":"CAR046","CAR053":"CAR047","CAR054":"CAR048","CAR055":"CAR049","DES033":"CAR050","DES034":"CAR051|PLAT006","DES036":"CAR052|PLAT001","POT011":"CAR053|NUEVO21","POT012":"CAR054|NUEVO22","TAP001":"CAR055|TAPA029","TAP008":"CAR056|NUEVO47","VAS008":"CAR057","VAS009":"CAR058","VAS011":"CAR059|VASO015","VAS022":"CAR060|VASO006","VAS023":"CAR061|VASO005","VAS024":"CAR062|VASO004","PLA012":"CAR063","PLA014":"CAR064|CT5B001","PLA015":"CAR065","PLA016":"CAR066","POT003":"CAR067|POTE005","POT004":"CAR068|POTE004","CON001":"|ATUN001","CON002":"|ATUN004","CON003":"|CHOR001","CON004":"|DURA004","CON005":"|DURA001","CON006":"|PINA003","CON007":"|PINA002","CON008":"|SURT001","ABA013":"DES001|VINA005","ABA014":"DES002|NUEVO12","ABA015":"DES003|ECOV001","ABA016":"DES004|VINA003","ABA017":"DES005|VINA004","ABA029":"DES006|AZUC003","ABA030":"DES007|AZUC002","ABA048":"DES008","ABA050":"DES009|GELA001","ABA088":"DES010","ABA089":"DES011|TENE004","ABA090":"DES012","ABA091":"DES013","ABA092":"DES014|TEVE002","ABA093":"DES015|TEVE001","ABA094":"DES016","ABA095":"DES017","OTR001":"DUL001|78023994","OTR014":"EQU001","OTR015":"EQU002","OTR016":"EQU003","ABA001":"GRA001","ABA002":"GRA002","ABA003":"GRA003","ABA004":"GRA004","ABA005":"GRA005","ABA006":"GRA006","ABA007":"GRA007","ABA008":"GRA008","ABA009":"GRA009","ABA010":"GRA010","ABA011":"GRA011","ABA018":"GRA012|AJIN001","ABA019":"GRA013|AJOE001","ABA020":"GRA014|AJOP001","ABA021":"GRA015|ALBA001","ABA022":"GRA016","ABA023":"GRA017|ALME001","ABA024":"GRA018","ABA025":"GRA019|AMAR001","ABA026":"GRA020|ANIS001","ABA027":"GRA021","ABA028":"GRA022|AVEN001","ABA031":"GRA023","ABA032":"GRA024|CACA002","ABA033":"GRA025|CANE002","ABA034":"GRA026|CARD001","ABA035":"GRA027|CARN001","ABA036":"GRA028|CEBO001","ABA037":"GRA029|CHIA001","ABA038":"GRA030","ABA039":"GRA031|CHUC001","ABA040":"GRA032|CHUN001","ABA041":"GRA033","ABA042":"GRA034|CLAV002","ABA043":"GRA035|CLAV001","ABA044":"GRA036|COCO001","ABA045":"GRA037","ABA046":"GRA038","ABA047":"GRA039|ESTR001","ABA049":"GRA040","ABA051":"GRA041|GRAM001","ABA052":"GRA042","ABA053":"GRA043|HARI004","ABA054":"GRA044|HARI003","ABA055":"GRA045","ABA056":"GRA046","ABA057":"GRA047","ABA058":"GRA048|LINA001","ABA059":"GRA049|MAIZ001","ABA060":"GRA050|MAIZ002","ABA061":"GRA051","ABA062":"GRA052|MAQU002","ABA063":"GRA053|MAQU001","ABA064":"GRA054|MERK001","ABA065":"GRA055","ABA066":"GRA056|FRUT001","ABA067":"GRA057|MOST003","ABA068":"GRA058","ABA069":"GRA059|MOST002","ABA070":"GRA060","ABA071":"GRA061|NUEC001","ABA072":"GRA062|NUEZ001","ABA073":"GRA063","ABA074":"GRA064","ABA075":"GRA065|PIMI005","ABA076":"GRA066|PIMI006","ABA077":"GRA067|PIMI004","ABA078":"GRA068|QUIN002","ABA079":"GRA069|QUIN001","ABA080":"GRA070","ABA081":"GRA071","ABA082":"GRA072","ABA083":"GRA073|SEMI002","ABA084":"GRA074|SEMI001","ABA085":"GRA075|SESA003","ABA086":"GRA076|SESA002","ABA087":"GRA077|SESA001","CAR025":"INS001|HUEV020","HUE001":"INS002|HUEV017","HUE002":"INS003","HUE003":"INS004|HUEV018","HUE025":"INS005|HUEV016","TAP020":"INS006|HUEV021","OTR012":"LAC009|7802080001204","ASE001":"LIM001","ASE002":"LIM002","ASE003":"LIM003","ASE004":"LIM004","ASE005":"LIM005","ASE006":"LIM006","ASE007":"LIM007","ASE008":"LIM008|NUEVO01","ASE010":"LIM009|PRES001","ASE011":"LIM010","ASE012":"LIM011|TRAP002","ASE013":"LIM012","ASE014":"LIM013|TRAP001","ASE015":"LIM014","ASE016":"LIM015","ASE017":"LIM016|LIM001","ASE018":"LIM017|LIM002","ASE019":"LIM018|LIM003","DES010":"LIM019","DES011":"LIM020|COFI001","DES025":"LIM021|GUAN001","DES026":"LIM022","DES027":"LIM023","DES028":"LIM024","DES029":"LIM025","DES043":"LIM026|SERV001","DES054":"LIM027","OTR006":"LIM028|LIMP001","OTR008":"LIM029|PAST002","OTR009":"LIM030|PAST001","OTR013":"LIM031|TOAL002","DES005":"MAD001|PALO001","DES006":"MAD002","DES007":"MAD003","DES008":"MAD004","DES009":"MAD005","DES014":"MAD006","DES018":"MAD007|CUCH003","DES022":"MAD008","DES030":"MAD009|MOND001","DES032":"MAD010","DES042":"MAD011|REVO001","DES045":"MAD012|SETC001","DES046":"MAD013","DES047":"MAD014","DES051":"MAD015","DES052":"MAD016","VAS007":"MAD018|VASO018","BOL001":"MER001","BOL013":"MER002","BOL025":"MER003|ETIQ001","BOL030":"MER004|NUEVO45","OTR003":"MER005|HILO003","OTR005":"MER006","OTR007":"MER007|MARM001","OTR010":"MER008","OTR011":"MER009","BOL064":"MER010","BOL065":"MER011","BOL066":"MER012","BOL067":"MER013","BOL068":"MER014","BOL069":"MER015","BOL075":"MER016","BOL076":"MER017","BOL077":"MER018","BLO001":"PAP001","BLO002":"PAP002","BLO003":"PAP003","BLO004":"PAP004|BLON005","BLO005":"PAP005","BLO006":"PAP006","BLO007":"PAP007","BLO009":"PAP008|NUEVO54","BLO010":"PAP009","BOL009":"PAP010","BOL010":"PAP011","BOL011":"PAP012","BOL019":"PAP013","BOL020":"PAP014","BOL021":"PAP015","BOL022":"PAP016|NUEVO60","BOL023":"PAP017|NUEVO58","BOL024":"PAP018","BOL031":"PAP019","BOL034":"PAP020|PAPE003","BOL043":"PAP021|PAPE002","BOL044":"PAP022|PAPE006","BOL045":"PAP023","BOL047":"PAP024|SACO012","BOL048":"PAP025|SACO013","BOL050":"PAP026|SACO008","BOL051":"PAP027|SACO007","BOL052":"PAP028|SACO006","BOL053":"PAP029|SACO005","BOL054":"PAP030|SACO004","BOL055":"PAP031|SACO003","BOL056":"PAP032|SACO002","BOL059":"PAP033","BOL060":"PAP034","DES001":"PAP035","DES002":"PAP036","DES003":"PAP037","DES004":"PAP038","BOL002":"PLA001","BOL003":"PLA002","BOL004":"PLA003","BOL005":"PLA004","BOL006":"PLA005","BOL007":"PLA006","BOL008":"PLA007","BOL012":"PLA008","BOL014":"PLA009","BOL015":"PLA010","BOL016":"PLA011","BOL017":"PLA012","BOL018":"PLA013","BOL026":"PLA014","BOL027":"PLA015|FILM003","BOL028":"PLA016","BOL032":"PLA017","BOL033":"PLA018","BOL057":"PLA019","BOL058":"PLA020","BOL061":"PLA021","BOL062":"PLA022","BOL063":"PLA023","CAR040":"PLA024|COMP001","DES012":"PLA025","DES015":"PLA026","DES016":"PLA027","DES017":"PLA028","DES019":"PLA029","DES020":"PLA030","DES021":"PLA031","DES023":"PLA032|CUCH001","DES024":"PLA033","DES031":"PLA034","DES037":"PLA035|PLAT004","DES038":"PLA036|PLAT003","DES039":"PLA037|PLAT002","DES040":"PLA038|NUEVO26","DES041":"PLA039|NUEVO27","DES044":"PLA040|SET3001","DES048":"PLA041","DES049":"PLA042","DES050":"PLA043|TENE003","DES053":"PLA044","DES055":"PLA045","PLA001":"PLA046|NUEVO17","PLA002":"PLA047|CP79001","PLA003":"PLA048","PLA004":"PLA049","PLA005":"PLA050|CLAM002","PLA006":"PLA051|CLAM001","PLA007":"PLA052","PLA008":"PLA053|P1CO001","PLA009":"PLA054|P1CO002","PLA010":"PLA055|CT12001","PLA011":"PLA056","PLA017":"PLA057|CT20001","PLA018":"PLA058|CTMA001","PLA019":"PLA059|CUPU013","PLA020":"PLA060|CUPU012","PLA021":"PLA061","PLA022":"PLA062|CUPU009","PLA023":"PLA063","PLA024":"PLA064|CUPU004","PLA025":"PLA065|CUPU003","PLA026":"PLA066|CUPU005","PLA027":"PLA067|CUPU002","PLA028":"PLA068","PLA029":"PLA069|CUPU001","PLA030":"PLA070|CUPU008","PLA031":"PLA071|CUPU007","PLA032":"PLA072|CUPU006","PLA033":"PLA073|ENVA005","PLA034":"PLA074|NUEVO20","PLA035":"PLA075|ENVA006","PLA037":"PLA076","PLA038":"PLA077","PLA039":"PLA078|ENVA004","PLA040":"PLA079","PLA041":"PLA080","PLA042":"PLA081|ENVA003","PLA043":"PLA082|ENVA002","PLA044":"PLA083","POT001":"PLA084|POTE011","POT002":"PLA085","POT005":"PLA086|POTE008","POT006":"PLA087|POTE007","POT007":"PLA088|POTE006","POT008":"PLA089|POTE003","POT009":"PLA090|POTE002","POT013":"PLA091|POTE001","POT014":"PLA092|POTE010","POT015":"PLA093","POT016":"PLA094|SALS007","POT017":"PLA095|SALS005","POT018":"PLA096|SALS006","POT019":"PLA097","POT020":"PLA098|SALS003","POT021":"PLA099","POT022":"PLA100","TAP002":"PLA101|TAPA028","TAP003":"PLA102|TAPA027","TAP009":"PLA103|NUEVO40","TAP010":"PLA104|NUEVO41","TAP011":"PLA105|NUEVO42","TAP012":"PLA106|NUEVO43","TAP013":"PLA107|NUEVO37","TAP014":"PLA108|TAPA025","TAP015":"PLA109|NUEVO18","TAP016":"PLA110|TAPA024","TAP017":"PLA111|TAPA023","TAP018":"PLA112|TAPA022","TAP019":"PLA113|TAPA030","TAP021":"PLA114|TAPA004","TAP022":"PLA115","TAP023":"PLA116|TAPA002","TAP024":"PLA117|TAPA003","TAP026":"PLA118|TAPA010","TAP027":"PLA119|TAPA008","TAP028":"PLA120|TAPA005","TAP029":"PLA121|TAPA006","TAP030":"PLA122|TAPA007","TAP031":"PLA123|TAPA019","TAP032":"PLA124|TAPA018","TAP033":"PLA125|TAPA015","TAP034":"PLA126|TAPA016","TAP035":"PLA127|TAPA017","TAP036":"PLA128|TAPA011","TAP037":"PLA129|TAPA014","TAP038":"PLA130","TAP040":"PLA132|TAPA013","TAP041":"PLA133","TAP042":"PLA134|TAPA012","TAP043":"PLA135|TAPA001","VAS001":"PLA138|COPA001","VAS002":"PLA139","VAS003":"PLA140|VASO002","VAS004":"PLA141|VASO017","VAS005":"PLA142|NUEVO34","VAS006":"PLA143|VASO001","VAS010":"PLA144|VASO016","VAS012":"PLA145|VASO012","VAS013":"PLA146|VASO014","VAS014":"PLA147|VASO013","VAS015":"PLA148|VASO011","VAS016":"PLA149|VASO010","VAS019":"PLA150|NUEVO38","VAS020":"PLA151|VASO007","VAS021":"PLA152|VASO008","VAS026":"PLA153","BOL070":"PLA154","BOL071":"PLA155","BOL072":"PLA156","BOL073":"PLA157","BOL074":"PLA158"};
+const codsDe=p=>[p.cod,...(CODIGOS_OTROS[p.cod]||"").split("|").filter(Boolean)];
+const codBusca=txt=>{const u=String(txt).trim().toUpperCase();if(/\s/.test(u)&&!/^[A-Z]{3}[\s._-]+\d{1,4}$/.test(u))return null; // con espacio («pla 26») solo si son 3 letras: «vaso 12» sigue buscando por palabras
+  const s=u.replace(/[\s._-]/g,""),k=s.match(/^([A-Z]{3,5})(\d{1,4})$/);return k?{raw:s,pad:k[1]+k[2].padStart(3,"0")}:null};
+const COD_VER=new Set();let COD_Q=null;
+const codTagHTML=p=>{const o=(CODIGOS_OTROS[p.cod]||"").split("|"),hit=c=>COD_Q&&(c===COD_Q.raw||c===COD_Q.pad||(COD_Q.pre&&c.startsWith(COD_Q.raw)));
+  const parte=(l,c)=>c?`${l} <span${hit(c)?' class="cod-hit"':""}>${c}</span>`:"";
+  return `<small class="cod-res">${[parte("Código",p.cod),parte("planilla",o[0]),parte("etiqueta",o[1])].filter(Boolean).join(" · ")}</small>`};
 const favs=visibles.filter(p=>p.fav||p.oferta!=null);
 /* Familias: en el menú se ve primero la familia («Plásticos») y al tocarla se despliegan sus páginas («Envases», «Contenedores»…) */
 const FAMILIAS=[
@@ -2485,7 +2510,7 @@ function precioHTML(p){
   if(p.virtual)return p.precio==null?`<span class="precio pc">Precio por confirmar</span>`:`<span class="precio"><small class="u">Desde</small> ${clp(p.precio)} <small class="u">c/u</small></span>`;
   if(p.oferta!=null)return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(p.oferta)}${p.precio!=null?` <s>${clp(p.precio)}</s>`:""}</span>`;
   const base=precioBase(p);
-  if(fmtDe(p)&&precioFmt(p,modoDe(p))!=null){const f=fmtInfo(p,modoDe(p)),po=precioFmt(p,f[0]),pl=precioLista(p,f[0],1);return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(po)}${pl!=null&&pl>po?` <s>${clp(pl)}</s>`:""} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">${p.bolsas?`Sale a ${clp(Math.round(po/f[2]*1000))} el kilo`:`Sale a ${clp(Math.round(po/f[2]))} c/u`}</small>${(pr=>pr?`<span class="mayor siempre"><span class="ok">Promo: ${pr[0]} ${f[1].replace(/^Bandeja/,"bandejas").toLowerCase()} por ${clp(pr[1])}</span></span>`:"")(promoFmt(p,f[0]))}${aperturaHTML(p,f[0])}`}
+  if(fmtDe(p)&&precioFmt(p,modoDe(p))!=null){const f=fmtInfo(p,modoDe(p)),po=precioFmt(p,f[0]),pl=precioLista(p,f[0],1);return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(po)}${pl!=null&&pl>po?` <s>${clp(pl)}</s>`:""} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">${p.bolsas?`Sale a ${clp(Math.round(po/f[2]*1000))} el kilo`:`Sale a ${clp(Math.round(po/f[2]))} c/u`}</small>${(pr=>pr?`<span class="mayor siempre"><span class="ok">Promo: ${pr[0]} ${f[1].replace(/^Bandeja/,"bandejas").toLowerCase()} por ${clp(pr[1])}</span></span>`:"")(promoFmt(p,f[0]))}${enPromoTercera(p.cod,f[0])?`<small class="regla-mayor">1 promo por cliente al día: hasta 2 bandejas, en blanco o café.</small>`:""}${aperturaHTML(p,f[0])}`}
   if(p.pieza&&modoDe(p)==="Fpz")return `<span class="precio">${clp(p.pieza)} <small class="u">el kilo</small></span><small class="cu">Pieza entera: se pesa y se cobra por kilo</small>`;
   if(enCaja(p)&&precioLista(p,modoDe(p),1)!=null)return `<span class="pcaja" data-pcaja="${p.cod}">${cajaPrecioHTML(p)}</span>`;
   if(fmtDe(p)){const f=fmtInfo(p,modoDe(p)),pl=precioLista(p,f[0],1);if(pl!=null){const ts=tramosLista(p,f[0]);
@@ -2542,7 +2567,7 @@ const repintarVar=g=>{document.querySelectorAll(`article[data-var="${g}"]`).forE
 const card=(p,c,vg)=>`
       <article class="prod${vg?" var":""}${agotado(p)?" agotado":""}${p.oferta!=null||p.ofertaFmt||p.promo?" oferta":""}" data-prod="${p.cod}"${vg?` data-var="${vg}"`:c===FAV?"":` id="p-${p.cod}"`}>${p.virtual?"":`<button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>`}
         <div class="ico${fmtDe(p)&&p.foto?" con-et":""}">${p.foto?fotoHTML(p):((ICONOS[p.icono]||ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}${fmtDe(p)&&p.foto?etLatHTML(p):""}</div>
-        <div class="info"><small class="tipo-p">${p.cat}</small><b>${vg?VARG[vg].nombre:p.nombre}</b>${vg?tallasHTML(vg):""}${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${agotado(p)?`<span class="tag">${p.cerrado?"Agotado por ahora":p.sinStock?"Stock 0 en el conteo":p.stock===0?"Sin stock":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
+        <div class="info"><small class="tipo-p">${p.cat}</small><b>${vg?VARG[vg].nombre:p.nombre}</b>${!vg&&COD_VER.has(p.cod)?codTagHTML(p):""}${vg?tallasHTML(vg):""}${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${p.aviso?`<small class="regla-mayor">${p.aviso}</small>`:""}${agotado(p)?`<span class="tag">${p.cerrado?"Agotado por ahora":p.sinStock?"Stock 0 en el conteo":p.stock===0?"Sin stock":`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
         ${p.virtual?`<div class="paso vacio pista-var"><button type="button" class="elige" disabled>Elige un tamaño</button></div>`:`<div class="paso vacio">
           <button class="menos" data-cod="${p.cod}" data-d="-1" aria-label="Quitar ${p.nombre}">−</button>
           <input class="cant" type="number" inputmode="numeric" min="0" step="1" data-q="${p.cod}" value="0" aria-label="Cantidad de ${p.nombre}${tienePaq(p)?" (en la modalidad elegida)":""}">
@@ -2698,6 +2723,16 @@ verSeccion(leePref("seccion-"+KEY)||SECC[0].id,{desplazar:false});
   const busca=()=>{const txt=q.value.trim(),ws=pal(txt);borrar.hidden=!txt;
     if(!ws.length){if(!res.hidden){res.hidden=true;res.innerHTML="";verSeccion(antes||SECC[0].id,{desplazar:false})}estado.textContent="";return}
     if(res.hidden){const v=SECC.find(x=>!x.hidden);antes=v?v.id:null;SECC.forEach(x=>{x.hidden=true});res.hidden=false;document.body.classList.remove("con-fondo")}
+    // por código: exacto (PLA75 = PLA075) en cualquiera de los códigos del producto; si no hay, los que empiezan así (desde 4 letras y números)
+    COD_VER.clear();COD_Q=codBusca(txt);
+    if(COD_Q){let lc=visibles.filter(p=>codsDe(p).some(c=>c===COD_Q.raw||c===COD_Q.pad));
+      if(!lc.length&&COD_Q.raw.length>=4){lc=visibles.filter(p=>codsDe(p).some(c=>c.startsWith(COD_Q.raw))).slice(0,40);COD_Q.pre=lc.length>0}
+      if(lc.length){lc.forEach(p=>COD_VER.add(p.cod));const t=COD_Q.raw,n=lc.length,dos=!COD_Q.pre&&n>1;
+        res.innerHTML=`<h2 id="resTit">${COD_Q.pre?`Códigos que empiezan con «${t}»`:`Código «${COD_Q.pad}»`}</h2>`
+          +`<p class="res-n">${n} producto${n===1?"":"s"}${dos?". Ese código corresponde a un producto en el catálogo y a otro en la planilla o la etiqueta: revisa los códigos de cada tarjeta.":""}</p>`
+          +`<div class="lista">${lc.map(p=>card(p,FAV)).join("")}</div>`;
+        refrescar();estado.textContent=`${n} producto${n===1?"":"s"} con ese código`;return}
+      COD_Q=null}
     const r=IDX.map(o=>{const ps=ws.map(w=>puntaje(w,o.todo,o.nom));return {p:o.p,todos:ps.every(v=>v>0),suma:ps.reduce((a,v)=>a+v,0)}}).filter(o=>o.suma>0);
     const exactos=r.filter(o=>o.todos).sort((a,b)=>b.suma-a.suma||a.p.nombre.localeCompare(b.p.nombre));
     const parecidos=exactos.length?[]:r.sort((a,b)=>b.suma-a.suma).slice(0,24);
@@ -2756,6 +2791,7 @@ function clickTarjeta(e){
   const p=PROD[b.dataset.cod], m=modoDe(p), k=clave(p.cod,m), d=Number(b.dataset.d), tp=topeDe(p);
   if(d>0&&p.cerrado){avisaCarro(`${p.nombre} está agotado por ahora`,false);return}
   if(d>0&&tp!=null&&unidadesEn(p)+porDe(p,m)>tp){avisaCarro(`No queda más stock de ${p.nombre}`,false);return}   // no alcanza el stock (envase con tapa: manda el menor)
+  if(d>0&&enPromoTercera(p.cod,m)&&bandejasTercera()+d>PROMO_TERCERA.tope){avisaCarro(AVISO_TERCERA,false);return}
   const n=Math.max(0,(cart[k]||0)+d); if(n)cart[k]=n; else delete cart[k];
   guardar(); refrescar();
   /* tarjeta de varios tamaños: al agregar un tamaño nuevo se vuelve a elegir (el cuadrito queda marcado con lo que lleva) */
@@ -2770,6 +2806,7 @@ function fijarCantidad(inp){
   const m=modoDe(p), k=clave(p.cod,m), por=porDe(p,m), tp=topeDe(p);
   let n=Math.max(0,Math.floor(Number(String(inp.value).replace(/[^0-9]/g,""))||0));
   if(tp!=null){const libres=tp-(unidadesEn(p)-(cart[k]||0)*por);n=Math.min(n,Math.max(0,Math.floor(libres/por)))}
+  if(enPromoTercera(p.cod,m)){const lib=Math.max(0,PROMO_TERCERA.tope-(bandejasTercera()-(cart[k]||0)));if(n>lib){n=lib;avisaCarro(AVISO_TERCERA,false)}}
   if(n)cart[k]=n; else delete cart[k];
   inp.value=n; guardar(); refrescar();
 }
@@ -2842,7 +2879,7 @@ function mostrarLista(titulo,prods,vacio){const res=$("resBusca");if(!res)return
   $("carta").prepend(barra);
   /* Vitrina: fotos reales de la avícola (más adelante, las ofertas especiales del mes con sus propias fotos) */
   const VITRINA=[
-    {img:"../img/huevos-cafe-bandeja.jpg",et:"Oferta del mes",precio:"$1.990",tit:"Huevo tercera, bandeja de 30",txt:"En blanco o café. Y 2 bandejas por $2.990. Precio de apertura, hasta agotar stock.",alt:"Bandeja de huevos café.",ir:"g-ofertas-y-promos",cta:"Ver la oferta"},
+    {img:"../img/huevos-cafe-bandeja.jpg",et:"Oferta del mes",precio:"$1.990",tit:"Huevo tercera, bandeja de 30",txt:"En blanco o café. Y 2 bandejas por $2.990. 1 promo por cliente al día. Precio de apertura, hasta agotar stock.",alt:"Bandeja de huevos café.",ir:"g-ofertas-y-promos",cta:"Ver la oferta"},
     {img:"../img/huevos-blancos-bandeja.jpg",et:"Promo Gym Bro",precio:"$3.800",tit:"Bandeja de huevo tercera + una Monster",txt:"Para quienes no omiten el entrenamiento de piernas: una bandeja de 30 huevos tercera junto con una Monster Ultra, la blanca sin azúcar.",alt:"Bandeja de huevos blancos.",extra:"../img/productos/monster.webp",wa:"https://wa.me/56933903395?text=Hola%2C%20quiero%20la%20Promo%20Gym%20Bro%3A%20bandeja%20de%2030%20huevos%20tercera%20%2B%20Monster%20Ultra%20blanca%2C%20a%20%243.800.",letra:"La bebida energética no se recomienda para menores de 18 años, embarazadas ni personas sensibles a la cafeína."},
     {img:"../img/avicola-pabellon-silos.jpg",et:"Nuestra avícola",tit:"Del campo de Oro Verde a tu mesa",txt:"Nuestro pabellón nuevo y sus silos, en las afueras de Chillán.",alt:"Pabellón nuevo de la avícola, de techo rojo, con dos silos metálicos bajo un cielo azul.",ali:true},
     {img:"../img/huevos-cafe-bandeja.jpg",et:"Huevos",tit:"Huevos frescos, sanos, ricos y naturales",txt:"Blancos, de color y azules, por bandeja y por caja.",alt:"Bandeja de huevos café sobre una mesa de madera.",ir:"g-huevos-de-color"},
@@ -2938,7 +2975,9 @@ const items=()=>{const out=[];L.productos.forEach(p=>{if(esPieza(p))return;const
   const qp=cart[clave(p.cod,"P")]||0, qu=cart[p.cod]||0;
   if(qp&&tienePaq(p)){const pr=precioPaq(p,qp);out.push({...p,q:qp,precio:pr,mayor:pr!=null&&qp>=MIN_PAQ_MAYOR&&pr<precioPaq(p,1),tapa:tp,paq:true,uds:qp*p.upp,detalle:"",nombre:`${nom} · paquete de ${p.upp} u`})}
   if(fmtDe(p)){const b=precioBase(p);fmtDe(p).filter(f=>f[0]!=="U").forEach(f=>{const qt=cart[p.cod+"@"+f[0]]||0,po=precioFmt(p,f[0]),pl=po==null?precioLista(p,f[0],qt):null,pr=po!=null&&promoFmt(p,f[0]);let qf=qt;
-    if(pr&&qt>=pr[0]){const qp=qt-qt%pr[0];qf=qt-qp;out.push({...p,q:qp,precio:pr[1]/pr[0],oferta:pr[1]/pr[0],mayor:false,tapa:null,paq:false,fmt:true,fid:f[0],uds:qp*f[2],detalle:"",nombre:`${nom} · ${f[1].toLowerCase()} (${f[2]} u) · promo ${pr[0]} por ${clp(pr[1])}`})}
+    let qpr=pr?qt-qt%pr[0]:0;
+    if(pr&&enPromoTercera(p.cod,f[0])){const cs=PROMO_TERCERA.cods,tot=bandejasTercera(),antes=cs.slice(0,cs.indexOf(p.cod)).reduce((a,c)=>a+(cart[c+"@"+f[0]]||0),0);qpr=Math.max(0,Math.min(qt,tot-tot%pr[0]-antes))}
+    if(qpr){const qp=qpr;qf=qt-qp;out.push({...p,q:qp,precio:pr[1]/pr[0],oferta:pr[1]/pr[0],mayor:false,tapa:null,paq:false,fmt:true,fid:f[0],uds:qp*f[2],detalle:"",nombre:`${nom} · ${f[1].toLowerCase()} (${f[2]} u) · promo ${pr[0]} por ${clp(pr[1])}${qp<pr[0]?" (sumando blanco y café)":""}`})}
     if(qf)out.push({...p,q:qf,precio:f[0]==="Fpz"?null:po!=null?po:pl!=null?pl:b==null?null:redondear(b*f[2]),oferta:po!=null?po:p.oferta,mayor:pl!=null&&pl<precioLista(p,f[0],1),tapa:null,paq:false,fmt:true,fid:f[0],uds:p.bolsas?Math.round(qf*f[2])/1000:qf*f[2],detalle:"",nombre:`${nom} · ${f[1].toLowerCase()}${f[0]==="Fpz"?` (${clp(p.pieza)} el kilo, se cobra lo que pese)`:p.bolsas?"":` (${f[2]} u)`}`})})}
   if(qu){const {pr,m}=precioQ(p,qu);out.push({...p,q:qu,precio:pr,mayor:m,tapa:tp,paq:false,uds:qu,detalle:tienePaq(p)||fmtDe(p)?"por unidad":p.detalle,nombre:nom})}
 });return out};
@@ -2947,6 +2986,7 @@ const total=()=>items().reduce((a,x)=>a+x.q*(x.precio||0),0);
 const sub=x=>x.precio==null?"precio por confirmar":clp(x.q*x.precio);
 
 function refrescar(){
+  recortaTercera();
   L.productos.forEach(p=>{
     if(esPieza(p))return;
     const m=modoDe(p), q=cart[clave(p.cod,m)]||0, otra=fmtDe(p)?(fmtDe(p).filter(f=>f[0]!==m&&cart[clave(p.cod,f[0])]).map(f=>`${cart[clave(p.cod,f[0])]} × ${f[1].toLowerCase()}`).join(", ")):m==="P"?(cart[p.cod]||0):(cart[clave(p.cod,"P")]||0);
