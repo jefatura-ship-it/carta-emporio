@@ -17,12 +17,12 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+# Dos trabajos (21/11/2026): armar y subir el paquete en uno y publicarlo en otro. Con los dos pasos en el mismo
+# trabajo, deploy-pages buscaba el paquete una fracción de segundo después de subirlo y no lo encontraba
+# («No artifacts named github-pages», actions/deploy-pages#451): fallaron así tres publicaciones seguidas.
 jobs:
-  publicar:
+  armar:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.despliegue.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Armar la carpeta pública
@@ -35,5 +35,12 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
+  publicar:
+    needs: armar
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+    steps:
       - id: despliegue
         uses: actions/deploy-pages@v5
