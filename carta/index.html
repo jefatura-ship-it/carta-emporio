@@ -422,6 +422,13 @@ body.con-galleta{padding-bottom:calc(190px + env(safe-area-inset-bottom,0px))}
 @keyframes nivEntra{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:none}}
 .famlista{display:grid;gap:8px}
 .famBtn{display:flex;align-items:center;gap:10px;min-height:54px;padding:10px 16px;border:1.5px solid var(--borde);border-radius:14px;background:#fff;color:var(--campo);font-family:inherit;font-weight:700;font-size:16px;text-align:left;cursor:pointer}
+/* Despensa y Lácteos destacados (21/11/2026) */
+.famBtn.destacada,.niv2 .mgrid>.destacada{background:linear-gradient(120deg,#fff8e8,#fce6b0);border-color:var(--trigo);box-shadow:0 6px 14px -10px rgba(0,0,0,.45)}
+.niv2 .mgrid>.destacada{flex-direction:row;align-items:center;justify-content:flex-start;gap:10px}
+.destacada .t{display:flex;flex-direction:column;gap:2px}
+.fam-ico{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:50%;background:#fff;box-shadow:0 2px 6px -3px rgba(0,0,0,.35)}
+.fam-ico svg{width:28px;height:28px}
+.chip.destacada{border-color:var(--trigo);background:#fff3d6}
 .famBtn small{margin-left:auto;font-weight:600;font-size:12.5px;color:#6b6b66}
 .famBtn::after{content:"";width:9px;height:9px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(-45deg);flex:none}
 .famBtn:hover,.famBtn:focus-visible{border-color:var(--campo)}
@@ -2019,6 +2026,7 @@ const ICONOS={
   "Aseo":'<svg viewBox="0 0 40 40"><rect x="14" y="15" width="12" height="19" rx="3" fill="var(--brote)"/><rect x="16" y="8" width="7" height="7" fill="var(--sol)"/><path d="M23 10h7" stroke="var(--sol)" stroke-width="2.5" stroke-linecap="round"/></svg>',
   "Lácteos":'<svg viewBox="0 0 40 40"><path d="M13 15l3-7h8l3 7v19H13z" fill="#fff" stroke="var(--brote)" stroke-width="2" stroke-linejoin="round"/><path d="M13 15h14" stroke="var(--brote)" stroke-width="2"/><rect x="13" y="20" width="14" height="8" fill="var(--trigo)"/><path d="M20 22c-1.6 2-2.2 3-2.2 3.8a2.2 2.2 0 0 0 4.4 0c0-.8-.6-1.8-2.2-3.8z" fill="#fff"/></svg>',
   "Golosinas":'<svg viewBox="0 0 40 40"><path d="M12 20L5 14v12zM28 20l7-6v12z" fill="var(--trigo)" stroke="var(--sol)" stroke-width="2" stroke-linejoin="round"/><ellipse cx="20" cy="20" rx="9" ry="7.5" fill="var(--sol)"/><path d="M16 14.5c2 3 2 8 0 11M21.5 13c2 3.5 2 10.5 0 14" stroke="#fff" stroke-width="1.6" fill="none" opacity=".6"/></svg>',
+  "_despensa":'<svg viewBox="0 0 40 40"><path d="M6 17h28l-3.5 15h-21z" fill="var(--trigo)" stroke="var(--brote)" stroke-width="2" stroke-linejoin="round"/><path d="M13 17l5-9M27 17l-5-9" stroke="var(--brote)" stroke-width="2.2" stroke-linecap="round"/><path d="M14 22v6M20 22v6M26 22v6" stroke="var(--brote)" stroke-width="1.8" stroke-linecap="round"/></svg>',
   "_fav":'<svg viewBox="0 0 40 40"><path d="M20 5l4.4 9.3 10.1 1.3-7.4 7 1.9 10-9-4.9-9 4.9 1.9-10-7.4-7 10.1-1.3z" fill="var(--trigo)" stroke="var(--sol)" stroke-width="2" stroke-linejoin="round"/></svg>',
   "_":'<svg viewBox="0 0 40 40"><path d="M8 14h24l-2 18H10z" fill="var(--trigo)" stroke="var(--sol)" stroke-width="2" stroke-linejoin="round"/><path d="M14 14c0-4 3-6 6-6s6 2 6 6" fill="none" stroke="var(--brote)" stroke-width="2.5"/></svg>'
 };
@@ -2414,17 +2422,19 @@ const favs=visibles.filter(p=>p.fav||p.oferta!=null);
 const FAMILIAS=[
   ["Huevos",["Huevos blancos","Huevos de color","Huevos Novogen","Huevos","Hueveras"]],
   ["Alimento para aves",["Alimentos","Núcleos y aditivos"]],
+  ["Despensa",["Lácteos","Abarrotes","Bebidas y jugos","Frutas en conserva","Mariscos y atún","Golosinas"]], // 3.ª familia y Lácteos primero (David, 21/11/2026)
   ["Plásticos",["Envases","Contenedores","Cúpulas","Potes","Salseros"]],
   ["Cartón",["Cajas de cartón","Bandejas de cartón","Bowls y conos de cartón"]],
   ["Aluminio",["Envases de aluminio","Foil y moldes de aluminio"]],
   ["Bolsas y papeles",["Bolsas","Sacos y mallas","Papeles y film"]],
   ["Vasos, platos y cubiertos",["Vasos","Platos","Cubiertos y servilletas","Bombillas, brochetas y palitos"]],
   ["Repostería",["Moldes","Esencias y colorantes"]],
-  ["Despensa",["Abarrotes","Bebidas y jugos","Frutas en conserva","Mariscos y atún","Lácteos","Golosinas"]],
   ["Granel",["Frutos secos y deshidratados","Semillas y cereales","Harinas y repostería","Té e infusiones","Especias y sales"]],
   ["Aseo",["Bolsas de basura","Traperos","Detergentes y cloro","Papel higiénico y afeitado","Guantes y cofias"]],
   ["Otros",["Hilos y pitas","Balanzas","Otros"]]
 ];
+/* Destacadas en el menú (David, 21/11/2026): Despensa y Lácteos llevan su ícono y fondo dorado */
+const DESTACA={"Despensa":ICONOS._despensa,"Lácteos":ICONOS["Lácteos"]};
 const hayCat=new Set(visibles.filter(p=>!p.promo).map(p=>p.cat));
 const FAMS=FAMILIAS.map(([f,l])=>[f,l.filter(x=>hayCat.has(x))]).filter(([,l])=>l.length);
 const sueltas=ordenCats([...hayCat].filter(x=>!FAMS.some(([,l])=>l.includes(x))));
@@ -2536,12 +2546,12 @@ const card=(p,c,vg)=>`
           <button class="mas" data-cod="${p.cod}" data-d="1" aria-label="Agregar ${p.nombre}">+</button>
         </div>`}${tapasHTML(p)}
       </article>`;
-$("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}" data-fam="${FAV}" aria-current="true">★ ${FAV}</button>`:"")+FAMS.map(([f,l])=>`<button class="chip" data-ir="${slug(l[0])}" data-fam="${f}" aria-current="false">${f}</button>`).join("");
+$("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}" data-fam="${FAV}" aria-current="true">★ ${FAV}</button>`:"")+FAMS.map(([f,l])=>`<button class="chip${DESTACA[f]?" destacada":""}" data-ir="${slug(l[0])}" data-fam="${f}" aria-current="false">${f}</button>`).join("");
 /* Menú «Ver todo»: todas las secciones, pedidos a la avícola, la página web y los Instagram */
 (()=>{const bt=$("catMenu"),mn=$("menuCats");
   const ig=[["emporio.sabroso","Emporio Sabroso"],["pollitasoroverde","Pollitas Oro Verde"]];
   mn.innerHTML=`<section class="mbloque mcuenta" aria-label="Mi cuenta"><h3>Mi cuenta</h3><div class="mcuenta-in"></div></section>`
-    +`<section class="mbloque" aria-label="Productos"><h3>Productos</h3><button type="button" class="mofertas"${favs.length?` data-ir="${slug(FAV)}"`:""}><span class="mo-et" aria-hidden="true">%</span><span><b>Ofertas y promos</b><small>${favs.length?`${favs.length} producto${favs.length===1?"":"s"} con precio especial`:"Pronto tendremos ofertas"}</small></span></button><div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn" data-fam="${i}"><span>${f}</span><small>${(n=>n===1?"1 producto":n+" productos")(l.reduce((t,x)=>t+nProd(deCat(x)),0))}</small></button>`).join("")}</div></section>`
+    +`<section class="mbloque" aria-label="Productos"><h3>Productos</h3><button type="button" class="mofertas"${favs.length?` data-ir="${slug(FAV)}"`:""}><span class="mo-et" aria-hidden="true">%</span><span><b>Ofertas y promos</b><small>${favs.length?`${favs.length} producto${favs.length===1?"":"s"} con precio especial`:"Pronto tendremos ofertas"}</small></span></button><div class="famlista">${FAMS.map(([f,l],i)=>`<button type="button" class="famBtn${DESTACA[f]?" destacada":""}" data-fam="${i}">${DESTACA[f]?`<span class="fam-ico">${DESTACA[f]}</span>`:""}<span>${f}</span><small>${(n=>n===1?"1 producto":n+" productos")(l.reduce((t,x)=>t+nProd(deCat(x)),0))}</small></button>`).join("")}</div></section>`
     +`<section class="mbloque" aria-label="Tu pedido"><h3>Tu pedido</h3><button type="button" class="mpedido"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2.5l2.2 10.5h10.6L20.5 7H7"/><circle cx="9.5" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg>Ver y editar mi pedido</button></section>`
     +`<section class="mbloque" aria-label="Pedidos a la avícola"><h3>Pedidos a la avícola</h3><div class="mgrid uno"><button type="button" class="dest" data-ir="avicola">Pollitas de 14 semanas y alimento para aves</button></div></section>`
     +`<section class="mbloque" aria-label="Conócenos"><h3>Conócenos</h3><div class="mgrid"><a href="../">Nuestra página web</a>${ig.map(([u,n])=>`<a href="https://www.instagram.com/${u}/" target="_blank" rel="noopener">Instagram ${n}</a>`).join("")}</div></section>`;
@@ -2553,7 +2563,7 @@ $("cats").innerHTML=(favs.length?`<button class="chip fav" data-ir="${slug(FAV)}
   mn.addEventListener("click",e=>{
     const fb=e.target.closest(".famBtn");
     if(fb){const [f,l]=FAMS[+fb.dataset.fam];famAbierta=fb.dataset.fam;
-      n2.innerHTML=`<button type="button" class="nivVolver"><span aria-hidden="true">←</span> Volver al menú</button><h3>${f}</h3><div class="mgrid">${l.map(x=>`<button type="button" data-ir="${slug(x)}"><span>${x}</span><small>${nProd(deCat(x))} producto${nProd(deCat(x))===1?"":"s"}</small></button>`).join("")}</div>`;
+      n2.innerHTML=`<button type="button" class="nivVolver"><span aria-hidden="true">←</span> Volver al menú</button><h3>${f}</h3><div class="mgrid">${l.map(x=>`<button type="button"${DESTACA[x]?' class="destacada"':""} data-ir="${slug(x)}">${DESTACA[x]?`<span class="fam-ico">${DESTACA[x]}</span><span class="t">`:""}<span>${x}</span><small>${nProd(deCat(x))} producto${nProd(deCat(x))===1?"":"s"}</small>${DESTACA[x]?"</span>":""}</button>`).join("")}</div>`;
       n1.hidden=true;n2.hidden=false;tit.textContent=f;$("menuScroll").scrollTop=0;n2.querySelector(".nivVolver").focus({preventScroll:true});return}
     if(e.target.closest(".nivVolver")){nivel1(true);const b=n1.querySelector(`.famBtn[data-fam="${famAbierta}"]`);if(b)b.focus({preventScroll:true})}
   });
