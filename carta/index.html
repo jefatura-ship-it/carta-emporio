@@ -1798,6 +1798,7 @@ const LOCALES = {
       {cod:"HUE008",retirado:true,cat:"Huevos",nombre:"Huevo súper blanco 100 u",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
       {cod:"HUE007",cat:"Huevos",nombre:"Huevo súper blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande"},
       {cod:"HUE010",cat:"Huevos",nombre:"Huevo súper Novogen",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande",nuevo:true},
+      {cod:"HUE027",cat:"Huevos",nombre:"Huevo jumbo Novogen",detalle:"Precio por bandeja",precio:null,formatos:"huevoGrande",nuevo:true},
       {cod:"HUE012",cat:"Huevos",nombre:"Huevo extra blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
       {cod:"HUE011",cat:"Huevos",nombre:"Huevo extra Novogen",detalle:"Precio por bandeja",precio:null,formatos:"huevo",nuevo:true},
       {cod:"HUE014",cat:"Huevos",nombre:"Huevo primera blanco",detalle:"Precio por bandeja",precio:null,formatos:"huevo"},
@@ -2355,9 +2356,11 @@ const precioFmt=(p,fid)=>p.ofertaFmt&&p.ofertaFmt[fid]!=null?p.ofertaFmt[fid]:nu
    La caja: [1 caja, desde 5, desde 25, desde 35 cajas] (null = sin precio en ese tramo). La unidad, media docena, docena y 15 quedan por confirmar.
    21/11/2026 (David): cajas a un solo precio, desde 1 caja y la cantidad que sea (sin tramos), en blanco, color y Novogen:
    súper $13.900 (caja de 100), extra $21.500, primera $18.990 y segunda $13.990 (caja de 180).
+   Jumbo Novogen: código HUE027 creado en la carta (en MyPyme HUE025 es jumbo Novogen, pero aquí HUE025 ya es la bandeja para 20); solo bandeja.
    Bandejas (David, 21/11/2026), en blanco, color y Novogen: jumbo $4.500 y súper $3.790 (bandeja de 20); extra $4.990, primera $4.500 y segunda $3.900 (bandeja de 30). */
 const LISTA_HUEVOS={
   superJumbo:{F20:5500,F100:[24000,23000,22000,21000]},
+  jumboNovogen:{F20:4500},
   jumbo:{F20:4500,F100:[20500,19000,18000,17000]},
   super:{F20:3790,F100:[13900,null,null,null]},
   superNovogen:{F20:3790,F100:[13900,null,null,null]},
@@ -2370,10 +2373,10 @@ const LISTA_HUEVOS={
   tercera:{F30:3500,F180:[12000,null,null,11000]}
 };
 const TRAMOS_CAJA=[1,5,25,35];
-const CAL_HUEVO={HUE004:"superJumbo",HUE010:"superNovogen",HUE011:"extraNovogen",HUE016:"primeraNovogen",HUE019:"segundaNovogen",HUE005:"jumbo",HUE006:"jumbo",HUE007:"super",HUE009:"super",HUE012:"extra",HUE013:"extra",HUE014:"primera",HUE015:"primera",HUE017:"segunda",HUE018:"segunda",HUE020:"tercera",HUE021:"tercera"};
-/* Precios de apertura (David, 21/11/2026): los precios nuevos de caja y la promo de tercera son hasta agotar stock */
-const APERTURA={super:"F100",superNovogen:"F100",extra:"F180",extraNovogen:"F180",primera:"F180",primeraNovogen:"F180",segunda:"F180",segundaNovogen:"F180"};
-const aperturaHTML=(p,fid)=>APERTURA[CAL_HUEVO[p.cod]]===fid||promoFmt(p,fid)?`<small class="regla-mayor">Precio de apertura, hasta agotar stock.</small>`:"";
+const CAL_HUEVO={HUE004:"superJumbo",HUE027:"jumboNovogen",HUE010:"superNovogen",HUE011:"extraNovogen",HUE016:"primeraNovogen",HUE019:"segundaNovogen",HUE005:"jumbo",HUE006:"jumbo",HUE007:"super",HUE009:"super",HUE012:"extra",HUE013:"extra",HUE014:"primera",HUE015:"primera",HUE017:"segunda",HUE018:"segunda",HUE020:"tercera",HUE021:"tercera"};
+/* Precios de apertura (David, 21/11/2026): los precios nuevos de caja y de bandeja y la promo de tercera son hasta agotar stock */
+const APERTURA={jumbo:["F20"],jumboNovogen:["F20"],super:["F20","F100"],superNovogen:["F20","F100"],extra:["F30","F180"],extraNovogen:["F30","F180"],primera:["F30","F180"],primeraNovogen:["F30","F180"],segunda:["F30","F180"],segundaNovogen:["F30","F180"]};
+const aperturaHTML=(p,fid)=>(APERTURA[CAL_HUEVO[p.cod]]||[]).includes(fid)||promoFmt(p,fid)?`<small class="regla-mayor">Precio de apertura, hasta agotar stock.</small>`:"";
 // precio de lista de un formato de huevo para n bandejas o cajas (la caja baja por tramos); null si no hay
 function precioLista(p,fid,n){if(p.bolsas){const b=p.bolsas.find(([g])=>"Fb"+g===fid);return b?b[1]:null}const c=LISTA_HUEVOS[CAL_HUEVO[p.cod]],v=c&&c[fid];if(v==null)return null;if(!Array.isArray(v))return v;let pr=v[0];TRAMOS_CAJA.forEach((d,i)=>{if(n>=d&&v[i]!=null)pr=v[i]});return pr}
 // páginas de huevos en vista «por caja»: ahí la caja es la única forma de venta (sin selector de formato)
