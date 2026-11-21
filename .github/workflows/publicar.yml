@@ -32,8 +32,8 @@ jobs:
           cp -r carta web img js modelos video fonts sabapp _site/
           rm -f _site/js/*.map
           echo "Archivos publicados:"; find _site -maxdepth 2 -type d
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
       - id: despliegue
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
