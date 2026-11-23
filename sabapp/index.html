@@ -99,6 +99,9 @@ button{font:inherit;cursor:pointer}
 .p-items li:last-child{border-bottom:0}
 .p-items b{min-width:28px;text-align:right}
 .p-sku{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:var(--papel);color:var(--suave);font-size:11.5px;font-weight:800;letter-spacing:.03em;white-space:nowrap;vertical-align:1px}
+button.p-sku{border:0;font-family:inherit;line-height:1.6;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button.p-sku:hover,button.p-sku:focus-visible{background:#e6f6ec;color:var(--campo);outline:none;box-shadow:inset 0 0 0 1px var(--campo)}
+button.p-sku.copiado{background:var(--campo);color:#fff}
 .p-mayor{margin-top:8px;padding:6px 10px;border-radius:8px;background:#fff4e5;color:#9a3412;font-size:13px;font-weight:700}
 .p-mayor.repite{background:#fdecea;color:#9b1c1c;border:1.5px solid #f0b8b2}
 .p-avisado{display:flex;align-items:center;gap:6px;margin-top:8px;padding:6px 10px;border-radius:8px;background:#e6f6ec;color:#14663a;font-size:13px;font-weight:700}
@@ -826,7 +829,7 @@ function enlaceDe(p, medio, tipo) { return medio === 'correo' ? correoEnlace(p, 
 function copiar(texto) {
   var ok = false, t = document.createElement('textarea');
   t.value = texto; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
-  document.body.appendChild(t); t.select();
+  document.body.appendChild(t); t.select(); try { t.setSelectionRange(0, t.value.length); } catch (e) { /* iPhone */ }
   try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
   t.remove();
   if (!ok && navigator.clipboard) { navigator.clipboard.writeText(texto).then(function () {}, function () {}); ok = true; }
@@ -1038,7 +1041,8 @@ var agregada = function (x) { return x.pedida === 0; }; // la agregó un vendedo
 function itemHTML(x) {
   var c = cambiada(x), fuera = c && !(x.q > 0), mot = motivoDe(x), ag = agregada(x);
   return '<li' + (fuera ? ' class="quitado"' : '') + '><b>' + fmtQ(x.q) + ' ×</b><span>' + (fuera ? '<s>' + esc(x.nombre) + '</s>' : esc(x.nombre))
-    + (x.cod ? ' <small class="p-sku">' + esc(x.cod) + '</small>' : '')
+    // el código MyPyme se copia con un toque para pegarlo en MyPyme (David, 23/11/2026)
+    + (x.cod ? ' <button type="button" class="p-sku" data-copiarcod="' + esc(x.cod) + '" title="Copiar el código para pegarlo en MyPyme" aria-label="Copiar código ' + esc(x.cod) + '">' + esc(x.cod) + '</button>' : '')
     + (c ? ' <em class="p-cambio">' + (fuera ? 'quitado' : ag ? 'agregado' : 'pidió ' + fmtQ(x.pedida)) + (mot && !ag ? ' · ' + esc(mot.toLowerCase()) : '') + '</em>' : '') + '</span></li>';
 }
 function botonEditar(p) {
@@ -1561,6 +1565,16 @@ document.addEventListener('click', function (e) {
   }
   var edb = e.target.closest('button[data-editar]');
   if (edb) { if (!edb.disabled) abrirEdicion(edb.dataset.editar); return; }
+  var cpb = e.target.closest('button[data-copiarcod]');
+  if (cpb) {
+    var cc = cpb.dataset.copiarcod;
+    if (copiar(cc)) {
+      cpb.classList.add('copiado'); cpb.textContent = '✓ ' + cc;
+      setTimeout(function () { if (document.body.contains(cpb)) { cpb.classList.remove('copiado'); cpb.textContent = cc; } }, 1500);
+      avisar(cc + ' copiado: pégalo en MyPyme.');
+    } else avisar('No se pudo copiar ' + cc + ': selecciónalo y cópialo a mano.');
+    return;
+  }
   var jnb = e.target.closest('button[data-juntar]');
   if (jnb) { if (!jnb.disabled) abrirJuntar(jnb.dataset.juntar); return; }
   var pdb = e.target.closest('button[data-pdf]');
