@@ -25,6 +25,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Catálogo de SabAPP («Agregar producto», 23/11/2026): sabapp/catalogo.json con los productos y precios de la carta que se publica.
+      # Si fallara, la web se publica igual (SabAPP avisa que no pudo cargar el catálogo).
+      - name: Catálogo para SabAPP
+        run: |
+          node herramientas/sabapp/catalogo.js || echo "Aviso - no se pudo armar sabapp/catalogo.json"
       - name: Armar la carpeta pública
         run: |
           mkdir _site

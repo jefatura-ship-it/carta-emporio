@@ -1,1 +1,3 @@
 herramientas/node_modules/
+# Lo arma herramientas/sabapp/catalogo.js en cada publicación (GitHub Actions) y con construir.js
+sabapp/catalogo.json

@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https://www.avicolasb.com data:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https://www.avicolasb.com data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; base-uri 'self'; form-action 'none'">
 <link rel="icon" href="../img/huevo-sabroso-isotipo.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icono-apple-180.png">
@@ -213,6 +213,19 @@ button{font:inherit;cursor:pointer}
 .ed-l.menos{border-color:#f0c79a;background:#fffaf3}
 .ed-l.fuera{border-color:#f0b8b2;background:#fdf3f2}
 .ed-l.mas{border-color:#9bd3ad;background:#f2fbf5}
+.ed-l.nueva{border-color:#9bc1e8;background:#f2f7fd}
+.ag{margin-top:12px;padding:12px;border:1.5px dashed #c9c1ad;border-radius:12px;background:var(--papel)}
+.ag label{display:block;margin-bottom:6px;font-size:14px}
+.ag input{width:100%;min-height:44px;padding:8px 12px;border:1.5px solid var(--linea);border-radius:10px;font:inherit;font-size:16px;background:#fff;color:var(--tinta)}
+.ag input:focus-visible{outline:none;border-color:var(--campo);box-shadow:0 0 0 3px rgba(31,95,58,.18)}
+.ag-msg{margin:6px 0 0;color:var(--suave);font-size:12.5px}
+.ag-res{display:grid;gap:8px;margin:8px 0 0;padding:0;list-style:none}
+.ag-res li{padding:10px 12px;border:1.5px solid var(--linea);border-radius:12px;background:#fff}
+.ag-res b{display:block;font-size:14px;line-height:1.3}.ag-res small{display:block;color:var(--suave);font-size:12px}
+.ag-res .ag-ago{display:inline;color:var(--rojo);font-weight:700}
+.ag-ops{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ag-ops button{min-height:36px;padding:4px 12px;border-radius:999px;border:1.5px solid var(--campo);background:#fff;color:var(--campo);font-weight:700;font-size:13px;cursor:pointer}
+.ag-ops button:hover,.ag-ops button:focus-visible{background:#e6f6ec;outline:none}
 .jn-sel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:10px 12px;border:1.5px solid var(--linea);border-radius:12px;background:#fff;color:var(--tinta);text-align:left;font:inherit;cursor:pointer}
 .jn-sel[aria-pressed="true"]{border-color:var(--campo);background:#e6f6ec}
 .jn-sel i{font-style:normal;font-size:22px;line-height:1;color:var(--campo)}
@@ -321,6 +334,9 @@ button{font:inherit;cursor:pointer}
     <h2 id="eTit">Editar pedido</h2>
     <p id="eSub"></p>
     <ul class="ed-lista" id="eLista"></ul>
+    <div class="ag"><label for="eBuscar"><b>➕ Agregar otro producto del catálogo</b></label>
+      <input id="eBuscar" type="search" placeholder="Código MyPyme, de etiqueta o nombre" autocomplete="off" spellcheck="false">
+      <p class="ag-msg" id="eCat" aria-live="polite"></p><ul class="ag-res" id="eRes"></ul></div>
     <div class="ed-tot" id="eTot"></div>
     <p class="ed-msg" id="eMsg" role="alert"></p>
     <div class="m-pie"><button type="button" class="b" data-ecerrar>Cancelar</button><button type="button" class="b prim" id="eGuardar">Guardar cambios</button></div>
@@ -627,6 +643,9 @@ document.querySelectorAll('[data-filtro]').forEach(function (b) {
   });
 });
 $('q').addEventListener('input', function () { busqueda = this.value.trim(); pintar(); });
+$('eBuscar').addEventListener('input', function () { pintarResultados(); });
+$('eBuscar').addEventListener('keydown', function (ev) { // Enter: si hay un solo producto con una sola forma de venta, la agrega
+  if (ev.key !== 'Enter') return; ev.preventDefault(); var r = edicion && edicion.res; if (r && r.length === 1 && r[0].o.length === 1) agregarOpcion(0, 0); });
 
 /* ---------- Tablero ---------- */
 var COLUMNAS = [
@@ -1011,11 +1030,12 @@ var motivoDe = function (x) { return String(x.cambio || '').split(' · ')[0]; };
 // El script del 23/11 manda «codCarta» en cada línea: con el script anterior no se ofrece editar
 var puedeEditar = function (p) { return ['Por confirmar', 'Confirmado', 'Preparado'].indexOf(p.estado) >= 0 && p.items.length > 0 && 'codCarta' in p.items[0]; };
 var despachoDe = function (p) { var m = String(p.comentario || '').match(/DESPACHO \$([\d.]+)/); return m ? Number(m[1].replace(/\./g, '')) || 0 : 0; };
+var agregada = function (x) { return x.pedida === 0; }; // la agregó un vendedor desde el catálogo (no estaba en el pedido del cliente)
 function itemHTML(x) {
-  var c = cambiada(x), fuera = c && !(x.q > 0), mot = motivoDe(x);
+  var c = cambiada(x), fuera = c && !(x.q > 0), mot = motivoDe(x), ag = agregada(x);
   return '<li' + (fuera ? ' class="quitado"' : '') + '><b>' + fmtQ(x.q) + ' ×</b><span>' + (fuera ? '<s>' + esc(x.nombre) + '</s>' : esc(x.nombre))
     + (x.cod ? ' <small class="p-sku">' + esc(x.cod) + '</small>' : '')
-    + (c ? ' <em class="p-cambio">' + (fuera ? 'quitado' : 'pidió ' + fmtQ(x.pedida)) + (mot ? ' · ' + esc(mot.toLowerCase()) : '') + '</em>' : '') + '</span></li>';
+    + (c ? ' <em class="p-cambio">' + (fuera ? 'quitado' : ag ? 'agregado' : 'pidió ' + fmtQ(x.pedida)) + (mot && !ag ? ' · ' + esc(mot.toLowerCase()) : '') + '</em>' : '') + '</span></li>';
 }
 function botonEditar(p) {
   return puedeEditar(p) ? '<button type="button" class="b peq" data-editar="' + esc(p.codigo) + '" data-foco="ed-' + esc(p.codigo) + '"' + (ocupado[p.codigo] ? ' disabled' : '') + '>✏️ Editar pedido</button>' : '';
@@ -1024,7 +1044,67 @@ function botonPdf(p, grande) {
   return '<button type="button" class="b ' + (grande ? 'pdf' : 'peq') + '" data-pdf="' + esc(p.codigo) + '" data-foco="pdf-' + esc(p.codigo) + '">📄 ' + (grande ? 'Enviar PDF del pedido' : 'PDF del pedido') + '</button>';
 }
 
-var edicion = null; // { cod, total0, desp, lineas: [{ i, x, q, pedida, motivo, tapa, de }], volver }
+/* Agregar un producto del catálogo (David, 23/11/2026: «quiero agregar un producto del catálogo yo como vendedor al pedido, no de los que ya me pidió
+   el comprador, sino poder buscarlo por código y agregarlo»). La lista sale de sabapp/catalogo.json, que se arma en cada publicación con la carta
+   publicada (herramientas/sabapp/catalogo.js): cada producto con sus formas de venta y los precios de la carta (por mayor según la cantidad). */
+var URL_CATALOGO = window.URL_CATALOGO_PRUEBA || (MODO_API ? 'catalogo.json' : 'https://www.avicolasb.com/sabapp/catalogo.json');
+var catalogo = null, catalogoCargando = null;
+var sinTildes = function (s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); };
+function cargarCatalogo() {
+  if (catalogo) return Promise.resolve(catalogo);
+  if (!catalogoCargando) catalogoCargando = fetch(URL_CATALOGO + '?v=' + Math.floor(Date.now() / 6e5), { cache: 'no-store' })
+    .then(function (r) { if (!r.ok) throw new Error('error ' + r.status); return r.json(); })
+    .then(function (j) { (j.productos || []).forEach(function (p) { p.t = sinTildes([p.c, p.m, p.e, p.n, p.s].filter(Boolean).join(' ')); }); catalogo = j; return j; })
+    .catch(function (err) { catalogoCargando = null; throw err; });
+  return catalogoCargando;
+}
+// Por código o por palabras del nombre. Primero el código de MyPyme o de etiqueta exacto; el código interno de la carta solo si ninguno calza
+// (ej.: «HUE009» es el huevo extra blanco en MyPyme y el súper café dentro de la carta); después los que empiezan así y los que tienen esas palabras.
+function buscarCatalogo(q) {
+  q = sinTildes(q).trim(); if (!q || !catalogo) return [];
+  var cod = q.replace(/\s+/g, '').toUpperCase(), palabras = q.split(/\s+/), n = [[], [], []];
+  var up = function (c) { return c ? String(c).toUpperCase() : ''; };
+  catalogo.productos.forEach(function (p) {
+    var my = [up(p.m), up(p.e)].filter(Boolean);
+    if (my.indexOf(cod) >= 0) n[0].push(p);
+    else if (up(p.c) === cod) n[1].push(p);
+    else if (my.concat(up(p.c)).some(function (c) { return c && c.indexOf(cod) === 0; }) || palabras.every(function (w) { return p.t.indexOf(w) >= 0; })) n[2].push(p);
+  });
+  return (n[0].length ? n[0] : n[1]).concat(n[2]).slice(0, 8);
+}
+var precioOp = function (op, q) { var pr = op.p; (op.may || []).forEach(function (m) { if (q >= m[0]) pr = m[1]; }); return pr; };
+function pintarResultados() {
+  var e = edicion; if (!e) return;
+  var q = $('eBuscar').value;
+  if (!catalogo) {
+    $('eCat').textContent = 'Cargando el catálogo…'; $('eRes').innerHTML = '';
+    cargarCatalogo().then(function () { if (edicion) pintarResultados(); }, function (err) {
+      if (edicion) $('eCat').textContent = 'No se pudo cargar el catálogo (' + String(err && err.message || err) + '). Revisa internet y vuelve a escribir.'; });
+    return;
+  }
+  var g = catalogo.generado ? new Date(catalogo.generado) : null;
+  var res = e.res = buscarCatalogo(q);
+  $('eCat').textContent = !q.trim() ? 'Escribe el código (MyPyme o de etiqueta) o parte del nombre.' + (g ? ' Precios de la carta del ' + ('0' + g.getDate()).slice(-2) + '/' + ('0' + (g.getMonth() + 1)).slice(-2) + ' ' + horaCorta(g) + '.' : '')
+    : res.length ? res.length + (res.length === 8 ? ' o más' : '') + ' producto' + (res.length === 1 ? '' : 's') + ': toca la forma de venta para agregarla.' : 'No hay productos con «' + q.trim() + '».';
+  $('eRes').innerHTML = res.map(function (p, i) {
+    return '<li><b>' + esc(p.n) + (p.a ? ' <small class="ag-ago">agotado en la carta</small>' : '') + '</b><small>' + esc([p.m ? 'Código ' + p.m : 'Sin código MyPyme', p.e ? 'etiqueta ' + p.e : '', p.s].filter(Boolean).join(' · ')) + '</small>'
+      + '<div class="ag-ops">' + p.o.map(function (op, j) {
+        return '<button type="button" data-agp="' + i + '" data-ago="' + j + '">' + esc(op.t) + ' · ' + (op.p == null ? 'por confirmar' : clp(op.p)) + '</button>'; }).join('') + '</div></li>';
+  }).join('');
+}
+function agregarOpcion(i, j) {
+  var e = edicion, p = e && e.res && e.res[i], op = p && p.o[j]; if (!op) return;
+  var ya = e.lineas.filter(function (l) { return l.nueva && l.prod.c === p.c && l.op.f === op.f; })[0];
+  if (ya) ya.q = Math.min(MAX_Q, ya.q + 1);
+  else e.lineas.push({ nueva: true, prod: p, op: op, q: 1, x: { nombre: op.n, precio: op.p, q: 0 } });
+  var k = e.lineas.indexOf(ya || e.lineas[e.lineas.length - 1]);
+  $('eBuscar').value = ''; e.res = []; $('eRes').innerHTML = ''; $('eCat').textContent = '';
+  e.seguroVacio = false; $('eMsg').textContent = 'Agregado: ' + e.lineas[k].q + ' × ' + op.n + '. Ajusta la cantidad con + y −.';
+  pintarEdicion();
+  var b = $('eLista').querySelector('[data-efoco="p' + k + '"]'); if (b) b.focus();
+}
+
+var edicion = null; // { cod, total0, desp, lineas: [{ i, x, q, pedida, motivo, tapa, de } o { nueva, prod, op, q, x }], res, volver }
 function abrirEdicion(cod) {
   var p = pedido(cod); if (!p || !puedeEditar(p)) return;
   var ls = p.items.map(function (x, i) {
@@ -1032,10 +1112,12 @@ function abrirEdicion(cod) {
   });
   // cada tapa va con el envase que la antecede
   ls.forEach(function (l, k) { if (l.tapa) for (var j = k - 1; j >= 0; j--) if (!ls[j].tapa) { l.de = ls[j]; break; } });
-  edicion = { cod: cod, total0: Number(p.total) || 0, desp: despachoDe(p), lineas: ls, volver: document.activeElement, seguroVacio: false };
+  edicion = { cod: cod, total0: Number(p.total) || 0, desp: despachoDe(p), lineas: ls, res: [], volver: document.activeElement, seguroVacio: false };
   $('eTit').textContent = 'Editar pedido ' + p.codigo;
-  $('eSub').textContent = (p.cliente || '(sin nombre)') + ': quita o rebaja lo que no tenemos o lo que el cliente no quiere, o suma con «+» lo que te pidió de más por WhatsApp. Queda guardado en la planilla y lo ven todos.';
-  $('eMsg').textContent = ''; $('eGuardar').textContent = 'Guardar cambios';
+  $('eSub').textContent = (p.cliente || '(sin nombre)') + ': quita o rebaja lo que no tenemos o lo que el cliente no quiere, suma con «+» lo que te pidió de más, o agrega abajo otro producto del catálogo. Queda guardado en la planilla y lo ven todos.';
+  $('eMsg').textContent = ''; $('eGuardar').textContent = 'Guardar cambios'; $('eBuscar').value = ''; $('eRes').innerHTML = '';
+  $('eCat').textContent = 'Escribe el código (MyPyme o de etiqueta) o parte del nombre.';
+  cargarCatalogo().catch(function () {}); // se va cargando mientras edita
   pintarEdicion();
   $('mEditar').hidden = false;
   var f = $('eLista').querySelector('button:not(:disabled)'); if (f) f.focus();
@@ -1046,38 +1128,54 @@ function cerrarEdicion() {
   if (v && !document.body.contains(v) && k) v = document.querySelector('[data-foco="' + k + '"]');
   if (v && document.body.contains(v)) v.focus();
 }
-function ajustarTapas() { // la tapa sigue a su envase, en la misma proporción de lo pedido
-  edicion.lineas.forEach(function (l) { if (l.tapa && l.de) l.q = l.de.pedida ? Math.round(l.pedida * l.de.q / l.de.pedida) : 0; });
+function ajustarTapas() { // la tapa sigue a su envase, en la misma proporción de lo pedido (o de lo que había, si el envase lo agregó un vendedor)
+  edicion.lineas.forEach(function (l) {
+    if (!l.tapa || !l.de) return;
+    l.q = l.de.pedida ? Math.round(l.pedida * l.de.q / l.de.pedida) : l.de.x.q ? Math.round(l.x.q * l.de.q / l.de.x.q) : l.de.q;
+  });
 }
 // Igual que el script: el despacho no cambia y el descuento (si hubo) queda en la misma proporción
 function totalesEdicion() {
-  var e = edicion, antes = 0, despues = 0, cambios = 0;
-  e.lineas.forEach(function (l) { var pr = l.x.precio; if (pr != null) { antes += l.x.q * pr; despues += l.q * pr; } if (!l.tapa && l.q !== l.x.q) cambios++; });
+  var e = edicion, antes = 0, despues = 0, cambios = 0, nuevas = 0;
+  e.lineas.forEach(function (l) {
+    if (l.nueva) { if (!(l.q > 0)) return; nuevas++; cambios++; var pn = precioOp(l.op, l.q); if (pn != null) despues += l.q * pn; return; }
+    var pr = l.x.precio; if (pr != null) { antes += l.x.q * pr; despues += l.q * pr; } if (!l.tapa && l.q !== l.x.q) cambios++;
+  });
   var factor = antes > 0 && e.total0 ? Math.min(1, Math.max(0, (e.total0 - e.desp) / antes)) : 1;
   var vacio = e.lineas.every(function (l) { return !(l.q > 0); });
-  return { cambios: cambios, vacio: vacio, total1: !e.total0 ? 0 : vacio ? 0 : Math.round(e.desp + despues * factor) };
+  return { cambios: cambios, vacio: vacio, total1: vacio ? 0 : !e.total0 ? (nuevas ? Math.round(e.desp + despues) : 0) : Math.round(e.desp + despues * factor) };
 }
 function pintarEdicion() {
   var e = edicion; if (!e) return;
   var foco = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.efoco : null;
+  var botones = function (k, nombre, q, menosOff, fuera, nueva) {
+    return '<div class="ed-q"><button type="button" data-emenos="' + k + '" data-efoco="m' + k + '" aria-label="Uno menos: ' + esc(nombre) + '"' + (menosOff ? ' disabled' : '') + '>−</button>'
+      + '<output aria-live="polite">' + fmtQ(q) + '</output>'
+      + '<button type="button" data-emas="' + k + '" data-efoco="p' + k + '" aria-label="Uno más: ' + esc(nombre) + '"' + (q >= MAX_Q ? ' disabled' : '') + '>+</button>'
+      + (fuera ? '<button type="button" class="ed-txt" data-edevolver="' + k + '" data-efoco="d' + k + '">Devolver</button>'
+        : '<button type="button" class="ed-txt quitar" data-equitar="' + k + '" data-efoco="q' + k + '">' + (nueva ? 'Sacar' : 'Quitar') + '</button>') + '</div>';
+  };
   $('eLista').innerHTML = e.lineas.map(function (l, k) {
-    var x = l.x, pr = x.precio, menos = l.q < l.pedida, mas = l.q > l.pedida, fuera = !(l.q > 0), cl = 'ed-l' + (fuera ? ' fuera' : menos ? ' menos' : mas ? ' mas' : '');
+    if (l.nueva) {
+      var pn = precioOp(l.op, l.q), may = (l.op.may || []).map(function (m) { return clp(m[1]) + ' desde ' + m[0]; }).join(', ');
+      return '<li class="ed-l nueva"><div class="ed-nom"><b>' + esc(l.op.n) + '</b><small>Nuevo · ' + esc(l.prod.m || 'sin código MyPyme') + ' · '
+        + (pn == null ? 'precio por confirmar' : clp(pn) + ' c/u · ' + clp(pn * l.q)) + (may ? ' · por mayor ' + esc(may) : '') + (l.op.tapa ? ' · con su tapa' : '') + '</small></div>'
+        + botones(k, l.op.n, l.q, l.q <= 1, false, true) + '</li>';
+    }
+    var x = l.x, pr = x.precio, ag = l.pedida === 0, menos = !ag && l.q < l.pedida, mas = ag ? l.q > 0 : l.q > l.pedida, fuera = !(l.q > 0);
+    var cl = 'ed-l' + (fuera ? ' fuera' : menos ? ' menos' : mas ? ' mas' : '');
     if (l.tapa) return '<li class="' + cl + '"><div class="ed-nom"><b>' + esc(x.nombre.replace(/^↳\s*/, '')) + '</b><small>' + fmtQ(l.q) + ' u · sigue al envase de arriba</small></div></li>';
     return '<li class="' + cl + '"><div class="ed-nom"><b>' + esc(x.nombre) + '</b><small>' + (x.cod ? esc(x.cod) + ' · ' : '')
-      + (pr == null ? 'precio por confirmar' : clp(pr) + ' c/u' + (l.q > 0 ? ' · ' + clp(pr * l.q) : '')) + (menos || mas ? ' · pidió ' + fmtQ(l.pedida) : '') + '</small></div>'
-      + '<div class="ed-q"><button type="button" data-emenos="' + k + '" data-efoco="m' + k + '" aria-label="Uno menos: ' + esc(x.nombre) + '"' + (fuera ? ' disabled' : '') + '>−</button>'
-      + '<output aria-live="polite">' + fmtQ(l.q) + '</output>'
-      + '<button type="button" data-emas="' + k + '" data-efoco="p' + k + '" aria-label="Uno más: ' + esc(x.nombre) + '"' + (l.q >= MAX_Q ? ' disabled' : '') + '>+</button>'
-      + (fuera ? '<button type="button" class="ed-txt" data-edevolver="' + k + '" data-efoco="d' + k + '">Devolver</button>'
-        : '<button type="button" class="ed-txt quitar" data-equitar="' + k + '" data-efoco="q' + k + '">Quitar</button>') + '</div>'
+      + (pr == null ? 'precio por confirmar' : clp(pr) + ' c/u' + (l.q > 0 ? ' · ' + clp(pr * l.q) : '')) + (ag ? ' · agregado' + (fuera ? ': se saca al guardar' : '') : menos || mas ? ' · pidió ' + fmtQ(l.pedida) : '') + '</small></div>'
+      + botones(k, x.nombre, l.q, fuera, fuera, false)
       + (menos ? '<div class="ed-mot"><span>Motivo:</span>' + MOTIVOS.map(function (m, j) {
         return '<button type="button" data-emotivo="' + k + '" data-m="' + esc(m) + '" data-efoco="o' + k + '-' + j + '" aria-pressed="' + (l.motivo === m) + '">' + esc(m) + '</button>'; }).join('') + '</div>'
-        : mas ? '<div class="ed-mot"><span>Motivo: ' + esc(MOTIVO_MAS.toLowerCase()) + ' (suma ' + fmtQ(l.q - l.pedida) + ')</span></div>' : '')
+        : mas && !ag ? '<div class="ed-mot"><span>Motivo: ' + esc(MOTIVO_MAS.toLowerCase()) + ' (suma ' + fmtQ(l.q - l.pedida) + ')</span></div>' : '')
       + '</li>';
   }).join('');
   var t = totalesEdicion();
   $('eTot').innerHTML = '<span>' + (t.cambios ? t.cambios + ' producto' + (t.cambios === 1 ? '' : 's') + ' con cambios' : 'Sin cambios todavía') + '</span><span>'
-    + (e.total0 ? 'Total ' + (t.total1 !== e.total0 ? '<s>' + clp(e.total0) + '</s> → ' : '') + clp(t.total1) : 'Total por confirmar') + '</span>';
+    + (e.total0 || t.total1 ? 'Total ' + (t.total1 !== e.total0 ? '<s>' + clp(e.total0) + '</s> → ' : '') + clp(t.total1) : 'Total por confirmar') + '</span>';
   $('eGuardar').disabled = !t.cambios;
   if (foco) { var f = $('eLista').querySelector('[data-efoco="' + foco + '"]'); if (f && !f.disabled) f.focus(); }
 }
@@ -1085,22 +1183,34 @@ function clicEdicion(t) {
   var e = edicion, b = t.closest('button'); if (!b || !$('eLista').contains(b)) return;
   var k = Number(b.dataset.emenos || b.dataset.emas || b.dataset.equitar || b.dataset.edevolver || b.dataset.emotivo), l = e.lineas[k];
   if (!l) return;
+  if (l.nueva) {
+    if (b.hasAttribute('data-emenos')) l.q = Math.max(1, l.q - 1);
+    else if (b.hasAttribute('data-emas')) l.q = Math.min(MAX_Q, l.q + 1);
+    else if (b.hasAttribute('data-equitar')) { e.lineas.splice(k, 1); $('eMsg').textContent = 'Sacaste ' + l.op.n + '.'; pintarEdicion(); var s = $('eBuscar'); if (s) s.focus(); return; }
+    else return;
+    $('eMsg').textContent = ''; pintarEdicion(); return;
+  }
   if (b.hasAttribute('data-emotivo')) l.motivo = b.dataset.m;
   else if (b.hasAttribute('data-emenos')) l.q = Math.max(0, l.q - 1);
   else if (b.hasAttribute('data-emas')) l.q = Math.min(MAX_Q, l.q + 1);
   else if (b.hasAttribute('data-equitar')) l.q = 0;
-  else if (b.hasAttribute('data-edevolver')) l.q = l.pedida;
+  else if (b.hasAttribute('data-edevolver')) l.q = l.pedida === 0 ? l.x.q : l.pedida;
   else return;
   e.seguroVacio = false; $('eMsg').textContent = '';
   ajustarTapas(); pintarEdicion();
 }
 function guardarEdicion() {
   var e = edicion; if (!e) return;
-  var cambios = e.lineas.filter(function (l) { return l.q !== l.x.q; }).map(function (l) {
+  var cambios = e.lineas.filter(function (l) { return !l.nueva && l.q !== l.x.q; }).map(function (l) {
     var mot = l.q > l.pedida ? MOTIVO_MAS : l.tapa && l.de ? l.de.motivo : l.motivo;
     return { i: l.i, q: l.q, motivo: mot, huella: [l.x.nombre, l.x.codCarta, l.x.q].join('|') };
   });
-  if (!cambios.length) return;
+  var nuevos = e.lineas.filter(function (l) { return l.nueva && l.q > 0; }).map(function (l) {
+    var o = { cod: l.prod.c, codMyPyme: l.prod.m || '', nombre: l.op.n, q: l.q, uds: Math.round(l.q * l.op.u * 1000) / 1000, precio: precioOp(l.op, l.q) };
+    if (l.op.tapa) { o.tapa = l.op.tapa.c; o.tapaMyPyme = l.op.tapa.m || ''; o.tapaNombre = l.op.tapa.n; }
+    return o;
+  });
+  if (!cambios.length && !nuevos.length) return;
   if (totalesEdicion().vacio && !e.seguroVacio) {
     e.seguroVacio = true;
     $('eMsg').textContent = 'Quitaste todos los productos. Si el pedido no va, es mejor «Anular». Para dejarlo vacío igual, toca «Guardar cambios» otra vez.';
@@ -1109,9 +1219,10 @@ function guardarEdicion() {
   var cod = e.cod;
   $('eGuardar').disabled = true; $('eGuardar').textContent = 'Guardando…'; $('eMsg').textContent = '';
   ocupado[cod] = true;
-  servidor('panelEditar', [cod, cambios], function (d) {
+  servidor('panelEditar', [cod, cambios, nuevos], function (d) {
     delete ocupado[cod]; recibir(d); estadoConexion(true); cerrarEdicion();
-    avisar(cod + ': pedido editado' + (d.editado && d.editado.total ? ' · total ' + clp(d.editado.total) : '') + '. Avísale al cliente y envíale el PDF.');
+    avisar(cod + ': pedido editado' + (nuevos.length ? ' (' + nuevos.length + ' producto' + (nuevos.length === 1 ? '' : 's') + ' agregado' + (nuevos.length === 1 ? '' : 's') + ')' : '')
+      + (d.editado && d.editado.total ? ' · total ' + clp(d.editado.total) : '') + '. Avísale al cliente y envíale el PDF.');
   }, function (err) {
     delete ocupado[cod];
     if (!edicion) return;
@@ -1351,7 +1462,7 @@ function pdfPedido(p) {
   cabezaTabla();
   lineas.forEach(function (x) {
     var tapa = esTapa(x), ns = cortarPdf(winAnsi(x.nombre), anchoProd, 10, !tapa);
-    var sub = [x.cod ? 'Código ' + x.cod : '', cambiada(x) ? 'pidió ' + fmtQ(x.pedida) : ''].filter(Boolean).join(' · ');
+    var sub = [x.cod ? 'Código ' + x.cod : '', cambiada(x) ? (agregada(x) ? 'agregado' : 'pidió ' + fmtQ(x.pedida)) : ''].filter(Boolean).join(' · ');
     var alto = ns.length * 12.5 + (sub ? 11 : 0) + 11;
     espacio(alto, true);
     d.texto(X.cant + 6, y, fmtQ(x.q), 10, true, TINTA);
@@ -1382,7 +1493,7 @@ function pdfPedido(p) {
     d.texto(M, y, 'Cambios en su pedido', 12, true, NARANJA); y += 17;
     cambios.forEach(function (x) {
       var mot = motivoDe(x), por = mot === 'Sin stock' ? 'no nos queda' : mot ? 'como nos pidió' : '';
-      var t = (x.q > x.pedida ? 'Sumamos ' + x.nombre + ': pidió ' + fmtQ(x.pedida) + ', va ' + fmtQ(x.q)
+      var t = agregada(x) ? 'Agregamos ' + fmtQ(x.q) + ' × ' + x.nombre + ' (como nos pidió).' : (x.q > x.pedida ? 'Sumamos ' + x.nombre + ': pidió ' + fmtQ(x.pedida) + ', va ' + fmtQ(x.q)
         : x.q > 0 ? 'Rebajamos ' + x.nombre + ': pidió ' + fmtQ(x.pedida) + ', va ' + fmtQ(x.q) : 'Quitamos ' + fmtQ(x.pedida) + ' × ' + x.nombre) + (por ? ' (' + por + ')' : '') + '.';
       var ls = cortarPdf(winAnsi('•  ' + t), ANCHO - 12, 9.5, false);
       espacio(ls.length * 12.5 + 4, false);
@@ -1439,6 +1550,8 @@ document.addEventListener('click', function (e) {
   if (edicion) {
     if (e.target === $('mEditar') || e.target.closest('[data-ecerrar]')) { cerrarEdicion(); return; }
     if (e.target.closest('#eGuardar')) { guardarEdicion(); return; }
+    var agb = e.target.closest('[data-agp]');
+    if (agb && $('eRes').contains(agb)) { agregarOpcion(Number(agb.dataset.agp), Number(agb.dataset.ago)); return; }
     clicEdicion(e.target);
     return;
   }

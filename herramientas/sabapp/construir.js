@@ -12,7 +12,7 @@ pon("var API_SABAPP = '';", "var API_SABAPP = '" + API + "';");
 pon('<meta charset="utf-8">', `<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https://www.avicolasb.com data:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' https://www.avicolasb.com data:; connect-src 'self' https://script.google.com https://script.googleusercontent.com; base-uri 'self'; form-action 'none'">
 <link rel="icon" href="../img/huevo-sabroso-isotipo.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icono-apple-180.png">
@@ -43,3 +43,5 @@ pon('</body>', `<script>
 </body>`);
 fs.writeFileSync(path.join(RAIZ, 'sabapp', 'index.html'), '<!DOCTYPE html>\n' + h.replace(/^<!DOCTYPE html>\s*/i, ''));
 console.log('sabapp/index.html listo (' + API.slice(0, 60) + '…)');
+// Catálogo para «Agregar producto» (sabapp/catalogo.json; en la web lo vuelve a armar «Publicar sitio» con la carta publicada)
+require('./catalogo.js');

@@ -793,7 +793,7 @@ function sabappApi_(d) {
   if (d.accion === 'cambiar') return conRol(panelCambiar_(yo.nombre, a[0], a[1], a[2], a[3], a[4]));
   if (d.accion === 'asignar') return conRol(panelAsignar_(yo.nombre, a[0], a[1], a[2]));
   if (d.accion === 'avisado') return conRol(panelAvisado_(yo.nombre, a[0], a[1]));
-  if (d.accion === 'editar') return conRol(panelEditar_(yo.nombre, a[0], a[1]));
+  if (d.accion === 'editar') return conRol(panelEditar_(yo.nombre, a[0], a[1], a[2]));
   if (d.accion === 'juntar') return conRol(panelJuntar_(yo.nombre, a[0], a[1]));
   if (d.accion === 'stock') {
     if (!yo.admin) return { ok: false, error: 'Solo un administrador de SabAPP decide sobre el stock.' };
@@ -1037,9 +1037,14 @@ const MOTIVOS_CAMBIO = ['Sin stock', 'El cliente no lo quiere'];
 const MOTIVO_MAS = 'El cliente pidió más';
 const MAX_CANTIDAD = 100000;
 function pesos_(n) { return '$' + String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
-function panelEditar(codigo, cambios) { return panelEditar_(exigirVendedor(), codigo, cambios); }
-function panelEditar_(usuario, codigo, cambios) {
-  if (!Array.isArray(cambios) || !cambios.length || cambios.length > 200) throw new Error('No hay cambios que guardar.');
+function panelEditar(codigo, cambios, nuevos) { return panelEditar_(exigirVendedor(), codigo, cambios, nuevos); }
+// nuevos (David, 23/11/2026: «quiero agregar un producto del catálogo yo como vendedor al pedido, buscarlo por código y agregarlo»):
+// [{ cod, codMyPyme, nombre, q, uds, precio, tapa?, tapaMyPyme?, tapaNombre? }], armados por SabAPP con sabapp/catalogo.json (los precios de la carta).
+// Van al final del pedido con «Cantidad pedida» 0 (el cliente no los pidió en la carta) y «Cambio» = «El cliente pidió más · agregado por …».
+// Si después se quitan, la línea se borra.
+function panelEditar_(usuario, codigo, cambios, nuevos) {
+  cambios = Array.isArray(cambios) ? cambios : []; nuevos = Array.isArray(nuevos) ? nuevos : [];
+  if ((!cambios.length && !nuevos.length) || cambios.length > 200 || nuevos.length > 50) throw new Error('No hay cambios que guardar.');
   const candado = LockService.getScriptLock();
   candado.waitLock(15000);
   let resumen = null;
@@ -1055,8 +1060,11 @@ function panelEditar_(usuario, codigo, cambios) {
     if (!lineas.length) throw new Error('No se encontró el detalle del pedido ' + codigo + '.');
     const cambio = 'El pedido cambió mientras lo editabas: ábrelo de nuevo.';
     const cuando = Utilities.formatDate(new Date(), SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'dd/MM HH:mm');
-    const suma = function () { return lineas.reduce(function (a, l) { return a + (l.f[8] === '' || l.f[8] == null ? 0 : (Number(l.f[6]) || 0) * Number(l.f[8])); }, 0); };
-    const antes = suma(), notas = [], vistos = {};
+    const iP = CD['Cantidad pedida'] - 1, iU = CD['Unidades pedidas'] - 1, iC = CD['Cambio'] - 1;
+    const vivas = function () { return lineas.filter(function (l) { return !l.borrar; }); };
+    const suma = function () { return vivas().reduce(function (a, l) { return a + (l.f[8] === '' || l.f[8] == null ? 0 : (Number(l.f[6]) || 0) * Number(l.f[8])); }, 0); };
+    const antes = suma(), notas = [], vistos = {}, borrar = [];
+    const marcaAgregado = MOTIVO_MAS + ' · agregado por ' + usuario + ' ' + cuando;
     cambios.forEach(function (c) {
       const i = Number(c && c.i);
       const l = lineas[i];
@@ -1064,37 +1072,64 @@ function panelEditar_(usuario, codigo, cambios) {
       vistos[i] = true;
       const f = l.f, qAhora = Number(f[6]) || 0, udsAhora = Number(f[7]) || 0;
       if (String(c.huella || '') !== [String(f[4]), String(f[5]), qAhora].join('|')) throw new Error(cambio);
-      const pedida = f[CD['Cantidad pedida'] - 1] === '' ? qAhora : Number(f[CD['Cantidad pedida'] - 1]) || 0;
-      const udsPedidas = f[CD['Unidades pedidas'] - 1] === '' ? udsAhora : Number(f[CD['Unidades pedidas'] - 1]) || 0;
+      const agregada = f[iP] !== '' && f[iP] != null && Number(f[iP]) === 0; // la agregó un vendedor (no estaba en el pedido del cliente)
+      const pedida = f[iP] === '' ? qAhora : Number(f[iP]) || 0;
+      const udsPedidas = f[iU] === '' ? udsAhora : Number(f[iU]) || 0;
       const q = entero(c.q, MAX_CANTIDAD);
       if (q === qAhora) return;
-      const uds = pedida ? Math.round(udsPedidas * q / pedida * 1000) / 1000 : 0;
+      const porUnidad = pedida ? udsPedidas / pedida : qAhora ? udsAhora / qAhora : 1;
+      const uds = Math.round(porUnidad * q * 1000) / 1000;
       const motivo = q > pedida ? MOTIVO_MAS : MOTIVOS_CAMBIO.indexOf(c.motivo) >= 0 ? c.motivo : MOTIVOS_CAMBIO[0];
       const nombre = String(f[4]).replace(/^↳ /, '');
       f[6] = q; f[7] = uds;
-      if (q === pedida) { f[CD['Cantidad pedida'] - 1] = ''; f[CD['Unidades pedidas'] - 1] = ''; f[CD['Cambio'] - 1] = ''; notas.push(nombre + ': vuelve a ' + q); }
+      if (agregada) {
+        if (!q) { l.borrar = true; borrar.push(l.n); notas.push('sacó ' + nombre + ' (lo había agregado un vendedor)'); return; }
+        f[iC] = marcaAgregado; notas.push(nombre + ': ' + qAhora + ' → ' + q + ' (agregado)');
+      } else if (q === pedida) { f[iP] = ''; f[iU] = ''; f[iC] = ''; notas.push(nombre + ': vuelve a ' + q); }
       else {
-        f[CD['Cantidad pedida'] - 1] = pedida; f[CD['Unidades pedidas'] - 1] = udsPedidas; f[CD['Cambio'] - 1] = motivo + ' · ' + usuario + ' ' + cuando;
+        f[iP] = pedida; f[iU] = udsPedidas; f[iC] = motivo + ' · ' + usuario + ' ' + cuando;
         notas.push((q ? nombre + ': ' + pedida + ' → ' + q : 'quitó ' + pedida + ' × ' + nombre) + ' (' + motivo.toLowerCase() + ')');
       }
       det.getRange(l.n, 1, 1, COLUMNAS_DETALLE.length).setValues([f]);
     });
+    // Productos que agrega el vendedor desde el catálogo
+    const filasNuevas = [];
+    const fecha = ped[CP['Día de retiro'] - 1], hora = ped[CP['Hora'] - 1], cliente = ped[CP['Cliente'] - 1];
+    nuevos.forEach(function (x) {
+      const q = entero(x && x.q, MAX_CANTIDAD); if (!q) return;
+      const nombre = textoLargo(x.nombre, 140), cod = texto(x.cod).slice(0, 20);
+      if (!nombre || !cod) throw new Error('Falta el nombre o el código de un producto agregado.');
+      const uds = Math.max(0, Math.min(10000000, Math.round((x.uds == null || x.uds === '' ? q : Number(x.uds) || 0) * 1000) / 1000));
+      const precio = x.precio == null || x.precio === '' ? '' : entero(x.precio, 10000000);
+      const f = [fecha, hora, codigo, cliente, nombre, cod, q, uds, precio, codigoPedidoMyPyme_(cod, x.codMyPyme), 0, 0, marcaAgregado];
+      filasNuevas.push(f); lineas.push({ n: 0, f: f });
+      if (x.tapa) {
+        const tf = [fecha, hora, codigo, cliente, '↳ ' + (textoLargo(x.tapaNombre, 100) || 'Tapa') + ' (va con el envase)', texto(x.tapa).slice(0, 20), uds, uds, '',
+          codigoPedidoMyPyme_(x.tapa, x.tapaMyPyme), 0, 0, marcaAgregado];
+        filasNuevas.push(tf); lineas.push({ n: 0, f: tf });
+      }
+      notas.push('agregó ' + q + ' × ' + nombre + (precio === '' ? ' (precio por confirmar)' : ' a ' + pesos_(precio)));
+    });
     if (!notas.length) throw new Error('No hay cambios que guardar.');
+    if (filasNuevas.length) det.getRange(det.getLastRow() + 1, 1, filasNuevas.length, COLUMNAS_DETALLE.length).setValues(filasNuevas);
+    borrar.sort(function (a, b) { return b - a; }).forEach(function (n) { det.deleteRow(n); });
     // Totales del pedido: el despacho no cambia; el descuento (si hubo) se mantiene en la misma proporción
     const despues = suma(), total0 = Number(ped[CP['Total aprox.'] - 1]) || 0;
     const desp = (String(ped[CP['Comentario'] - 1] || '').match(/DESPACHO \$([\d.]+)/) || [])[1];
     const despacho = desp ? Number(desp.replace(/\./g, '')) || 0 : 0;
     const factor = antes > 0 && total0 ? Math.min(1, Math.max(0, (total0 - despacho) / antes)) : 1;
-    const vacio = lineas.every(function (l) { return !(Number(l.f[6]) > 0); });
-    const total1 = !total0 ? 0 : vacio ? 0 : Math.round(despacho + despues * factor);
-    const principales = lineas.filter(function (l) { return !/^↳/.test(String(l.f[4])); });
+    const vacio = vivas().every(function (l) { return !(Number(l.f[6]) > 0); });
+    // si el pedido no tenía total (todo por confirmar) y se agregan productos con precio, el total pasa a ser esa suma
+    const total1 = vacio ? 0 : !total0 ? (filasNuevas.length ? Math.round(despacho + despues) : 0) : Math.round(despacho + despues * factor);
+    const principales = vivas().filter(function (l) { return !/^↳/.test(String(l.f[4])); });
     const unidades = principales.reduce(function (a, l) { return a + (Number(l.f[7]) || Number(l.f[6]) || 0); }, 0);
     const productos = principales.filter(function (l) { return Number(l.f[6]) > 0; }).map(function (l) { return l.f[6] + ' × ' + l.f[4]; }).join(' · ');
     hoja.getRange(fila, CP['Unidades']).setValue(Math.round(unidades * 1000) / 1000);
     hoja.getRange(fila, CP['Total aprox.']).setValue(total1 || '');
     hoja.getRange(fila, CP['Productos']).setValue(textoLargo(productos || '(sin productos: todo se quitó)', 2000));
-    anotarEnEstado(hoja, fila, ('Editado por ' + usuario + ': ' + notas.join('; ') + (total0 ? '. Total ' + pesos_(total0) + ' → ' + pesos_(total1) : '')).slice(0, 480));
-    resumen = { codigo: codigo, total: total1, cambios: notas.length };
+    anotarEnEstado(hoja, fila, ('Editado por ' + usuario + ': ' + notas.join('; ') + (total0 || total1 ? '. Total ' + pesos_(total0) + ' → ' + pesos_(total1) : '')).slice(0, 480));
+    if (filasNuevas.length || borrar.length) ordenarPedidos(); // las líneas agregadas quedan junto a las del pedido
+    resumen = { codigo: codigo, total: total1, cambios: notas.length, agregados: nuevos.length };
     try { recalcularStock_({ correo: true }); } catch (err) { /* el cambio ya quedó */ }
   } finally { candado.releaseLock(); }
   const datos = panelDatos_(usuario);

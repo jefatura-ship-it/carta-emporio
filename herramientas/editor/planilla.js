@@ -583,5 +583,5 @@
     return estado;
   }
 
-  return { HOJA: HOJA, HOJA_NUEVOS: HOJA_NUEVOS, COMO: COMO, COLUMNAS: COLUMNAS, crearProducto: crearProducto, seccionesDe: seccionesDe, usadosDe: usadosDe, comoDe: comoDe, filasPrecios: filasPrecios, crearXlsx: crearXlsx, leerXlsx: leerXlsx, compararPlanilla: compararPlanilla, aplicarEnEstado: aplicarEnEstado, hojaTexto: hojaTexto, calculos: calculos, pista: pista, clp: clp };
+  return { calculos: calculos, HOJA: HOJA, HOJA_NUEVOS: HOJA_NUEVOS, COMO: COMO,COLUMNAS: COLUMNAS, crearProducto: crearProducto, seccionesDe: seccionesDe, usadosDe: usadosDe, comoDe: comoDe, filasPrecios: filasPrecios, crearXlsx: crearXlsx, leerXlsx: leerXlsx, compararPlanilla: compararPlanilla, aplicarEnEstado: aplicarEnEstado, hojaTexto: hojaTexto, calculos: calculos, pista: pista, clp: clp };
 });
