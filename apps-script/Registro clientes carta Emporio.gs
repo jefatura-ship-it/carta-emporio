@@ -794,6 +794,7 @@ function sabappApi_(d) {
   if (d.accion === 'asignar') return conRol(panelAsignar_(yo.nombre, a[0], a[1], a[2]));
   if (d.accion === 'avisado') return conRol(panelAvisado_(yo.nombre, a[0], a[1]));
   if (d.accion === 'editar') return conRol(panelEditar_(yo.nombre, a[0], a[1]));
+  if (d.accion === 'juntar') return conRol(panelJuntar_(yo.nombre, a[0], a[1]));
   if (d.accion === 'stock') {
     if (!yo.admin) return { ok: false, error: 'Solo un administrador de SabAPP decide sobre el stock.' };
     const oc = stockDecidir_(yo.nombre, a[0], a[1]), datos = panelDatos_(yo.nombre);
@@ -964,6 +965,9 @@ function panelDatos_(usuario) {
   const pedidos = filas.map(function (f, i) {
     const aviso = String((notas[i] || [''])[0] || '').match(/Avisado por (WhatsApp|correo) por \S+ el (\d{2}\/\d{2}\/\d{4} \d{2}:\d{2})/);
     const atiende = String((notas[i] || [''])[0] || '').match(/Aviso al cliente por (correo|WhatsApp): (.+?) atiende su pedido/);
+    const juntados = []; // pedidos que se juntaron en este (panelJuntar_)
+    String((notas[i] || [''])[0] || '').replace(/Se juntaron (.+?) por \S/g, function (t, s) {
+      (s.match(/[A-Z]{1,3}\d{4}-\d{4}/g) || []).forEach(function (c) { if (juntados.indexOf(c) < 0) juntados.push(c); }); return t; });
     const codigo = String(valor(f, 'Código del pedido') || ''), dia = valor(f, 'Día de retiro'), rec = valor(f, 'Recibido'), hora = valor(f, 'Hora');
     return {
       codigo: codigo,
@@ -988,6 +992,7 @@ function panelDatos_(usuario) {
       avisadoEl: aviso ? aviso[2] : '',
       avisoAtiende: atiende ? atiende[1] : '',
       avisoAtiendeQuien: atiende ? atiende[2] : '',
+      juntados: juntados,
       items: items[codigo] || []
     };
   }).filter(function (p) {
@@ -1025,9 +1030,12 @@ function panelCambiar_(usuario, codigo, estado, avisado, prepara, avisoWsp) {
 
 // Editar un pedido desde SabAPP (David, 23/11/2026: «poder editar el pedido eliminando lo que no tenemos o lo que el cliente me dijo que no quiere»).
 // cambios: [{ i: n.º de línea del pedido (en el orden de la hoja), q: cantidad nueva (0 = quitar), motivo, huella: 'producto|código|cantidad' al abrir }].
-// Solo se baja la cantidad (o se devuelve hasta lo que pidió el cliente). La línea guarda lo pedido y el motivo; el pedido recalcula unidades,
-// total (mismo descuento proporcional y el despacho igual) y la columna «Productos», y queda anotado en la nota de «Estado».
+// Se baja, se quita o se sube (David, 23/11/2026: «habilita la opción de poder agregar más productos de los mismos, porque hablamos por WhatsApp
+// con el cliente y ahí nos piden más»: subir sobre lo pedido lleva el motivo «El cliente pidió más»). La línea guarda lo pedido y el motivo; el pedido
+// recalcula unidades, total (mismo descuento proporcional y el despacho igual) y la columna «Productos», y queda anotado en la nota de «Estado».
 const MOTIVOS_CAMBIO = ['Sin stock', 'El cliente no lo quiere'];
+const MOTIVO_MAS = 'El cliente pidió más';
+const MAX_CANTIDAD = 100000;
 function pesos_(n) { return '$' + String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
 function panelEditar(codigo, cambios) { return panelEditar_(exigirVendedor(), codigo, cambios); }
 function panelEditar_(usuario, codigo, cambios) {
@@ -1058,10 +1066,10 @@ function panelEditar_(usuario, codigo, cambios) {
       if (String(c.huella || '') !== [String(f[4]), String(f[5]), qAhora].join('|')) throw new Error(cambio);
       const pedida = f[CD['Cantidad pedida'] - 1] === '' ? qAhora : Number(f[CD['Cantidad pedida'] - 1]) || 0;
       const udsPedidas = f[CD['Unidades pedidas'] - 1] === '' ? udsAhora : Number(f[CD['Unidades pedidas'] - 1]) || 0;
-      const q = entero(c.q, pedida);
+      const q = entero(c.q, MAX_CANTIDAD);
       if (q === qAhora) return;
       const uds = pedida ? Math.round(udsPedidas * q / pedida * 1000) / 1000 : 0;
-      const motivo = MOTIVOS_CAMBIO.indexOf(c.motivo) >= 0 ? c.motivo : MOTIVOS_CAMBIO[0];
+      const motivo = q > pedida ? MOTIVO_MAS : MOTIVOS_CAMBIO.indexOf(c.motivo) >= 0 ? c.motivo : MOTIVOS_CAMBIO[0];
       const nombre = String(f[4]).replace(/^↳ /, '');
       f[6] = q; f[7] = uds;
       if (q === pedida) { f[CD['Cantidad pedida'] - 1] = ''; f[CD['Unidades pedidas'] - 1] = ''; f[CD['Cambio'] - 1] = ''; notas.push(nombre + ': vuelve a ' + q); }
@@ -1091,6 +1099,120 @@ function panelEditar_(usuario, codigo, cambios) {
   } finally { candado.releaseLock(); }
   const datos = panelDatos_(usuario);
   datos.editado = resumen;
+  return datos;
+}
+
+// Juntar pedidos (David, 23/11/2026: «a veces un cliente hace un pedido y luego se acuerda que quiere otra cosa: juntar los pedidos en uno para
+// poder mandar el PDF bien»). Los productos de «origenes» pasan al pedido «destino» (el mismo producto, al mismo precio, se suma en una línea; los
+// envases con tapa quedan aparte). Todo se entrega junto, con el retiro o el despacho del destino: el despacho que cobraba un pedido juntado sale
+// del total. Los juntados quedan «Anulado», sin productos, con «JUNTADO CON …» en el comentario. Solo pedidos abiertos, del mismo local y del mismo
+// cliente: mismo celular (si los dos tienen), mismo código de cliente o el mismo nombre.
+function mismoCliente_(a, b) {
+  const v = function (f, n) { return String(f[CP[n] - 1] == null ? '' : f[CP[n] - 1]).trim(); };
+  const cel = function (f) { return v(f, 'Celular').replace(/\D/g, '').slice(-8); };
+  if (cel(a) && cel(b)) return cel(a) === cel(b);
+  if (v(a, 'Código de cliente') && v(a, 'Código de cliente') === v(b, 'Código de cliente')) return true;
+  const nom = function (f) { return v(f, 'Cliente').toLowerCase().replace(/\s+/g, ' '); };
+  return !!nom(a) && nom(a) !== '(sin nombre)' && nom(a) === nom(b);
+}
+function panelJuntar(destino, origenes) { return panelJuntar_(exigirVendedor(), destino, origenes); }
+function panelJuntar_(usuario, destino, origenes) {
+  if (!Array.isArray(origenes) || !origenes.length || origenes.length > 10) throw new Error('Elige los pedidos que quieres juntar.');
+  destino = String(destino || '');
+  const ABIERTOS = ['Por confirmar', 'Confirmado', 'Preparado'];
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  let resumen = null;
+  try {
+    const hoja = hojaPedidos(), filaD = filaDelPedido(hoja, destino);
+    const filaDe = function (fila) { return hoja.getRange(fila, 1, 1, COLUMNAS_PEDIDOS.length).getValues()[0]; };
+    const v = function (f, nombre) { return f[CP[nombre] - 1]; };
+    const pd = filaDe(filaD), estD = String(v(pd, 'Estado'));
+    if (ABIERTOS.indexOf(estD) < 0) throw new Error('El pedido ' + destino + ' está ' + estD.toLowerCase() + ': no se le pueden juntar otros.');
+    const orig = [], vistos = {};
+    origenes.forEach(function (c) {
+      c = String(c || '');
+      if (!c || c === destino || vistos[c]) throw new Error('Revisa los pedidos elegidos.');
+      vistos[c] = true;
+      const fila = filaDelPedido(hoja, c), f = filaDe(fila), est = String(v(f, 'Estado'));
+      if (ABIERTOS.indexOf(est) < 0) throw new Error('El pedido ' + c + ' está ' + est.toLowerCase() + ': ya no se puede juntar.');
+      if (String(v(f, 'Local') || '') !== String(v(pd, 'Local') || '')) throw new Error('El pedido ' + c + ' es de otro local.');
+      if (!mismoCliente_(f, pd)) throw new Error('El pedido ' + c + ' es de otro cliente.');
+      orig.push({ cod: c, fila: fila, f: f });
+    });
+    const det = hojaDetalle(), m = det.getLastRow();
+    const todas = m > 1 ? det.getRange(2, 1, m - 1, COLUMNAS_DETALLE.length).getValues() : [];
+    const de = function (cod) { const out = []; todas.forEach(function (f, k) { if (String(f[2]) === cod) out.push(k); }); return out; };
+    const esTapa = function (f) { return /^↳/.test(String(f[4])); };
+    const conTapa = function (ks, j) { return j + 1 < ks.length && esTapa(todas[ks[j + 1]]); }; // envase seguido de su tapa
+    const idsD = de(destino);
+    if (!idsD.length) throw new Error('No se encontró el detalle del pedido ' + destino + '.');
+    // Líneas del destino donde se suma el mismo producto (mismo nombre, código de la carta, precio y código MyPyme)
+    const clave = function (f) { return [f[4], f[5], f[8], codigoFilaMyPyme_(f)].map(String).join('|'); };
+    const simples = {};
+    idsD.forEach(function (k, j) { if (!esTapa(todas[k]) && !conTapa(idsD, j)) simples[clave(todas[k])] = k; });
+    const borrar = [], partes = [];
+    const ped = function (x, si) { return x === '' || x == null ? si : Number(x) || 0; };
+    let total = Number(v(pd, 'Total aprox.')) || 0, comentario = String(v(pd, 'Comentario') || ''), alta = String(v(pd, 'Prioridad')) === 'Alta';
+    let prepara = String(v(pd, 'Prepara') || '');
+    const total0 = total;
+    orig.forEach(function (o) {
+      const ks = de(o.cod);
+      if (!ks.length) throw new Error('No se encontró el detalle del pedido ' + o.cod + '.');
+      ks.forEach(function (k, j) {
+        const f = todas[k], simple = !esTapa(f) && !conTapa(ks, j), dk = simple ? simples[clave(f)] : undefined;
+        if (dk !== undefined) {
+          const g = todas[dk], qD = Number(g[6]) || 0, uD = Number(g[7]) || 0, qO = Number(f[6]) || 0, uO = Number(f[7]) || 0;
+          const iP = CD['Cantidad pedida'] - 1, iU = CD['Unidades pedidas'] - 1, iC = CD['Cambio'] - 1;
+          const conCambio = (g[iP] !== '' && g[iP] != null) || (f[iP] !== '' && f[iP] != null);
+          if (conCambio) { g[iP] = ped(g[iP], qD) + ped(f[iP], qO); g[iU] = Math.round((ped(g[iU], uD) + ped(f[iU], uO)) * 1000) / 1000; g[iC] = g[iC] || f[iC]; }
+          g[6] = qD + qO; g[7] = Math.round((uD + uO) * 1000) / 1000;
+          if (conCambio && Number(g[iP]) === Number(g[6])) { g[iP] = ''; g[iU] = ''; g[iC] = ''; }
+          borrar.push(k);
+        } else {
+          f[0] = v(pd, 'Día de retiro'); f[1] = v(pd, 'Hora'); f[2] = destino; f[3] = v(pd, 'Cliente');
+          if (simple) simples[clave(f)] = k; // un segundo pedido juntado puede sumarse aquí
+        }
+      });
+      const t = Number(v(o.f, 'Total aprox.')) || 0;
+      const desp = (String(v(o.f, 'Comentario') || '').match(/DESPACHO \$([\d.]+)/) || [])[1];
+      const despacho = desp ? Number(desp.replace(/\./g, '')) || 0 : 0;
+      total += Math.max(0, t - despacho);
+      const c = String(v(o.f, 'Comentario') || '').replace(/DESPACHO \$[\d.]+ \(incluido en el total\)[^.]*\.\s*/i, '').trim();
+      if (c) comentario += (comentario ? ' · ' : '') + o.cod + ': ' + c;
+      if (String(v(o.f, 'Prioridad')) === 'Alta') alta = true;
+      if (!prepara && v(o.f, 'Prepara')) prepara = String(v(o.f, 'Prepara'));
+      partes.push(o.cod + (t ? ' (' + pesos_(t - despacho) + (despacho ? ', sin su despacho de ' + pesos_(despacho) : '') + ')' : ''));
+    });
+    if (todas.length) det.getRange(2, 1, todas.length, COLUMNAS_DETALLE.length).setValues(todas);
+    borrar.slice().sort(function (a, b) { return b - a; }).forEach(function (k) { det.deleteRow(k + 2); });
+    const lineas = todas.filter(function (f, k) { return String(f[2]) === destino && borrar.indexOf(k) < 0; });
+    const principales = lineas.filter(function (f) { return !esTapa(f); });
+    const unidades = Math.round(principales.reduce(function (a, f) { return a + (Number(f[7]) || Number(f[6]) || 0); }, 0) * 1000) / 1000;
+    const productos = principales.filter(function (f) { return Number(f[6]) > 0; }).map(function (f) { return f[6] + ' × ' + f[4]; }).join(' · ');
+    if (unidades >= UNIDADES_GRANDE || total >= TOTAL_GRANDE) alta = true;
+    hoja.getRange(filaD, CP['Prioridad']).setValue(alta ? 'Alta' : 'Normal');
+    hoja.getRange(filaD, CP['Unidades']).setValue(unidades);
+    hoja.getRange(filaD, CP['Total aprox.']).setValue(total || '');
+    hoja.getRange(filaD, CP['Productos']).setValue(textoLargo(productos || '(sin productos)', 2000));
+    hoja.getRange(filaD, CP['Comentario']).setValue(textoLargo(comentario, 600));
+    if (prepara) hoja.getRange(filaD, CP['Prepara']).setValue(prepara);
+    anotarEnEstado(hoja, filaD, ('Se juntaron ' + partes.join(', ') + ' por ' + usuario + (total0 !== total ? '. Total ' + pesos_(total0) + ' → ' + pesos_(total) : '')).slice(0, 480));
+    orig.forEach(function (o) {
+      hoja.getRange(o.fila, CP['Estado']).setValue('Anulado');
+      hoja.getRange(o.fila, CP['Confirmado']).setValue(false);
+      hoja.getRange(o.fila, CP['Unidades']).setValue(0);
+      hoja.getRange(o.fila, CP['Total aprox.']).setValue('');
+      hoja.getRange(o.fila, CP['Productos']).setValue('(juntado con ' + destino + ')');
+      hoja.getRange(o.fila, CP['Comentario']).setValue(textoLargo('JUNTADO CON ' + destino + '. ' + String(v(o.f, 'Comentario') || ''), 600));
+      anotarEnEstado(hoja, o.fila, 'Juntado con ' + destino + ' por ' + usuario);
+    });
+    ordenarPedidos();
+    resumen = { codigo: destino, juntados: orig.map(function (o) { return o.cod; }), total: total, sumadas: borrar.length };
+    try { recalcularStock_({ correo: true }); } catch (err) { /* el cambio ya quedó */ }
+  } finally { candado.releaseLock(); }
+  const datos = panelDatos_(usuario);
+  datos.juntado = resumen;
   return datos;
 }
 

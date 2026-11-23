@@ -212,6 +212,13 @@ button{font:inherit;cursor:pointer}
 .ed-l{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:10px 12px;border:1.5px solid var(--linea);border-radius:12px;background:#fff}
 .ed-l.menos{border-color:#f0c79a;background:#fffaf3}
 .ed-l.fuera{border-color:#f0b8b2;background:#fdf3f2}
+.ed-l.mas{border-color:#9bd3ad;background:#f2fbf5}
+.jn-sel{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:10px 12px;border:1.5px solid var(--linea);border-radius:12px;background:#fff;color:var(--tinta);text-align:left;font:inherit;cursor:pointer}
+.jn-sel[aria-pressed="true"]{border-color:var(--campo);background:#e6f6ec}
+.jn-sel i{font-style:normal;font-size:22px;line-height:1;color:var(--campo)}
+.jn-sel b{display:block;font-size:14.5px;line-height:1.3}.jn-sel small{display:block;color:var(--suave);font-size:12.5px}
+.jn-sel strong{font-size:14px;white-space:nowrap}
+@media (max-width:560px){.jn-sel{grid-template-columns:auto minmax(0,1fr)}.jn-sel strong{grid-column:2}}
 .ed-nom{min-width:0}.ed-nom b{display:block;font-size:14.5px;line-height:1.3}.ed-nom small{color:var(--suave);font-size:12.5px}
 .ed-l.fuera .ed-nom b{text-decoration:line-through;color:var(--suave)}
 .ed-q{display:flex;align-items:center;gap:6px}
@@ -230,6 +237,7 @@ button{font:inherit;cursor:pointer}
 .p-items li.quitado{color:var(--suave)}
 .p-cambio{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;background:#fff4e5;color:#9a3412;font-size:11.5px;font-style:normal;font-weight:800;white-space:nowrap}
 .t-edit{background:#fff4e5;color:#9a3412}
+.t-junt{background:#e8f0fb;color:#1e4e8c}
 .b.pdf{background:#eef3fb;border-color:#c5d6f2;color:#1d4f9a}
 @media (max-width:520px){.ed-l{grid-template-columns:1fr}.ed-q{justify-content:flex-end}}
 </style>
@@ -319,6 +327,17 @@ button{font:inherit;cursor:pointer}
   </div>
 </div>
 
+<div class="modal" id="mJuntar" hidden>
+  <div class="dlg ed" role="dialog" aria-modal="true" aria-labelledby="jTit" aria-describedby="jSub">
+    <h2 id="jTit">Juntar pedidos</h2>
+    <p id="jSub"></p>
+    <ul class="ed-lista" id="jLista"></ul>
+    <div class="ed-tot" id="jTot"></div>
+    <p class="ed-msg" id="jMsg" role="alert"></p>
+    <div class="m-pie"><button type="button" class="b" data-jcerrar>Cancelar</button><button type="button" class="b prim" id="jGuardar">Juntar pedidos</button></div>
+  </div>
+</div>
+
 <script>
 /* SabAPP, el panel de pedidos del Catálogo Sabroso: lee la planilla cada 12 segundos y muestra los pedidos nuevos al instante.
    Los cambios de estado se guardan en la planilla (casilla «Confirmado» y columna «Estado»). */
@@ -338,7 +357,7 @@ try { vistos = JSON.parse(localStorage.getItem('panel-vistos') || 'null'); sonid
    se entra con correo + RUT y se habla con el script por su API, con la sesión de este PC (no se guarda el RUT). */
 var API_SABAPP = 'https://script.google.com/macros/s/AKfycbzezlxDUrWOtHP-LQWa_2iiL8sBrNz6UsqvweuQri5XO_lKC6MipFCfm8eNyZfslMmi/exec'; // la pone herramientas/sabapp/construir.js en la página de avicolasb.com
 var MODO_API = !(window.google && google.script && google.script.run);
-var ACCIONES = { panelDatos: 'datos', panelCambiar: 'cambiar', panelAsignar: 'asignar', panelAvisado: 'avisado', panelStock: 'stock', panelEditar: 'editar' };
+var ACCIONES = { panelDatos: 'datos', panelCambiar: 'cambiar', panelAsignar: 'asignar', panelAvisado: 'avisado', panelStock: 'stock', panelEditar: 'editar', panelJuntar: 'juntar' };
 var sesion = ''; try { sesion = localStorage.getItem('sabapp-sesion') || ''; } catch (e) {}
 function api(cuerpo) {
   return fetch(API_SABAPP, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(Object.assign({ tipo: 'sabapp' }, cuerpo)) })
@@ -816,19 +835,20 @@ function tarjeta(p) {
     return medios.map(function (m) { return '<a class="b ' + (m === 'correo' ? 'correo' : 'wsp') + ' ' + (clase || '') + '" href="' + enlaceDe(p, m, 'confirmar') + '">' + (clase ? 'Confirmación por ' + nombreMedio(m) : nombreMedio(m) === 'correo' ? 'Correo' : 'WhatsApp') + '</a>'; }).join('');
   };
   if (p.estado === 'Por confirmar') {
-    acc = boton(p, 'Confirmado', '✓ Confirmar pedido', 'prim') + confirmacion('') + botonEditar(p) + boton(p, 'No llegó', 'No llegó', 'peq peligro');
+    acc = boton(p, 'Confirmado', '✓ Confirmar pedido', 'prim') + confirmacion('') + botonEditar(p) + botonJuntar(p) + boton(p, 'No llegó', 'No llegó', 'peq peligro');
   } else if (p.estado === 'Confirmado') {
     // Un solo toque deja el pedido «listo» y abre el aviso escrito (por correo o WhatsApp)
     acc = (medios.length ? medios.map(function (m, i) { return boton(p, 'Preparado', 'Listo · avisar por ' + nombreMedio(m), i ? (m === 'correo' ? 'correo' : 'wsp') : 'prim azul', m); }).join('') : boton(p, 'Preparado', 'Listo para retirar', 'prim azul'))
-      + confirmacion('peq') + botonEditar(p) + botonPdf(p) + boton(p, 'Por confirmar', '↩ Volver', 'peq') + boton(p, 'Anulado', 'Anular', 'peq peligro');
+      + confirmacion('peq') + botonEditar(p) + botonJuntar(p) + botonPdf(p) + boton(p, 'Por confirmar', '↩ Volver', 'peq') + boton(p, 'Anulado', 'Anular', 'peq peligro');
   } else if (p.estado === 'Preparado') {
     acc = boton(p, 'Entregado', '✓ Entregado', 'prim')
       + (medios.length
         ? medios.map(function (m) { return '<a class="b ' + (m === 'correo' ? 'correo' : 'wsp') + '" data-avisado="' + esc(p.codigo) + '" data-medio="' + m + '" href="' + enlaceDe(p, m, 'listo') + '">' + (p.avisado && (p.avisadoPor === 'correo') === (m === 'correo') ? 'Volver a avisar por ' : 'Avisar por ') + nombreMedio(m) + '</a>'; }).join('')
         : '<button type="button" class="b wsp" data-copiar="' + esc(p.codigo) + '">Copiar aviso para el chat</button>')
-      + botonPdf(p, true) + botonEditar(p) + boton(p, 'Confirmado', '↩ Volver', 'peq') + boton(p, 'Anulado', 'Anular', 'peq peligro');
+      + botonPdf(p, true) + botonEditar(p) + botonJuntar(p) + boton(p, 'Confirmado', '↩ Volver', 'peq') + boton(p, 'Anulado', 'Anular', 'peq peligro');
   } else {
-    acc = '<span class="p-cel">' + esc(p.estado) + '</span>' + (p.estado === 'Entregado' ? botonPdf(p) : '') + boton(p, p.estado === 'Entregado' ? 'Preparado' : 'Por confirmar', '↩ Reabrir', 'peq');
+    // un pedido juntado con otro no se reabre (sus productos ya están en el otro pedido)
+    acc = '<span class="p-cel">' + esc(p.estado) + '</span>' + (p.estado === 'Entregado' ? botonPdf(p) : '') + (juntadoCon(p) ? '' : boton(p, p.estado === 'Entregado' ? 'Preparado' : 'Por confirmar', '↩ Reabrir', 'peq'));
   }
   if ((esDespacho(p) || pagaTransf(p)) && ['Por confirmar', 'Confirmado', 'Preparado'].indexOf(p.estado) >= 0)
     acc += '<button type="button" class="b peq" data-transf="' + esc(p.codigo) + '">🏦 Copiar datos de transferencia</button>';
@@ -837,7 +857,9 @@ function tarjeta(p) {
     + (nuevos[p.codigo] ? '<span class="tag t-nuevo">Nuevo</span>' : '')
     + (enLocal(p) && !cerrado ? '<span class="tag t-local">Cliente en el local</span>' : '')
     + (p.prioridad === 'Alta' ? '<span class="tag t-alta">Prioridad alta</span>' : '')
-    + (p.frecuente ? '<span class="tag t-frec">Frecuente · ' + p.veces + ' pedidos</span>' : '') + (editado(p) ? '<span class="tag t-edit">Editado</span>' : '') + '</div>'
+    + (p.frecuente ? '<span class="tag t-frec">Frecuente · ' + p.veces + ' pedidos</span>' : '') + (editado(p) ? '<span class="tag t-edit">Editado</span>' : '')
+    + (juntadoCon(p) ? '<span class="tag t-junt">Juntado con ' + esc(juntadoCon(p)) + '</span>' : '')
+    + (p.juntados && p.juntados.length ? '<span class="tag t-junt">Incluye ' + esc(p.juntados.join(', ')) + '</span>' : '') + '</div>'
     + '<div class="p-cli">' + esc(p.cliente || '(sin nombre)') + '</div>'
     + (p.celular || p.correo || p.codigoCliente ? '<div class="p-cel">' + esc([p.celular, p.correo, p.codigoCliente].filter(Boolean).join(' · ')) + '</div>' : '')
     + (enLocal(p) ? '<div class="p-ret local">🛍️ Está en el local · ' + esc(diaLargo(p.dia)) + ' ' + etiquetaDia(p.dia) + '</div>'
@@ -926,6 +948,15 @@ function quienPrepara(nombre) {
     function (err) { delete ocupado[m.cod]; if (p) p.prepara = antes; pintar(); avisar('No se pudo guardar: ' + String(err && err.message || err)); });
 }
 document.addEventListener('keydown', function (e) {
+  if (junta) {
+    if (e.key === 'Escape') { cerrarJuntar(); return; }
+    if (e.key === 'Tab') { // el foco no sale de la ventana
+      var jb = [].filter.call($('mJuntar').querySelectorAll('button'), function (b) { return !b.disabled; }), jp = jb[0], ju = jb[jb.length - 1];
+      if (e.shiftKey && document.activeElement === jp) { ju.focus(); e.preventDefault(); }
+      else if (!e.shiftKey && document.activeElement === ju) { jp.focus(); e.preventDefault(); }
+    }
+    return;
+  }
   if (edicion) {
     if (e.key === 'Escape') { cerrarEdicion(); return; }
     if (e.key === 'Tab') { // el foco no sale de la ventana
@@ -969,8 +1000,9 @@ function cambiarEstado(cod, est, conAviso, prepara, avisoWsp) {
 
 /* ---------- Editar el pedido (David, 23/11/2026: «cuando avise por WhatsApp al cliente que está listo su pedido, pueda editar el pedido
    eliminando lo que no tenemos o lo que el cliente me dijo que no quiere, y luego pueda mandarle un PDF con el pedido y su detalle»).
-   Se quita o se rebaja cada producto con su motivo; se guarda en la planilla (panelEditar) y lo ven todos los equipos. ---------- */
-var MOTIVOS = ['Sin stock', 'El cliente no lo quiere'];
+   Se quita o se rebaja cada producto con su motivo; se guarda en la planilla (panelEditar) y lo ven todos los equipos.
+   Desde el 23/11 también se sube sobre lo pedido (David: «nos piden más por WhatsApp»): motivo «El cliente pidió más». ---------- */
+var MOTIVOS = ['Sin stock', 'El cliente no lo quiere'], MOTIVO_MAS = 'El cliente pidió más', MAX_Q = 9999;
 var fmtQ = function (n) { return String(Math.round((Number(n) || 0) * 1000) / 1000).replace('.', ','); };
 var esTapa = function (x) { return /^↳/.test(x.nombre || ''); };
 var cambiada = function (x) { return x.pedida != null && x.pedida !== x.q; };
@@ -1002,7 +1034,7 @@ function abrirEdicion(cod) {
   ls.forEach(function (l, k) { if (l.tapa) for (var j = k - 1; j >= 0; j--) if (!ls[j].tapa) { l.de = ls[j]; break; } });
   edicion = { cod: cod, total0: Number(p.total) || 0, desp: despachoDe(p), lineas: ls, volver: document.activeElement, seguroVacio: false };
   $('eTit').textContent = 'Editar pedido ' + p.codigo;
-  $('eSub').textContent = (p.cliente || '(sin nombre)') + ': quita o rebaja lo que no tenemos o lo que el cliente no quiere. Queda guardado en la planilla y lo ven todos.';
+  $('eSub').textContent = (p.cliente || '(sin nombre)') + ': quita o rebaja lo que no tenemos o lo que el cliente no quiere, o suma con «+» lo que te pidió de más por WhatsApp. Queda guardado en la planilla y lo ven todos.';
   $('eMsg').textContent = ''; $('eGuardar').textContent = 'Guardar cambios';
   pintarEdicion();
   $('mEditar').hidden = false;
@@ -1029,17 +1061,18 @@ function pintarEdicion() {
   var e = edicion; if (!e) return;
   var foco = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.efoco : null;
   $('eLista').innerHTML = e.lineas.map(function (l, k) {
-    var x = l.x, pr = x.precio, menos = l.q < l.pedida, fuera = !(l.q > 0), cl = 'ed-l' + (fuera ? ' fuera' : menos ? ' menos' : '');
+    var x = l.x, pr = x.precio, menos = l.q < l.pedida, mas = l.q > l.pedida, fuera = !(l.q > 0), cl = 'ed-l' + (fuera ? ' fuera' : menos ? ' menos' : mas ? ' mas' : '');
     if (l.tapa) return '<li class="' + cl + '"><div class="ed-nom"><b>' + esc(x.nombre.replace(/^↳\s*/, '')) + '</b><small>' + fmtQ(l.q) + ' u · sigue al envase de arriba</small></div></li>';
     return '<li class="' + cl + '"><div class="ed-nom"><b>' + esc(x.nombre) + '</b><small>' + (x.cod ? esc(x.cod) + ' · ' : '')
-      + (pr == null ? 'precio por confirmar' : clp(pr) + ' c/u' + (l.q > 0 ? ' · ' + clp(pr * l.q) : '')) + (menos ? ' · pidió ' + fmtQ(l.pedida) : '') + '</small></div>'
+      + (pr == null ? 'precio por confirmar' : clp(pr) + ' c/u' + (l.q > 0 ? ' · ' + clp(pr * l.q) : '')) + (menos || mas ? ' · pidió ' + fmtQ(l.pedida) : '') + '</small></div>'
       + '<div class="ed-q"><button type="button" data-emenos="' + k + '" data-efoco="m' + k + '" aria-label="Uno menos: ' + esc(x.nombre) + '"' + (fuera ? ' disabled' : '') + '>−</button>'
       + '<output aria-live="polite">' + fmtQ(l.q) + '</output>'
-      + '<button type="button" data-emas="' + k + '" data-efoco="p' + k + '" aria-label="Uno más: ' + esc(x.nombre) + '"' + (l.q >= l.pedida ? ' disabled' : '') + '>+</button>'
+      + '<button type="button" data-emas="' + k + '" data-efoco="p' + k + '" aria-label="Uno más: ' + esc(x.nombre) + '"' + (l.q >= MAX_Q ? ' disabled' : '') + '>+</button>'
       + (fuera ? '<button type="button" class="ed-txt" data-edevolver="' + k + '" data-efoco="d' + k + '">Devolver</button>'
         : '<button type="button" class="ed-txt quitar" data-equitar="' + k + '" data-efoco="q' + k + '">Quitar</button>') + '</div>'
       + (menos ? '<div class="ed-mot"><span>Motivo:</span>' + MOTIVOS.map(function (m, j) {
-        return '<button type="button" data-emotivo="' + k + '" data-m="' + esc(m) + '" data-efoco="o' + k + '-' + j + '" aria-pressed="' + (l.motivo === m) + '">' + esc(m) + '</button>'; }).join('') + '</div>' : '')
+        return '<button type="button" data-emotivo="' + k + '" data-m="' + esc(m) + '" data-efoco="o' + k + '-' + j + '" aria-pressed="' + (l.motivo === m) + '">' + esc(m) + '</button>'; }).join('') + '</div>'
+        : mas ? '<div class="ed-mot"><span>Motivo: ' + esc(MOTIVO_MAS.toLowerCase()) + ' (suma ' + fmtQ(l.q - l.pedida) + ')</span></div>' : '')
       + '</li>';
   }).join('');
   var t = totalesEdicion();
@@ -1054,7 +1087,7 @@ function clicEdicion(t) {
   if (!l) return;
   if (b.hasAttribute('data-emotivo')) l.motivo = b.dataset.m;
   else if (b.hasAttribute('data-emenos')) l.q = Math.max(0, l.q - 1);
-  else if (b.hasAttribute('data-emas')) l.q = Math.min(l.pedida, l.q + 1);
+  else if (b.hasAttribute('data-emas')) l.q = Math.min(MAX_Q, l.q + 1);
   else if (b.hasAttribute('data-equitar')) l.q = 0;
   else if (b.hasAttribute('data-edevolver')) l.q = l.pedida;
   else return;
@@ -1064,7 +1097,8 @@ function clicEdicion(t) {
 function guardarEdicion() {
   var e = edicion; if (!e) return;
   var cambios = e.lineas.filter(function (l) { return l.q !== l.x.q; }).map(function (l) {
-    return { i: l.i, q: l.q, motivo: l.tapa && l.de ? l.de.motivo : l.motivo, huella: [l.x.nombre, l.x.codCarta, l.x.q].join('|') };
+    var mot = l.q > l.pedida ? MOTIVO_MAS : l.tapa && l.de ? l.de.motivo : l.motivo;
+    return { i: l.i, q: l.q, motivo: mot, huella: [l.x.nombre, l.x.codCarta, l.x.q].join('|') };
   });
   if (!cambios.length) return;
   if (totalesEdicion().vacio && !e.seguroVacio) {
@@ -1083,6 +1117,86 @@ function guardarEdicion() {
     if (!edicion) return;
     $('eGuardar').disabled = false; $('eGuardar').textContent = 'Guardar cambios';
     $('eMsg').textContent = 'No se pudo guardar: ' + String(err && err.message || err);
+  });
+}
+
+/* ---------- Juntar pedidos (David, 23/11/2026: «a veces un cliente hace un pedido y luego se acuerda que quiere otra cosa: juntar los pedidos
+   en uno para poder mandar el PDF bien») ----------
+   En la tarjeta de un pedido abierto, «🔗 Juntar con su otro pedido» si el mismo cliente (celular, código o nombre, como en el script) tiene otro
+   abierto en el mismo local. Los productos de los marcados pasan al pedido de esa tarjeta (panelJuntar) y esos quedan anulados. */
+var abierto = function (p) { return ['Por confirmar', 'Confirmado', 'Preparado'].indexOf(p.estado) >= 0; };
+var juntadoCon = function (p) { var m = String(p.comentario || '').match(/^JUNTADO CON (\S+?)\./); return m ? m[1] : ''; };
+function mismoCliente(a, b) {
+  var cel = function (p) { return String(p.celular || '').replace(/\D/g, '').slice(-8); };
+  if (cel(a) && cel(b)) return cel(a) === cel(b);
+  if (a.codigoCliente && a.codigoCliente === b.codigoCliente) return true;
+  var nom = function (p) { return String(p.cliente || '').trim().toLowerCase().replace(/\s+/g, ' '); };
+  return !!nom(a) && nom(a) !== '(sin nombre)' && nom(a) === nom(b);
+}
+function paraJuntar(p) {
+  if (!datos || !puedeEditar(p)) return [];
+  return datos.pedidos.filter(function (o) { return o.codigo !== p.codigo && abierto(o) && (o.local || '') === (p.local || '') && o.items.length > 0 && mismoCliente(o, p); })
+    .sort(function (a, b) { return (a.recibido || 0) - (b.recibido || 0); });
+}
+function botonJuntar(p) {
+  var n = paraJuntar(p).length;
+  return n ? '<button type="button" class="b peq" data-juntar="' + esc(p.codigo) + '" data-foco="jn-' + esc(p.codigo) + '"' + (ocupado[p.codigo] ? ' disabled' : '') + '>🔗 Juntar con '
+    + (n === 1 ? 'su otro pedido' : 'sus otros ' + n + ' pedidos') + '</button>' : '';
+}
+var junta = null; // { cod, cands: [códigos], sel: { código: true }, volver }
+function abrirJuntar(cod) {
+  var p = pedido(cod), cs = p ? paraJuntar(p) : []; if (!cs.length) return;
+  junta = { cod: cod, cands: cs.map(function (o) { return o.codigo; }), sel: {}, volver: document.activeElement };
+  cs.forEach(function (o) { junta.sel[o.codigo] = true; });
+  $('jTit').textContent = 'Juntar pedidos en ' + p.codigo;
+  $('jSub').textContent = (p.cliente || '(sin nombre)') + ': los productos de los pedidos marcados pasan a ' + p.codigo + ' (el mismo producto se suma en una línea). '
+    + 'Se entrega todo junto, ' + (esDespacho(p) ? 'en el despacho de ' : 'con el retiro de ') + p.codigo + '; los pedidos juntados quedan anulados.';
+  $('jMsg').textContent = ''; $('jGuardar').textContent = 'Juntar pedidos';
+  pintarJuntar();
+  $('mJuntar').hidden = false;
+  var f = $('jLista').querySelector('button'); if (f) f.focus();
+}
+function cerrarJuntar() {
+  var v = junta && junta.volver, k = v && v.dataset ? v.dataset.foco : '';
+  junta = null; $('mJuntar').hidden = true;
+  if (v && !document.body.contains(v) && k) v = document.querySelector('[data-foco="' + k + '"]');
+  if (v && document.body.contains(v)) v.focus();
+}
+function pintarJuntar() {
+  var j = junta; if (!j) return;
+  var p = pedido(j.cod); if (!p) { cerrarJuntar(); return; }
+  var foco = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.jfoco : null;
+  var lista = j.cands.map(pedido).filter(Boolean);
+  $('jLista').innerHTML = lista.map(function (o) {
+    var on = !!j.sel[o.codigo], dsp = despachoDe(o), prods = o.items.filter(function (x) { return x.q > 0 && !esTapa(x); });
+    return '<li><button type="button" class="jn-sel" data-jsel="' + esc(o.codigo) + '" data-jfoco="' + esc(o.codigo) + '" aria-pressed="' + on + '">'
+      + '<i aria-hidden="true">' + (on ? '☑' : '☐') + '</i><span><b>' + esc(o.codigo) + ' · ' + esc(o.estado) + '</b><small>'
+      + esc((esDespacho(o) ? 'Despacho ' : 'Retira ') + diaLargo(o.dia) + ' · ' + prods.length + ' producto' + (prods.length === 1 ? '' : 's') + ': '
+        + prods.slice(0, 3).map(function (x) { return fmtQ(x.q) + ' × ' + x.nombre; }).join(' · ') + (prods.length > 3 ? '…' : '')
+        + (dsp ? ' · su despacho de ' + clp(dsp) + ' no se cobra' : '')) + '</small></span>'
+      + '<strong>' + (o.total ? clp(Math.max(0, o.total - dsp)) : 'por confirmar') + '</strong></button></li>';
+  }).join('');
+  var marcados = lista.filter(function (o) { return j.sel[o.codigo]; }), t0 = Number(p.total) || 0;
+  var tot = t0 + marcados.reduce(function (a, o) { return a + Math.max(0, (Number(o.total) || 0) - despachoDe(o)); }, 0);
+  $('jTot').innerHTML = '<span>' + (marcados.length ? marcados.length + ' pedido' + (marcados.length === 1 ? '' : 's') + ' para juntar en ' + esc(p.codigo) : 'Marca al menos un pedido') + '</span><span>'
+    + (tot ? 'Total ' + (t0 && tot !== t0 ? '<s>' + clp(t0) + '</s> → ' : '') + clp(tot) : 'Total por confirmar') + '</span>';
+  $('jGuardar').disabled = !marcados.length;
+  if (foco) { var f = $('jLista').querySelector('[data-jfoco="' + foco + '"]'); if (f) f.focus(); }
+}
+function guardarJuntar() {
+  var j = junta; if (!j) return;
+  var ors = j.cands.filter(function (c) { return j.sel[c] && pedido(c); }); if (!ors.length) return;
+  var cod = j.cod, todos = [cod].concat(ors);
+  $('jGuardar').disabled = true; $('jGuardar').textContent = 'Juntando…'; $('jMsg').textContent = '';
+  todos.forEach(function (c) { ocupado[c] = true; });
+  servidor('panelJuntar', [cod, ors], function (d) {
+    todos.forEach(function (c) { delete ocupado[c]; }); recibir(d); estadoConexion(true); cerrarJuntar();
+    avisar(cod + ': ' + (ors.length === 1 ? 'se juntó ' : 'se juntaron ') + ors.join(', ') + (d.juntado && d.juntado.total ? ' · total ' + clp(d.juntado.total) : '') + '. Revísalo y envíale el PDF al cliente.');
+  }, function (err) {
+    todos.forEach(function (c) { delete ocupado[c]; });
+    if (!junta) return;
+    $('jGuardar').disabled = false; $('jGuardar').textContent = 'Juntar pedidos';
+    $('jMsg').textContent = 'No se pudo juntar: ' + String(err && err.message || err);
   });
 }
 
@@ -1226,6 +1340,7 @@ function pdfPedido(p) {
     entrega = 'Despacho a domicilio: ' + diaLargo(p.dia) + (fr ? ' entre ' + fr : '') + (dir ? '. Dirección: ' + dir : '') + '.';
   } else if (enLocal(p)) entrega = 'Retira en el mesón de Emporio Sabroso (Arturo Prat 720, Chillán).';
   else entrega = 'Retira en Emporio Sabroso (Arturo Prat 720, Chillán): ' + diaLargo(p.dia) + (/^\d/.test(p.hora || '') ? ' a las ' + p.hora : '') + '.';
+  if (p.juntados && p.juntados.length) entrega += ' Incluye también su' + (p.juntados.length > 1 ? 's pedidos ' : ' pedido ') + p.juntados.join(', ') + '.';
   var le = cortarPdf(winAnsi(entrega), ANCHO - 20, 10, false);
   y += 6; d.rect(M, y, ANCHO, 12 + le.length * 13, PAPEL);
   le.forEach(function (t, i) { d.texto(M + 10, y + 16 + i * 13, t, 10, false, TINTA); });
@@ -1267,7 +1382,8 @@ function pdfPedido(p) {
     d.texto(M, y, 'Cambios en su pedido', 12, true, NARANJA); y += 17;
     cambios.forEach(function (x) {
       var mot = motivoDe(x), por = mot === 'Sin stock' ? 'no nos queda' : mot ? 'como nos pidió' : '';
-      var t = (x.q > 0 ? 'Rebajamos ' + x.nombre + ': pidió ' + fmtQ(x.pedida) + ', va ' + fmtQ(x.q) : 'Quitamos ' + fmtQ(x.pedida) + ' × ' + x.nombre) + (por ? ' (' + por + ')' : '') + '.';
+      var t = (x.q > x.pedida ? 'Sumamos ' + x.nombre + ': pidió ' + fmtQ(x.pedida) + ', va ' + fmtQ(x.q)
+        : x.q > 0 ? 'Rebajamos ' + x.nombre + ': pidió ' + fmtQ(x.pedida) + ', va ' + fmtQ(x.q) : 'Quitamos ' + fmtQ(x.pedida) + ' × ' + x.nombre) + (por ? ' (' + por + ')' : '') + '.';
       var ls = cortarPdf(winAnsi('•  ' + t), ANCHO - 12, 9.5, false);
       espacio(ls.length * 12.5 + 4, false);
       ls.forEach(function (l, k) { d.texto(M + (k ? 10 : 0), y + k * 12.5, l, 9.5, false, TINTA); });
@@ -1313,6 +1429,13 @@ function enviarPdf(cod) {
 
 /* ---------- Acciones ---------- */
 document.addEventListener('click', function (e) {
+  if (junta) {
+    if (e.target === $('mJuntar') || e.target.closest('[data-jcerrar]')) { cerrarJuntar(); return; }
+    if (e.target.closest('#jGuardar')) { guardarJuntar(); return; }
+    var sb = e.target.closest('[data-jsel]');
+    if (sb && $('jLista').contains(sb)) { junta.sel[sb.dataset.jsel] = !junta.sel[sb.dataset.jsel]; $('jMsg').textContent = ''; pintarJuntar(); }
+    return;
+  }
   if (edicion) {
     if (e.target === $('mEditar') || e.target.closest('[data-ecerrar]')) { cerrarEdicion(); return; }
     if (e.target.closest('#eGuardar')) { guardarEdicion(); return; }
@@ -1321,6 +1444,8 @@ document.addEventListener('click', function (e) {
   }
   var edb = e.target.closest('button[data-editar]');
   if (edb) { if (!edb.disabled) abrirEdicion(edb.dataset.editar); return; }
+  var jnb = e.target.closest('button[data-juntar]');
+  if (jnb) { if (!jnb.disabled) abrirJuntar(jnb.dataset.juntar); return; }
   var pdb = e.target.closest('button[data-pdf]');
   if (pdb) { enviarPdf(pdb.dataset.pdf); return; }
   if (modalDe) {
