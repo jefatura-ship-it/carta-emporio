@@ -220,6 +220,24 @@ body.vermayor .mayor{display:block}
 .info small.varped{color:var(--campo);font-weight:700;font-size:12px;line-height:1.35}
 .szchip.ancho{width:auto;min-width:42px;padding:0 7px}
 .info .szchip small.szd{font-size:8.5px;margin:1px 0 0;white-space:nowrap}
+/* familias al estilo del catálogo Vanni: etiqueta de texto en el cuadrito, ficha del tamaño y tabla de medidas */
+.szchip .szt{font-size:12.5px;font-weight:800;line-height:1.1;white-space:nowrap}
+.info small.medsel{color:var(--tinta);font-weight:600;font-size:12.5px;line-height:1.35;background:#f3ecdc;border-radius:7px;padding:5px 8px;align-self:flex-start}
+.vtabla{font-size:12.5px;margin-top:2px}
+.vtabla summary{cursor:pointer;color:var(--campo);font-weight:800;padding:4px 0;list-style:none;display:inline-flex;align-items:center;gap:5px}
+.vtabla summary::-webkit-details-marker{display:none}
+.vtabla summary::before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .15s}
+.vtabla[open] summary::before{transform:rotate(45deg)}
+.vt-scroll{overflow-x:auto;margin-top:4px;border:1px solid #e6dcc6;border-radius:9px;background:#fff}
+.vtabla table{border-collapse:collapse;width:100%;min-width:100%}
+.vtabla th,.vtabla td{padding:6px 7px;text-align:left;border-bottom:1px solid #efe6d2;white-space:nowrap;font-variant-numeric:tabular-nums}
+.vtabla thead th{background:#3a2a1c;color:#fff;font-size:11px;font-weight:700;letter-spacing:.02em}
+.vtabla tbody tr:last-child th,.vtabla tbody tr:last-child td{border-bottom:0}
+.vtabla tbody th button{font:inherit;font-weight:800;color:var(--campo);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.vtabla tr.sel{background:#e8f1e9}
+.vtabla tr.sel th button{text-decoration:none}
+.info .vtabla td small{display:inline;font-size:10.5px;color:#6b5a45;margin:0}
+.vtabla small.vt-sin{color:#b3261e;font-weight:700}
 .paso.pista-var{display:flex}
 .paso.pista-var .elige,#carta .prod .paso.pista-var .elige{flex:1;width:100%;height:auto;min-height:46px;padding:0 18px;border:1.5px dashed var(--borde);border-radius:12px;background:#fff;color:var(--suave);font-family:inherit;font-size:15px;font-weight:700;white-space:nowrap;opacity:1;cursor:default;display:flex;align-items:center;justify-content:center}
 .tapa{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px}
@@ -2549,7 +2567,7 @@ function precioQ(p,q){let pr=precioBase(p),m=false;for(const e of escalones(p))i
 const unidad=p=>/por kilo/i.test(p.detalle||"")?"kg":porUnidad(p)?"c/u":"";
 const soloPaq=p=>/por paquete/i.test(p.detalle||"")&&!porUnidad(p); // se vende solo por paquete
 function precioHTML(p){
-  if(p.virtual)return p.precio==null?`<span class="precio pc">Precio por confirmar</span>`:`<span class="precio"><small class="u">Desde</small> ${clp(p.precio)} <small class="u">c/u</small></span>`;
+  if(p.virtual)return p.precio==null?`<span class="precio pc">Precio por confirmar</span>`:`<span class="precio"><small class="u">Desde</small> ${clp(p.precio)} <small class="u">${p.unidadTxt||"c/u"}</small></span>`;
   if(p.oferta!=null)return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(p.oferta)}${p.precio!=null?` <s>${clp(p.precio)}</s>`:""}</span>`;
   const base=precioBase(p);
   if(fmtDe(p)&&precioFmt(p,modoDe(p))!=null){const f=fmtInfo(p,modoDe(p)),po=precioFmt(p,f[0]),pl=precioLista(p,f[0],1);return `<span class="precio"><span class="badge-of">Oferta</span> ${clp(po)}${pl!=null&&pl>po?` <s>${clp(pl)}</s>`:""} <small class="u">${f[1].toLowerCase()}</small></span><small class="cu">${p.bolsas?`Sale a ${clp(Math.round(po/f[2]*1000))} el kilo`:`Sale a ${clp(Math.round(po/f[2]))} c/u`}</small>${(pr=>pr?`<span class="mayor siempre"><span class="ok">Promo: ${pr[0]} ${f[1].replace(/^Bandeja/,"bandejas").toLowerCase()} por ${clp(pr[1])}</span></span>`:"")(promoFmt(p,f[0]))}${enPromoTercera(p.cod,f[0])?`<small class="regla-mayor">1 promo por cliente al día: hasta 2 bandejas, en blanco o café.</small>`:""}${aperturaHTML(p,f[0])}`}
@@ -2584,16 +2602,74 @@ const fotoHTML=p=>{const n=fotosDe(p).length;return `<button type="button" class
    Al agregar un tamaño la tarjeta vuelve a quedar sin elegir, por si el cliente quiere llevar otro tamaño. */
 const VARIANTES=[
   {id:"saco-kraft",nombre:"Saco kraft",re:/^saco kraft n° ?(?<n>\d+)$/i,foto:"../img/productos/fotos/saco-kraft.webp"},
-  {id:"papel-kraft",nombre:"Papel kraft",re:/^papel kraft (?:(?<d>sin|con) diseño )?n° ?(?<n>\d+)$/i,foto:"../img/productos/fotos/papel-kraft.webp"}];
+  {id:"papel-kraft",nombre:"Papel kraft",re:/^papel kraft (?:(?<d>sin|con) diseño )?n° ?(?<n>\d+)$/i,foto:"../img/productos/fotos/papel-kraft.webp"},
+  /* Familias al estilo del catálogo Vanni (23/11/2026): generadas con familias/familias.py del scratchpad (fotos familia-<id>.webp) */
+  {id:"alu-rect",nombre:"Envase de aluminio rectangular",foto:"../img/productos/fotos/familia-alu-rect.webp",ms:[{cod:"ALU001",et:"C 10",med:"11 × 8 × 4 cm",cap:"300 cc"},{cod:"ALU002",et:"C 15",med:"11,5 × 11,5 × 3,5 cm",cap:"400 cc"},{cod:"ALU003",et:"C 15 sin tapa",med:"11,5 × 11,5 × 3,5 cm",cap:"400 cc"},{cod:"ALU004",et:"C 18",med:"15 × 10 × 4 cm",cap:"540 cc"},{cod:"ALU005",et:"C 20",med:"17,5 × 10,5 × 4 cm",cap:"660 cc"},{cod:"ALU006",et:"C 30",med:"19 × 14 × 3,5 cm",cap:"800 cc"},{cod:"ALU008",et:"C 40",med:"27 × 17 × 4 cm",cap:"1.500 cc"},{cod:"ALU007",et:"C 40 L tapa plástica",med:"27 × 17 × 4 cm",cap:"1.500 cc"},{cod:"ALU009",et:"C 45"},{cod:"ALU010",et:"C 65",med:"30 × 20,5 × 5 cm",cap:"2.750 cc"},{cod:"ALU011",et:"C 85",med:"38 × 26 × 8,5 cm",cap:"5.000 cc"}]},
+  {id:"alu-redondo",nombre:"Envase de aluminio redondo",foto:"../img/productos/fotos/familia-alu-redondo.webp",ms:[{cod:"ALU012",et:"R 1",med:"Ø 15 × 2 cm",cap:"300 cc"},{cod:"ALU013",et:"R 3"},{cod:"ALU014",et:"R 5",med:"Ø 19 × 2 cm",cap:"500 cc"},{cod:"ALU015",et:"R 10",med:"Ø 23,5 × 2 cm",cap:"750 cc"},{cod:"ALU016",et:"R 20",med:"Ø 30,5 × 1,5 cm",cap:"1.000 cc"},{cod:"ALU017",et:"R 40",med:"Ø 11 × 4 cm",cap:"300 cc"},{cod:"ALU018",et:"R 50",med:"Ø 11 × 5 cm",cap:"400 cc"},{cod:"ALU019",et:"R 80",med:"Ø 14 × 3,5 cm",cap:"600 cc"}]},
+  {id:"foil",nombre:"Foil de aluminio",foto:"../img/productos/fotos/familia-foil.webp",ms:[{cod:"ALU021",et:"4 m"},{cod:"ALU022",et:"100 m",med:"30 cm × 100 m"}]},
+  {id:"bandeja-redonda",nombre:"Bandeja redonda",foto:"../img/productos/fotos/familia-bandeja-redonda.webp",ms:[{cod:"CAR012",et:"N° 5",med:"Ø 28 cm"},{cod:"CAR013",et:"N° 6",med:"Ø 29,2 cm"},{cod:"CAR014",et:"N° 7",med:"Ø 31,7 cm"},{cod:"CAR015",et:"N° 8",med:"Ø 34,8 cm"},{cod:"CAR016",et:"N° 9",med:"Ø 36,8 cm"},{cod:"CAR017",et:"N° 10",med:"Ø 38,8 cm"}]},
+  {id:"bandeja-rectangular",nombre:"Bandeja rectangular de cartulina",foto:"../img/productos/fotos/familia-bandeja-rectangular.webp",ms:[{cod:"CAR009",et:"N° 7",med:"22,8 × 15,8 cm"},{cod:"CAR010",et:"N° 13"},{cod:"CAR011",et:"N° 14",med:"32,1 × 26,6 cm"}]},
+  {id:"bandeja-canasto",nombre:"Bandeja canasto ovalada",foto:"../img/productos/fotos/familia-bandeja-canasto.webp",ms:[{cod:"CAR002",et:"N° 00",med:"21 × 14,2 cm"},{cod:"CAR003",et:"N° 01",med:"23 × 14,5 cm"}]},
+  {id:"bandeja-completo",nombre:"Bandeja para completo",foto:"../img/productos/fotos/familia-bandeja-completo.webp",ms:[{cod:"CAR004",et:"Normal",med:"19,3 × 8,5 cm"},{cod:"CAR038",et:"Grande",med:"26,5 × 8,5 cm"}]},
+  {id:"bandeja-kraft",nombre:"Bandeja kraft",foto:"../img/productos/fotos/familia-bandeja-kraft.webp",ms:[{cod:"CAR008",et:"Pequeña"},{cod:"CAR007",et:"Mediana"},{cod:"CAR006",et:"Grande"},{cod:"CAR055",et:"Extra grande"}]},
+  {id:"caja-pizza",nombre:"Caja para pizza",foto:"../img/productos/fotos/familia-caja-pizza.webp",ms:[{cod:"CAR046",et:"Chica",med:"17 × 17 × 4 cm"},{cod:"CAR047",et:"Mediana",med:"32 × 32 × 4,5 cm"},{cod:"CAR048",et:"Grande",med:"38 × 38 × 4,5 cm"}]},
+  {id:"caja-pollo",nombre:"Caja para pollo",foto:"../img/productos/fotos/familia-caja-pollo.webp",ms:[{cod:"CAR052",et:"Chica",med:"22,5 × 10,5 × 10,5 cm"},{cod:"CAR053",et:"Grande",med:"22,5 × 14,5 × 10,5 cm"}]},
+  {id:"caja-torta",nombre:"Caja para torta",foto:"../img/productos/fotos/familia-caja-torta.webp",ms:[{cod:"CAR032",et:"Chica",med:"29,5 × 29,5 × 10,6 cm"},{cod:"CAR035",et:"Mediana"},{cod:"CAR033",et:"Grande",med:"38 × 38 × 14 cm"},{cod:"CAR036",et:"Rectangular",med:"44,5 × 34,5 × 12 cm"},{cod:"CAR034",et:"Kraft chica"},{cod:"CAR054",et:"Kraft grande"}]},
+  {id:"caja-kuchen",nombre:"Caja para kuchen",foto:"../img/productos/fotos/familia-caja-kuchen.webp",ms:[{cod:"CAR027",et:"Chica"},{cod:"CAR028",et:"Grande"}]},
+  {id:"bowl",nombre:"Bowl de cartón",foto:"../img/productos/fotos/familia-bowl.webp",ms:[{cod:"CAR018",et:"500 cc",cap:"500 cc"},{cod:"CAR019",et:"1000 cc",cap:"1.000 cc"},{cod:"CAR020",et:"1200 cc",cap:"1.200 cc"},{cod:"CAR022",et:"1300 cc kraft",cap:"1.300 cc"}]},
+  {id:"clamshell",nombre:"Clamshell transparente",foto:"../img/productos/fotos/familia-clamshell.webp",ms:[{cod:"PLA005",et:"½ kg falso"},{cod:"PLA004",et:"½ kg",cap:"500 g"},{cod:"PLA007",et:"¾ kg",cap:"750 g"},{cod:"PLA006",et:"1 kg",cap:"1.000 g"}]},
+  {id:"sushi",nombre:"Envase para sushi",foto:"../img/productos/fotos/familia-sushi.webp",ms:[{cod:"PLA040",et:"2 rolls"},{cod:"PLA041",et:"3 rolls"}]},
+  {id:"envase-miel",nombre:"Envase para miel",foto:"../img/productos/fotos/familia-envase-miel.webp",ms:[{cod:"PLA033",et:"½ kg con tapa"},{cod:"PLA034",et:"1 kg con diseño"},{cod:"PLA035",et:"1 kg Darnel"},{cod:"PLA037",et:"1 kg transparente"},{cod:"PLA038",et:"Con logo"}]},
+  {id:"bolsa-camiseta",nombre:"Bolsa camiseta",foto:"../img/productos/fotos/familia-bolsa-camiseta.webp",ms:[{cod:"BOL002",et:"28 × 35",med:"28 × 35 cm"},{cod:"BOL003",et:"32 × 40",med:"32 × 40 cm"},{cod:"BOL004",et:"40 × 50",med:"40 × 50 cm"},{cod:"BOL005",et:"45 × 55",med:"45 × 55 cm"},{cod:"BOL006",et:"50 × 60",med:"50 × 60 cm"}]},
+  {id:"bolsa-transparente",nombre:"Bolsa transparente",foto:"../img/productos/fotos/familia-bolsa-transparente.webp",ms:[{cod:"BOL015",et:"12 × 25",med:"12 × 25 cm"},{cod:"BOL016",et:"14 × 25",med:"14 × 25 cm"},{cod:"BOL017",et:"15 × 30",med:"15 × 30 cm"},{cod:"BOL018",et:"20 × 30",med:"20 × 30 cm"},{cod:"BOL014",et:"11 × 35",med:"11 × 35 cm"}]},
+  {id:"bolsa-baja-densidad",nombre:"Bolsa de baja densidad",foto:"../img/productos/fotos/familia-bolsa-baja-densidad.webp",ms:[{cod:"BOL058",et:"8 × 25",med:"8 × 25 cm"},{cod:"BOL072",et:"10 × 15",med:"10 × 15 cm"},{cod:"BOL063",et:"12 × 15",med:"12 × 15 cm"},{cod:"BOL062",et:"15 × 20",med:"15 × 20 cm"},{cod:"BOL057",et:"15 × 25",med:"15 × 25 cm"},{cod:"BOL073",et:"20 × 40",med:"20 × 40 cm"},{cod:"BOL074",et:"25 × 30",med:"25 × 30 cm"},{cod:"BOL070",et:"50 × 50",med:"50 × 50 cm"},{cod:"BOL071",et:"65 × 70",med:"65 × 70 cm"}]},
+  {id:"bolsa-manilla",nombre:"Bolsa de papel kraft con manilla",foto:"../img/productos/fotos/familia-bolsa-manilla.webp",ms:[{cod:"BOL009",et:"Chica"},{cod:"BOL011",et:"Mediana",med:"30 × 12 × 32 cm"},{cod:"BOL010",et:"Grande",med:"30 × 12 × 41 cm"}]},
+  {id:"bolsa-pan-pascua",nombre:"Bolsa pan de pascua",foto:"../img/productos/fotos/familia-bolsa-pan-pascua.webp",ms:[{cod:"BOL007",et:"½ kg",med:"25 × 35 cm"},{cod:"BOL008",et:"1 kg",med:"30 × 40 cm"}]},
+  {id:"saco-blanco",nombre:"Saco blanco",foto:"../img/productos/fotos/familia-saco-blanco.webp",ms:[{cod:"BOL046",et:"⅛ kg"},{cod:"BOL047",et:"¼ kg"},{cod:"BOL048",et:"½ kg"}]},
+  {id:"film",nombre:"Film plástico",foto:"../img/productos/fotos/familia-film.webp",ms:[{cod:"BOL026",et:"30 m",med:"28 cm × 30 m"},{cod:"BOL027",et:"100 m",med:"28 cm × 100 m"},{cod:"BOL028",et:"Económico"}]},
+  {id:"bolsa-basura",nombre:"Bolsa de basura",foto:"../img/productos/fotos/familia-bolsa-basura.webp",ms:[{cod:"ASE007",et:"50 × 65 con asas",med:"50 × 65 cm"},{cod:"ASE001",et:"50 × 70 Superior",med:"50 × 70 cm"},{cod:"ASE015",et:"50 × 70",med:"50 × 70 cm"},{cod:"ASE002",et:"70 × 90 Clean",med:"70 × 90 cm"},{cod:"ASE003",et:"80 × 110 Impeque",med:"80 × 110 cm"},{cod:"ASE004",et:"80 × 110 Virutex",med:"80 × 110 cm"},{cod:"ASE005",et:"80 × 120 Superior",med:"80 × 120 cm"},{cod:"ASE006",et:"110 × 120 Doña Gaby",med:"110 × 120 cm"}]},
+  {id:"vaso-plastico",nombre:"Vaso plástico transparente",foto:"../img/productos/fotos/familia-vaso-plastico.webp",ms:[{cod:"VAS016",et:"300 cc",cap:"300 cc"},{cod:"VAS002",et:"300 cc Good Food",cap:"300 cc"},{cod:"VAS003",et:"300 cc Vanni",cap:"300 cc"},{cod:"VAS004",et:"500 cc Cheap",cap:"500 cc"},{cod:"VAS005",et:"500 cc Good Food",cap:"500 cc"},{cod:"VAS006",et:"500 cc Vanni",cap:"500 cc"},{cod:"VAS015",et:"16 oz",cap:"500 cc"}]},
+  {id:"vaso-polipapel",nombre:"Vaso de polipapel",foto:"../img/productos/fotos/VAS023.webp",ms:[{cod:"VAS022",et:"8 oz",cap:"240 cc"},{cod:"VAS024",et:"240 cc",cap:"240 cc"},{cod:"VAS023",et:"10 oz",cap:"290 cc"}]},
+  {id:"vaso-plumavit",nombre:"Vaso de plumavit",foto:"../img/productos/fotos/VAS020.webp",ms:[{cod:"VAS020",et:"8 oz"},{cod:"VAS021",et:"10 oz"}]},
+  {id:"vaso-cafe",nombre:"Vaso para café",foto:"../img/productos/fotos/VAS008.webp",ms:[{cod:"VAS008",et:"Liso"},{cod:"VAS009",et:"Corrugado 8 oz"},{cod:"VAS011",et:"Corrugado 12 oz"}]},
+  {id:"salsero",nombre:"Salsero",foto:"../img/productos/fotos/familia-salsero.webp",ms:[{cod:"POT016",et:"1 oz",cap:"30 cc"},{cod:"POT015",et:"1 oz con tapa",cap:"30 cc"},{cod:"POT017",et:"2 oz con tapa",cap:"60 cc"},{cod:"POT020",et:"3,25 oz",cap:"100 cc"},{cod:"POT019",et:"3,25 oz con tapa",cap:"100 cc"},{cod:"POT021",et:"5,5 oz con tapa",cap:"160 cc"}]},
+  {id:"pote-bisagra",nombre:"Pote bisagra liso",foto:"../img/productos/fotos/POT006.webp",ms:[{cod:"POT005",et:"40-8",cap:"225 g"},{cod:"POT006",et:"40-12",cap:"340 g"},{cod:"POT007",et:"40-16",cap:"500 g"}]},
+  {id:"pote-helado",nombre:"Pote para helado",foto:"../img/productos/fotos/familia-pote-helado.webp",ms:[{cod:"POT008",et:"16 oz"},{cod:"POT009",et:"24 oz"},{cod:"POT010",et:"Bambú 16 oz"}]},
+  {id:"pote-palomita",nombre:"Pote palomitas",foto:"../img/productos/fotos/POT011.webp",ms:[{cod:"POT011",et:"N° 1"},{cod:"POT012",et:"N° 2"}]},
+  {id:"pote-bio",nombre:"Pote BIO",ms:[{cod:"POT003",et:"Chico"},{cod:"POT004",et:"Grande"}]},
+  {id:"plato-carton",nombre:"Plato de cartón",foto:"../img/productos/fotos/familia-plato-carton.webp",ms:[{cod:"DES034",et:"N° 1",med:"Ø 15 cm"},{cod:"DES033",et:"N° 2",med:"Ø 19,5 cm"},{cod:"DES036",et:"N° 3",med:"Ø 23,5 cm"}]},
+  {id:"plato-plastico",nombre:"Plato plástico",foto:"../img/productos/fotos/DES038.webp",ms:[{cod:"DES040",et:"N° 1"},{cod:"DES041",et:"N° 3"},{cod:"DES038",et:"17 cm",med:"Ø 17 cm"},{cod:"DES039",et:"20 cm",med:"Ø 20 cm"}]},
+  {id:"brocheta",nombre:"Brocheta de madera",foto:"../img/productos/fotos/familia-brocheta.webp",ms:[{cod:"DES005",et:"15 cm"},{cod:"DES006",et:"20 cm"},{cod:"DES007",et:"25 cm"},{cod:"DES008",et:"30 cm"},{cod:"DES009",et:"40 cm"},{cod:"DES051",et:"15 cm Bio Ely"},{cod:"DES052",et:"20 cm Bio Ely"}]},
+  {id:"guante-nitrilo",nombre:"Guante de nitrilo",foto:"../img/productos/fotos/familia-guante-nitrilo.webp",ms:[{cod:"DES027",et:"M"},{cod:"DES026",et:"L"}]},
+  {id:"guante-vinilo",nombre:"Guante de vinilo",foto:"../img/productos/fotos/familia-guante-vinilo.webp",ms:[{cod:"DES054",et:"S"},{cod:"DES029",et:"M"},{cod:"DES028",et:"L"}]},
+  {id:"bombilla",nombre:"Bombilla de papel",foto:"../img/productos/fotos/familia-bombilla.webp",ms:[{cod:"DES002",et:"20 cm 6 mm"},{cod:"DES003",et:"Estrecha"},{cod:"DES004",et:"Gruesa"},{cod:"DES001",et:"Con envoltorio"}]},
+  {id:"molde-pan-pascua",nombre:"Molde pan de pascua",foto:"../img/productos/fotos/familia-molde-pan-pascua.webp",ms:[{cod:"BLO007",et:"500 g",med:"Ø 14 × 5 cm"},{cod:"BLO006",et:"1 kg",med:"Ø 17 × 5 cm"}]}];
 const VARG={}, varSel={};
-VARIANTES.forEach(v=>{const ms=L.productos.filter(p=>!p.retirado&&!esPieza(p)&&v.re.test(p.nombre));if(ms.length<2)return;
-  ms.forEach(p=>{const m=p.nombre.match(v.re).groups;p.var=v.id;p.num=+m.n;p.dis=(m.d||"").toLowerCase();p.talla="N° "+m.n+(p.dis?` ${p.dis} diseño`:"")});
-  ms.sort((a,b)=>a.num-b.num||(a.dis==="con")-(b.dis==="con"));
-  const prs=ms.map(precioDe).filter(x=>x!=null);
-  const vp={cod:"VAR-"+v.id,nombre:v.nombre,cat:ms[0].cat,catBase:ms[0].catBase,detalle:"Precio por unidad",precio:prs.length?Math.min(...prs):null,virtual:true,var:v.id,foto:v.foto,fotos:[v.foto,...ms.map(p=>p.foto).filter(Boolean)]};
-  PROD[vp.cod]=vp;VARG[v.id]={nombre:v.nombre,ms,vp}});
-const tallasHTML=g=>{const v=VARG[g],s=varSel[g];
-  return `<div class="tallas"><span class="tl">Elige el tamaño</span><div class="tsz" role="group" aria-label="Tamaño de ${v.nombre}">${v.ms.map(p=>`<button type="button" class="szchip${agotado(p)?" sin":""}${p.dis?" ancho":""}" data-vg="${g}" data-varsel="${p.cod}" aria-pressed="${p.cod===s}" aria-label="${p.talla}"><span aria-hidden="true"><small>N°</small>${p.num}${p.dis?`<small class="szd">${p.dis} diseño</small>`:""}</span><span class="szn" aria-hidden="true" hidden></span></button>`).join("")}</div><small class="varped" aria-live="polite" hidden></small></div>`};
+/* Familias al estilo del catálogo Vanni (23/11/2026, David: «fíjate en las imágenes y en la forma en que la venden… recrea la
+   forma de venta que sea cómoda, parecido al catálogo»): en vez de una expresión de nombre, una entrada puede traer la lista de
+   sus tamaños, ms:[{cod, et, med, cap}], con la etiqueta del cuadrito (et: «N° 7», «Chica», «500 cc»), sus medidas y su
+   capacidad; el paquete que se muestra es el que vende la carta (upp), no el empaque del proveedor. La tarjeta muestra los cuadritos, la ficha del tamaño elegido y una tabla de medidas
+   (como la del catálogo) donde también se puede elegir el tamaño. */
+VARIANTES.forEach(v=>{let ms;
+  if(v.ms){ms=v.ms.map((x,i)=>{const p=L.productos.find(q=>q.cod===x.cod&&!q.retirado);if(!p||p.var)return null;const n=(x.et.match(/^N° ?(\d+)$/i)||[])[1];
+      Object.assign(p,{var:v.id,num:n!=null?+n:null,ord:i,dis:"",talla:x.et,med:x.med||"",cap:x.cap||"",emp:p.upp>1?p.upp:null});return p}).filter(Boolean);
+    if(ms.length<2){ms.forEach(p=>{delete p.var});return}}
+  else{ms=L.productos.filter(p=>!p.retirado&&!esPieza(p)&&v.re.test(p.nombre));if(ms.length<2)return;
+    ms.forEach(p=>{const m=p.nombre.match(v.re).groups;p.var=v.id;p.num=+m.n;p.dis=(m.d||"").toLowerCase();p.talla="N° "+m.n+(p.dis?` ${p.dis} diseño`:"")});
+    ms.sort((a,b)=>a.num-b.num||(a.dis==="con")-(b.dis==="con"))}
+  const prs=ms.map(precioDe).filter(x=>x!=null),todosPaq=ms.every(soloPaq);
+  const vp={cod:"VAR-"+v.id,nombre:v.nombre,cat:ms[0].cat,catBase:ms[0].catBase,detalle:"Precio por unidad",precio:prs.length?Math.min(...prs):null,virtual:true,var:v.id,unidadTxt:todosPaq?"el paquete":"c/u",foto:v.foto,fotos:[v.foto,...ms.map(p=>p.foto).filter(Boolean)]};
+  PROD[vp.cod]=vp;VARG[v.id]={nombre:v.nombre,ms,vp,tabla:!!v.ms,info:v.info||""}});
+const varTabla={}; // tablas de medidas abiertas (se mantienen abiertas al elegir un tamaño)
+const fichaTalla=p=>[p.med,p.cap,p.emp?`paquete de ${p.emp} u`:""].filter(Boolean).join(" · ");
+const chipTalla=p=>p.num!=null&&/^N°/i.test(p.talla)?`<small>N°</small>${p.talla.replace(/^N° ?/i,"").replace(/ .*$/,"")}${p.dis?`<small class="szd">${p.dis} diseño</small>`:""}`:`<span class="szt">${p.talla}</span>`;
+const tablaVarHTML=g=>{const v=VARG[g],s=varSel[g],cap=v.ms.some(p=>p.cap),med=v.ms.some(p=>p.med),emp=v.ms.some(p=>p.emp);
+  return `<details class="vtabla" data-vg="${g}"${varTabla[g]?" open":""}><summary>Ver tabla de medidas</summary><div class="vt-scroll"><table><thead><tr><th scope="col">Tamaño</th>${med?`<th scope="col">Medidas</th>`:""}${cap?`<th scope="col">Capacidad</th>`:""}${emp?`<th scope="col">Paquete</th>`:""}<th scope="col">Precio</th></tr></thead><tbody>`
+    +v.ms.map(p=>{const pr=precioDe(p);return `<tr${p.cod===s?' class="sel"':""}><th scope="row"><button type="button" data-vg="${g}" data-varsel="${p.cod}" aria-pressed="${p.cod===s}">${p.talla}</button></th>${med?`<td>${p.med||"—"}</td>`:""}${cap?`<td>${p.cap||"—"}</td>`:""}${emp?`<td>${p.emp?p.emp+" u":"—"}</td>`:""}<td>${pr==null?"Por confirmar":clp(pr)+`<small>${soloPaq(p)?" paq.":" c/u"}</small>`}${agotado(p)?` <small class="vt-sin">sin stock</small>`:""}</td></tr>`}).join("")
+    +`</tbody></table></div></details>`};
+const tallasHTML=g=>{const v=VARG[g],s=varSel[g],ps=s&&PROD[s];
+  return `<div class="tallas"><span class="tl">Elige el tamaño</span><div class="tsz" role="group" aria-label="Tamaño de ${v.nombre}">${v.ms.map(p=>`<button type="button" class="szchip${agotado(p)?" sin":""}${p.dis||p.num==null||!/^N°/i.test(p.talla)?" ancho":""}" data-vg="${g}" data-varsel="${p.cod}" aria-pressed="${p.cod===s}" aria-label="${p.talla}"><span aria-hidden="true">${chipTalla(p)}</span><span class="szn" aria-hidden="true" hidden></span></button>`).join("")}</div>${ps&&fichaTalla(ps)?`<small class="medsel">${fichaTalla(ps)}</small>`:""}${v.info&&!ps?`<small class="medsel">${v.info}</small>`:""}${v.tabla?tablaVarHTML(g):""}<small class="varped" aria-live="polite" hidden></small></div>`};
+document.addEventListener("toggle",e=>{const d=e.target;if(d.matches&&d.matches("details.vtabla"))varTabla[d.dataset.vg]=d.open},true);
 const cardVar=g=>card((varSel[g]&&PROD[varSel[g]])||VARG[g].vp,null,g);
 // tarjetas de una lista: los tamaños de un mismo producto salen una sola vez, en una tarjeta con cuadritos
 const cardsDe=(lista,c,ya=new Set())=>lista.map(p=>{if(!p.var||!VARG[p.var])return card(p,c);if(ya.has(p.var))return "";ya.add(p.var);return cardVar(p.var)}).join("");
@@ -2787,7 +2863,7 @@ verSeccion(leePref("seccion-"+KEY)||SECC[0].id,{desplazar:false});
     const tambien=exactos.length?visibles.filter(p=>secs.slice(0,2).includes(p.cat)&&!vistos.has(p.cod)).slice(0,6):[];
     // «saco kraft 4» o «papel kraft n° 5»: la tarjeta de tamaños aparece con ese tamaño ya elegido (el N° 3 del papel kraft necesita «sin» o «diseño»)
     const nums=(txt.match(/\d+/g)||[]).map(Number),tp=nPlano(txt);
-    if(nums.length)Object.keys(VARG).forEach(g=>{if(!lista.some(p=>p.var===g))return;let c=VARG[g].ms.filter(p=>nums.includes(p.num));
+    if(nums.length)Object.keys(VARG).forEach(g=>{if(!lista.some(p=>p.var===g))return;let c=VARG[g].ms.filter(p=>p.num!=null&&nums.includes(p.num));
       if(c.length>1){const sin=/\bsin\b/.test(tp),con=!sin&&/disen/.test(tp);c=sin?c.filter(p=>p.dis==="sin"):con?c.filter(p=>p.dis==="con"):[]}
       varSel[g]=c.length===1?c[0].cod:null});
     const t=txt.replace(/[<>&"]/g,""),ya=new Set(),htmlL=cardsDe(lista,FAV,ya),htmlT=cardsDe(tambien,FAV,ya),nl=nProd(lista);
