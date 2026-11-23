@@ -240,8 +240,34 @@ const ZONA = 'America/Santiago';
 const ESTADOS = ['Por confirmar', 'Confirmado', 'Preparado', 'Entregado', 'Anulado', 'No llegó'];
 const CONFIRMADOS = ['Confirmado', 'Preparado', 'Entregado']; // estados con la casilla marcada
 const HORAS_SIN_CONFIRMAR = 24;
-const COLUMNAS_DETALLE = ['Día de retiro', 'Hora', 'Código del pedido', 'Cliente', 'Producto', 'Código de producto', 'Cantidad', 'Unidades', 'Precio unitario'];
+// 23/11/2026: al final van el código de MyPyme de cada línea y lo que cambió SabAPP al editar el pedido («Cantidad pedida» y «Unidades pedidas»
+// = lo que pidió el cliente; «Cambio» = motivo, quién y cuándo). «Código de producto» sigue siendo el código interno de la carta.
+const COLUMNAS_DETALLE = ['Día de retiro', 'Hora', 'Código del pedido', 'Cliente', 'Producto', 'Código de producto', 'Cantidad', 'Unidades', 'Precio unitario',
+  'Código MyPyme', 'Cantidad pedida', 'Unidades pedidas', 'Cambio'];
+const DETALLE_ANTES = 9; // columnas que tenía la hoja hasta el 22/11/2026
+const CD = {}; COLUMNAS_DETALLE.forEach(function (nombre, i) { CD[nombre] = i + 1; });
+const SIN_CODIGO = 'SIN CÓDIGO'; // en «Código MyPyme»: el producto no tiene código en MyPyme
 const CP = {}; COLUMNAS_PEDIDOS.forEach(function (nombre, i) { CP[nombre] = i + 1; });
+/* Códigos MyPyme (David, 23/11/2026: «vamos a dejar estos códigos», los de la planilla (7), «Código nuevo» de su «Mapa de Codigos»): la carta manda en cada producto su código
+   interno («hasta 18-11») y el de MyPyme. Para las líneas anteriores (sin «Código MyPyme») se traduce con este mapa: código de la carta →
+   código MyPyme ("" = no tiene). Si un código no está aquí, es el mismo. Lo genera mapaCodigos7.py (ver CLAUDE.md del repositorio). */
+const CODIGOS_MYPYME = {"ABA001":"GRA001","ABA002":"GRA002","ABA003":"GRA003","ABA004":"GRA004","ABA005":"GRA005","ABA006":"GRA006","ABA007":"GRA007","ABA008":"GRA008","ABA009":"GRA009","ABA010":"GRA010","ABA011":"GRA011","ABA012":"","ABA013":"DES001","ABA014":"DES002","ABA015":"DES003","ABA016":"DES004","ABA017":"DES005","ABA018":"GRA012","ABA019":"GRA013","ABA020":"GRA014","ABA021":"GRA015","ABA022":"GRA016","ABA023":"GRA017","ABA024":"GRA018","ABA025":"GRA019","ABA026":"GRA020","ABA027":"GRA021","ABA028":"GRA022","ABA029":"DES006","ABA030":"DES007","ABA031":"GRA023","ABA032":"GRA024","ABA033":"GRA025","ABA034":"GRA026","ABA035":"GRA027","ABA036":"GRA028","ABA037":"GRA029","ABA038":"GRA030","ABA039":"GRA031","ABA040":"GRA032","ABA041":"GRA033","ABA042":"GRA034","ABA043":"GRA035","ABA044":"GRA036","ABA045":"GRA037","ABA046":"GRA038","ABA047":"GRA039","ABA048":"DES008","ABA049":"GRA040","ABA050":"DES009","ABA051":"GRA041","ABA052":"GRA042","ABA053":"GRA043","ABA054":"GRA044","ABA055":"GRA045","ABA056":"GRA046","ABA057":"GRA047","ABA058":"GRA048","ABA059":"GRA049","ABA060":"GRA050","ABA061":"GRA051","ABA062":"GRA052","ABA063":"GRA053","ABA064":"GRA054","ABA065":"GRA055","ABA066":"GRA056","ABA067":"GRA057","ABA068":"GRA058","ABA069":"GRA059","ABA070":"GRA060","ABA071":"GRA061","ABA072":"GRA062","ABA073":"GRA063","ABA074":"GRA064","ABA075":"GRA065","ABA076":"GRA066","ABA077":"GRA067","ABA078":"GRA068","ABA079":"GRA069","ABA080":"GRA070","ABA081":"GRA071","ABA082":"GRA072","ABA083":"GRA073","ABA084":"GRA074","ABA085":"GRA075","ABA086":"GRA076","ABA087":"GRA077","ABA088":"DES010","ABA089":"DES011","ABA090":"DES012","ABA091":"DES013","ABA092":"DES014","ABA093":"DES015","ABA094":"DES016","ABA095":"DES017","ANT-BLO013":"","ANT-BOL002":"","ANT-CAR007":"","ANT-CAR012":"","ANT-DES005":"","ANT-DES013":"","ANT-DES036":"","ANT-OTR011":"","ANT-PLA018":"","ANT-PLA027":"","ANT-POT004":"","ANT-POT007":"","ANT-POT017":"","ANT-TAP016":"","ANT-VAS007":"","ANT-VAS022":"","ASE001":"LIM001","ASE002":"LIM002","ASE003":"LIM003","ASE004":"LIM004","ASE005":"LIM005","ASE006":"LIM006","ASE007":"LIM007","ASE008":"LIM008","ASE009":"","ASE010":"LIM009","ASE011":"LIM010","ASE012":"LIM011","ASE013":"LIM012","ASE014":"LIM013","ASE015":"LIM014","ASE016":"LIM015","ASE017":"LIM016","ASE018":"LIM017","ASE019":"LIM018","BLO001":"PAP001","BLO002":"PAP002","BLO003":"PAP003","BLO004":"PAP004","BLO005":"PAP005","BLO006":"PAP006","BLO007":"PAP007","BLO009":"PAP008","BLO010":"PAP009","BOL001":"MER001","BOL002":"PLA001","BOL003":"PLA002","BOL004":"PLA003","BOL005":"PLA004","BOL006":"PLA005","BOL007":"PLA006","BOL008":"PLA007","BOL009":"PAP010","BOL010":"PAP011","BOL011":"PAP012","BOL012":"PLA008","BOL013":"MER002","BOL014":"PLA009","BOL015":"PLA010","BOL016":"PLA011","BOL017":"PLA012","BOL018":"PLA013","BOL019":"PAP013","BOL020":"PAP014","BOL021":"PAP015","BOL022":"PAP016","BOL023":"PAP017","BOL024":"PAP018","BOL025":"MER003","BOL026":"PLA014","BOL027":"PLA015","BOL028":"PLA016","BOL030":"MER004","BOL031":"PAP019","BOL032":"PLA017","BOL033":"PLA018","BOL034":"PAP020","BOL035":"","BOL036":"","BOL037":"","BOL038":"","BOL039":"","BOL040":"","BOL041":"","BOL042":"","BOL043":"PAP021","BOL044":"PAP022","BOL045":"PAP023","BOL046":"","BOL047":"PAP024","BOL048":"PAP025","BOL049":"","BOL050":"PAP026","BOL051":"PAP027","BOL052":"PAP028","BOL053":"PAP029","BOL054":"PAP030","BOL055":"PAP031","BOL056":"PAP032","BOL057":"PLA019","BOL058":"PLA020","BOL059":"PAP033","BOL060":"PAP034","BOL061":"PLA021","BOL062":"PLA022","BOL063":"PLA023","BOL064":"MER010","BOL065":"MER011","BOL066":"MER012","BOL067":"MER013","BOL068":"MER014","BOL069":"MER015","BOL070":"PLA154","BOL071":"PLA155","BOL072":"PLA156","BOL073":"PLA157","BOL074":"PLA158","BOL075":"MER016","BOL076":"MER017","BOL077":"MER018","CAR022":"","CAR023":"CAR021","CAR024":"CAR022","CAR025":"INS001","CAR026":"CAR023","CAR027":"CAR024","CAR028":"CAR025","CAR029":"CAR026","CAR030":"CAR027","CAR032":"CAR028","CAR033":"CAR029","CAR034":"CAR030","CAR035":"CAR031","CAR036":"CAR032","CAR037":"CAR033","CAR038":"CAR034","CAR039":"CAR035","CAR040":"PLA024","CAR041":"CAR036","CAR042":"CAR037","CAR043":"CAR038","CAR044":"CAR039","CAR045":"CAR040","CAR046":"CAR041","CAR047":"CAR042","CAR048":"CAR043","CAR049":"CAR044","CAR051":"CAR045","CAR052":"CAR046","CAR053":"CAR047","CAR054":"CAR048","CAR055":"CAR049","DES001":"PAP035","DES002":"PAP036","DES003":"PAP037","DES004":"PAP038","DES005":"MAD001","DES006":"MAD002","DES007":"MAD003","DES008":"MAD004","DES009":"MAD005","DES010":"LIM019","DES011":"LIM020","DES012":"PLA025","DES014":"MAD006","DES015":"PLA026","DES016":"PLA027","DES017":"PLA028","DES018":"MAD007","DES019":"PLA029","DES020":"PLA030","DES021":"PLA031","DES022":"MAD008","DES023":"PLA032","DES024":"PLA033","DES025":"LIM021","DES026":"LIM022","DES027":"LIM023","DES028":"LIM024","DES029":"LIM025","DES030":"MAD009","DES031":"PLA034","DES032":"MAD010","DES033":"CAR050","DES034":"CAR051","DES036":"CAR052","DES037":"PLA035","DES038":"PLA036","DES039":"PLA037","DES040":"PLA038","DES041":"PLA039","DES042":"MAD011","DES043":"LIM026","DES044":"PLA040","DES045":"MAD012","DES046":"MAD013","DES047":"MAD014","DES048":"PLA041","DES049":"PLA042","DES050":"PLA043","DES051":"MAD015","DES052":"MAD016","DES053":"PLA044","DES054":"LIM027","DES055":"PLA045","HUE001":"INS002","HUE002":"INS003","HUE003":"INS004","HUE025":"INS005","HUE027":"","OTR001":"DUL001","OTR003":"MER005","OTR004":"","OTR005":"MER006","OTR006":"LIM028","OTR007":"MER007","OTR008":"LIM029","OTR009":"LIM030","OTR010":"MER008","OTR011":"MER009","OTR012":"LAC009","OTR013":"LIM031","OTR014":"EQU001","OTR015":"EQU002","OTR016":"EQU003","PLA001":"PLA046","PLA002":"PLA047","PLA003":"PLA048","PLA004":"PLA049","PLA005":"PLA050","PLA006":"PLA051","PLA007":"PLA052","PLA008":"PLA053","PLA009":"PLA054","PLA010":"PLA055","PLA011":"PLA056","PLA012":"CAR063","PLA014":"CAR064","PLA015":"CAR065","PLA016":"CAR066","PLA017":"PLA057","PLA018":"PLA058","PLA019":"PLA059","PLA020":"PLA060","PLA021":"PLA061","PLA022":"PLA062","PLA023":"PLA063","PLA024":"PLA064","PLA025":"PLA065","PLA026":"PLA066","PLA027":"PLA067","PLA028":"PLA068","PLA029":"PLA069","PLA030":"PLA070","PLA031":"PLA071","PLA032":"PLA072","PLA033":"PLA073","PLA034":"PLA074","PLA035":"PLA075","PLA037":"PLA076","PLA038":"PLA077","PLA039":"PLA078","PLA040":"PLA079","PLA041":"PLA080","PLA042":"PLA081","PLA043":"PLA082","PLA044":"PLA083","POT001":"PLA084","POT002":"PLA085","POT003":"CAR067","POT004":"CAR068","POT005":"PLA086","POT006":"PLA087","POT007":"PLA088","POT008":"PLA089","POT009":"PLA090","POT010":"","POT011":"CAR053","POT012":"CAR054","POT013":"PLA091","POT014":"PLA092","POT015":"PLA093","POT016":"PLA094","POT017":"PLA095","POT018":"PLA096","POT019":"PLA097","POT020":"PLA098","POT021":"PLA099","POT022":"PLA100","TAP001":"CAR055","TAP002":"PLA101","TAP003":"PLA102","TAP004":"","TAP005":"ALU024","TAP006":"ALU025","TAP007":"ALU026","TAP008":"CAR056","TAP009":"PLA103","TAP010":"PLA104","TAP011":"PLA105","TAP012":"PLA106","TAP013":"PLA107","TAP014":"PLA108","TAP015":"PLA109","TAP016":"PLA110","TAP017":"PLA111","TAP018":"PLA112","TAP019":"PLA113","TAP020":"INS006","TAP021":"PLA114","TAP022":"PLA115","TAP023":"PLA116","TAP024":"PLA117","TAP025":"ALU027","TAP026":"PLA118","TAP027":"PLA119","TAP028":"PLA120","TAP029":"PLA121","TAP030":"PLA122","TAP031":"PLA123","TAP032":"PLA124","TAP033":"PLA125","TAP034":"PLA126","TAP035":"PLA127","TAP036":"PLA128","TAP037":"PLA129","TAP038":"PLA130","TAP040":"PLA132","TAP041":"PLA133","TAP042":"PLA134","TAP043":"PLA135","VAS001":"PLA138","VAS002":"PLA139","VAS003":"PLA140","VAS004":"PLA141","VAS005":"PLA142","VAS006":"PLA143","VAS007":"MAD018","VAS008":"CAR057","VAS009":"CAR058","VAS010":"PLA144","VAS011":"CAR059","VAS012":"PLA145","VAS013":"PLA146","VAS014":"PLA147","VAS015":"PLA148","VAS016":"PLA149","VAS019":"PLA150","VAS020":"PLA151","VAS021":"PLA152","VAS022":"CAR060","VAS023":"CAR061","VAS024":"CAR062","VAS025":"","VAS026":"PLA153"};
+function codigoMyPyme_(cod) {
+  const c = String(cod || '').trim().toUpperCase();
+  return Object.prototype.hasOwnProperty.call(CODIGOS_MYPYME, c) ? CODIGOS_MYPYME[c] : c;
+}
+// Código MyPyme de una fila de «Detalle de pedidos» ('' si no tiene)
+function codigoFilaMyPyme_(f) {
+  const g = String(f[CD['Código MyPyme'] - 1] == null ? '' : f[CD['Código MyPyme'] - 1]).trim().toUpperCase();
+  if (g === SIN_CODIGO) return '';
+  return g || codigoMyPyme_(f[CD['Código de producto'] - 1]);
+}
+// Lo que manda la carta (desde el 23/11 trae codMyPyme; '' = sin código); si no viene, el mapa
+function codigoPedidoMyPyme_(cod, my) {
+  const c = my === undefined || my === null ? codigoMyPyme_(cod) : texto(my).toUpperCase().slice(0, 20);
+  return c || SIN_CODIGO;
+}
+
 // Prioridad alta: cliente frecuente (3 pedidos o más) o pedido grande
 const FRECUENTE_DESDE = 3, UNIDADES_GRANDE = 180, TOTAL_GRANDE = 50000;
 const EN_LOCAL = 'Estoy en el local'; // hora que elige en el catálogo el cliente que ya está en el Emporio
@@ -260,7 +286,8 @@ function anotarPedido(d, tel, local) {
   const its = (Array.isArray(d.items) ? d.items : []).slice(0, 100).map(function (x) {
     return { cod: texto(x.cod).slice(0, 20), nombre: textoLargo(x.nombre, 140), q: entero(x.q, 100000), uds: entero(x.uds, 1000000),
       precio: x.precio == null || x.precio === '' ? '' : entero(x.precio, 10000000),
-      tapa: texto(x.tapa).slice(0, 20), tapaNombre: textoLargo(x.tapaNombre, 100) };
+      tapa: texto(x.tapa).slice(0, 20), tapaNombre: textoLargo(x.tapaNombre, 100),
+      my: codigoPedidoMyPyme_(x.cod, x.codMyPyme), tapaMy: x.tapa ? codigoPedidoMyPyme_(x.tapa, x.tapaMyPyme) : '' };
   }).filter(function (x) { return x.q > 0; });
   if (!its.length) throw new Error('pedido vacío');
   const unidades = its.reduce(function (a, x) { return a + (x.uds || x.q); }, 0);
@@ -279,8 +306,8 @@ function anotarPedido(d, tel, local) {
   hoja.getRange(hoja.getLastRow(), CP['Confirmado']).setDataValidation(casilla());
   const lineas = [];
   its.forEach(function (x) {
-    lineas.push([fecha, hora, codigo, cliente, x.nombre, x.cod, x.q, x.uds || x.q, x.precio]);
-    if (x.tapa) lineas.push([fecha, hora, codigo, cliente, '↳ ' + (x.tapaNombre || 'Tapa') + ' (va con el envase)', x.tapa, x.uds || x.q, x.uds || x.q, '']);
+    lineas.push([fecha, hora, codigo, cliente, x.nombre, x.cod, x.q, x.uds || x.q, x.precio, x.my, '', '', '']);
+    if (x.tapa) lineas.push([fecha, hora, codigo, cliente, '↳ ' + (x.tapaNombre || 'Tapa') + ' (va con el envase)', x.tapa, x.uds || x.q, x.uds || x.q, '', x.tapaMy, '', '', '']);
   });
   hojaDetalle().getRange(hojaDetalle().getLastRow() + 1, 1, lineas.length, COLUMNAS_DETALLE.length).setValues(lineas);
   // Si ahora es frecuente, sus pedidos pendientes también pasan a prioridad alta
@@ -437,6 +464,13 @@ function onEdit(e) {
 }
 
 function hojaDetalle() {
+  const vieja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_DETALLE);
+  if (vieja) { // hasta el 22/11/2026 tenía 9 columnas: se agregan las nuevas al final (una vez)
+    if (vieja.getMaxColumns() < COLUMNAS_DETALLE.length) vieja.insertColumnsAfter(vieja.getMaxColumns(), COLUMNAS_DETALLE.length - vieja.getMaxColumns());
+    const cab = vieja.getRange(1, 1, 1, COLUMNAS_DETALLE.length).getValues()[0];
+    if (COLUMNAS_DETALLE.slice(0, DETALLE_ANTES).every(function (c, i) { return cab[i] === c; }) && cab.slice(DETALLE_ANTES).every(function (v) { return v === ''; }))
+      vieja.getRange(1, DETALLE_ANTES + 1, 1, COLUMNAS_DETALLE.length - DETALLE_ANTES).setValues([COLUMNAS_DETALLE.slice(DETALLE_ANTES)]).setFontWeight('bold');
+  }
   const hoja = hojaCon(HOJA_DETALLE, COLUMNAS_DETALLE);
   hoja.getRange('A2:A').setNumberFormat('dddd dd/mm/yyyy');
   return hoja;
@@ -758,6 +792,7 @@ function sabappApi_(d) {
   if (d.accion === 'cambiar') return conRol(panelCambiar_(yo.nombre, a[0], a[1], a[2], a[3], a[4]));
   if (d.accion === 'asignar') return conRol(panelAsignar_(yo.nombre, a[0], a[1], a[2]));
   if (d.accion === 'avisado') return conRol(panelAvisado_(yo.nombre, a[0], a[1]));
+  if (d.accion === 'editar') return conRol(panelEditar_(yo.nombre, a[0], a[1]));
   if (d.accion === 'stock') {
     if (!yo.admin) return { ok: false, error: 'Solo un administrador de SabAPP decide sobre el stock.' };
     const oc = stockDecidir_(yo.nombre, a[0], a[1]), datos = panelDatos_(yo.nombre);
@@ -917,8 +952,10 @@ function panelDatos_(usuario) {
   if (m > 1) det.getRange(2, 1, m - 1, COLUMNAS_DETALLE.length).getValues().forEach(function (f) {
     const cod = String(f[2] || '');
     if (!cod) return;
-    (items[cod] = items[cod] || []).push({ nombre: String(f[4]), cod: String(f[5]), q: Number(f[6]) || 0, uds: Number(f[7]) || 0,
-      precio: f[8] === '' || f[8] == null ? null : Number(f[8]) });
+    const ped = f[CD['Cantidad pedida'] - 1], udp = f[CD['Unidades pedidas'] - 1];
+    (items[cod] = items[cod] || []).push({ nombre: String(f[4]), cod: codigoFilaMyPyme_(f), codCarta: String(f[5]), q: Number(f[6]) || 0, uds: Number(f[7]) || 0,
+      precio: f[8] === '' || f[8] == null ? null : Number(f[8]),
+      pedida: ped === '' || ped == null ? null : Number(ped), udsPedidas: udp === '' || udp == null ? null : Number(udp), cambio: String(f[CD['Cambio'] - 1] || '') });
   });
   const hace = Date.now() - 14 * 864e5;
   const valor = function (f, nombre) { return f[CP[nombre] - 1]; };
@@ -983,6 +1020,77 @@ function panelCambiar_(usuario, codigo, estado, avisado, prepara, avisoWsp) {
   const d = panelDatos_(usuario);
   if (avisoAtiende) d.avisoAtiende = avisoAtiende;
   return d;
+}
+
+// Editar un pedido desde SabAPP (David, 23/11/2026: «poder editar el pedido eliminando lo que no tenemos o lo que el cliente me dijo que no quiere»).
+// cambios: [{ i: n.º de línea del pedido (en el orden de la hoja), q: cantidad nueva (0 = quitar), motivo, huella: 'producto|código|cantidad' al abrir }].
+// Solo se baja la cantidad (o se devuelve hasta lo que pidió el cliente). La línea guarda lo pedido y el motivo; el pedido recalcula unidades,
+// total (mismo descuento proporcional y el despacho igual) y la columna «Productos», y queda anotado en la nota de «Estado».
+const MOTIVOS_CAMBIO = ['Sin stock', 'El cliente no lo quiere'];
+function pesos_(n) { return '$' + String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function panelEditar(codigo, cambios) { return panelEditar_(exigirVendedor(), codigo, cambios); }
+function panelEditar_(usuario, codigo, cambios) {
+  if (!Array.isArray(cambios) || !cambios.length || cambios.length > 200) throw new Error('No hay cambios que guardar.');
+  const candado = LockService.getScriptLock();
+  candado.waitLock(15000);
+  let resumen = null;
+  try {
+    const hoja = hojaPedidos(), fila = filaDelPedido(hoja, codigo);
+    const ped = hoja.getRange(fila, 1, 1, COLUMNAS_PEDIDOS.length).getValues()[0];
+    const estado = String(ped[CP['Estado'] - 1]);
+    if (['Por confirmar', 'Confirmado', 'Preparado'].indexOf(estado) < 0) throw new Error('El pedido ' + codigo + ' está ' + estado.toLowerCase() + ': ya no se puede editar.');
+    const det = hojaDetalle(), m = det.getLastRow();
+    const todas = m > 1 ? det.getRange(2, 1, m - 1, COLUMNAS_DETALLE.length).getValues() : [];
+    const lineas = [];
+    todas.forEach(function (f, k) { if (String(f[2]) === String(codigo)) lineas.push({ n: k + 2, f: f }); });
+    if (!lineas.length) throw new Error('No se encontró el detalle del pedido ' + codigo + '.');
+    const cambio = 'El pedido cambió mientras lo editabas: ábrelo de nuevo.';
+    const cuando = Utilities.formatDate(new Date(), SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone(), 'dd/MM HH:mm');
+    const suma = function () { return lineas.reduce(function (a, l) { return a + (l.f[8] === '' || l.f[8] == null ? 0 : (Number(l.f[6]) || 0) * Number(l.f[8])); }, 0); };
+    const antes = suma(), notas = [], vistos = {};
+    cambios.forEach(function (c) {
+      const i = Number(c && c.i);
+      const l = lineas[i];
+      if (!l || vistos[i]) throw new Error(cambio);
+      vistos[i] = true;
+      const f = l.f, qAhora = Number(f[6]) || 0, udsAhora = Number(f[7]) || 0;
+      if (String(c.huella || '') !== [String(f[4]), String(f[5]), qAhora].join('|')) throw new Error(cambio);
+      const pedida = f[CD['Cantidad pedida'] - 1] === '' ? qAhora : Number(f[CD['Cantidad pedida'] - 1]) || 0;
+      const udsPedidas = f[CD['Unidades pedidas'] - 1] === '' ? udsAhora : Number(f[CD['Unidades pedidas'] - 1]) || 0;
+      const q = entero(c.q, pedida);
+      if (q === qAhora) return;
+      const uds = pedida ? Math.round(udsPedidas * q / pedida * 1000) / 1000 : 0;
+      const motivo = MOTIVOS_CAMBIO.indexOf(c.motivo) >= 0 ? c.motivo : MOTIVOS_CAMBIO[0];
+      const nombre = String(f[4]).replace(/^↳ /, '');
+      f[6] = q; f[7] = uds;
+      if (q === pedida) { f[CD['Cantidad pedida'] - 1] = ''; f[CD['Unidades pedidas'] - 1] = ''; f[CD['Cambio'] - 1] = ''; notas.push(nombre + ': vuelve a ' + q); }
+      else {
+        f[CD['Cantidad pedida'] - 1] = pedida; f[CD['Unidades pedidas'] - 1] = udsPedidas; f[CD['Cambio'] - 1] = motivo + ' · ' + usuario + ' ' + cuando;
+        notas.push((q ? nombre + ': ' + pedida + ' → ' + q : 'quitó ' + pedida + ' × ' + nombre) + ' (' + motivo.toLowerCase() + ')');
+      }
+      det.getRange(l.n, 1, 1, COLUMNAS_DETALLE.length).setValues([f]);
+    });
+    if (!notas.length) throw new Error('No hay cambios que guardar.');
+    // Totales del pedido: el despacho no cambia; el descuento (si hubo) se mantiene en la misma proporción
+    const despues = suma(), total0 = Number(ped[CP['Total aprox.'] - 1]) || 0;
+    const desp = (String(ped[CP['Comentario'] - 1] || '').match(/DESPACHO \$([\d.]+)/) || [])[1];
+    const despacho = desp ? Number(desp.replace(/\./g, '')) || 0 : 0;
+    const factor = antes > 0 && total0 ? Math.min(1, Math.max(0, (total0 - despacho) / antes)) : 1;
+    const vacio = lineas.every(function (l) { return !(Number(l.f[6]) > 0); });
+    const total1 = !total0 ? 0 : vacio ? 0 : Math.round(despacho + despues * factor);
+    const principales = lineas.filter(function (l) { return !/^↳/.test(String(l.f[4])); });
+    const unidades = principales.reduce(function (a, l) { return a + (Number(l.f[7]) || Number(l.f[6]) || 0); }, 0);
+    const productos = principales.filter(function (l) { return Number(l.f[6]) > 0; }).map(function (l) { return l.f[6] + ' × ' + l.f[4]; }).join(' · ');
+    hoja.getRange(fila, CP['Unidades']).setValue(Math.round(unidades * 1000) / 1000);
+    hoja.getRange(fila, CP['Total aprox.']).setValue(total1 || '');
+    hoja.getRange(fila, CP['Productos']).setValue(textoLargo(productos || '(sin productos: todo se quitó)', 2000));
+    anotarEnEstado(hoja, fila, ('Editado por ' + usuario + ': ' + notas.join('; ') + (total0 ? '. Total ' + pesos_(total0) + ' → ' + pesos_(total1) : '')).slice(0, 480));
+    resumen = { codigo: codigo, total: total1, cambios: notas.length };
+    try { recalcularStock_({ correo: true }); } catch (err) { /* el cambio ya quedó */ }
+  } finally { candado.releaseLock(); }
+  const datos = panelDatos_(usuario);
+  datos.editado = resumen;
+  return datos;
 }
 
 // El vendedor abrió WhatsApp o el correo para avisar al cliente que su pedido está listo: queda anotado (lo ven todos los PC).
@@ -1240,7 +1348,7 @@ function recalcularStock_(opc) {
   });
   const reservado = {}, det = hojaDetalle(), nd = det.getLastRow();
   if (nd > 1) det.getRange(2, 1, nd - 1, COLUMNAS_DETALLE.length).getValues().forEach(function (f) {
-    const pc = String(f[5] || '').trim().toUpperCase();
+    const pc = codigoFilaMyPyme_(f);
     if (!cuentan[String(f[2])] || !pc) return;
     reservado[pc] = (reservado[pc] || 0) + (Number(f[7]) || Number(f[6]) || 0);
   });
