@@ -1,3 +1,6 @@
 herramientas/node_modules/
 # Lo arma herramientas/sabapp/catalogo.js en cada publicación (GitHub Actions) y con construir.js
 sabapp/catalogo.json
+# Pruebas locales de SabAPP (planilla simulada) y cachés de Python: no van en git
+herramientas/consola/
+__pycache__/

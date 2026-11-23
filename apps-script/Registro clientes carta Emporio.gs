@@ -1,31 +1,30 @@
 /**
- * Registro de clientes y pedidos del Catálogo Sabroso (Emporio Sabroso y Distribuidora Santa Bárbara).
- * Apps Script ligado a la planilla «EM27-0802 Pedidos y clientes Catálogo Sabroso» (antes EM27-07).
- * Recibe lo que envía el catálogo y lo anota. También sirve SabAPP, el panel de pedidos de los vendedores.
+ * Registro de clientes y pedidos del Catálogo Sabroso (Emporio Sabroso y Distribuidora Santa Bárbara) y SabAPP.
+ * Apps Script ligado a la planilla «EM27-0802 Pedidos y clientes Catálogo Sabroso» (unidad compartida de la empresa).
+ * Recibe lo que envía el catálogo (www.avicolasb.com/carta), lo anota y sirve SabAPP, el panel de pedidos de los vendedores:
+ * el archivo «Panel» de este proyecto, que también se publica en www.avicolasb.com/sabapp (herramientas/sabapp/construir.js).
  *
- * INSTALACIÓN
- *  1. Abrir la planilla EM27-07 → Extensiones → Apps Script. Pegar este archivo completo.
- *  2. Implementar → Nueva implementación → Aplicación web.
- *     Ejecutar como: yo. Quién tiene acceso: cualquier persona.
- *  3. Copiar la URL que termina en /exec y pegarla en index.html, en REGISTRO_URL.
- *  4. Recargar la planilla: aparece el menú "Registro de clientes".
+ * IMPLEMENTACIONES (las tres ejecutan como jefatura@avicolasb.com y usan la misma versión del script)
+ *  · Catálogo (acceso: cualquier persona): recibe pedidos, registros y avisos de la carta y responde ?stock=emporio.
+ *  · SabAPP vendedores (acceso: cuentas @avicolasb.com): muestra el panel a quien tiene acceso a esta planilla.
+ *  · SabAPP correo y clave (acceso: cualquier persona): la API de www.avicolasb.com/sabapp, siempre con sesión.
+ *  Al cambiar el código: guardar y, en Implementar → Administrar las implementaciones, editar cada una → Versión:
+ *  «Nueva versión» en la primera y esa misma versión en las otras dos → Implementar. Las direcciones no cambian.
  *
- * QUÉ RECIBE (JSON enviado como texto por la carta)
+ * QUÉ RECIBE DEL CATÁLOGO (JSON enviado como texto)
  *  registro  {n1, n2, a1, a2, tel, acepta, fecha, local}  crea al cliente (o actualiza solo sus ofertas) y RESPONDE su código
- *
- * PROTECCIONES: tamaño máximo del envío, celular chileno válido, nombres solo con letras, textos sin fórmulas,
- * límite de envíos por minuto y por celular, y un cliente ya registrado no cambia de nombre desde la carta.
- *  uso      {tel, codigo, monto, local}                  anota el descuento de bienvenida usado
+ *  uso       {tel, codigo, monto, local}                  anota el descuento de bienvenida usado
  *  baja      {tel, local}                                 deja de recibir ofertas (se aplica de inmediato)
  *  eliminar  {tel, local}                                 solicitud de eliminación (queda pendiente)
  *  pedido    {codigo, nombre, tel?, correo?, codigoCliente?, fechaRetiro, hora, items[], total, nota, local}
- *            anota el pedido enviado desde la carta en "Pedidos" (y sus productos en "Detalle de pedidos")
- *            y deja la planilla ordenada: por día de retiro, primero los de prioridad alta
- *            (cliente frecuente o pedido grande), luego los de más unidades y por hora.
- *            "Por preparar" suma, para cada día desde hoy, cuánto hay que tener listo de cada producto.
+ *            anota el pedido en «Pedidos» (y cada producto, con su código MyPyme, en «Detalle de pedidos») y deja la
+ *            planilla ordenada: por día de retiro, primero los de prioridad alta (cliente frecuente, pedido grande o
+ *            cliente en el local), luego los de más unidades y por hora.
+ *            «Por preparar» suma, para cada día desde hoy, cuánto hay que tener listo de cada producto confirmado.
  *
- * DESPUÉS DE PEGAR ESTA VERSIÓN: Implementar → Gestionar implementaciones → editar la actual →
- * Versión: "Nueva versión" → Implementar. Así la URL de la carta no cambia.
+ * PROTECCIONES: tamaño máximo del envío, celular chileno válido, nombres solo con letras, textos sin fórmulas,
+ *  límite de envíos (40 por minuto en total y 4 por celular cada 10 minutos, en `limitar`) y un cliente ya
+ *  registrado no cambia de nombre desde la carta.
  *
  * ESTADOS DE UN PEDIDO (columna "Estado", y la casilla "Confirmado" al inicio de cada fila)
  *  Por confirmar → llegó desde el catálogo; aún no se comprueba que el cliente lo envió por el chat.
@@ -33,14 +32,6 @@
  *  Preparado     → listo para retirar.   Entregado / Anulado → cerrado.
  *  No llegó      → nadie lo confirmó en 24 horas (el cliente abrió el chat pero no lo envió).
  *  "Por preparar" suma solo los pedidos confirmados.
- *
- * PANEL DE PEDIDOS (pantalla en vivo para los PC de los vendedores; archivo HTML "Panel" de este proyecto)
- *  Implementar → Nueva implementación → Aplicación web.
- *    Ejecutar como: yo (dte@avicolasb.com).
- *    Quién tiene acceso: cualquier usuario de Avícola El Huevo Sabroso (cuentas @avicolasb.com).
- *  Solo lo abre quien tiene acceso a esta planilla: para sumar a un vendedor, se le comparte la planilla
- *  (o la unidad compartida) con su cuenta de Google. Se actualiza solo cada pocos segundos.
- *  La implementación pública del catálogo (Ejecutar como: yo) no muestra el panel a nadie más que al dueño.
  *
  * La eliminación NO es automática: cualquiera que conozca un celular podría enviarla.
  * Queda anotada en "Solicitudes" y una persona la confirma con el cliente (por WhatsApp
@@ -244,7 +235,6 @@ const HORAS_SIN_CONFIRMAR = 24;
 // = lo que pidió el cliente; «Cambio» = motivo, quién y cuándo). «Código de producto» sigue siendo el código interno de la carta.
 const COLUMNAS_DETALLE = ['Día de retiro', 'Hora', 'Código del pedido', 'Cliente', 'Producto', 'Código de producto', 'Cantidad', 'Unidades', 'Precio unitario',
   'Código MyPyme', 'Cantidad pedida', 'Unidades pedidas', 'Cambio'];
-const DETALLE_ANTES = 9; // columnas que tenía la hoja hasta el 22/11/2026
 const CD = {}; COLUMNAS_DETALLE.forEach(function (nombre, i) { CD[nombre] = i + 1; });
 const SIN_CODIGO = 'SIN CÓDIGO'; // en «Código MyPyme»: el producto no tiene código en MyPyme
 const CP = {}; COLUMNAS_PEDIDOS.forEach(function (nombre, i) { CP[nombre] = i + 1; });
@@ -332,7 +322,6 @@ function ordenarPedidos() {
 }
 
 function hojaPedidos() {
-  migrarPedidos();
   const hoja = hojaCon(HOJA_PEDIDOS, COLUMNAS_PEDIDOS);
   const n = hoja.getLastRow();
   if (n > 1) hoja.getRange(2, CP['Confirmado'], n - 1, 1).setDataValidation(casilla());
@@ -365,63 +354,6 @@ function formatoPedidos(hoja) {
     regla().whenFormulaSatisfied('=' + d + '=TODAY()').setBackground('#fff2c2').setRanges([fila]).build(),
     regla().whenFormulaSatisfied('=' + d + '=TODAY()+1').setBackground('#e3f1dc').setRanges([fila]).build()
   ]);
-}
-
-// Una sola vez: pasa la planilla a la hora de Chile y agrega la casilla «Confirmado» a la hoja de la versión anterior.
-function migrarPedidos() {
-  corregirZonaHoraria();
-  const hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_PEDIDOS);
-  if (!hoja) return;
-  const total = COLUMNAS_PEDIDOS.length, max = hoja.getMaxColumns();
-  if (max < total) hoja.insertColumnsAfter(max, total - max);
-  // Los títulos se leen de una vez (el panel pasa por aquí cada 12 segundos)
-  const cab = hoja.getRange(1, 1, 1, total).getValues()[0].map(String);
-  const t = function (nombre) { return cab[CP[nombre] - 1]; };
-  const poner = function (nombre) { hoja.getRange(1, CP[nombre]).setValue(nombre).setFontWeight('bold'); cab[CP[nombre] - 1] = nombre; };
-  // Hoja ya con «Confirmado» pero sin «Correo» (versión del 14/11): se agrega al final
-  if (cab[0] === 'Confirmado' && t('Correo') === '' && t('Local') === 'Local') poner('Correo');
-  // Hoja sin «Prepara» (quién prepara el pedido): se agrega al final, después de «Correo»
-  if (cab[0] === 'Confirmado' && t('Correo') === 'Correo' && t('Prepara') === '') poner('Prepara');
-  if (cab[0] !== 'Día de retiro') return;
-  hoja.insertColumnBefore(1);
-  hoja.getRange(1, 1).setValue('Confirmado').setFontWeight('bold');
-  hoja.getRange(1, CP['Correo']).setValue('Correo').setFontWeight('bold');
-  hoja.getRange(1, CP['Prepara']).setValue('Prepara').setFontWeight('bold');
-  hoja.clearConditionalFormatRules(); // se rehacen con las columnas nuevas
-  hoja.getRange(2, CP['Estado'], hoja.getMaxRows() - 1, 1).clearDataValidations();
-  const n = hoja.getLastRow();
-  if (n > 1) {
-    const est = hoja.getRange(2, CP['Estado'], n - 1, 1), v = est.getValues().map(function (f) { return [f[0] === 'Pendiente' ? 'Por confirmar' : f[0]]; });
-    est.setValues(v);
-    hoja.getRange(2, CP['Confirmado'], n - 1, 1).setValues(v.map(function (f) { return [CONFIRMADOS.indexOf(f[0]) >= 0]; }));
-  }
-}
-
-// La planilla nació con la hora del Pacífico de EE. UU.: «Recibido» salía 5 horas antes y el día de retiro, un día antes.
-// Se leen las fechas (quedan como instantes correctos), se cambia la zona a Chile y se vuelven a escribir.
-function corregirZonaHoraria() {
-  const libro = SpreadsheetApp.getActiveSpreadsheet();
-  if (libro.getSpreadsheetTimeZone() === ZONA) return false;
-  const columnas = {};
-  columnas[HOJA_PEDIDOS] = ['Día de retiro', 'Recibido'];
-  columnas[HOJA_DETALLE] = ['Día de retiro'];
-  columnas[HOJA_CLIENTES] = ['Fecha de registro', 'Fecha de baja', 'Descuento usado', 'Eliminación solicitada', 'Actualizado'];
-  columnas[HOJA_SOLICITUDES] = ['Fecha', 'Resuelta el'];
-  const guardadas = [];
-  Object.keys(columnas).forEach(function (nombreHoja) {
-    const hoja = libro.getSheetByName(nombreHoja);
-    if (!hoja || hoja.getLastRow() < 2) return;
-    const cab = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0];
-    columnas[nombreHoja].forEach(function (titulo) {
-      const c = cab.indexOf(titulo) + 1;
-      if (!c) return;
-      const r = hoja.getRange(2, c, hoja.getLastRow() - 1, 1);
-      guardadas.push({ r: r, v: r.getValues() });
-    });
-  });
-  libro.setSpreadsheetTimeZone(ZONA);
-  guardadas.forEach(function (g) { g.r.setValues(g.v); });
-  return true;
 }
 
 // Pedidos «Por confirmar» con más de 24 horas: el cliente abrió el chat pero el pedido nunca llegó.
@@ -465,13 +397,6 @@ function onEdit(e) {
 }
 
 function hojaDetalle() {
-  const vieja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_DETALLE);
-  if (vieja) { // hasta el 22/11/2026 tenía 9 columnas: se agregan las nuevas al final (una vez)
-    if (vieja.getMaxColumns() < COLUMNAS_DETALLE.length) vieja.insertColumnsAfter(vieja.getMaxColumns(), COLUMNAS_DETALLE.length - vieja.getMaxColumns());
-    const cab = vieja.getRange(1, 1, 1, COLUMNAS_DETALLE.length).getValues()[0];
-    if (COLUMNAS_DETALLE.slice(0, DETALLE_ANTES).every(function (c, i) { return cab[i] === c; }) && cab.slice(DETALLE_ANTES).every(function (v) { return v === ''; }))
-      vieja.getRange(1, DETALLE_ANTES + 1, 1, COLUMNAS_DETALLE.length - DETALLE_ANTES).setValues([COLUMNAS_DETALLE.slice(DETALLE_ANTES)]).setFontWeight('bold');
-  }
   const hoja = hojaCon(HOJA_DETALLE, COLUMNAS_DETALLE);
   hoja.getRange('A2:A').setNumberFormat('dddd dd/mm/yyyy');
   return hoja;
@@ -655,7 +580,7 @@ function fechaValida(v) {
 
 /* ---------- Panel de pedidos (vendedores) ---------- */
 
-// Correo de quien abre el panel. El panel corre con la cuenta dueña del script (dte@) y solo deja entrar a cuentas
+// Correo de quien abre el panel. El panel corre con la cuenta dueña del script (jefatura@) y solo deja entrar a cuentas
 // del mismo dominio de Google Workspace (avicolasb.com): Google entrega ese correo solo a usuarios del dominio.
 // Un visitante anónimo o de otra cuenta queda fuera (también en la implementación pública del catálogo).
 function vendedor() {
@@ -778,7 +703,6 @@ function sesionUsuario_(token) {
   const u = propsJson_('SABAPP_USUARIOS')[s.correo];
   return u ? { correo: s.correo, nombre: u.nombre, admin: !!u.admin, cambiar: !!u.cambiar } : null;
 }
-function usuarioSesion_(token) { const u = sesionUsuario_(token); return u ? u.nombre : ''; }
 // Todo lo que pide la página de SabAPP pasa por aquí
 function sabappApi_(d) {
   if (d.accion === 'ingresar') { const r = sabappIngresar_(d.correo, d.clave || d.rut); return { ok: true, token: r.token, nombre: r.nombre, cambiar: r.cambiar }; }
@@ -1321,11 +1245,6 @@ function enviarCorreoAtiende_(correo, cliente, codigo, prepara) {
       + '<p style="margin:0 0 12px">' + html(saludo) + ' <b>' + html(prepara) + '</b> atenderá tu pedido <b>' + html(codigo) + '</b>, ¡lo estamos preparando!</p>'
       + '<p style="margin:0;color:#66645c;font-size:14px">Te lo entregamos en el mesón.<br>Emporio Sabroso · Arturo Prat 720, Chillán</p></div>'
   });
-}
-
-// Ejecutar UNA vez desde el editor con la cuenta dueña: da el permiso de enviar correos (no envía nada).
-function autorizarCorreo() {
-  Logger.log('Permiso de correo listo. Correos que quedan hoy: ' + MailApp.getRemainingDailyQuota());
 }
 
 function filaDelPedido(hoja, codigo) {
