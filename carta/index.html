@@ -1920,7 +1920,24 @@ const LOCALES = {
       {cod:"LAC005",cat:"Lácteos",nombre:"Queso laminado Don Isidro ¼ kg",detalle:"Precio por unidad",precio:2990,nuevo:true,foto:"../img/productos/fotos/LAC005.webp"},
       {cod:"LAC006",cat:"Lácteos",nombre:"Queso laminado Don Isidro ½ kg",detalle:"Precio por unidad",precio:5980,nuevo:true,foto:"../img/productos/fotos/LAC006.webp"},
       {cod:"LAC007",cat:"Lácteos",nombre:"Queso gauda (barra)",detalle:"Precio por kilo",precio:5990,bolsas:[[250,1590],[1000,5990]],porcion:true,nuevo:true,foto:"../img/productos/fotos/LAC007.webp"},
-      {cod:"LAC008",cat:"Lácteos",nombre:"Queso despunte 1 kg",detalle:"Precio por unidad",precio:5990,nuevo:true,foto:"../img/productos/fotos/LAC008.webp"},
+      // 24/11/2026: facturas Los Llanos N° 109334 y Don Gaspar N° 180 (David: «22% precio del cuarto. 18,5 para el kg y 15% para la pieza»; «los precios están bien»).
+      // Códigos = MyPyme: LAC018–LAC021 los creó el equipo en MyPyme; LAC022–LAC026, Claude. Despunte gauda Soprole = LAC008 (mismo costo). Fotos de David.
+      {cod:"LAC008",cat:"Lácteos",nombre:"Queso despunte gauda Soprole",detalle:"Precio por kilo",precio:6140,bolsas:[[250,1610],[1000,6140]],porcion:true,nuevo:true,foto:"../img/productos/fotos/LAC008.webp"},
+      {cod:"LAC018",cat:"Lácteos",nombre:"Mantequilla artesanal Fundo Curihue 250 g",detalle:"Precio por unidad",precio:2720,nuevo:true,foto:"../img/productos/fotos/LAC018.webp"},
+      {cod:"LAC019",cat:"Lácteos",nombre:"Quesillo San Sebastián 400 g",detalle:"Precio por unidad",precio:2460,nuevo:true,foto:"../img/productos/fotos/LAC019.webp"},
+      {cod:"LAC020",cat:"Lácteos",nombre:"Queso mantecoso San Sebastián (pieza)",detalle:"Precio por kilo",precio:8770,bolsas:[[250,2290],[1000,8770]],porcion:true,pieza:8400,nuevo:true,foto:"../img/productos/fotos/LAC020.webp"},
+      {cod:"LAC021",cat:"Lácteos",nombre:"Queso mantecoso redondo San Sebastián 800 g aprox.",detalle:"Precio por unidad",precio:8240,nuevo:true,foto:"../img/productos/fotos/LAC021.webp"},
+      {cod:"LAC022",cat:"Lácteos",nombre:"Queso mantecoso Las Parcelas de Valdivia (pieza)",detalle:"Precio por kilo",precio:10930,bolsas:[[250,2860],[1000,10930]],porcion:true,pieza:10480,nuevo:true,foto:"../img/productos/fotos/LAC022.webp"},
+      {cod:"LAC023",cat:"Lácteos",nombre:"Queso mantecoso Rafulco (redondo de 1 kg)",detalle:"Precio por kilo",precio:10740,bolsas:[[250,2810],[1000,10740]],porcion:true,pieza:10300,nuevo:true,foto:"../img/productos/fotos/LAC023.webp",fotos:["../img/productos/fotos/LAC023.webp", "../img/productos/fotos/LAC023-2.webp"]},
+      {cod:"LAC024",cat:"Lácteos",nombre:"Queso finas hierbas Rafulco merkén",detalle:"Precio por kilo",precio:12030,bolsas:[[250,3150],[1000,12030]],porcion:true,pieza:11530,nuevo:true,foto:"../img/productos/fotos/LAC024.webp",fotos:["../img/productos/fotos/LAC024.webp", "../img/productos/fotos/LAC024-2.webp"]},
+      {cod:"LAC025",cat:"Lácteos",nombre:"Queso finas hierbas Rafulco orégano",detalle:"Precio por kilo",precio:12030,bolsas:[[250,3150],[1000,12030]],porcion:true,pieza:11530,nuevo:true,foto:"../img/productos/fotos/LAC025.webp",fotos:["../img/productos/fotos/LAC025.webp", "../img/productos/fotos/LAC025-2.webp"]},
+      {cod:"LAC026",cat:"Lácteos",nombre:"Queso finas hierbas Rafulco albahaca",detalle:"Precio por kilo",precio:12030,bolsas:[[250,3150],[1000,12030]],porcion:true,pieza:11530,nuevo:true,foto:"../img/productos/fotos/LAC026.webp",fotos:["../img/productos/fotos/LAC026.webp", "../img/productos/fotos/LAC026-2.webp"]},
+      // Ya estaban en MyPyme (los creó el equipo) y David mandó su foto el 24/11/2026: precio = lista Emporio de MyPyme.
+      // Queso de cabra El Roble: kilo y pieza = U.M. «Kilogramos» y «Pieza kilo»; el ¼ kg = 250 g al precio por gramo (lo que cobra la balanza).
+      {cod:"LAC011",cat:"Lácteos",nombre:"Mantequilla de campo El Roble 250 g",detalle:"Precio por unidad",precio:2050,nuevo:true,foto:"../img/productos/fotos/LAC011.webp"},
+      {cod:"LAC013",cat:"Lácteos",nombre:"Queso fresco Los Tilos 350 g",detalle:"Precio por unidad",precio:2400,nuevo:true,foto:"../img/productos/fotos/LAC013.webp"},
+      {cod:"LAC014",cat:"Lácteos",nombre:"Queso chacra El Roble 450 g",detalle:"Precio por unidad",precio:3320,nuevo:true,foto:"../img/productos/fotos/LAC014.webp"},
+      {cod:"LAC016",cat:"Lácteos",nombre:"Queso de cabra El Roble (barra)",detalle:"Precio por kilo",precio:18810,bolsas:[[250,4920],[1000,18810]],porcion:true,pieza:18050,nuevo:true,foto:"../img/productos/fotos/LAC016.webp"},
       // 23/11/2026 (David: «estos son todos los códigos, porque faltan congelados y cecinas»): productos nuevos de la planilla 13, código = el de MyPyme,
       // precio = «Precio venta» de la planilla 13; las cecinas por kilo se venden en ¼ kg o 1 kg (el ¼ kg es el de la planilla, columna «Observaciones»).
       {cod:"CEC001",cat:"Cecinas",nombre:"Jamón pierna sándwich Receta del Abuelo",detalle:"Precio por kilo",precio:11400,bolsas:[[250,2950],[1000,11400]],porcion:true,nuevo:true,foto:"../img/productos/fotos/CEC001.webp"},
@@ -1945,7 +1962,7 @@ const LOCALES = {
       {cod:"CGL008",cat:"Congelados",nombre:"Apanado de pollo PF 100 g",detalle:"Precio por unidad",precio:450,nuevo:true,foto:"../img/productos/fotos/CGL008.webp"},
       {cod:"CGL009",cat:"Congelados",nombre:"Choclo grano congelado 450 g",detalle:"Precio por unidad",precio:1700,nuevo:true,foto:"../img/productos/fotos/CGL009.webp"},
       {cod:"CGL010",cat:"Congelados",nombre:"Arvejas congeladas 200 g",detalle:"Precio por unidad",precio:700,nuevo:true,foto:"../img/productos/fotos/CGL010.webp"},
-      {cod:"LAC010",cat:"Lácteos",nombre:"Mantequilla panificadora 250 g",detalle:"Precio por unidad",precio:2890,nuevo:true,foto:"../img/productos/fotos/LAC010.webp"},
+      {cod:"LAC010",cat:"Lácteos",nombre:"Mantequilla panificadora 250 g",detalle:"Precio por unidad",precio:2890,nuevo:true,foto:"../img/productos/fotos/LAC010.webp",fotos:["../img/productos/fotos/LAC010.webp", "../img/productos/fotos/LAC010-2.webp"]},
       {cod:"OTR001",cat:"Golosinas",nombre:"Bon o bon dulce de leche",detalle:"Precio por unidad",precio:118},
       {cod:"OTR004",cat:"Otros",nombre:"Hilo ovillo chico",detalle:"Precio por unidad",precio:3990,foto:"../img/productos/fotos/OTR004.webp"},
       {cod:"OTR003",cat:"Otros",nombre:"Hilo cono",detalle:"Precio por unidad",precio:12750,stock:42,foto:"../img/productos/fotos/OTR003.webp"},
