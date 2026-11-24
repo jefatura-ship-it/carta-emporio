@@ -1603,14 +1603,14 @@ const LOCALES = {
       {cod:"ANT-BOL002",cat:"Bolsas, sacos y papeles",nombre:"Mallas",detalle:"Precio por paquete",precio:490,retirado:true},
       {cod:"BOL027",cat:"Bolsas, sacos y papeles",nombre:"Film 100 m Vanni",detalle:"Precio por unidad",precio:2595,stock:30,foto:"../img/productos/fotos/BOL027.webp"},
       {cod:"BOL047",cat:"Bolsas, sacos y papeles",nombre:"Saco blanco 1/4",detalle:"Precio por unidad",precio:990,foto:"../img/productos/fotos/BOL047.webp"},
-      {cod:"BOL049",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 0",detalle:"Precio por unidad",precio:990,foto:"../img/productos/fotos/BOL049.webp"},
-      {cod:"BOL050",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 1",detalle:"Precio por unidad",precio:1290,foto:"../img/productos/fotos/BOL050.webp"},
-      {cod:"BOL051",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 2",detalle:"Precio por unidad",precio:1800,foto:"../img/productos/fotos/BOL051.webp"},
-      {cod:"BOL052",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 3",detalle:"Precio por unidad",precio:2200,foto:"../img/productos/fotos/BOL052.webp"},
-      {cod:"BOL053",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 4",detalle:"Precio por unidad",precio:2400,foto:"../img/productos/fotos/BOL053.webp"},
-      {cod:"BOL054",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 5",detalle:"Precio por unidad",precio:2690,foto:"../img/productos/fotos/BOL054.webp"},
-      {cod:"BOL055",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 6",detalle:"Precio por unidad",precio:2990,foto:"../img/productos/fotos/BOL055.webp"},
-      {cod:"BOL056",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 7",detalle:"Precio por unidad",precio:3500,foto:"../img/productos/fotos/BOL056.webp"},
+      {cod:"BOL049",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 0",detalle:"Precio por unidad · paquete de 50 u",precio:21,upp:50,pq:990,foto:"../img/productos/fotos/BOL049.webp"},
+      {cod:"BOL050",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 1",detalle:"Precio por unidad · paquete de 50 u",precio:27,upp:50,pq:1290,foto:"../img/productos/fotos/BOL050.webp"},
+      {cod:"BOL051",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 2",detalle:"Precio por unidad · paquete de 50 u",precio:38,upp:50,pq:1800,foto:"../img/productos/fotos/BOL051.webp"},
+      {cod:"BOL052",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 3",detalle:"Precio por unidad · paquete de 50 u",precio:46,upp:50,pq:2200,foto:"../img/productos/fotos/BOL052.webp"},
+      {cod:"BOL053",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 4",detalle:"Precio por unidad · paquete de 50 u",precio:50,upp:50,pq:2400,foto:"../img/productos/fotos/BOL053.webp"},
+      {cod:"BOL054",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 5",detalle:"Precio por unidad · paquete de 50 u",precio:56,upp:50,pq:2690,foto:"../img/productos/fotos/BOL054.webp"},
+      {cod:"BOL055",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 6",detalle:"Precio por unidad · paquete de 50 u",precio:63,upp:50,pq:2990,foto:"../img/productos/fotos/BOL055.webp"},
+      {cod:"BOL056",cat:"Bolsas, sacos y papeles",nombre:"Saco kraft N° 7",detalle:"Precio por unidad · paquete de 50 u",precio:74,upp:50,pq:3500,foto:"../img/productos/fotos/BOL056.webp"},
       {cod:"BOL043",cat:"Bolsas, sacos y papeles",nombre:"Papel mantequilla pliego",detalle:"Precio por unidad",precio:300,foto:"../img/productos/fotos/BOL043.webp"},
       {cod:"BOL034",cat:"Bolsas, sacos y papeles",nombre:"Papel kraft",detalle:"Precio por unidad",precio:30,stock:90,retirado:true},
       {cod:"BOL044",cat:"Bolsas, sacos y papeles",nombre:"Papel alfajor",detalle:"Precio por paquete de 100 u",precio:990,stock:9900},
@@ -2657,7 +2657,9 @@ VARIANTES.forEach(v=>{let ms;
   else{ms=L.productos.filter(p=>!p.retirado&&!esPieza(p)&&v.re.test(p.nombre));if(ms.length<2)return;
     ms.forEach(p=>{const m=p.nombre.match(v.re).groups;p.var=v.id;p.num=+m.n;p.dis=(m.d||"").toLowerCase();p.talla="N° "+m.n+(p.dis?` ${p.dis} diseño`:"")});
     ms.sort((a,b)=>a.num-b.num||(a.dis==="con")-(b.dis==="con"))}
-  const prs=ms.map(precioDe).filter(x=>x!=null),todosPaq=ms.every(soloPaq);
+  // «Desde»: si todos se venden por paquete (solo paquete, o paquete con la unidad como opción y precio fijo de paquete), el menor precio de paquete
+  const conPq=ms.every(p=>tienePaq(p)&&p.pq!=null),todosPaq=ms.every(soloPaq)||conPq;
+  const prs=(conPq?ms.map(p=>p.pq):ms.map(precioDe)).filter(x=>x!=null);
   const vp={cod:"VAR-"+v.id,nombre:v.nombre,cat:ms[0].cat,catBase:ms[0].catBase,detalle:"Precio por unidad",precio:prs.length?Math.min(...prs):null,virtual:true,var:v.id,unidadTxt:todosPaq?"el paquete":"c/u",foto:v.foto,fotos:[v.foto,...ms.map(p=>p.foto).filter(Boolean)]};
   PROD[vp.cod]=vp;VARG[v.id]={nombre:v.nombre,ms,vp,tabla:!!v.ms,info:v.info||""}});
 const varTabla={}; // tablas de medidas abiertas (se mantienen abiertas al elegir un tamaño)
