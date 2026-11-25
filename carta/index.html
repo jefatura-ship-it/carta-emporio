@@ -1005,6 +1005,18 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 /* Fotos con etiqueta: siempre completas, sobre el fondo crema de las fotos (la etiqueta va al costado) */
 #carta .prod>.ico .verfotos img{object-fit:contain;padding:0}
 #carta .prod>.ico:has(.verfotos){background:#fbf6ec}
+/* Código bajo la foto (David, 25/11/2026): chiquitito y centrado; en el celular va bajo la foto chica y el nombre sigue al lado */
+.cod-foto{display:none}
+#carta .prod>.cod-foto{display:block;margin:0;font-size:10.5px;line-height:1.3;font-weight:600;color:#66625a;letter-spacing:.02em;font-variant-numeric:tabular-nums;text-align:center;overflow-wrap:anywhere}
+#carta .prod>.cod-foto span+span::before{content:" · "}
+@media (min-width:700px){#carta .prod>.cod-foto{padding-top:6px}}
+@media (max-width:699px){
+  #carta .prod>.ico{grid-column:1;grid-row:1}
+  #carta .prod>.cod-foto:not(.ico):not(.corazon):not(.info):not(.paso){grid-column:1;grid-row:2;padding-top:4px;font-size:10px}
+  #carta .prod>.cod-foto span{display:block}
+  #carta .prod>.cod-foto span+span::before{content:none}
+  #carta .prod>.info{grid-column:2;grid-row:1/span 2}
+}
 /* Carro: «Guardar como lista» y «Vaciar carro» */
 .carro-acc{display:grid;grid-template-columns:repeat(3,1fr);margin:16px 0 0;border-block:1px solid var(--borde)}
 .carro-acc[hidden],.carro-lista-form[hidden]{display:none}
@@ -2524,6 +2536,10 @@ const COD_VER=new Set();let COD_Q=null;
 const codTagHTML=p=>{const m=codMyPyme(p.cod),hit=c=>COD_Q&&(c===COD_Q.raw||c===COD_Q.pad||(COD_Q.pre&&c.startsWith(COD_Q.raw)));
   const parte=(l,c)=>c?`${l} <span${hit(c)?' class="cod-hit"':""}>${c}</span>`:"";
   return `<small class="cod-res">${[m?parte("Código",m):"Sin código MyPyme",parte("etiqueta",COD_ETIQ[p.cod]),hit(p.cod)&&p.cod!==m?parte("interno",p.cod):""].filter(Boolean).join(" · ")}</small>`};
+/* Código a la vista bajo la foto (David, 25/11/2026: «cada producto tenga su código a la vista en chiquitito debajo de la imagen. o los que tengan
+   en su etiqueta al lado»): el código de MyPyme y, si tiene, el de su etiqueta al lado. Solo en la carta (en el carro no se muestra). */
+const codFotoHTML=p=>{if(p.virtual||p.promo)return "";const m=codMyPyme(p.cod),e=COD_ETIQ[p.cod],ok=/^[A-Z]{3}\d{3}$/.test(m);if(!ok&&!e)return "";
+  return `<small class="cod-foto">${ok?`<span>Cód. ${m}</span>`:""}${e?`<span>Etiq. ${e}</span>`:""}</small>`};
 const favs=visibles.filter(p=>p.fav||p.oferta!=null);
 /* Familias: en el menú se ve primero la familia («Plásticos») y al tocarla se despliegan sus páginas («Envases», «Contenedores»…) */
 const FAMILIAS=[
@@ -2707,7 +2723,7 @@ function pintaVar(a){const v=VARG[a.dataset.var];if(!v)return;const lle=[];
 const repintarVar=g=>{document.querySelectorAll(`article[data-var="${g}"]`).forEach(a=>{a.outerHTML=cardVar(g)});refrescar()};
 const card=(p,c,vg)=>`
       <article class="prod${vg?" var":""}${agotado(p)?" agotado":""}${p.oferta!=null||p.ofertaFmt||p.promo?" oferta":""}" data-prod="${p.cod}"${vg?` data-var="${vg}"`:c===FAV?"":` id="p-${p.cod}"`}>${p.virtual?"":`<button type="button" class="corazon" data-fav="${p.cod}" aria-pressed="${esFavCli(p.cod)}" aria-label="Guardar ${p.nombre} en mis favoritos"><svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 8 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 5.6 3.5 4.3 6.8-1.8 4.6-9.3 9.2-9.3 9.2z"/></svg></button>`}
-        <div class="ico${fmtDe(p)&&p.foto?" con-et":""}">${p.foto?fotoHTML(p):((ICONOS[p.icono]||ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}${fmtDe(p)&&p.foto?etLatHTML(p):""}</div>
+        <div class="ico${fmtDe(p)&&p.foto?" con-et":""}">${p.foto?fotoHTML(p):((ICONOS[p.icono]||ICONOS[p.catBase||p.cat]||(p.cat==="Hueveras"?ICONOS.Huevos:ICONOS._)))}${fmtDe(p)&&p.foto?etLatHTML(p):""}</div>${codFotoHTML(p)}
         <div class="info"><small class="tipo-p">${p.cat}</small><b>${vg?VARG[vg].nombre:p.nombre}</b>${!vg&&COD_VER.has(p.cod)?codTagHTML(p):""}${vg?tallasHTML(vg):""}${modosHTML(p)}${p.detalle&&!tienePaq(p)&&!formaVenta(p)?`<small>${p.detalle}${tapasDe[p.cod]?" · con "+pieza(tapaDe(p)):""}</small>`:(tapasDe[p.cod]&&!tienePaq(p)?`<small>Con ${pieza(tapaDe(p))}</small>`:"")}${precioHTML(p)}${p.aviso?`<small class="regla-mayor">${p.aviso}</small>`:""}${agotado(p)?`<span class="tag">${p.cerrado?"Agotado por ahora":p.sinStock?"Stock 0 en el conteo":p.stock===0?"Sin stock":p.paqueteSolo&&disponible(p)<p.upp?`Quedan ${disponible(p)} u: no alcanza para un paquete`:`Sin ${pieza(tapaDe(p))}s en stock`}</span>`:""}<small class="tope" hidden></small><small class="enped" hidden></small></div>
         ${p.virtual?`<div class="paso vacio pista-var"><button type="button" class="elige" disabled>Elige un tamaño</button></div>`:`<div class="paso vacio">
           <button class="menos" data-cod="${p.cod}" data-d="-1" aria-label="Quitar ${p.nombre}">−</button>
