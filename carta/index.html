@@ -1033,7 +1033,8 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
 .carro-cotiz .dos-cot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .carro-cotiz .dos-cot input{width:100%;box-sizing:border-box}
 .carro-cotiz .btn{width:100%}
-@media (max-width:420px){.carro-cotiz .dos-cot{grid-template-columns:1fr}}
+.carro-cotiz .cot-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media (max-width:420px){.carro-cotiz .dos-cot{grid-template-columns:1fr}.carro-cotiz .cot-btns{grid-template-columns:1fr}}
 #cotizImp{display:none}
 @media print{
   body.cotiz-imp{background:#fff!important;margin:0!important;padding:0!important}
@@ -1237,16 +1238,16 @@ body.con-galleta{padding-bottom:calc(var(--alto-barra,72px) + 96px + env(safe-ar
       <div id="carroLista" class="lista"></div>
       <div class="carro-acc" id="carroAcc">
         <button type="button" class="enlace" id="cGuardarLista" aria-expanded="false" aria-controls="cListaForm">Guardar como lista</button>
-        <button type="button" class="enlace" id="cCotiz" aria-expanded="false" aria-controls="cCotizForm">Imprimir cotización</button>
+        <button type="button" class="enlace" id="cCotiz" aria-expanded="false" aria-controls="cCotizForm">Cotización</button>
         <button type="button" class="enlace" id="cVaciar">Vaciar carro</button>
       </div>
       <div class="carro-lista-form carro-cotiz" id="cCotizForm" hidden>
-        <p class="nota-cot">Imprime o guarda en PDF una cotización con los productos de este carro. Vale solo por hoy.</p>
+        <p class="nota-cot">Imprime, guarda en PDF o envía por WhatsApp una cotización con los productos de este carro. Vale solo por hoy.</p>
         <div class="dos-cot">
           <div><label for="cotNom">Nombre del cliente <small>(opcional)</small></label><input id="cotNom" maxlength="60" autocomplete="off"></div>
           <div><label for="cotTel">Teléfono <small>(opcional)</small></label><input id="cotTel" type="tel" inputmode="tel" maxlength="20" autocomplete="off"></div>
         </div>
-        <button type="button" class="btn prim" id="cotImprimir">Imprimir o guardar en PDF</button>
+        <div class="cot-btns"><button type="button" class="btn prim" id="cotImprimir">Imprimir</button><button type="button" class="btn sec" id="cotPdf">Guardar PDF</button><button type="button" class="btn sec" id="cotWsp">Enviar por WhatsApp</button></div>
       </div>
       <div class="carro-lista-form" id="cListaForm" hidden>
         <label for="cListaNom">Nombre de la lista</label>
@@ -3261,6 +3262,88 @@ $("irPedido").onclick=()=>{cerrarHoja("veloCarro");abrirRevision()};
     const z=$("cotizImp");z.innerHTML=hoja();document.body.classList.add("cotiz-imp");
     const im=z.querySelector("img"),ir=()=>{window.print()};
     if(im&&!im.complete){im.onload=im.onerror=ir}else ir()};
+  /* «Guardar PDF» y «Enviar por WhatsApp» (David, 27/11/2026: «quiero que el catalogo de la opción de imprimir y de guardar cotización o de enviar por wsp»).
+     El PDF se arma aquí mismo, sin librerías externas (la página solo permite código propio): la cotización se dibuja en un lienzo tamaño A4
+     y cada página va como imagen JPEG dentro de un PDF mínimo. WhatsApp abre wa.me con la cotización en texto (al teléfono del cliente si se escribió). */
+  function datos(){const its=items(),d=new Date(),G=L.legal||{},U=L.ubicacion||{};
+    return {its,G,U,num:`COT-${L.pref||""}${p2(d.getDate())}${p2(d.getMonth()+1)}-${p2(d.getHours())}${p2(d.getMinutes())}`,
+      fecha:`${DIAS[d.getDay()]} ${p2(d.getDate())}/${p2(d.getMonth()+1)}/${d.getFullYear()}`,hora:`${p2(d.getHours())}:${p2(d.getMinutes())}`,
+      nom:$("cotNom").value.trim(),tel:$("cotTel").value.trim(),tot:total(),sinPrecio:its.some(x=>x.precio==null)}}
+  const detDe=x=>[x.detalle&&!/^(precio )?por unidad$/i.test(x.detalle)?x.detalle:"",x.tapa?"incluye tapa":""].filter(Boolean).join(" · ");
+  const notasDe=k=>["Los precios y el stock pueden cambiar desde mañana; esta cotización no reserva productos.","No incluye despacho."]
+    .concat(k.its.some(x=>x.fid&&aperturaHTML(x,x.fid))?["Huevos: precio de apertura, hasta agotar stock."]:[])
+    .concat(k.its.some(x=>x.mayor)?["«Precio por mayor»: el precio rebajado por la cantidad que lleva."]:[]);
+  function paginas(k,logo){
+    const W=1240,H=1754,M=86,VERDE="#1d5c36",TXT="#1f2a22",SUAVE="#4a554d",SANS='system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif',SERIF='"Fraunces",Georgia,serif';
+    const pags=[];let cv,cx,y;
+    const nueva=()=>{cv=document.createElement("canvas");cv.width=W;cv.height=H;cx=cv.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,W,H);pags.push(cv);y=M};
+    const f=(px,peso,fam)=>{cx.font=`${peso||400} ${px}px ${fam||SANS}`};
+    const lineas=(t,ancho)=>{const out=[];String(t).split("\n").forEach(par=>{let l="";par.split(/\s+/).forEach(w=>{const p=l?l+" "+w:w;if(cx.measureText(p).width>ancho&&l){out.push(l);l=w}else l=p});out.push(l)});return out};
+    const texto=(t,x,yy,al,color)=>{cx.fillStyle=color||TXT;cx.textAlign=al||"left";cx.fillText(t,x,yy)};
+    nueva();
+    if(logo)cx.drawImage(logo,M,y,150,150);
+    const xe=M+(logo?175:0);
+    f(42,700,SERIF);texto(L.nombre,xe,y+48,"left",VERDE);
+    f(19);let yy=y+82;
+    [k.G.razon?k.G.razon+(k.G.rut?" · RUT "+k.G.rut:""):"",(k.G.direccion||k.U.calle||"")+(k.U.horario?" · "+k.U.horario:""),`WhatsApp ${fono(L.whatsapp)} · www.avicolasb.com`]
+      .filter(Boolean).forEach(s=>{lineas(s,W-M-xe-330).forEach(l=>{texto(l,xe,yy,"left",SUAVE);yy+=25})});
+    f(20,600);texto("COTIZACIÓN",W-M,y+30,"right");
+    f(32,700,SERIF);texto(k.num,W-M,y+72,"right",VERDE);
+    f(18);texto(`${k.fecha} · ${k.hora}`,W-M,y+102,"right",SUAVE);
+    y=Math.max(y+160,yy+10);cx.fillStyle=VERDE;cx.fillRect(M,y,W-2*M,5);y+=40;
+    const mitad=(W-2*M-30)/2;
+    [["Cliente",k.nom],["Teléfono",k.tel]].forEach(([e,v],i)=>{const x=M+i*(mitad+30);f(16);texto(e,x,y,"left",SUAVE);f(22,600);texto(v,x,y+34);cx.fillStyle="#9aa39c";cx.fillRect(x,y+44,mitad,1.5)});
+    y+=86;f(19,600);texto(`Cotización válida solo por hoy, ${k.fecha}. Precios con IVA incluido.`,M,y);y+=34;
+    const cC=M+50,cP=M+110,cPr=W-M-215,cSu=W-M,anchoP=cPr-cP-150,pie=H-M-40;
+    const cabTabla=()=>{cx.fillStyle=VERDE;cx.fillRect(M,y,W-2*M,46);f(19,700);texto("Cant.",cC,y+30,"center","#fff");texto("Producto",cP,y+30,"left","#fff");texto("Precio",cPr,y+30,"right","#fff");texto("Subtotal",cSu,y+30,"right","#fff");y+=46};
+    cabTabla();
+    k.its.forEach((x,i)=>{
+      f(21);const ln=lineas(x.nombre,anchoP),det=detDe(x);f(16);const ld=det?lineas(det,anchoP):[];
+      const alto=16+ln.length*28+ld.length*22+(x.mayor?24:0)+10;
+      if(y+alto>pie){nueva();cabTabla()}
+      if(i%2){cx.fillStyle="#f5f2ea";cx.fillRect(M,y,W-2*M,alto)}
+      let ry=y+36;f(21,600);texto(x.q.toLocaleString("es-CL"),cC,ry,"center");
+      f(21);texto(x.precio==null?"Por confirmar":clp(x.precio),cPr,ry,"right");f(21,700);texto(x.precio==null?"—":clp(x.q*x.precio),cSu,ry,"right");
+      f(21);ln.forEach(l=>{texto(l,cP,ry);ry+=28});f(16);ld.forEach(l=>{texto(l,cP,ry-4,"left",SUAVE);ry+=22});
+      if(x.mayor){f(15,700);texto("PRECIO POR MAYOR",cP,ry-2,"left","#b45309");ry+=24}
+      y+=alto;cx.fillStyle="#d9d2c1";cx.fillRect(M,y-1,W-2*M,1)});
+    if(y+90>pie)nueva();
+    cx.fillStyle=VERDE;cx.fillRect(M,y+6,W-2*M,3);f(24,700);texto("TOTAL"+(k.sinPrecio?" (sin los productos por confirmar)":""),cP,y+48);texto(clp(k.tot),cSu,y+48,"right",VERDE);y+=86;
+    f(17);notasDe(k).forEach(n=>{lineas("• "+n,W-2*M).forEach(l=>{if(y+26>pie)nueva();f(17);texto(l,M,y,"left",SUAVE);y+=26})});
+    pags.forEach((c,i)=>{const g=c.getContext("2d");g.font=`400 16px ${SANS}`;g.fillStyle=SUAVE;g.textAlign="center";
+      g.fillText(`${L.nombre} · ${k.U.calle||k.G.direccion||""} · Gracias por preferirnos${pags.length>1?` · Página ${i+1} de ${pags.length}`:""}`,W/2,H-M+20)});
+    return pags}
+  const jpeg=c=>new Promise(r=>c.toBlob(b=>b.arrayBuffer().then(a=>r(new Uint8Array(a))),"image/jpeg",.9));
+  async function pdf(cvs){
+    const enc=new TextEncoder(),partes=[],offs=[];let off=0;
+    const add=b=>{if(typeof b==="string")b=enc.encode(b);partes.push(b);off+=b.length};
+    const obj=(id,s)=>{offs[id]=off;add(`${id} 0 obj\n${s}\nendobj\n`)};
+    const PW=595.28,PH=841.89,n=cvs.length;
+    add(new Uint8Array([37,80,68,70,45,49,46,52,10,37,226,227,207,211,10]));
+    obj(1,"<< /Type /Catalog /Pages 2 0 R >>");
+    obj(2,`<< /Type /Pages /Kids [${cvs.map((_,i)=>`${3+3*i} 0 R`).join(" ")}] /Count ${n} >>`);
+    for(let i=0;i<n;i++){const c=cvs[i],b=await jpeg(c),pg=3+3*i,im=pg+1,co=pg+2,cs=`q ${PW} 0 0 ${PH} 0 0 cm /Im${i} Do Q`;
+      obj(pg,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << /Im${i} ${im} 0 R >> >> /Contents ${co} 0 R >>`);
+      offs[im]=off;add(`${im} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${b.length} >>\nstream\n`);
+      add(b);add("\nendstream\nendobj\n");
+      obj(co,`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`)}
+    const xr=off,tot=3+3*n;
+    add(`xref\n0 ${tot}\n0000000000 65535 f \n`+offs.slice(1,tot).map(o=>String(o).padStart(10,"0")+" 00000 n \n").join(""));
+    add(`trailer\n<< /Size ${tot} /Root 1 0 R >>\nstartxref\n${xr}\n%%EOF\n`);
+    return new Blob(partes,{type:"application/pdf"})}
+  const cargarLogo=()=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src="../img/emporio-sello.webp"});
+  $("cotPdf").onclick=async()=>{if(!items().length)return;const bt=$("cotPdf"),tx=bt.textContent;bt.disabled=true;bt.textContent="Preparando PDF…";
+    try{if(document.fonts&&document.fonts.load)await document.fonts.load('700 40px "Fraunces"').catch(()=>{});
+      const k=datos(),blob=await pdf(paginas(k,await cargarLogo())),a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);a.download=`Cotizacion ${k.num}.pdf`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000)}
+    finally{bt.disabled=false;bt.textContent=tx}};
+  $("cotWsp").onclick=()=>{if(!items().length)return;const k=datos();
+    const lin=k.its.map(x=>{const det=detDe(x);return `• ${x.q.toLocaleString("es-CL")} × ${x.nombre}${det?` (${det})`:""}${x.mayor?" · precio por mayor":""}: `
+      +(x.precio==null?"precio por confirmar":`${clp(x.precio)} c/u = ${clp(x.q*x.precio)}`)});
+    const t=[`*COTIZACIÓN ${k.num}* · ${L.nombre}`,`${k.fecha}, ${k.hora}. Válida solo por hoy. Precios con IVA.`].concat(k.nom?[`Cliente: ${k.nom}`]:[],[""],lin,
+      ["",`*TOTAL: ${clp(k.tot)}*${k.sinPrecio?" (sin los productos por confirmar)":""}`,""],notasDe(k),["",`${L.nombre} · ${k.U.calle||k.G.direccion||""} · WhatsApp ${fono(L.whatsapp)}`,"www.avicolasb.com"]).join("\n");
+    let tf=k.tel.replace(/\D/g,"");if(/^9\d{8}$/.test(tf))tf="56"+tf;else if(!/^569\d{8}$/.test(tf))tf="";
+    window.open(`https://wa.me/${tf}?text=${encodeURIComponent(t)}`,"_blank","noopener")};
 })();
 $("carroLista").addEventListener("click",e=>{
   const q=e.target.closest("button[data-quitar]"); if(!q)return;
