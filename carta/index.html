@@ -1711,7 +1711,7 @@ const LOCALES = {
       {cod:"VAS012",cat:"Vasos",nombre:"Vaso domo 12 - 16 oz con tapas",detalle:"Precio por unidad",precio:90,stock:0,sinStock:true},
       {cod:"VAS007",cat:"Vasos",nombre:"Vaso bambú 16 oz",detalle:"Precio por paquete de 50 u",precio:4990,stock:173,foto:"../img/productos/fotos/VAS007.webp"},
       {cod:"ANT-VAS022",cat:"Vasos",nombre:"Vaso rojo plástico 14-16 oz",detalle:"Precio por unidad",precio:44,stock:0,sinStock:true,retirado:true},
-      {cod:"VAS002",cat:"Vasos",nombre:"Vaso 300 cc Good Food",detalle:"Precio por unidad · paquete de 50 u",precio:36,upp:50,pq:1810,stock:2700},
+      {cod:"VAS002",cat:"Vasos",nombre:"Vaso 300 cc Good Food",detalle:"Precio por unidad · paquete de 50 u",precio:30,upp:50,pq:1500,pm:1350,desdePaq:6,stock:2700},
       {cod:"VAS008",cat:"Vasos",nombre:"Vaso café liso",detalle:"Precio por unidad",precio:75,stock:246,tramos:[[25,55],[100,50]],foto:"../img/productos/fotos/VAS008.webp"},
       {cod:"VAS009",cat:"Vasos",nombre:"Vaso café corrugado marrón 8 oz",detalle:"Precio por unidad · paquete de 25 u",precio:120,upp:25,pq:2790,stock:500,nuevo:true,foto:"../img/productos/fotos/VAS009.webp"},
       {cod:"VAS026",cat:"Vasos",nombre:"Copa helado Garza con pedestal",detalle:"Precio por unidad",precio:250,nuevo:true,tramos:[[50,225]],foto:"../img/productos/fotos/VAS026.webp"},
@@ -2573,7 +2573,7 @@ const deCat=c=>c===FAV?favs:visibles.filter(p=>p.cat===c);
 const precioDe=p=>p.oferta!=null?p.oferta:p.precio;
 /* precio por mayor: escalones según el paquete (o 12 y 50 u si no tiene paquete) */
 const MAYOR=L.mayor||null;
-const DPAQ=MAYOR?MAYOR.dctos[0]:0, DMAY=MAYOR?MAYOR.dctos[1]:0, MIN_PAQ_MAYOR=MAYOR&&MAYOR.paquetes||3;
+const DPAQ=MAYOR?MAYOR.dctos[0]:0, DMAY=MAYOR?MAYOR.dctos[1]:0, MIN_PAQ_MAYOR=MAYOR&&MAYOR.paquetes||3, minPaq=p=>p.desdePaq||MIN_PAQ_MAYOR; // desdePaq: desde cuántos paquetes rige el precio por mayor de ese producto (VAS002: 6, David 28/11/2026)
 /* pm: precio por mayor propio del producto (c/u, o c/paquete si viene en paquete), desde 10 u o 10 paquetes; pq: precio fijo del paquete (David, 19/11/2026) */
 const tapaCobra=p=>{const t=tapaDe(p);return !!t&&(precioDe(t)||0)>0}; // tapa o blonda con precio propio (las de $0 van incluidas: no impiden paquete fijo ni por mayor)
 const pmDe=p=>MAYOR&&p.pm!=null&&p.oferta==null&&!tapaCobra(p)?p.pm:null;
@@ -2593,14 +2593,14 @@ const unidadesEn=p=>(cart[clave(p.cod,"P")]||0)*(p.upp||0)+(cart[p.cod]||0)+(fmt
 function precioPaq(p,n){if(!tienePaq(p))return null;
   const b=precioBase(p),pq=p.pq!=null&&p.oferta==null&&!tapaCobra(p)?p.pq:null;
   const normal=pq!=null?pq:b==null?null:redondear(b*p.upp*(1-DPAQ/100));
-  if(normal==null||n<MIN_PAQ_MAYOR)return normal;
+  if(normal==null||n<minPaq(p))return normal;
   const pm=pmDe(p);if(pm!=null)return Math.min(pm,normal);
   return pq!=null?redondear(pq*(100-DMAY)/(100-DPAQ)):redondear(b*p.upp*(1-DMAY/100))}
 function escalones(p){ // por mayor de lo que no viene en paquete: desde 10 y 50 u (o su precio por mayor propio desde 10 u)
   const base=precioBase(p);
   if(!MAYOR||base==null||p.oferta!=null||tienePaq(p))return [];
   if(Array.isArray(p.tramos))return p.tramos.map(([d,pr])=>({desde:d,precio:pr})).filter(e=>e.precio<base); // tramos propios: [[desde, precio], …] (alimento por saco, bandeja de 20 huevos)
-  const pm=pmDe(p);if(pm!=null)return pm<base?[{desde:soloPaq(p)?MIN_PAQ_MAYOR:MAYOR.sinPaquete[0],precio:pm}]:[];
+  const pm=pmDe(p);if(pm!=null)return pm<base?[{desde:soloPaq(p)?minPaq(p):MAYOR.sinPaquete[0],precio:pm}]:[];
   if(!porUnidad(p))return [];
   return MAYOR.sinPaquete.map((d,i)=>({desde:d,precio:redondear(base*(1-MAYOR.dctos[i]/100))})).filter(e=>e.precio<base);
 }
@@ -2619,8 +2619,8 @@ function precioHTML(p){
   if(base==null)return `<span class="precio pc">Precio por confirmar</span>`;
   if(fmtDe(p)){const f=fmtInfo(p,modoDe(p));return `<span class="precio">${clp(redondear(base*f[2]))} <small class="u">${f[1].toLowerCase()}</small></span>`+(f[2]>1?`<small class="cu">Sale a ${clp(base)} c/u</small>`:"")}
   if(tienePaq(p)){
-    const pq=precioPaq(p,1), pm=precioPaq(p,MIN_PAQ_MAYOR);
-    if(modoDe(p)==="P")return `<span class="precio">${clp(pq)} <small class="u">paquete de ${p.upp} u</small></span><small class="cu">Sale a ${clp(Math.round(pq/p.upp))} c/u</small>`+(pm<pq?`<span class="mayor">Por mayor: <span>${MIN_PAQ_MAYOR} paquetes o más: ${clp(pm)} c/paquete</span></span>`:"");
+    const pq=precioPaq(p,1), pm=precioPaq(p,minPaq(p));
+    if(modoDe(p)==="P")return `<span class="precio">${clp(pq)} <small class="u">paquete de ${p.upp} u</small></span><small class="cu">Sale a ${clp(Math.round(pq/p.upp))} c/u</small>`+(pm<pq?`<span class="mayor">Por mayor: <span>${minPaq(p)} paquetes o más: ${clp(pm)} c/paquete</span></span>`:"");
     return `<span class="precio">${clp(base)} <small class="u">c/u</small></span><small class="cu">Por paquete de ${p.upp} u: ${clp(pq)}</small>`;
   }
   const u=p.uni?"el "+p.uni:unidad(p), es=escalones(p);
@@ -3138,7 +3138,7 @@ const orden=p=>{if(p.envase){const e=p.envase.find(c=>cart[c]);if(e)return POS[e
 const items=()=>{const out=[];L.productos.forEach(p=>{if(esPieza(p))return;const tp=tapaDe(p);
   const nom=tp?(new RegExp("con "+pieza(tp),"i").test(p.nombre)?`${p.nombre} (${sinTapa(tp.nombre).toLowerCase()})`:`${p.nombre} con ${pieza(tp)} (${sinTapa(tp.nombre).toLowerCase()})`):p.nombre;
   const qp=cart[clave(p.cod,"P")]||0, qu=cart[p.cod]||0;
-  if(qp&&tienePaq(p)){const pr=precioPaq(p,qp);out.push({...p,q:qp,precio:pr,mayor:pr!=null&&qp>=MIN_PAQ_MAYOR&&pr<precioPaq(p,1),tapa:tp,paq:true,uds:qp*p.upp,detalle:"",nombre:`${nom} · paquete de ${p.upp} u`})}
+  if(qp&&tienePaq(p)){const pr=precioPaq(p,qp);out.push({...p,q:qp,precio:pr,mayor:pr!=null&&qp>=minPaq(p)&&pr<precioPaq(p,1),tapa:tp,paq:true,uds:qp*p.upp,detalle:"",nombre:`${nom} · paquete de ${p.upp} u`})}
   if(fmtDe(p)){const b=precioBase(p);fmtDe(p).filter(f=>f[0]!=="U").forEach(f=>{const qt=cart[p.cod+"@"+f[0]]||0,po=precioFmt(p,f[0]),pl=po==null?precioLista(p,f[0],qt):null,pr=po!=null&&promoFmt(p,f[0]);let qf=qt;
     let qpr=pr?qt-qt%pr[0]:0;
     if(pr&&enPromoTercera(p.cod,f[0])){const cs=PROMO_TERCERA.cods,tot=bandejasTercera(),antes=cs.slice(0,cs.indexOf(p.cod)).reduce((a,c)=>a+(cart[c+"@"+f[0]]||0),0);qpr=Math.max(0,Math.min(qt,tot-tot%pr[0]-antes))}
